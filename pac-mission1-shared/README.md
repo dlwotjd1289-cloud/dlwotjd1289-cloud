@@ -1,10 +1,6 @@
-# PAC 2026 · AHEAD 팀 공통 저장소
-
-이동한 담당: **흐름도 5번 Low-level Placement Planner의 ③~⑥**.
-후보의 특징을 계산하고, AI로 Top-K를 고른 뒤, 같은 미래 시나리오에서 비교하여 순위 목록을 반환합니다.
-ROS 2가 설치되지 않아도 알고리즘 개발·학습·테스트가 가능합니다.
-
-압축 파일로 전달받은 팀원은 [최초 업로드 안내](docs/upload_guide_ko.md)에 따라 기능 브랜치와 PR로 올리면 됩니다.
+**흐름도 5번 Low-level Placement Planner의 ③~⑥**.
+후보의 특징을 계산하고, AI로 Top-K를 고른 뒤, 같은 미래 시나리오에서 비교하여 순위 목록을 반환
+ROS 2가 설치되지 않아도 알고리즘 개발·학습·테스트가 가능
 
 | 흐름도 | 구현 | 설명 |
 |---|---|---|
@@ -31,7 +27,7 @@ python -m pac_planning.demo --model models/dual_head_ranker.json --fixed-work
 
 ![실행 예시](reports/demo_preview.svg)
 
-## 팀원이 먼저 볼 문서
+## 먼저 볼 문서
 
 1. [공통 개발 기준 v0.2 원문](docs/common_development_standard.md)
 2. [입출력·함수 연결 예제와 추가 계약](docs/integration.md)
@@ -42,13 +38,13 @@ python -m pac_planning.demo --model models/dual_head_ranker.json --fixed-work
 
 ## 담당 범위의 경계
 
-5-① 후보 생성 / 5-② Hard Mask는 `generate_candidates`, `validate_constraints` 콜백으로 연결합니다.
-`reference_backend.py`는 단독 테스트용 **완전 지지·단일 하부 박스** 기준선입니다.
-팀원의 EMS/Extreme Point/LBCP 구현을 대체하거나 이미 구현했다고 뜻하지 않습니다.
+5-① 후보 생성 / 5-② Hard Mask는 `generate_candidates`, `validate_constraints` 콜백으로 연결
+`reference_backend.py`는 단독 테스트용 **완전 지지·단일 하부 박스** 기준선
+태현님의 EMS/Extreme Point/LBCP 구현을 대체하거나 이미 구현한 것은 아님
 
 4번 High-level의 버퍼·팔레트 마감·재적재 선택, 6번의 IK/충돌/가반하중 검사,
 7번 실행·사후 측정, 8번 실제 State Manager는 각 담당 모듈에서 연결합니다.
-출력은 항상 `requires_robot_validation=True`; 이 패키지는 로봇을 움직이거나 ACTUAL 상태를 갱신하지 않습니다.
+출력은 항상 `requires_robot_validation=True`; 이 패키지는 로봇을 움직이거나 ACTUAL 상태를 갱신하지 않음
 
 ## 재학습과 비교
 
@@ -58,7 +54,7 @@ OPENBLAS_NUM_THREADS=1 python -m pac_planning.experiment --output runs/retrain \
   --epochs 80 --aggregate-rounds 1 --seed 20261007
 ```
 
-교사가 모든 유효 후보를 평가하고, 학생이 방문한 상태를 다시 교사로 라벨링해 데이터를 누적합니다.
+teacher: 모든 유효 후보를 평가하고, 방문한 상태를 다시 teacher로 라벨링해 데이터를 누적합니다.
 학습/검증/최종 시험은 **박스 구성 그룹**을 분리합니다. PPO 학습은 이 파트의 구현 범위에 포함되지 않습니다.
 지금 모델은 작은 합성 데이터로 학습한 통합용 출발점입니다. 데이터 규모·기하 검사기·목표 분포가 바뀌면 다시 평가해야 합니다.
 
