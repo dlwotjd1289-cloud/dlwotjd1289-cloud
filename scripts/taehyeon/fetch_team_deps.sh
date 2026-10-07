@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Extract teammates' code (read-only copies) into .deps/team so that the
-# taehyun stage 5-1/5-2 code can be tested before every branch is merged.
+# taehyeon stage 5-1/5-2 code can be tested before every branch is merged.
 # Nothing in teammates' directories is modified; .deps/ is git-ignored.
 #
-# Usage: scripts/taehyun/fetch_team_deps.sh [DATASET_REF] [SIM_REF]
+# Usage: scripts/taehyeon/fetch_team_deps.sh [DATASET_REF] [SIM_REF]
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 DATASET_REF="${1:-origin/feature/jaesung-dataset-generator}"

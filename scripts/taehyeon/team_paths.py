@@ -4,7 +4,7 @@ Resolution order for each package:
 1. explicit environment variable (e.g. ``PAC_COMMON_SRC``),
 2. the merged monorepo location (``ros2_ws/src/<pkg>``),
 3. a nested upload location (``*/ros2_ws/src/<pkg>``),
-4. read-only extracts created by ``scripts/taehyun/fetch_team_deps.sh``.
+4. read-only extracts created by ``scripts/taehyeon/fetch_team_deps.sh``.
 """
 
 from pathlib import Path
@@ -63,7 +63,7 @@ def bootstrap(require_common=True):
     common = locate("pac_common")
     if common is None and require_common:
         raise RuntimeError(
-            "pac_common not found. Run scripts/taehyun/fetch_team_deps.sh "
+            "pac_common not found. Run scripts/taehyeon/fetch_team_deps.sh "
             "or set PAC_COMMON_SRC."
         )
     if common is not None:

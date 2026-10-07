@@ -6,7 +6,7 @@ from pathlib import Path
 import sys
 
 REPO = Path(__file__).resolve().parents[3]
-sys.path.insert(0, str(REPO / "scripts" / "taehyun"))
+sys.path.insert(0, str(REPO / "scripts" / "taehyeon"))
 import team_paths  # noqa: E402
 
 team_paths.bootstrap()

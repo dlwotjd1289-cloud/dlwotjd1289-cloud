@@ -25,20 +25,20 @@
 python3.10 -m venv .venv && . .venv/bin/activate          # 또는 uv venv --python 3.10
 pip install "numpy>=1.23,<3" "PyYAML>=6,<7" "pytest>=7,<9"
 pip install "pybullet>=3.2.6,<4" "networkx>=2.8,<4"       # 물리 교차 검증을 돌릴 때만
-scripts/taehyun/fetch_team_deps.sh                          # 팀원 코드를 .deps/team 에 읽기 전용으로 추출
-python -m pytest -q tests/taehyun                           # 119 passed
-scripts/taehyun/run_validation.sh                           # 모든 검증 리포트 재생성 (약 4분)
+scripts/taehyeon/fetch_team_deps.sh                          # 팀원 코드를 .deps/team 에 읽기 전용으로 추출
+python -m pytest -q tests/taehyeon                           # 119 passed
+scripts/taehyeon/run_validation.sh                           # 모든 검증 리포트 재생성 (약 4분)
 ```
 
 `fetch_team_deps.sh`는 팀원 브랜치에서 `pac_common`, `pac_planning`, 재성 님 제너레이터와 시뮬레이터를 꺼내 git 제외 폴더(`.deps/`)에 둡니다.
-브랜치가 main에 합쳐진 뒤에는 `ros2_ws/src/pac_common` 같은 원래 위치를 자동으로 우선 사용합니다(`scripts/taehyun/team_paths.py`).
+브랜치가 main에 합쳐진 뒤에는 `ros2_ws/src/pac_common` 같은 원래 위치를 자동으로 우선 사용합니다(`scripts/taehyeon/team_paths.py`).
 
 코드에서 사용하는 방법:
 
 ```python
 from pac_candidates import CandidateBackend, load_candidate_config
 
-backend = CandidateBackend(context, load_candidate_config("config/taehyun/candidates.yaml"))
+backend = CandidateBackend(context, load_candidate_config("config/taehyeon/candidates.yaml"))
 candidates = backend.generate_candidates(box, state)          # 5-①
 verdict = backend.validate_constraints(box, candidates[0], state)  # 5-②
 cset = backend.candidate_set(box, state)                       # 5-①+②: "54 generated → 31 masked → 23 valid"
@@ -57,11 +57,11 @@ print(cset.summary(), dict(cset.reason_counts))
 | `├ loads.py` | 하중 분배(lever/area), McKee 상자 압축강도 |
 | `├ geometry.py` · `config.py` · `reports.py` | 기하 연산, 검증되는 YAML 설정, 결과 자료형 |
 | `tools/virtual_data/` | 가상데이터 생성기, 오라클·물리·planner 벤치마크 스크립트 |
-| `config/taehyun/candidates.yaml` | 5-①/5-② 설정 (모든 기본값의 근거는 [algorithms.md](algorithms.md)) |
-| `config/taehyun/virtual_data.yaml` | 가상데이터 설정 |
-| `tests/taehyun/` | 119개 테스트 (단위, brute-force 오라클, planner 통합, 가상데이터) |
-| `scripts/taehyun/` | 팀 코드 추출, 경로 탐색, 전체 검증 스크립트 |
-| `docs/taehyun/` | 이 문서들 + `reports/` 검증 결과 |
+| `config/taehyeon/candidates.yaml` | 5-①/5-② 설정 (모든 기본값의 근거는 [algorithms.md](algorithms.md)) |
+| `config/taehyeon/virtual_data.yaml` | 가상데이터 설정 |
+| `tests/taehyeon/` | 119개 테스트 (단위, brute-force 오라클, planner 통합, 가상데이터) |
+| `scripts/taehyeon/` | 팀 코드 추출, 경로 탐색, 전체 검증 스크립트 |
+| `docs/taehyeon/` | 이 문서들 + `reports/` 검증 결과 |
 
 ## 문서
 

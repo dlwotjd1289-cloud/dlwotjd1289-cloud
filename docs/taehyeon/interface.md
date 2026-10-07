@@ -8,14 +8,14 @@
 ```python
 from pac_candidates import CandidateBackend, load_candidate_config
 
-backend = CandidateBackend(context, load_candidate_config("config/taehyun/candidates.yaml"))
+backend = CandidateBackend(context, load_candidate_config("config/taehyeon/candidates.yaml"))
 
 backend.generate_candidates(box: BoxState, state: SystemState) -> list[PlacementCandidate]
 backend.validate_constraints(box: BoxState, candidate: PlacementCandidate,
                              state: SystemState) -> ValidationResult
 ```
 
-동한 님 planner에는 아래처럼 연결합니다(테스트 `tests/taehyun/test_th_planner_integration.py`에서 확인).
+동한 님 planner에는 아래처럼 연결합니다(테스트 `tests/taehyeon/test_th_planner_integration.py`에서 확인).
 
 ```python
 report = backend.generate_with_report(box, state)          # 5-① + 생성 정보

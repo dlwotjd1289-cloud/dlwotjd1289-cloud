@@ -17,8 +17,8 @@ FIXTURE = Path(__file__).parent / "fixtures" / "ahead_sample"
 @pytest.fixture(scope="module")
 def run_dir(tmp_path_factory):
     out = tmp_path_factory.mktemp("vd")
-    vcfg = load_virtual_config(REPO / "config/taehyun/virtual_data.yaml")
-    cfg = load_candidate_config(REPO / "config/taehyun/candidates.yaml")
+    vcfg = load_virtual_config(REPO / "config/taehyeon/virtual_data.yaml")
+    cfg = load_candidate_config(REPO / "config/taehyeon/candidates.yaml")
     generate(FIXTURE, out, cfg, vcfg, repo_root=REPO)
     return out
 
@@ -79,8 +79,8 @@ def test_split_folders_follow_generator_split(run_dir):
 
 
 def test_generation_is_reproducible(run_dir, tmp_path):
-    vcfg = load_virtual_config(REPO / "config/taehyun/virtual_data.yaml")
-    cfg = load_candidate_config(REPO / "config/taehyun/candidates.yaml")
+    vcfg = load_virtual_config(REPO / "config/taehyeon/virtual_data.yaml")
+    cfg = load_candidate_config(REPO / "config/taehyeon/candidates.yaml")
     generate(FIXTURE, tmp_path, cfg, vcfg, scenario_ids={"S0003"}, repo_root=REPO)
     a = (run_dir / "candidate_sets" / "S0003.jsonl").read_text().splitlines()
     b = (tmp_path / "candidate_sets" / "S0003.jsonl").read_text().splitlines()

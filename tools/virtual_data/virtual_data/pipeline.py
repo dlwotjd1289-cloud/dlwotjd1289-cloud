@@ -24,7 +24,7 @@ from pac_common import plain
 from .episode import run_episode
 from .scenario_source import build_catalog, load_dataset
 
-GENERATOR_NAME = "taehyun.virtual_data"
+GENERATOR_NAME = "taehyeon.virtual_data"
 VERSION = "1.0.0"
 
 

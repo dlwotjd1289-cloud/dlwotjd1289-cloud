@@ -1,7 +1,7 @@
 """Checked YAML configuration for stages 5-1 (candidates) and 5-2 (hard mask).
 
 All lengths are metres, masses kilograms, forces newtons, angles radians.
-Every default is documented in ``docs/taehyun/hard_mask.md`` together with
+Every default is documented in ``docs/taehyeon/hard_mask.md`` together with
 the reason it was chosen. Values are development defaults, not measured
 constants of the competition cell; replace them when measurements exist.
 """

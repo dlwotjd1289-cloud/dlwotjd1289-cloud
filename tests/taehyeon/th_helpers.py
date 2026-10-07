@@ -1,7 +1,7 @@
-"""Shared helpers for taehyun stage 5-1/5-2 tests.
+"""Shared helpers for taehyeon stage 5-1/5-2 tests.
 
-Teammates' ``pac_common`` is located via scripts/taehyun/team_paths.py (merged
-monorepo location, nested upload, or ``scripts/taehyun/fetch_team_deps.sh``).
+Teammates' ``pac_common`` is located via scripts/taehyeon/team_paths.py (merged
+monorepo location, nested upload, or ``scripts/taehyeon/fetch_team_deps.sh``).
 """
 
 import math
@@ -9,7 +9,7 @@ from pathlib import Path
 import sys
 
 REPO = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(REPO / "scripts" / "taehyun"))
+sys.path.insert(0, str(REPO / "scripts" / "taehyeon"))
 
 import team_paths  # noqa: E402
 

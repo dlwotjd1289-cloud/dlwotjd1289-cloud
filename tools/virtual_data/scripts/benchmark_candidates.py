@@ -14,7 +14,7 @@ import sys
 import time
 
 REPO = Path(__file__).resolve().parents[3]
-sys.path.insert(0, str(REPO / "scripts" / "taehyun"))
+sys.path.insert(0, str(REPO / "scripts" / "taehyeon"))
 import team_paths  # noqa: E402
 
 team_paths.bootstrap()
@@ -72,7 +72,7 @@ def main():
     parser.add_argument("--sample", type=int, default=60)
     parser.add_argument("--step", type=float, default=0.02)
     parser.add_argument("--seed", type=int, default=0)
-    parser.add_argument("--candidate-config", type=Path, default=REPO / "config/taehyun/candidates.yaml")
+    parser.add_argument("--candidate-config", type=Path, default=REPO / "config/taehyeon/candidates.yaml")
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
     paths = sorted(args.scenes.rglob("S*-T*.json"))

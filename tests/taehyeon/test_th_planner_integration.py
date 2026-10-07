@@ -1,7 +1,7 @@
-"""Stage 5-1/5-2 (taehyun) wired into stage 5-3~5-6 (donghan) planner.
+"""Stage 5-1/5-2 (taehyeon) wired into stage 5-3~5-6 (donghan) planner.
 
 Skipped automatically when the planner package is not available
-(run scripts/taehyun/fetch_team_deps.sh before merging).
+(run scripts/taehyeon/fetch_team_deps.sh before merging).
 """
 
 import pytest
@@ -33,7 +33,7 @@ def make_planner(context, backend, **cfg):
     )
 
 
-def test_end_to_end_plan_with_taehyun_backend(scene):
+def test_end_to_end_plan_with_taehyeon_backend(scene):
     _, box, state, context = scene
     backend = CandidateBackend(context)
     planner = make_planner(context, backend, horizon=2)

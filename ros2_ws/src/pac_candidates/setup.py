@@ -12,8 +12,8 @@ setup(
     ],
     install_requires=["setuptools", "numpy", "PyYAML"],
     zip_safe=True,
-    maintainer="taehyun",
-    maintainer_email="taehyun@example.com",
+    maintainer="taehyeon",
+    maintainer_email="taehyeon@example.com",
     description="AHEAD stages 5-1 candidate generation and 5-2 hard mask",
     license="Proprietary",
 )

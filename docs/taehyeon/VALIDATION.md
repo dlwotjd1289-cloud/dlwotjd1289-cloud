@@ -1,9 +1,9 @@
 # 검증 결과 (5-① · 5-② · 가상데이터)
 
-전체 재현: `scripts/taehyun/run_validation.sh 5` (약 4분). 원본 리포트는 [`reports/`](reports/)에 있습니다.
+전체 재현: `scripts/taehyeon/run_validation.sh 5` (약 4분). 원본 리포트는 [`reports/`](reports/)에 있습니다.
 데이터: 재성 님 제너레이터 `sample` 모드, 패밀리 6종 × 5 = 시나리오 30개, 박스 720개(seed 20261007).
 
-## 1. 테스트 (`tests/taehyun`, 119개 통과)
+## 1. 테스트 (`tests/taehyeon`, 119개 통과)
 
 | 파일 | 내용 |
 |---|---|

@@ -2,7 +2,7 @@
 """Cross-check 5-2 verdicts with jaesung's PyBullet simulator.
 
     python tools/virtual_data/scripts/physics_crosscheck.py OUT_DIR --steps 40 --per-step 2
-Requires pybullet and pac_simulation (scripts/taehyun/fetch_team_deps.sh).
+Requires pybullet and pac_simulation (scripts/taehyeon/fetch_team_deps.sh).
 """
 
 import argparse
@@ -12,7 +12,7 @@ import random
 import sys
 
 REPO = Path(__file__).resolve().parents[3]
-sys.path.insert(0, str(REPO / "scripts" / "taehyun"))
+sys.path.insert(0, str(REPO / "scripts" / "taehyeon"))
 import team_paths  # noqa: E402
 
 team_paths.bootstrap()
@@ -35,7 +35,7 @@ def main():
     parser.add_argument("--report", type=Path)
     args = parser.parse_args()
     if sim_root is None:
-        parser.error("pac_simulation not found; run scripts/taehyun/fetch_team_deps.sh")
+        parser.error("pac_simulation not found; run scripts/taehyeon/fetch_team_deps.sh")
     import pac_simulation.ahead_sim as sim
 
     out = args.output

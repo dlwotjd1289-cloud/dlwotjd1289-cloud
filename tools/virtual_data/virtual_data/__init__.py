@@ -1,4 +1,4 @@
-"""Virtual data generator for AHEAD stages 5-1/5-2 (owner: taehyun).
+"""Virtual data generator for AHEAD stages 5-1/5-2 (owner: taehyeon).
 
 Replays jaesung's dataset-generator scenarios with a stage-2 measurement
 model, runs candidate generation (5-1) and the hard mask (5-2) at every

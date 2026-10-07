@@ -1,4 +1,4 @@
-"""Pytest fixtures for stages 5-1/5-2 (taehyun). Helpers: th_helpers.py."""
+"""Pytest fixtures for stages 5-1/5-2 (taehyeon). Helpers: th_helpers.py."""
 
 from pathlib import Path
 import sys

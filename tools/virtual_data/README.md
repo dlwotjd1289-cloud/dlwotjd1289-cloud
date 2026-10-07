@@ -1,8 +1,8 @@
-# tools/virtual_data (owner: taehyun)
+# tools/virtual_data (owner: taehyeon)
 
 Virtual data generator and benchmarks for AHEAD stages 5-1/5-2.
-Documentation: [docs/taehyun/virtual_data.md](../../docs/taehyun/virtual_data.md),
-results: [docs/taehyun/VALIDATION.md](../../docs/taehyun/VALIDATION.md).
+Documentation: [docs/taehyeon/virtual_data.md](../../docs/taehyeon/virtual_data.md),
+results: [docs/taehyeon/VALIDATION.md](../../docs/taehyeon/VALIDATION.md).
 
 | script | purpose |
 |---|---|

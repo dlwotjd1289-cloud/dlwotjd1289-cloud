@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run donghan's planner (5-3~5-6) with taehyun's 5-1/5-2 on virtual scenes.
+"""Run donghan's planner (5-3~5-6) with taehyeon's 5-1/5-2 on virtual scenes.
 
     python tools/virtual_data/scripts/planner_benchmark.py --scenes OUT/scenes --sample 30
 """
@@ -13,12 +13,12 @@ import sys
 import time
 
 REPO = Path(__file__).resolve().parents[3]
-sys.path.insert(0, str(REPO / "scripts" / "taehyun"))
+sys.path.insert(0, str(REPO / "scripts" / "taehyeon"))
 import team_paths  # noqa: E402
 
 team_paths.bootstrap()
 if team_paths.add_optional("pac_planning") is None:
-    sys.exit("pac_planning not found; run scripts/taehyun/fetch_team_deps.sh")
+    sys.exit("pac_planning not found; run scripts/taehyeon/fetch_team_deps.sh")
 
 from pac_planning import PlacementPlanner, PlannerConfig  # noqa: E402
 from pac_planning.demo import scene_from_file  # noqa: E402
@@ -31,7 +31,7 @@ def main():
     parser.add_argument("--sample", type=int, default=30)
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--fixed-work", action="store_true", help="disable the 1 s soft budget")
-    parser.add_argument("--candidate-config", type=Path, default=REPO / "config/taehyun/candidates.yaml")
+    parser.add_argument("--candidate-config", type=Path, default=REPO / "config/taehyeon/candidates.yaml")
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
     cfg = load_candidate_config(args.candidate_config)

@@ -15,7 +15,7 @@
 ## 실행
 
 ```bash
-scripts/taehyun/fetch_team_deps.sh     # 최초 1회
+scripts/taehyeon/fetch_team_deps.sh     # 최초 1회
 
 # 재성 님 제너레이터를 먼저 실행 (sample: 패밀리당 N개, benchmark: 600개)
 python tools/virtual_data/scripts/generate_virtual_data.py \
@@ -28,10 +28,10 @@ python tools/virtual_data/scripts/generate_virtual_data.py \
 python tools/virtual_data/scripts/validate_virtual_data.py tools/virtual_data/output/run1
 ```
 
-`tools/virtual_data/output/`은 git에서 제외됩니다. 커밋되는 것은 `docs/taehyun/reports/`의 요약뿐입니다.
+`tools/virtual_data/output/`은 git에서 제외됩니다. 커밋되는 것은 `docs/taehyeon/reports/`의 요약뿐입니다.
 속도: 박스 한 개당 약 12 ms (720단계 ≈ 11초, 라벨 포함). `--policy planner`는 동한 님 planner를 매 단계 실행해서 훨씬 느립니다.
 
-## 설정 (`config/taehyun/virtual_data.yaml`)
+## 설정 (`config/taehyeon/virtual_data.yaml`)
 
 | 항목 | 기본값 | 설명 |
 |---|---|---|

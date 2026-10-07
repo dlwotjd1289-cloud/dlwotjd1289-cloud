@@ -45,7 +45,7 @@ def _spec(sim_module, box_id, size, yaw, center, mass):
         mass_kg=max(0.05, mass),
         target_position_m=center,
         yaw_rad=yaw,
-        source="taehyun_physics_check",
+        source="taehyeon_physics_check",
     )
 
 

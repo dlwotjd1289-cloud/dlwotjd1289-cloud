@@ -1,5 +1,5 @@
-# Stage 5-1 (candidate generation) / 5-2 (hard mask) settings -- owner: taehyun
-# SI units: m, kg, N, rad. Development defaults; reasons in docs/taehyun/hard_mask.md.
+# Stage 5-1 (candidate generation) / 5-2 (hard mask) settings -- owner: taehyeon
+# SI units: m, kg, N, rad. Development defaults; reasons in docs/taehyeon/hard_mask.md.
 # Robot: HDR50-22 (robot reach/IK/payload are stage 6, not checked here).
 schema_version: 1
 candidates:

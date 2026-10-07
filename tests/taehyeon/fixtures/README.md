@@ -1,4 +1,4 @@
-# Test fixtures (taehyun)
+# Test fixtures (taehyeon)
 
 `ahead_sample/` is a 3-scenario subset (normal, weight_mixed, late_heavy) of the
 output of jaesung's AHEAD dataset generator (`tools/ahead_dataset_generator`,

@@ -18,7 +18,7 @@ import sys
 import time
 
 REPO = Path(__file__).resolve().parents[3]
-sys.path.insert(0, str(REPO / "scripts" / "taehyun"))
+sys.path.insert(0, str(REPO / "scripts" / "taehyeon"))
 import team_paths  # noqa: E402
 
 team_paths.bootstrap()
@@ -35,8 +35,8 @@ def main():
     parser.add_argument("--sample-per-family", type=int, default=2)
     parser.add_argument("--generator-seed", type=int)
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--candidate-config", type=Path, default=REPO / "config/taehyun/candidates.yaml")
-    parser.add_argument("--virtual-config", type=Path, default=REPO / "config/taehyun/virtual_data.yaml")
+    parser.add_argument("--candidate-config", type=Path, default=REPO / "config/taehyeon/candidates.yaml")
+    parser.add_argument("--virtual-config", type=Path, default=REPO / "config/taehyeon/virtual_data.yaml")
     parser.add_argument("--policy", choices=("dblf", "random", "mixed", "planner"))
     parser.add_argument("--scenarios", nargs="*", help="limit to these scenario IDs")
     parser.add_argument("--max-scenarios", type=int, default=0)
@@ -49,7 +49,7 @@ def main():
         gen_root = team_paths.locate("generator")
         common = team_paths.locate("pac_common")
         if gen_root is None:
-            parser.error("jaesung generator not found; run scripts/taehyun/fetch_team_deps.sh")
+            parser.error("jaesung generator not found; run scripts/taehyeon/fetch_team_deps.sh")
         dataset = args.output / "source_dataset"
         print(run_generator(gen_root, common, dataset, args.run_generator,
                             args.sample_per_family, args.generator_seed))

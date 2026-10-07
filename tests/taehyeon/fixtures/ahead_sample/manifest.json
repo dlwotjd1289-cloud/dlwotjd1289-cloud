@@ -21,5 +21,5 @@
     "planner_future_order_exposed": false,
     "robot_feasibility_in_generator": false
   },
-  "note": "Subset (3 scenarios) of jaesung's AHEAD dataset generator sample output; used as a test fixture by taehyun."
+  "note": "Subset (3 scenarios) of jaesung's AHEAD dataset generator sample output; used as a test fixture by taehyeon."
 }
