@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "scenario_id": "scenario_001_basic",
+  "seed": 42,
+  "pallet_id": "P001",
+  "boxes": [
+    {
+      "box_id": "B001",
+      "sku_id": "SKU_A",
+      "size_m": {
+        "x": 0.4,
+        "y": 0.3,
+        "z": 0.25
+      },
+      "weight_kg": 12.0,
+      "allowed_yaws_rad": [
+        0.0,
+        1.57079632679
+      ]
+    },
+    {
+      "box_id": "B002",
+      "sku_id": "SKU_B",
+      "size_m": {
+        "x": 0.55,
+        "y": 0.35,
+        "z": 0.3
+      },
+      "weight_kg": 24.0,
+      "allowed_yaws_rad": [
+        0.0,
+        1.57079632679
+      ]
+    }
+  ]
+}

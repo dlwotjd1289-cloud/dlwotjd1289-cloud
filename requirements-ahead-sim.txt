@@ -1,0 +1,6 @@
+# AHEAD live physics simulator
+# Keep the existing project NumPy version unchanged.
+pybullet>=3.2.6,<4
+networkx>=2.8,<4
+aiohttp>=3.8,<4
+PyYAML>=6.0,<7

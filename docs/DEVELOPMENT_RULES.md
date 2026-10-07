@@ -1,0 +1,11 @@
+# Applied team development rules
+- module I/O contracts fixed; internals may vary
+- StateManager is the only ACTUAL state writer
+- SI units internally
+- every Pose has frame_id
+- ROS time for sensor/state timestamps; perf_counter for computation duration
+- JSON/YAML for storage/config, not direct runtime contracts
+- candidates include base_state_version; stale => STALE_PLAN
+- command accepted != placement completed
+- random algorithms accept explicit seed
+- core logic remains testable without ROS

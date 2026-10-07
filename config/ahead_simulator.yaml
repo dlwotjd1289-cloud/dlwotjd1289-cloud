@@ -1,0 +1,50 @@
+pallet:
+  length_m: 1.10
+  width_m: 1.10
+  deck_height_m: 0.15
+  max_height_m: 1.60
+
+  # Development collision geometry, not an official pallet specification.
+  # Replace these values when the actual competition pallet geometry is known.
+  collision_model: "slatted"
+  top_board_count: 5
+  top_board_width_ratio: 0.13
+  top_board_thickness_ratio: 0.22
+  support_block_count_x: 3
+  support_block_count_y: 3
+  support_block_length_ratio: 0.14
+  support_block_width_ratio: 0.15
+  support_block_height_ratio: 0.50
+  bottom_board_count: 3
+  bottom_board_width_ratio: 0.14
+  bottom_board_thickness_ratio: 0.16
+
+physics:
+  gravity_m_s2: 9.80665
+  physics_hz: 240
+  server_loop_hz: 60
+  viewer_hz: 30
+  solver_iterations: 100
+  rolling_friction: 0.001
+  spinning_friction: 0.01
+  restitution: 0.02
+  spawn_clearance_m: 0.002
+
+  # These are TARGET COMBINED Coulomb friction values at each contact.
+  # Bullet combines two body friction values by multiplication.
+  # 0.64 and 0.72 preserve the current development behavior:
+  # box body=0.8, pallet body=0.9 -> 0.8*0.8=0.64, 0.8*0.9=0.72.
+  # They are NOT measured carton/pallet constants.
+  target_box_box_friction: 0.64
+  target_box_pallet_friction: 0.72
+
+metrics:
+  load_grid_size: 20
+  contact_display_min_force_n: 0.05
+
+  # Average contact forces over simulation time to reduce solver/contact jitter.
+  contact_force_average_window_s: 0.50
+
+server:
+  host: "127.0.0.1"
+  port: 4173

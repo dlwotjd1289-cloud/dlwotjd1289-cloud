@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AHEAD Live Physics Simulator</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div id="app">
+    <div id="viewport"></div>
+
+    <header class="glass title-panel">
+      <div class="eyebrow">PAC2026 · AHEAD</div>
+      <h1>Live Pallet Physics Simulator</h1>
+      <div class="subtitle">
+        PyBullet rigid-body state · 1100 × 1100 mm pallet
+      </div>
+    </header>
+
+    <aside class="side">
+      <section class="glass status-panel">
+        <div class="section-title">
+          <span>LIVE PHYSICS</span>
+          <span id="liveBadge" class="live-badge">CONNECTING</span>
+        </div>
+        <div id="metrics" class="metric-grid"></div>
+      </section>
+
+      <section class="glass load-panel">
+        <div class="section-title">
+          <span>PALLET LOAD</span>
+          <span id="forceSummary" class="quiet">0 N</span>
+        </div>
+        <canvas id="heatmap" width="260" height="260"></canvas>
+        <div class="heat-legend">
+          <span>low</span><div class="gradient"></div><span>high</span>
+        </div>
+      </section>
+
+      <section class="glass analytics-panel">
+        <div class="section-title">
+          <span>LOAD ANALYTICS</span>
+          <span class="quiet">actual Bullet contacts</span>
+        </div>
+        <div class="analytics-grid">
+          <div class="chart-card">
+            <div class="chart-title">Quadrant load distribution</div>
+            <div class="chart-wrap"><canvas id="quadrantChart"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-title">Load transmitted by box</div>
+            <div class="chart-wrap"><canvas id="boxLoadChart"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-title">CoM trajectory · top view</div>
+            <canvas id="comTrace" width="300" height="210"></canvas>
+          </div>
+          <div class="chart-card">
+            <div class="chart-title">Stack history</div>
+            <div class="chart-wrap"><canvas id="historyChart"></canvas></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="glass boxes-panel">
+        <div class="section-title">
+          <span>BOXES</span>
+          <span id="boxCount" class="quiet">0</span>
+        </div>
+        <div id="boxList"></div>
+      </section>
+
+      <section class="glass controls-panel">
+        <button id="nextBtn">Add next demo box</button>
+        <button id="autoBtn">Auto demo sequence</button>
+        <button id="resetBtn" class="secondary">Reset</button>
+      </section>
+    </aside>
+
+    <div class="glass bottom-info">
+      <span><b>Left drag</b> rotate</span>
+      <span><b>Right drag</b> pan</span>
+      <span><b>Wheel</b> zoom</span>
+      <span id="selectedInfo">Click a box for live details</span>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <script src="/app.js?v=analytics2"></script>
+</body>
+</html>

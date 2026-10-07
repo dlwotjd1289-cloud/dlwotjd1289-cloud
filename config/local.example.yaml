@@ -1,0 +1,6 @@
+schema_version: 1
+paths:
+  hyundai_reference_root: external/hyundai_robotics
+hardware:
+  robot_ip: null
+  controller_api_port: null
