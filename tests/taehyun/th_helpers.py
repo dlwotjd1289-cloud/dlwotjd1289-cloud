@@ -29,7 +29,6 @@ from pac_common import (  # noqa: E402
     SkuSpec,
     SystemState,
 )
-from pac_candidates import CandidateBackend, CandidateConfig  # noqa: E402
 
 HALF_PI = math.pi / 2
 PALLET = Size3D(1.1, 1.1, 1.35)

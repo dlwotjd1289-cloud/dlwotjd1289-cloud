@@ -30,7 +30,6 @@ from .geometry import (
     clip_polygon_to_rect,
     convex_hull,
     footprint,
-    polygon_area,
     rotated_dims,
     shrink_rect_polygon,
 )
