@@ -412,7 +412,8 @@ class PalletModel:
                 contact, area[:, None], out=np.zeros_like(contact), where=area[:, None] > 0
             )
             limit = heavy_cfg.max_weight_ratio * self._weight + heavy_cfg.tolerance_kg
-            bad = (share >= heavy_cfg.min_share) & (weight_kg > limit[None, :])
+            load = weight_kg * share if heavy_cfg.mode == "share" else weight_kg
+            bad = (share >= heavy_cfg.min_share) & (load > limit[None, :])
             heavy = lifted & bad.any(axis=1)
         return ratio, heavy
 

@@ -203,7 +203,8 @@ def evaluate(model, box, pose, *, is_uncertain=False, collect_all=True):
             if contact.share < hol.min_share:
                 continue
             sup = model.by_id[contact.supporter_id]
-            if box.weight_kg > hol.max_weight_ratio * sup.weight_kg + hol.tolerance_kg:
+            load_kg = box.weight_kg * (contact.share if hol.mode == "share" else 1.0)
+            if load_kg > hol.max_weight_ratio * sup.weight_kg + hol.tolerance_kg:
                 fail(R.LOAD_VIOLATION, "HEAVY_ON_LIGHT:" + sup.box_id)
     metrics.update(
         supporter_shares={c.supporter_id: c.share for c in contacts},

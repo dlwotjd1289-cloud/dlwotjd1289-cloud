@@ -298,3 +298,17 @@ def test_fail_fast_and_full_modes_agree(seed):
         if valid:
             pose = rng.choice(valid[:3]).target_pose
             boxes.append(placed(box.box_id, pose.x, pose.y, pose.z, size, box.weight_kg, pose.yaw))
+
+
+def test_heavy_on_light_share_mode_allows_bridging():
+    from pac_candidates.config import HeavyOnLightConfig
+
+    a = placed("A", TOL, TOL, 0.0, size=(0.3, 0.3, 0.2), weight=4)
+    b = placed("B", TOL + 0.3 + GAP, TOL, 0.0, size=(0.3, 0.3, 0.2), weight=4)
+    state = make_state([a, b])
+    bridge = make_box("N", (0.5, 0.3, 0.1), weight=7)
+    strict = CandidateBackend(make_context())
+    assert "HEAVY_ON_LIGHT" in reasons(check(strict, bridge, state, 0.06, TOL, 0.2))
+    share_cfg = ConstraintConfig(heavy_on_light=HeavyOnLightConfig(mode="share"))
+    share = CandidateBackend(make_context(), CandidateConfig(constraints=share_cfg))
+    assert check(share, bridge, state, 0.06, TOL, 0.2).success

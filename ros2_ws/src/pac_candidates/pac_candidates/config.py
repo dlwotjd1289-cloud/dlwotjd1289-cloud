@@ -172,13 +172,18 @@ class HeavyOnLightConfig:
     """Mission requirement: heavy boxes must not be stacked on light boxes."""
 
     enabled: bool = True
-    # Reject if new.weight > ratio * supporter.weight + tolerance_kg for any
-    # direct supporter that carries at least ``min_share`` of the new box.
+    # per_box (mission wording): reject if new.weight > ratio * supporter.weight
+    #   + tolerance_kg for any direct supporter carrying >= ``min_share``.
+    # share: compare the load actually transferred (new.weight * share)
+    #   instead, so a heavy box bridging several light boxes may be allowed.
+    mode: str = "per_box"
     max_weight_ratio: float = 1.0
     tolerance_kg: float = 0.5
     min_share: float = 0.10
 
     def __post_init__(self):
+        if self.mode not in ("per_box", "share"):
+            raise ValueError("heavy_on_light.mode must be per_box or share")
         _number(self.max_weight_ratio, "max_weight_ratio", 0.0, strict_min=True)
         _number(self.tolerance_kg, "tolerance_kg", 0.0)
         _number(self.min_share, "min_share", 0.0, 1.0)
