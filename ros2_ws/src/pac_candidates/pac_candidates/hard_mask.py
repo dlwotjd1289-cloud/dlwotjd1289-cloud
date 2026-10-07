@@ -15,8 +15,10 @@ Checks (team ``RejectCode`` in brackets, detailed reason strings in details):
 11. pallet max load                                      [LOAD_VIOLATION]
 12. pallet CoG allowed region                            [COG_VIOLATION]
 
-All checks are evaluated (no short-circuit after geometry is known) so the
-rejected list carries every reason -- useful as training labels and logs.
+Checks run from cheap to expensive. Runtime (``collect_all=False``) stops at
+the first failing group -- the verdict (valid / codes) is identical, only the
+list of secondary reasons is shorter. ``collect_all=True`` (virtual data
+labels) evaluates every check so the rejected list carries every reason.
 """
 
 from dataclasses import dataclass
@@ -66,8 +68,8 @@ def pallet_cog_limits(model, mass_after):
     return 0.5 * p.x * ratio, 0.5 * p.y * ratio
 
 
-def evaluate(model, box, pose, *, is_uncertain=False):
-    """Evaluate every hard constraint for ``box`` at ``pose`` on ``model``."""
+def evaluate(model, box, pose, *, is_uncertain=False, collect_all=True):
+    """Evaluate the hard constraints for ``box`` at ``pose`` on ``model``."""
     cfg = model.config
     cons = cfg.constraints
     unc = cfg.uncertainty
@@ -80,6 +82,9 @@ def evaluate(model, box, pose, *, is_uncertain=False):
             codes.append(code)
         reasons.append(reason)
 
+    def rejected():
+        return MaskOutcome(tuple(codes), tuple(reasons), metrics, None)
+
     # 1. orientation ---------------------------------------------------
     if abs(pose.roll) > 1e-9 or abs(pose.pitch) > 1e-9:
         fail(R.INVALID_STATE, "ORIENTATION_NOT_UPRIGHT")
@@ -91,6 +96,8 @@ def evaluate(model, box, pose, *, is_uncertain=False):
         return MaskOutcome(tuple(codes), tuple(reasons), metrics, None)
     if not any(same_yaw(pose.yaw, y) for y in box.allowed_yaws_rad):
         fail(R.INVALID_STATE, "ORIENTATION_NOT_ALLOWED")
+        if not collect_all:
+            return rejected()
 
     dx, dy, dz = rotated_dims(box.size, pose.yaw)
     tol = box_tolerance(unc, is_uncertain)
@@ -111,6 +118,16 @@ def evaluate(model, box, pose, *, is_uncertain=False):
         fail(R.INVALID_STATE, "BELOW_PALLET_SURFACE")
     if top + tol > model.pallet_size.z + 1e-9:
         fail(R.HEIGHT_LIMIT, "MAX_STACK_HEIGHT")
+    if codes and not collect_all:
+        return rejected()
+
+    # 6. resting contact (cheap, vectorised) -------------------------------
+    rest = model.resting_z(expanded)
+    metrics["resting_z_m"] = rest
+    if z > rest + model.height_tol:
+        fail(R.LOW_SUPPORT, "FLOATING")
+        if not collect_all:
+            return rejected()
 
     # 4./5. collision, clearance and descent column ------------------------
     for i in model.overlapping_expanded(expanded):
@@ -126,12 +143,15 @@ def evaluate(model, box, pose, *, is_uncertain=False):
             )
         elif g.bottom >= top - model.height_tol and g.top > z:
             fail(R.APPROACH_FAIL, "OVERHEAD_OCCUPIED:" + g.box_id)
+    if codes and not collect_all:
+        return rejected()
 
-    # 6. resting contact ------------------------------------------------------
-    rest = model.resting_z(expanded)
-    metrics["resting_z_m"] = rest
-    if z > rest + model.height_tol:
-        fail(R.LOW_SUPPORT, "FLOATING")
+    # 11. pallet max load (cheap) ------------------------------------------
+    mass_after = model.mass_kg + box.weight_kg
+    if mass_after > model.max_weight_kg + 1e-9:
+        fail(R.LOAD_VIOLATION, "PALLET_MAX_WEIGHT")
+        if not collect_all:
+            return rejected()
 
     # 7./8. support area and LBCP stability ------------------------------------
     on_floor, found = model.contacts_for(rect, tol, z)
@@ -142,6 +162,8 @@ def evaluate(model, box, pose, *, is_uncertain=False):
     metrics["support_ratio"] = support_ratio
     if support_ratio + 1e-9 < cons.min_support_ratio:
         fail(R.LOW_SUPPORT, "SUPPORT_RATIO")
+        if not collect_all:
+            return rejected()
 
     polygon = model.support_polygon(rect, tol, on_floor, found)
     center = rect.center
@@ -156,6 +178,8 @@ def evaluate(model, box, pose, *, is_uncertain=False):
     )
     if lbcp_margin < cons.min_lbcp_margin_m - STABILITY_EPS:
         fail(R.COG_VIOLATION, "LBCP_UNSTABLE")
+        if not collect_all:
+            return rejected()
 
     # 9./10. loads --------------------------------------------------------------
     weight_n = box.weight_kg * G
@@ -186,11 +210,6 @@ def evaluate(model, box, pose, *, is_uncertain=False):
         max_load_ratio=max_ratio if math.isfinite(max_ratio) else 1e6,
     )
 
-    # 11. pallet max load -------------------------------------------------------
-    mass_after = model.mass_kg + box.weight_kg
-    if mass_after > model.max_weight_kg + 1e-9:
-        fail(R.LOAD_VIOLATION, "PALLET_MAX_WEIGHT")
-
     # 12. pallet CoG region --------------------------------------------------------
     p = model.pallet_size
     cx = (model.moment[0] + box.weight_kg * center[0]) / mass_after
@@ -216,7 +235,7 @@ def evaluate(model, box, pose, *, is_uncertain=False):
             fail(R.COG_VIOLATION, "PALLET_COG")
 
     if codes:
-        return MaskOutcome(tuple(codes), tuple(reasons), metrics, None)
+        return rejected()
 
     # Evidence for stage 5-3/5-6 (all normalised as the team contract asks).
     half_min = 0.5 * min(dx, dy)

@@ -363,6 +363,45 @@ class PalletModel:
             return 0.0
         return float(self._top[mask].max())
 
+    def resting_z_many(self, rects):
+        """Vectorised ``resting_z`` for an (k, 4) array of inflated rects."""
+        rects = np.asarray(rects, dtype=float).reshape(-1, 4)
+        if not self.boxes or rects.shape[0] == 0:
+            return np.zeros(rects.shape[0])
+        b = self._exp
+        ox = np.minimum(rects[:, None, 2], b[None, :, 2]) - np.maximum(
+            rects[:, None, 0], b[None, :, 0]
+        )
+        oy = np.minimum(rects[:, None, 3], b[None, :, 3]) - np.maximum(
+            rects[:, None, 1], b[None, :, 1]
+        )
+        hit = (ox > LEN_EPS) & (oy > LEN_EPS)
+        tops = np.where(hit, self._top[None, :], 0.0)
+        return tops.max(axis=1)
+
+    def support_ratio_many(self, rects, zs):
+        """Vectorised support-area ratio of actual footprints resting at
+        ``zs`` (floor = 1). Used as a cheap pre-mask estimate in 5-1 only;
+        the authoritative ratio is computed by the hard mask."""
+        rects = np.asarray(rects, dtype=float).reshape(-1, 4)
+        zs = np.asarray(zs, dtype=float)
+        ratio = np.ones(rects.shape[0])
+        if not self.boxes or rects.shape[0] == 0:
+            return ratio
+        b = self._act
+        ox = np.minimum(rects[:, None, 2], b[None, :, 2]) - np.maximum(
+            rects[:, None, 0], b[None, :, 0]
+        )
+        oy = np.minimum(rects[:, None, 3], b[None, :, 3]) - np.maximum(
+            rects[:, None, 1], b[None, :, 1]
+        )
+        level = np.abs(self._top[None, :] - zs[:, None]) <= self.height_tol
+        area = np.where(level & (ox > 0) & (oy > 0), ox * oy, 0.0).sum(axis=1)
+        own = (rects[:, 2] - rects[:, 0]) * (rects[:, 3] - rects[:, 1])
+        lifted = zs > self.height_tol
+        ratio[lifted] = np.minimum(1.0, area[lifted] / own[lifted])
+        return ratio
+
     # ------------------------------------------------------------------
     # Compressed heightmap and Empty Maximal Spaces
     # ------------------------------------------------------------------

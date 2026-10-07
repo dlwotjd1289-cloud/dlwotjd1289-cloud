@@ -27,7 +27,12 @@ from pac_common import (
     ValidationResult,
 )
 
-from .candidate_generation import deduplicate, raw_candidates, extreme_points
+from .candidate_generation import (
+    containing_ems,
+    deduplicate,
+    extreme_points,
+    raw_candidates,
+)
 from .config import CandidateConfig
 from .hard_mask import evaluate
 from .pallet_model import PalletModel, box_tolerance
@@ -64,15 +69,10 @@ def state_key(state):
     return (pallet.pallet_id, pallet.size, pallet.boxes)
 
 
-def box_key(box):
-    return (
-        box.box_id,
-        box.sku_id,
-        box.size,
-        box.weight_kg,
-        box.allowed_yaws_rad,
-        box.status,
-    )
+def geometry_key(box, uncertain):
+    """Everything the geometric checks depend on (NOT the box ID), so that
+    look-ahead boxes of the same SKU share cached results."""
+    return (box.size, box.weight_kg, box.allowed_yaws_rad, uncertain)
 
 
 def pose_key(pose):
@@ -85,6 +85,7 @@ class CandidateBackend:
         self.config = config or CandidateConfig()
         self._models = _Lru(self.config.cache_size)
         self._verdicts = _Lru(self.config.cache_size * 64)
+        self._generations = _Lru(self.config.cache_size * 4)
         self._last = (None, None)
 
     # ------------------------------------------------------------------
@@ -147,16 +148,44 @@ class CandidateBackend:
             )
         return None
 
-    def evaluate_pose(self, box, pose, state):
-        """Raw ``MaskOutcome`` (codes, reasons, metrics, evidence); cached."""
+    def _verdict_entry(self, box, pose, state):
         model = self.model_for(state)
-        key = (id(model), box_key(box), pose_key(pose))
+        uncertain = self._uncertain(box.box_id)
+        key = (id(model), geometry_key(box, uncertain), pose_key(pose))
         cached = self._verdicts.get(key)
         if cached is not None and cached[0] is model:  # guard id() reuse
-            return cached[1]
-        outcome = evaluate(model, box, pose, is_uncertain=self._uncertain(box.box_id))
-        self._verdicts.put(key, (model, outcome))
-        return outcome
+            return cached
+        outcome = evaluate(
+            model,
+            box,
+            pose,
+            is_uncertain=uncertain,
+            collect_all=self.config.collect_all_reasons,
+        )
+        entry = [model, outcome, None]  # ValidationResult built lazily
+        self._verdicts.put(key, entry)
+        return entry
+
+    @staticmethod
+    def _result(entry):
+        if entry[2] is None:
+            outcome = entry[1]
+            if outcome.codes:
+                entry[2] = ValidationResult(
+                    False,
+                    outcome.codes,
+                    {"reasons": outcome.reasons, "metrics": outcome.metrics},
+                )
+            else:
+                entry[2] = ValidationResult(
+                    True,
+                    details={"evidence": outcome.evidence, "metrics": outcome.metrics},
+                )
+        return entry[2]
+
+    def evaluate_pose(self, box, pose, state):
+        """Raw ``MaskOutcome`` (codes, reasons, metrics, evidence); cached."""
+        return self._verdict_entry(box, pose, state)[1]
 
     def validate_constraints(self, box, candidate, state):
         """v0.2 ``validate_constraints(box, candidate, state)``."""
@@ -164,32 +193,27 @@ class CandidateBackend:
         if failure is not None:
             return failure
         try:
-            outcome = self.evaluate_pose(box, candidate.target_pose, state)
+            return self._result(self._verdict_entry(box, candidate.target_pose, state))
         except (ValueError, KeyError) as error:
             return ValidationResult(
-                False, (R.INVALID_STATE,), {"reasons": ("INVALID_INPUT",), "error": str(error)}
-            )
-        if outcome.codes:
-            return ValidationResult(
                 False,
-                outcome.codes,
-                {"reasons": outcome.reasons, "metrics": outcome.metrics},
+                (R.INVALID_STATE,),
+                {"reasons": ("INVALID_INPUT",), "error": str(error)},
             )
-        return ValidationResult(
-            True,
-            details={"evidence": outcome.evidence, "metrics": outcome.metrics},
-        )
 
     # ------------------------------------------------------------------
     # 5-1 Candidate generation
     # ------------------------------------------------------------------
 
-    def generate_with_report(self, box, state):
-        started = time.perf_counter()
-        model = self.model_for(state)
+    def _kept_raws(self, box, state, model):
+        """Deduplicated raw candidates; cached per (snapshot, box geometry)."""
+        uncertain = self._uncertain(box.box_id)
+        key = (id(model), geometry_key(box, uncertain))
+        cached = self._generations.get(key)
+        if cached is not None and cached[0] is model:
+            return cached[1], cached[2], cached[3]
         gen = self.config.generation
         raws = raw_candidates(model, box, self.config)
-        validity = {}
         if gen.dedup_mode == "off":
             kept = raws
         else:
@@ -199,14 +223,34 @@ class CandidateBackend:
                     pose = Pose3D("pallet", raw.x, raw.y, raw.z, yaw=raw.yaw)
                     return not self.evaluate_pose(box, pose, state).codes
 
-            kept, validity = deduplicate(
-                raws,
-                gen.dedup_distance_m,
-                model.height_tol,
-                check,
-            )
+            elif gen.dedup_mode == "support_aware":
+                min_support = self.config.constraints.min_support_ratio - 1e-9
+                tol = box_tolerance(self.config.uncertainty, uncertain)
+                ceiling = model.pallet_size.z + 1e-9
+
+                def check(raw):
+                    return raw.support_est >= min_support and (
+                        raw.z + raw.dims[2] + tol <= ceiling
+                    )
+
+            kept, _ = deduplicate(raws, gen.dedup_distance_m, model.height_tol, check)
         if gen.max_candidates:
             kept = kept[: gen.max_candidates]
+        resolved = []
+        for raw in kept:
+            if raw.ems is None:
+                raw = replace(raw, ems=containing_ems(model, raw.expanded, raw.z))
+            resolved.append(raw)
+        kept = tuple(resolved)
+        n_ep = len(extreme_points(model)) if gen.use_extreme_points else 0
+        self._generations.put(key, (model, kept, len(raws), n_ep))
+        return kept, len(raws), n_ep
+
+    def generate_with_report(self, box, state):
+        started = time.perf_counter()
+        model = self.model_for(state)
+        gen = self.config.generation
+        kept, raw_count, n_ep = self._kept_raws(box, state, model)
         tol = box_tolerance(self.config.uncertainty, self._uncertain(box.box_id))
         margin = model.half_gap + tol
         candidates = []
@@ -240,10 +284,10 @@ class CandidateBackend:
             box_id=box.box_id,
             candidates=tuple(candidates),
             infos=infos,
-            raw_count=len(raws),
+            raw_count=raw_count,
             ems_count=len(model.ems()) if gen.use_ems else 0,
-            extreme_point_count=len(extreme_points(model)) if gen.use_extreme_points else 0,
-            yaws_rad=tuple(sorted({r.yaw for r in raws})),
+            extreme_point_count=n_ep,
+            yaws_rad=tuple(sorted({r.yaw for r in kept})),
             elapsed_sec=time.perf_counter() - started,
         )
 
@@ -301,4 +345,6 @@ class CandidateBackend:
             "model_misses": self._models.misses,
             "verdict_hits": self._verdicts.hits,
             "verdict_misses": self._verdicts.misses,
+            "generation_hits": self._generations.hits,
+            "generation_misses": self._generations.misses,
         }

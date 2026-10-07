@@ -36,6 +36,7 @@ class RawCandidate:
     anchor: str  # corner_ll ... center | ep_* name
     ems: object  # Ems or None (EMS of origin / containing EMS)
     expanded: Rect
+    support_est: float = 1.0  # vectorised pre-mask support ratio estimate
 
     def priority(self):
         """Deepest-bottom-left-fill order; corners before centres."""
@@ -165,21 +166,29 @@ def raw_candidates(model, box, config):
             anchors.extend(_ems_raw(model, box, yaw, dims, margin, gen.ems_anchors))
         if gen.use_extreme_points:
             anchors.extend(_ep_raw(model, box, dims, margin))
-        for ex, ey, source, anchor, ems in anchors:
-            expanded = Rect(
-                ex, ey, ex + dims[0] + 2.0 * margin, ey + dims[1] + 2.0 * margin
-            )
+        if not anchors:
+            continue
+        w = dims[0] + 2.0 * margin
+        d = dims[1] + 2.0 * margin
+        rects = [(ex, ey, ex + w, ey + d) for ex, ey, _, _, _ in anchors]
+        zs_arr = model.resting_z_many(rects)
+        actual = [(r[0] + margin, r[1] + margin, r[2] - margin, r[3] - margin) for r in rects]
+        supports = model.support_ratio_many(actual, zs_arr).tolist()
+        zs = zs_arr.tolist()
+        for (ex, ey, source, anchor, ems), z, sup in zip(anchors, zs, supports):
+            expanded = Rect(ex, ey, ex + w, ey + d)
             x = ex + margin
             y = ey + margin
-            z = model.resting_z(expanded)
             key = (round(x, 7), round(y, 7), round(z, 7), round(yaw, 7))
             if key in seen:
                 continue
             seen.add(key)
-            if ems is None or abs(ems.level - z) > model.height_tol:
-                ems = containing_ems(model, expanded, z)
+            if ems is not None and abs(ems.level - z) > model.height_tol:
+                ems = None  # resolved lazily for kept candidates only
             result.append(
-                RawCandidate(x, y, z, yaw, dims, source, anchor, ems, expanded)
+                RawCandidate(
+                    x, y, float(z), yaw, dims, source, anchor, ems, expanded, float(sup)
+                )
             )
     result.sort(key=RawCandidate.priority)
     return result

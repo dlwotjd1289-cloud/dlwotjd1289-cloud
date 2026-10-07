@@ -89,7 +89,12 @@ def test_floating_rejected(backend):
     assert R.LOW_SUPPORT in result.codes and "FLOATING" in reasons(result)
 
 
-def test_low_support_ratio(backend):
+def full_backend(ctx=None):
+    return CandidateBackend(ctx or make_context(), CandidateConfig(collect_all_reasons=True))
+
+
+def test_low_support_ratio():
+    backend = full_backend()
     state = make_state([placed("A", TOL, TOL, 0.0, weight=10)])
     result = check(backend, make_box(weight=1), state, 0.25, TOL, 0.2)
     assert R.LOW_SUPPORT in result.codes and "SUPPORT_RATIO" in reasons(result)
@@ -206,7 +211,8 @@ def test_uncertain_policies():
     assert check(robust, box, make_state(), 2 * TOL, 2 * TOL, 0).success
 
 
-def test_all_reasons_reported_together(backend):
+def test_all_reasons_reported_together():
+    backend = full_backend()
     state = make_state([placed("A", TOL, TOL, 0.0, weight=1)])
     result = check(backend, make_box(weight=20), state, 0.3, TOL, 0.2)
     assert {"SUPPORT_RATIO", "LBCP_UNSTABLE", "HEAVY_ON_LIGHT"} <= reasons(result)
@@ -268,3 +274,27 @@ def test_valid_candidates_satisfy_independent_oracle(seed):
             boxes.append(placed(box.box_id, pose.x, pose.y, pose.z, size, box.weight_kg, pose.yaw))
     final = backend.model_for(make_state(boxes))
     assert final.snapshot_issues() == {}
+
+
+@pytest.mark.parametrize("seed", range(4))
+def test_fail_fast_and_full_modes_agree(seed):
+    rng = random.Random(100 + seed)
+    fast = CandidateBackend(make_context())
+    full = full_backend()
+    boxes = []
+    for i in range(18):
+        size = rng.choice([(0.4, 0.3, 0.2), (0.3, 0.2, 0.15), (0.5, 0.4, 0.3)])
+        box = make_box(f"P{i}", size, weight=round(rng.uniform(1, 12), 2))
+        state = make_state(boxes, version=i)
+        cands = full.generate_candidates(box, state)
+        for cand in cands:
+            a = fast.validate_constraints(box, cand, state)
+            b = full.validate_constraints(box, cand, state)
+            assert a.success == b.success
+            assert set(a.codes) <= set(b.codes)
+            if a.success:
+                assert a.details["evidence"] == b.details["evidence"]
+        valid = [c for c in cands if full.validate_constraints(box, c, state).success]
+        if valid:
+            pose = rng.choice(valid[:3]).target_pose
+            boxes.append(placed(box.box_id, pose.x, pose.y, pose.z, size, box.weight_kg, pose.yaw))

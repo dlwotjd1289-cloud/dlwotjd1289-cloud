@@ -13,7 +13,7 @@ from pathlib import Path
 import yaml
 
 ANCHORS = ("corner_ll", "corner_lr", "corner_ul", "corner_ur", "center")
-DEDUP_MODES = ("geometric", "mask_aware", "off")
+DEDUP_MODES = ("geometric", "support_aware", "mask_aware", "off")
 UNCERTAIN_POLICIES = ("robust", "reject")
 LOAD_SHARE_MODELS = ("area", "lever")
 
@@ -45,9 +45,11 @@ class GenerationConfig:
     # Candidates closer than this (same yaw, x and y) are duplicates.
     dedup_distance_m: float = 0.08
     # geometric: keep the first by priority (flow-chart order: dedup before
-    # mask). mask_aware: inside a duplicate cluster prefer a candidate that
-    # passes the hard mask, so dedup never hides the only valid neighbour.
-    dedup_mode: str = "mask_aware"
+    # mask). support_aware: inside a duplicate cluster prefer a candidate
+    # whose vectorised support-ratio/height estimate passes (cheap proxy of
+    # the dominant mask reasons). mask_aware: same with the exact hard mask
+    # (most faithful, slowest). The hard mask always re-checks everything.
+    dedup_mode: str = "support_aware"
     # 0 = unlimited. When >0 the best ``max_candidates`` by priority remain.
     max_candidates: int = 0
 
@@ -212,10 +214,16 @@ class CandidateConfig:
     constraints: ConstraintConfig = field(default_factory=ConstraintConfig)
     # Size of the per-state geometric model cache (rollouts reuse states).
     cache_size: int = 256
+    # False (runtime): the hard mask stops at the first failing check group;
+    # verdicts are identical, rejected details list fewer secondary reasons.
+    # True: every reason is listed (used for virtual-data training labels).
+    collect_all_reasons: bool = False
 
     def __post_init__(self):
         if type(self.cache_size) is not int or self.cache_size < 1:
             raise ValueError("cache_size must be a positive integer")
+        if not isinstance(self.collect_all_reasons, bool):
+            raise ValueError("collect_all_reasons must be a boolean")
 
 
 _NESTED = {
