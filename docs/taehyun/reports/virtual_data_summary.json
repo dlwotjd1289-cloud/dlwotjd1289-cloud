@@ -1,0 +1,218 @@
+{
+ "families": {
+  "ALL": {
+   "scenarios": 30,
+   "steps": 720,
+   "mean_raw_candidates": 78.56527777777778,
+   "mean_generated": 49.018055555555556,
+   "mean_valid": 14.29861111111111,
+   "valid_ratio": 0.29170090386195563,
+   "no_valid_steps": 153,
+   "placed_ratio": 0.7875,
+   "pallet_volume_utilization": 0.17850800938679726,
+   "bounding_density": 0.36500179650086106,
+   "mean_max_height_m": 0.6857500000000001,
+   "snapshot_issue_boxes": 0,
+   "true_overlaps": 0,
+   "true_protrusions": 0,
+   "step_time_mean_ms": 12.122490427789975,
+   "step_time_p95_ms": 22.44651100045303,
+   "step_time_max_ms": 39.51454499974716,
+   "reason_share_of_masked": {
+    "SUPPORT_RATIO": 0.8474677974237939,
+    "LBCP_UNSTABLE": 0.6695335626850148,
+    "HEAVY_ON_LIGHT": 0.591847347787823,
+    "MAX_STACK_HEIGHT": 0.013121049683974718,
+    "BOX_CAPACITY": 0.0032802624209936795
+   },
+   "reject_code_counts": {
+    "LOW_SUPPORT": 21185,
+    "COG_VIOLATION": 16737,
+    "LOAD_VIOLATION": 14839,
+    "HEIGHT_LIMIT": 328
+   }
+  },
+  "late_heavy": {
+   "scenarios": 5,
+   "steps": 120,
+   "mean_raw_candidates": 75.4,
+   "mean_generated": 48.333333333333336,
+   "mean_valid": 13.525,
+   "valid_ratio": 0.2798275862068966,
+   "no_valid_steps": 43,
+   "placed_ratio": 0.6416666666666667,
+   "pallet_volume_utilization": 0.09092427303336392,
+   "bounding_density": 0.39519374756434456,
+   "mean_max_height_m": 0.3124,
+   "snapshot_issue_boxes": 0,
+   "true_overlaps": 0,
+   "true_protrusions": 0,
+   "step_time_mean_ms": 12.22020986665484,
+   "step_time_p95_ms": 19.953290000103152,
+   "step_time_max_ms": 29.84552799989615,
+   "reason_share_of_masked": {
+    "HEAVY_ON_LIGHT": 0.8970553028489346,
+    "SUPPORT_RATIO": 0.7397653818530046,
+    "LBCP_UNSTABLE": 0.5008379219535551
+   },
+   "reject_code_counts": {
+    "LOAD_VIOLATION": 3747,
+    "LOW_SUPPORT": 3090,
+    "COG_VIOLATION": 2092
+   }
+  },
+  "late_large": {
+   "scenarios": 5,
+   "steps": 120,
+   "mean_raw_candidates": 75.20833333333333,
+   "mean_generated": 49.13333333333333,
+   "mean_valid": 15.85,
+   "valid_ratio": 0.32259158751696065,
+   "no_valid_steps": 28,
+   "placed_ratio": 0.7666666666666666,
+   "pallet_volume_utilization": 0.10888888888888885,
+   "bounding_density": 0.27755073177694667,
+   "mean_max_height_m": 0.56424,
+   "snapshot_issue_boxes": 0,
+   "true_overlaps": 0,
+   "true_protrusions": 0,
+   "step_time_mean_ms": 13.323212750045363,
+   "step_time_p95_ms": 22.771264999846608,
+   "step_time_max_ms": 27.063250000082917,
+   "reason_share_of_masked": {
+    "SUPPORT_RATIO": 0.8387581372058087,
+    "HEAVY_ON_LIGHT": 0.7095643465197796,
+    "LBCP_UNSTABLE": 0.657486229344016,
+    "BOX_CAPACITY": 0.00200300450676014
+   },
+   "reject_code_counts": {
+    "LOW_SUPPORT": 3350,
+    "LOAD_VIOLATION": 2834,
+    "COG_VIOLATION": 2626
+   }
+  },
+  "normal": {
+   "scenarios": 5,
+   "steps": 120,
+   "mean_raw_candidates": 85.14166666666667,
+   "mean_generated": 50.875,
+   "mean_valid": 14.675,
+   "valid_ratio": 0.2884520884520885,
+   "no_valid_steps": 18,
+   "placed_ratio": 0.85,
+   "pallet_volume_utilization": 0.21292855831037644,
+   "bounding_density": 0.3961079945299487,
+   "mean_max_height_m": 0.75804,
+   "snapshot_issue_boxes": 0,
+   "true_overlaps": 0,
+   "true_protrusions": 0,
+   "step_time_mean_ms": 11.898795808330457,
+   "step_time_p95_ms": 23.0896009998105,
+   "step_time_max_ms": 30.636188999778824,
+   "reason_share_of_masked": {
+    "SUPPORT_RATIO": 0.9026243093922652,
+    "LBCP_UNSTABLE": 0.7744014732965009,
+    "HEAVY_ON_LIGHT": 0.4555709023941068,
+    "MAX_STACK_HEIGHT": 0.004604051565377533
+   },
+   "reject_code_counts": {
+    "LOW_SUPPORT": 3921,
+    "COG_VIOLATION": 3364,
+    "LOAD_VIOLATION": 1979,
+    "HEIGHT_LIMIT": 20
+   }
+  },
+  "repeated_sku": {
+   "scenarios": 5,
+   "steps": 120,
+   "mean_raw_candidates": 65.43333333333334,
+   "mean_generated": 40.458333333333336,
+   "mean_valid": 12.7,
+   "valid_ratio": 0.31390319258496396,
+   "no_valid_steps": 30,
+   "placed_ratio": 0.75,
+   "pallet_volume_utilization": 0.22204187327823693,
+   "bounding_density": 0.38211197268181835,
+   "mean_max_height_m": 0.85422,
+   "snapshot_issue_boxes": 0,
+   "true_overlaps": 0,
+   "true_protrusions": 0,
+   "step_time_mean_ms": 10.91136125835419,
+   "step_time_p95_ms": 21.974736000174744,
+   "step_time_max_ms": 39.51454499974716,
+   "reason_share_of_masked": {
+    "SUPPORT_RATIO": 0.7637346142299609,
+    "HEAVY_ON_LIGHT": 0.613329330531372,
+    "LBCP_UNSTABLE": 0.5902131492044431,
+    "MAX_STACK_HEIGHT": 0.07054938456919845
+   },
+   "reject_code_counts": {
+    "LOW_SUPPORT": 2544,
+    "LOAD_VIOLATION": 2043,
+    "COG_VIOLATION": 1966,
+    "HEIGHT_LIMIT": 235
+   }
+  },
+  "size_mixed": {
+   "scenarios": 5,
+   "steps": 120,
+   "mean_raw_candidates": 86.0,
+   "mean_generated": 52.34166666666667,
+   "mean_valid": 14.983333333333333,
+   "valid_ratio": 0.2862601496576978,
+   "no_valid_steps": 15,
+   "placed_ratio": 0.875,
+   "pallet_volume_utilization": 0.1987971839608203,
+   "bounding_density": 0.3918359921287843,
+   "mean_max_height_m": 0.68954,
+   "snapshot_issue_boxes": 0,
+   "true_overlaps": 0,
+   "true_protrusions": 0,
+   "step_time_mean_ms": 11.998535658328061,
+   "step_time_p95_ms": 21.200803999818163,
+   "step_time_max_ms": 29.637088000072254,
+   "reason_share_of_masked": {
+    "SUPPORT_RATIO": 0.8786526879321883,
+    "LBCP_UNSTABLE": 0.6796787865268793,
+    "HEAVY_ON_LIGHT": 0.5005576622797234
+   },
+   "reject_code_counts": {
+    "LOW_SUPPORT": 3939,
+    "COG_VIOLATION": 3047,
+    "LOAD_VIOLATION": 2244
+   }
+  },
+  "weight_mixed": {
+   "scenarios": 5,
+   "steps": 120,
+   "mean_raw_candidates": 84.20833333333333,
+   "mean_generated": 52.96666666666667,
+   "mean_valid": 14.058333333333334,
+   "valid_ratio": 0.2654185022026432,
+   "no_valid_steps": 19,
+   "placed_ratio": 0.8416666666666666,
+   "pallet_volume_utilization": 0.23746727884909696,
+   "bounding_density": 0.34721034032332365,
+   "mean_max_height_m": 0.93606,
+   "snapshot_issue_boxes": 0,
+   "true_overlaps": 0,
+   "true_protrusions": 0,
+   "step_time_mean_ms": 12.382827225026933,
+   "step_time_p95_ms": 22.47498099995937,
+   "step_time_max_ms": 30.468279000160692,
+   "reason_share_of_masked": {
+    "SUPPORT_RATIO": 0.9297494110087813,
+    "LBCP_UNSTABLE": 0.7800385521524952,
+    "HEAVY_ON_LIGHT": 0.4172199614478475,
+    "BOX_CAPACITY": 0.015849218248018847,
+    "MAX_STACK_HEIGHT": 0.01563503962304562
+   },
+   "reject_code_counts": {
+    "LOW_SUPPORT": 4341,
+    "COG_VIOLATION": 3642,
+    "LOAD_VIOLATION": 1992,
+    "HEIGHT_LIMIT": 73
+   }
+  }
+ }
+}

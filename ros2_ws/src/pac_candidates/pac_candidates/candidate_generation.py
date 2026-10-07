@@ -38,16 +38,22 @@ class RawCandidate:
     expanded: Rect
     support_est: float = 1.0  # vectorised pre-mask support ratio estimate
     proxy_ok: bool = True  # passes the cheap pre-mask estimate
+    rank: tuple = ()  # precomputed priority key
 
     def priority(self):
         """Deepest-bottom-left-fill order; corners before centres."""
-        return (
-            round(self.z, 6),
-            round(self.y, 6),
-            round(self.x, 6),
-            1 if self.anchor == "center" else 0,
-            self.yaw,
-        )
+        return self.rank or _rank(self.x, self.y, self.z, self.anchor, self.yaw)
+
+
+def _rank(x, y, z, anchor, yaw):
+    # micrometre integer keys: exact ties, cheaper than round()
+    return (
+        int(z * 1e6 + 0.5),
+        int(y * 1e6 + 0.5),
+        int(x * 1e6 + 0.5),
+        1 if anchor == "center" else 0,
+        yaw,
+    )
 
 
 def candidate_yaws(box, config):
@@ -189,7 +195,8 @@ def raw_candidates(model, box, config):
             expanded = Rect(ex, ey, ex + w, ey + d)
             x = ex + margin
             y = ey + margin
-            key = (round(x, 7), round(y, 7), round(z, 7), round(yaw, 7))
+            rank = _rank(x, y, z, anchor, yaw)
+            key = rank[:3] + (yaw,)
             if key in seen:
                 continue
             seen.add(key)
@@ -197,7 +204,8 @@ def raw_candidates(model, box, config):
                 ems = None  # resolved lazily for kept candidates only
             result.append(
                 RawCandidate(
-                    x, y, float(z), yaw, dims, source, anchor, ems, expanded, float(sup), bool(ok)
+                    x, y, float(z), yaw, dims, source, anchor, ems, expanded,
+                    float(sup), bool(ok), rank,
                 )
             )
     result.sort(key=RawCandidate.priority)
