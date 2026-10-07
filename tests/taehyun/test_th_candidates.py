@@ -183,3 +183,24 @@ def test_full_pallet_has_no_floor_candidates(backend):
     assert cands
     assert all(c.target_pose.z == pytest.approx(0.2) for c in cands)
     assert math.isclose(min(c.target_pose.z for c in cands), 0.2)
+
+
+@pytest.mark.parametrize("seed", range(5))
+def test_likely_valid_first_order_serves_first_n_consumers(seed):
+    """donghan's inventory probe validates only the first 16 candidates."""
+    backend, state = _random_state(10 + seed, n=16)
+    for size, weight in (((0.3, 0.25, 0.2), 1.0), ((0.4, 0.3, 0.2), 4.0), ((0.25, 0.2, 0.1), 0.5)):
+        box = make_box("N", size, weight=weight)
+        cset = backend.candidate_set(box, state)
+        if cset.valid:
+            first = backend.generate_candidates(box, state)[:16]
+            assert any(backend.validate_constraints(box, c, state).success for c in first)
+
+
+def test_priority_order_option():
+    cfg = CandidateConfig(generation=GenerationConfig(order="priority"))
+    backend = CandidateBackend(make_context(), cfg)
+    _, state = _random_state(4)
+    cands = backend.generate_candidates(make_box("N"), state)
+    keys = [(round(c.target_pose.z, 6), round(c.target_pose.y, 6), round(c.target_pose.x, 6)) for c in cands]
+    assert keys == sorted(keys)

@@ -37,6 +37,7 @@ class RawCandidate:
     ems: object  # Ems or None (EMS of origin / containing EMS)
     expanded: Rect
     support_est: float = 1.0  # vectorised pre-mask support ratio estimate
+    proxy_ok: bool = True  # passes the cheap pre-mask estimate
 
     def priority(self):
         """Deepest-bottom-left-fill order; corners before centres."""
@@ -173,9 +174,18 @@ def raw_candidates(model, box, config):
         rects = [(ex, ey, ex + w, ey + d) for ex, ey, _, _, _ in anchors]
         zs_arr = model.resting_z_many(rects)
         actual = [(r[0] + margin, r[1] + margin, r[2] - margin, r[3] - margin) for r in rects]
-        supports = model.support_ratio_many(actual, zs_arr).tolist()
+        sup_arr, heavy_arr = model.support_estimates(
+            actual, zs_arr, box.weight_kg, config.constraints.heavy_on_light
+        )
+        ok_arr = (
+            (sup_arr >= config.constraints.min_support_ratio - 1e-9)
+            & ~heavy_arr
+            & (zs_arr + dims[2] + tol <= model.pallet_size.z + 1e-9)
+        )
         zs = zs_arr.tolist()
-        for (ex, ey, source, anchor, ems), z, sup in zip(anchors, zs, supports):
+        for (ex, ey, source, anchor, ems), z, sup, ok in zip(
+            anchors, zs, sup_arr.tolist(), ok_arr.tolist()
+        ):
             expanded = Rect(ex, ey, ex + w, ey + d)
             x = ex + margin
             y = ey + margin
@@ -187,7 +197,7 @@ def raw_candidates(model, box, config):
                 ems = None  # resolved lazily for kept candidates only
             result.append(
                 RawCandidate(
-                    x, y, float(z), yaw, dims, source, anchor, ems, expanded, float(sup)
+                    x, y, float(z), yaw, dims, source, anchor, ems, expanded, float(sup), bool(ok)
                 )
             )
     result.sort(key=RawCandidate.priority)

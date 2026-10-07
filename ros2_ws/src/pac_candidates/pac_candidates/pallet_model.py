@@ -167,6 +167,7 @@ class PalletModel:
         ).reshape(n, 4)
         self._top = np.array([g.top for g in geoms], dtype=float)
         self._bottom = np.array([g.bottom for g in geoms], dtype=float)
+        self._weight = np.array([g.weight_kg for g in geoms], dtype=float)
         self._build_support()
         self._build_loads()
         self.mass_kg = sum(g.weight_kg for g in geoms)
@@ -379,15 +380,20 @@ class PalletModel:
         tops = np.where(hit, self._top[None, :], 0.0)
         return tops.max(axis=1)
 
-    def support_ratio_many(self, rects, zs):
-        """Vectorised support-area ratio of actual footprints resting at
-        ``zs`` (floor = 1). Used as a cheap pre-mask estimate in 5-1 only;
-        the authoritative ratio is computed by the hard mask."""
+    def support_estimates(self, rects, zs, weight_kg, heavy_cfg):
+        """Vectorised pre-mask estimates for actual footprints at ``zs``.
+
+        Returns (support_ratio, heavy_on_light_violation) arrays. Used only
+        to order / de-duplicate candidates in 5-1; the hard mask computes the
+        authoritative values (contact clipping, LBCP, lever load shares).
+        """
         rects = np.asarray(rects, dtype=float).reshape(-1, 4)
         zs = np.asarray(zs, dtype=float)
-        ratio = np.ones(rects.shape[0])
-        if not self.boxes or rects.shape[0] == 0:
-            return ratio
+        k = rects.shape[0]
+        ratio = np.ones(k)
+        heavy = np.zeros(k, dtype=bool)
+        if not self.boxes or k == 0:
+            return ratio, heavy
         b = self._act
         ox = np.minimum(rects[:, None, 2], b[None, :, 2]) - np.maximum(
             rects[:, None, 0], b[None, :, 0]
@@ -396,11 +402,19 @@ class PalletModel:
             rects[:, None, 1], b[None, :, 1]
         )
         level = np.abs(self._top[None, :] - zs[:, None]) <= self.height_tol
-        area = np.where(level & (ox > 0) & (oy > 0), ox * oy, 0.0).sum(axis=1)
+        contact = np.where(level & (ox > 0) & (oy > 0), ox * oy, 0.0)
+        area = contact.sum(axis=1)
         own = (rects[:, 2] - rects[:, 0]) * (rects[:, 3] - rects[:, 1])
         lifted = zs > self.height_tol
         ratio[lifted] = np.minimum(1.0, area[lifted] / own[lifted])
-        return ratio
+        if heavy_cfg.enabled:
+            share = np.divide(
+                contact, area[:, None], out=np.zeros_like(contact), where=area[:, None] > 0
+            )
+            limit = heavy_cfg.max_weight_ratio * self._weight + heavy_cfg.tolerance_kg
+            bad = (share >= heavy_cfg.min_share) & (weight_kg > limit[None, :])
+            heavy = lifted & bad.any(axis=1)
+        return ratio, heavy
 
     # ------------------------------------------------------------------
     # Compressed heightmap and Empty Maximal Spaces

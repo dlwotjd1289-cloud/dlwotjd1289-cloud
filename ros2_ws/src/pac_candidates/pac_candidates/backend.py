@@ -224,16 +224,15 @@ class CandidateBackend:
                     return not self.evaluate_pose(box, pose, state).codes
 
             elif gen.dedup_mode == "support_aware":
-                min_support = self.config.constraints.min_support_ratio - 1e-9
-                tol = box_tolerance(self.config.uncertainty, uncertain)
-                ceiling = model.pallet_size.z + 1e-9
-
                 def check(raw):
-                    return raw.support_est >= min_support and (
-                        raw.z + raw.dims[2] + tol <= ceiling
-                    )
+                    return raw.proxy_ok
 
             kept, _ = deduplicate(raws, gen.dedup_distance_m, model.height_tol, check)
+        if gen.order == "likely_valid_first":
+            # Stable: priority order inside each group. Consumers that only
+            # look at the first N candidates (e.g. 5-3 inventory probes) then
+            # see feasible positions first.
+            kept = sorted(kept, key=lambda r: not r.proxy_ok)
         if gen.max_candidates:
             kept = kept[: gen.max_candidates]
         resolved = []

@@ -50,7 +50,12 @@ class GenerationConfig:
     # the dominant mask reasons). mask_aware: same with the exact hard mask
     # (most faithful, slowest). The hard mask always re-checks everything.
     dedup_mode: str = "support_aware"
-    # 0 = unlimited. When >0 the best ``max_candidates`` by priority remain.
+    # Output order. priority: deepest-bottom-left (z, y, x). likely_valid_first:
+    # candidates passing the cheap pre-mask estimate (support ratio, height,
+    # heavy-on-light) first, each group in priority order. Consumers looking
+    # only at the first N candidates then do not miss feasible positions.
+    order: str = "likely_valid_first"
+    # 0 = unlimited. When >0 the first ``max_candidates`` (output order) remain.
     max_candidates: int = 0
 
     def __post_init__(self):
@@ -68,6 +73,8 @@ class GenerationConfig:
         _number(self.dedup_distance_m, "dedup_distance_m", 0.0)
         if self.dedup_mode not in DEDUP_MODES:
             raise ValueError(f"dedup_mode must be one of {DEDUP_MODES}")
+        if self.order not in ("priority", "likely_valid_first"):
+            raise ValueError("order must be priority or likely_valid_first")
         if type(self.max_candidates) is not int or self.max_candidates < 0:
             raise ValueError("max_candidates must be a nonnegative integer")
 

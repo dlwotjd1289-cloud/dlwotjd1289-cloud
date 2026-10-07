@@ -11,6 +11,7 @@ candidates:
     ems_anchors: [corner_ll, corner_lr, corner_ul, corner_ur, center]
     dedup_distance_m: 0.08                    # 80 mm duplicate removal
     dedup_mode: support_aware                 # geometric | support_aware | mask_aware | off
+    order: likely_valid_first                 # priority | likely_valid_first
     max_candidates: 0                         # 0 = unlimited
   uncertainty:                                # measurement uncertainty delta (from stage 2)
     lateral_clearance_m: 0.004
