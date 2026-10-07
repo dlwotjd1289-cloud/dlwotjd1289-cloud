@@ -24,7 +24,7 @@ PR: https://github.com/yang8988/pac-mission1-shared/pull/1 (Draft, 브랜치 `cl
 | pac_common | 복사하지 않음. `fetch_team_deps.sh`로 팀 브랜치에서 읽기 전용 추출 | 동한 님 확장 pac_common이 단일 원본, 중복 방지 |
 | 연결 계약 | 동한 님 `docs/integration.md`의 v0.2 콜백 그대로 | 공통 계약 변경 없음 |
 | 좌표 | target_pose = 회전 후 AABB 최소 모서리, z=0 적재면, PalletState.size.z = 최대 적재 높이 | 동한 님 계약 |
-| 최대 높이 1.5 m | 팔레트 목재(0.15 m) 포함으로 해석 → 적재 1.35 m | 보수적, 설정으로 변경 가능 |
+| 최대 높이 1.5 m | 팔레트 목재(0.15 m) 포함 → 적재 1.35 m | **태현 확정 (2026-10-07)** |
 | 루트 공용 파일 | 만들지 않음 (`.gitignore`도 폴더별로 둠) | 재성 님 브랜치의 루트 파일과 충돌 방지 |
 
 ## 진행 상태
@@ -38,7 +38,8 @@ PR: https://github.com/yang8988/pac-mission1-shared/pull/1 (Draft, 브랜치 `cl
 - [x] 오라클 벤치마크 (재현율 100 %), 물리 교차 검증 (통과 후보 100 % 안정)
 - [x] 문서: README, interface, algorithms, virtual_data, VALIDATION
 - [x] Draft PR 생성
-- [ ] 팀 리뷰 반영 (최대 높이 해석, 허용하중 실측값, 무거운-위-가벼운 모드 확정)
+- [x] 최대 높이 해석 확정 (팔레트 포함, 적재 1.35 m)
+- [ ] 팀 리뷰 반영 (허용하중 실측값, 무거운-위-가벼운 모드 확정)
 
 ## 다음 할 일 (선택)
 
