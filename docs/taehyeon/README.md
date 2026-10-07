@@ -26,8 +26,8 @@ python3.10 -m venv .venv && . .venv/bin/activate          # 또는 uv venv --pyt
 pip install "numpy>=1.23,<3" "PyYAML>=6,<7" "pytest>=7,<9"
 pip install "pybullet>=3.2.6,<4" "networkx>=2.8,<4"       # 물리 교차 검증을 돌릴 때만
 scripts/taehyeon/fetch_team_deps.sh                          # 팀원 코드를 .deps/team 에 읽기 전용으로 추출
-python -m pytest -q tests/taehyeon                           # 119 passed
-scripts/taehyeon/run_validation.sh                           # 모든 검증 리포트 재생성 (약 4분)
+python -m pytest -q tests/taehyeon                           # 124 passed
+scripts/taehyeon/run_validation.sh                           # 모든 검증 리포트 재생성 (약 11분)
 ```
 
 `fetch_team_deps.sh`는 팀원 브랜치에서 `pac_common`, `pac_planning`, 재성 님 제너레이터와 시뮬레이터를 꺼내 git 제외 폴더(`.deps/`)에 둡니다.
@@ -59,7 +59,7 @@ print(cset.summary(), dict(cset.reason_counts))
 | `tools/virtual_data/` | 가상데이터 생성기, 오라클·물리·planner 벤치마크 스크립트 |
 | `config/taehyeon/candidates.yaml` | 5-①/5-② 설정 (모든 기본값의 근거는 [algorithms.md](algorithms.md)) |
 | `config/taehyeon/virtual_data.yaml` | 가상데이터 설정 |
-| `tests/taehyeon/` | 119개 테스트 (단위, brute-force 오라클, planner 통합, 가상데이터) |
+| `tests/taehyeon/` | 124개 테스트 (단위, brute-force 오라클, planner 통합, 가상데이터, 박스 강도) |
 | `scripts/taehyeon/` | 팀 코드 추출, 경로 탐색, 전체 검증 스크립트 |
 | `docs/taehyeon/` | 이 문서들 + `reports/` 검증 결과 |
 
@@ -75,10 +75,11 @@ print(cset.summary(), dict(cset.reason_counts))
 
 | 항목 | 결과 |
 |---|---|
-| 5-① 재현율: 20 mm 격자 전수탐색에 놓을 자리가 있으면 유효 후보를 1개 이상 제공 | **100 %** (77/77 장면) |
+| 5-① 재현율: 20 mm 격자 전수탐색에 놓을 자리가 있으면 유효 후보를 1개 이상 제공 | **100 %** (76/76 장면) |
 | 5-① 최저 높이 후보 품질: 격자 탐색보다 같거나 낮음 | 98.7 % (최대 차이 1 mm) |
 | 5-② 안전성: Hard Mask 통과 후보를 실제 크기로 PyBullet에 놓았을 때 안정 | **89/89 (100 %)** |
-| 5-② 유의미성: 지지/LBCP로 탈락한 후보 중 실제로 무너짐 | 65/97 (67 %) |
+| 5-② 유의미성: 지지/LBCP로 탈락한 후보 중 실제로 무너짐 | 63/96 (66 %) |
 | 측정오차 δ 흡수: 실제 크기 기준 상호 관통/팔레트 돌출 | 0건 (720단계) |
-| 동한 님 planner 연동 (1 초 소프트 예산) | 평균 594 ms, p95 998 ms |
-| 5-①+② 한 번 계산 시간 | 평균 12 ms, p95 22 ms |
+| 박스 강도 비공개 대응: 숨겨진 실제 강도 6개 프로필, 팔레트 끝까지 적재 | extreme 외 5개 프로필 실제 눌림 **0건**(가정 안전계수 1에서도) |
+| 동한 님 planner 연동 (1 초 소프트 예산) | 평균 594~846 ms (머신에 따라 다름, VALIDATION 4장) |
+| 5-①+② 한 번 계산 시간 | 평균 12~21 ms (머신에 따라 다름) |

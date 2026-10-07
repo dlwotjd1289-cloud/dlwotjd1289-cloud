@@ -9,7 +9,7 @@
 uv venv --python 3.10 .venv && . .venv/bin/activate      # 또는 python3.10 -m venv .venv
 pip install "numpy>=1.23,<3" "PyYAML>=6,<7" "pytest>=7,<9" "pybullet>=3.2.6,<4" "networkx>=2.8,<4"
 scripts/taehyeon/fetch_team_deps.sh                       # 팀원 코드(읽기 전용)를 .deps/team 에 추출
-python -m pytest -q tests/taehyeon                        # 119 passed
+python -m pytest -q tests/taehyeon                        # 124 passed
 scripts/taehyeon/run_validation.sh                        # 전체 검증 리포트 재생성
 ```
 
@@ -26,6 +26,8 @@ PR: https://github.com/yang8988/pac-mission1-shared/pull/1 (Draft, 브랜치 `cl
 | 좌표 | target_pose = 회전 후 AABB 최소 모서리, z=0 적재면, PalletState.size.z = 최대 적재 높이 | 동한 님 계약 |
 | 최대 높이 1.5 m | 팔레트 목재(0.15 m) 포함 → 적재 1.35 m | **태현 확정 (2026-10-07)** |
 | 무거운-위-가벼운 | `per_box` (미션 문구 그대로) | **태현 확정 (2026-10-07)** |
+| 박스 강도 | 사양 비공개, 실측 없음 → 가상 강도 시나리오로 대응, 가정 안전계수 4 유지 | extreme 외 실제 눌림 0건 |
+| 이름 | `taehyun` → `taehyeon` (폴더·문서·코드) | 태현 님 요청 |
 | 루트 공용 파일 | 만들지 않음 (`.gitignore`도 폴더별로 둠) | 재성 님 브랜치의 루트 파일과 충돌 방지 |
 
 ## 진행 상태
@@ -41,7 +43,8 @@ PR: https://github.com/yang8988/pac-mission1-shared/pull/1 (Draft, 브랜치 `cl
 - [x] Draft PR 생성
 - [x] 최대 높이 해석 확정 (팔레트 포함, 적재 1.35 m)
 - [x] 무거운-위-가벼운 `per_box` 확정
-- [ ] 박스 허용하중 실측값 반영
+- [x] 박스 사양 비공개 → 숨겨진 실제 강도 6개 프로필 + 가정 안전계수 sweep으로 대응 (VALIDATION 8장)
+- [ ] 박스 허용하중 실측값이 생기면 반영 (선택)
 
 ## 다음 할 일 (선택)
 
@@ -61,3 +64,5 @@ PR: https://github.com/yang8988/pac-mission1-shared/pull/1 (Draft, 브랜치 `cl
 | 2026-10-07 | 5-③ 프로브 앞 16개 유효 누락 13 % → likely-valid-first | 0 % |
 | 2026-10-07 | PyBullet 교차 검증 (solid/slatted) | 통과 89/89 안정, 탈락 대조군 67 % 붕괴 |
 | 2026-10-07 | 가상데이터 30 시나리오 / 720 단계 | 검증 OK, 실제 크기 관통 0 |
+| 2026-10-07 | 박스 강도 숨겨진 6개 프로필, 80박스 팔레트, 안전계수 1~16 sweep | extreme 외 실제 눌림 0, extreme은 SF16에서 0 (적재율 −7 %p) |
+| 2026-10-07 | 컨테이너 재시작 후 시간 수치 1.8배 증가 | 예전 커밋도 동일 → 머신 차이, 코드 회귀 아님 |
