@@ -26,6 +26,7 @@ from pac_common import ConstraintEvidence, RejectCode as R
 
 from .geometry import (
     LEN_EPS,
+    STABILITY_EPS,
     footprint,
     inside_margin,
     quarter_turns,
@@ -153,7 +154,7 @@ def evaluate(model, box, pose, *, is_uncertain=False):
         cog_delta_m=(ddx, ddy),
         on_floor=on_floor,
     )
-    if lbcp_margin < cons.min_lbcp_margin_m - 1e-12:
+    if lbcp_margin < cons.min_lbcp_margin_m - STABILITY_EPS:
         fail(R.COG_VIOLATION, "LBCP_UNSTABLE")
 
     # 9./10. loads --------------------------------------------------------------

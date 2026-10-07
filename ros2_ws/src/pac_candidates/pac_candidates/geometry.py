@@ -12,6 +12,9 @@ import math
 HALF_PI = math.pi / 2.0
 YAW_TOL = 1e-6
 LEN_EPS = 1e-9
+# Shared numeric tolerance for stability margins (placement check and the
+# snapshot re-check must agree exactly on borderline cases).
+STABILITY_EPS = 1e-9
 
 
 def quarter_turns(yaw):

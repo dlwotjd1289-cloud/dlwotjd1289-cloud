@@ -25,6 +25,7 @@ import numpy as np
 
 from .geometry import (
     LEN_EPS,
+    STABILITY_EPS,
     Rect,
     clip_polygon_to_rect,
     convex_hull,
@@ -468,7 +469,7 @@ class PalletModel:
                 dx = g.rect.width
                 dy = g.rect.depth
                 margin = _margin(poly, g.rect.center, unc, dx, dy, g.uncertain)
-                if margin < 0:
+                if margin < self.config.constraints.min_lbcp_margin_m - STABILITY_EPS:
                     codes.append("UNSTABLE")
             if self.top_load_n[g.box_id] > g.capacity_n + 1e-6:
                 codes.append("OVERLOADED")
