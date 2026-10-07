@@ -43,6 +43,50 @@ python tools/virtual_data/scripts/validate_virtual_data.py tools/virtual_data/ou
 | `observation.uncertain_probability` | 5 % | 불확실 박스 비율 (치수 σ 4 mm, confidence 0.6, `uncertain_box_ids`에 등록) |
 | `episode.policy` | mixed | 70 %는 첫 유효 후보, 30 %는 상위 5개 중 무작위 → 다양한 중간 상태 |
 | `episode.scene_every` | 1 | 장면 저장 간격 |
+| `strength.profiles` | strong·nominal·weak·humid·mixed·extreme 각 1 | 박스 **실제** 강도 프로필 (planner에는 숨김) |
+| `strength.assignment` | round_robin | 시나리오마다 프로필을 돌아가며 배정(전체 데이터셋 순서 기준) |
+| `strength.damage_factor` | 0.25 | 파손 박스는 윗면 강도가 25 %만 남음 |
+| `strength.detect_probability` | 0.8 | 파손 박스를 2단계 검사가 찾을 확률. 찾으면 `capacity_overrides_n = 0`(위에 아무것도 못 올림) |
+
+## 박스 강도 시나리오 (사양 비공개 대응)
+
+박스 사양이 공개되지 않으므로 강도를 하나로 가정하지 않고 **여러 경우를 생성**합니다.
+각 시나리오는 프로필 하나를 받고, SKU마다 골판지 등급, 박스마다 ±10 % 편차와 파손 여부를 뽑습니다.
+
+`실제 허용하중 = McKee BCT(등급의 ECT, 두께) × 환경계수(습도·보관 기간) × 편차 × (파손 시 0.25)`
+
+| 프로필 | 골판지 등급 비율 | 환경계수 | 파손 확률 |
+|---|---|---|---|
+| strong | 단면 C 40 %, 이중 BC 60 % | 0.6~0.8 | 0 % |
+| nominal | 단면 B 60 %, 단면 C 40 % | 0.5~0.7 | 2 % |
+| weak | 단면 E 50 %, 단면 B 50 % | 0.4~0.6 | 4 % |
+| humid | 단면 B 50 %, 단면 C 50 % | 0.3~0.45 | 3 % |
+| mixed | E·B·C·BC 혼합 | 0.35~0.8 | 3 % |
+| extreme (스트레스) | 단면 E 70 %, 단면 B 30 % | 0.2~0.3 | 10 % |
+
+등급별 ECT·두께: 단면 E 2.5~3.5 kN/m·1.5 mm, 단면 B 3.5~5 kN/m·3 mm, 단면 C 4.5~6 kN/m·4 mm, 이중 BC 7~10 kN/m·7 mm.
+모두 일반적인 골판지 범위를 가정한 **개발용 값**입니다.
+
+- planner(5-②)는 실제 값을 모르고, `candidates.yaml`의 가정 허용하중(McKee/안전계수)만 사용합니다.
+- 최종 팔레트에서 실제 강도로 하중을 다시 계산합니다. 그 결과로 실제 붕괴 박스 수, 최대 실제 하중비, 검출된 파손 박스 위 적재 여부를 `episodes/`와 `analysis/summary.md`에 기록합니다.
+- 실제 강도(`true_capacity_n`, `damaged_box_ids`)는 `episodes/`(정답 데이터)에만 저장합니다. planner 장면에는 넣지 않으며, 검증기가 누출을 검사합니다.
+
+가정 안전계수별로 위험을 비교하려면 다음을 실행합니다.
+
+```bash
+python tools/virtual_data/scripts/strength_sweep.py --dataset OUT/source_dataset \
+    --safety-factors 1 2 4 8 16 --report strength_sweep.json
+```
+
+## 팔레트를 끝까지 채우는 시나리오
+
+재성 님 제너레이터 기본값은 시나리오당 24박스입니다(평균 높이 약 0.7 m). 하중 조건을 시험하려면 박스 수를 늘립니다.
+제너레이터 설정 파일은 수정하지 않고, 복사본에서 `boxes_per_scenario`만 바꿔 실행합니다.
+
+```bash
+python tools/virtual_data/scripts/generate_virtual_data.py --run-generator sample \
+    --sample-per-family 2 --boxes-per-scenario 80 --output tools/virtual_data/output/full
+```
 
 ## 출력 스키마
 

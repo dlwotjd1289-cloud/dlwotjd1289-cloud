@@ -60,6 +60,23 @@ class Dataset:
         return "unsplit"
 
 
+def derived_generator_config(generator_root, output_dir, boxes_per_scenario):
+    """Copy jaesung's default.yaml with a different ``boxes_per_scenario``.
+
+    The original file is never modified; the copy lives next to the output.
+    Used to fill the pallet to its height limit (default 24 boxes ~ 0.7 m).
+    """
+    import yaml
+
+    source = Path(generator_root) / "config" / "default.yaml"
+    cfg = yaml.safe_load(source.read_text(encoding="utf-8"))
+    cfg["generation"]["benchmark"]["boxes_per_scenario"] = int(boxes_per_scenario)
+    target = Path(output_dir).with_name(Path(output_dir).name + "_generator_config.yaml")
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(yaml.safe_dump(cfg, sort_keys=False), encoding="utf-8")
+    return target
+
+
 def run_generator(
     generator_root,
     pac_common_src,
@@ -68,9 +85,12 @@ def run_generator(
     sample_per_family=2,
     seed=None,
     config_path=None,
+    boxes_per_scenario=None,
 ):
     """Execute jaesung's generator CLI; returns its stdout line."""
     generator_root = Path(generator_root)
+    if boxes_per_scenario is not None and config_path is None:
+        config_path = derived_generator_config(generator_root, output_dir, boxes_per_scenario)
     cmd = [
         sys.executable,
         str(generator_root / "scripts" / "generate_dataset.py"),

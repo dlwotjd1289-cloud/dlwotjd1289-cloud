@@ -99,6 +99,7 @@ def generate(dataset_dir, out_dir, cand_config, vcfg, scenario_ids=None, repo_ro
         scene_index.append({"scene": str(path.relative_to(out)), "split": split, **scene["source"]})
 
     episodes = []
+    dataset_index = {s.scenario_id: k for k, s in enumerate(dataset.scenarios)}
     specs = [s for s in dataset.scenarios if not scenario_ids or s.scenario_id in scenario_ids]
     if max_scenarios:
         specs = specs[:max_scenarios]
@@ -115,6 +116,8 @@ def generate(dataset_dir, out_dir, cand_config, vcfg, scenario_ids=None, repo_ro
                 label_sink=label_sink if write_labels else None,
                 planner_factory=planner_factory,
                 run_id=run_id,
+                # position in the FULL dataset, so filtering keeps assignments
+                scenario_index=dataset_index[spec.scenario_id],
             )
             episodes.append(result)
             _dump(
@@ -129,6 +132,13 @@ def generate(dataset_dir, out_dir, cand_config, vcfg, scenario_ids=None, repo_ro
                     "true_sizes": {
                         b.box_id: plain(b.size) for b in spec.arrivals
                     },
+                    "true_capacity_n": (
+                        dict(result.strength.true_capacity_n) if result.strength else None
+                    ),
+                    "damaged_box_ids": list(result.strength.damaged) if result.strength else [],
+                    "damage_detected_box_ids": (
+                        list(result.strength.detected) if result.strength else []
+                    ),
                 },
             )
             if progress:
@@ -182,51 +192,64 @@ def _pct(values, q):
     return ordered[k]
 
 
+def _group_stats(eps):
+    steps = [s for e in eps for s in e.steps]
+    reasons = Counter()
+    codes = Counter()
+    for s in steps:
+        reasons.update(s["reason_counts"])
+        codes.update(s["code_counts"])
+    total_masked = sum(s["generated"] - s["valid"] for s in steps)
+    step_times = [s["generation_sec"] + s["mask_sec"] for s in steps]
+    placed_boxes = sum(e.metrics["placed"] for e in eps)
+    over = sum(len(e.metrics.get("true_overloaded_boxes", ())) for e in eps)
+    mean = lambda xs: statistics.fmean(xs) if xs else 0.0  # noqa: E731
+    return {
+        "scenarios": len(eps),
+        "steps": len(steps),
+        "mean_raw_candidates": mean([s["raw"] for s in steps]),
+        "mean_generated": mean([s["generated"] for s in steps]),
+        "mean_valid": mean([s["valid"] for s in steps]),
+        "valid_ratio": sum(s["valid"] for s in steps) / max(1, sum(s["generated"] for s in steps)),
+        "no_valid_steps": sum(1 for s in steps if s["valid"] == 0),
+        "placed_ratio": mean([e.metrics["placed_ratio"] for e in eps]),
+        "pallet_volume_utilization": mean([e.metrics["pallet_volume_utilization"] for e in eps]),
+        "bounding_density": mean([e.metrics["bounding_density"] for e in eps]),
+        "mean_max_height_m": mean([e.metrics["max_height_m"] for e in eps]),
+        "snapshot_issue_boxes": sum(len(e.metrics["snapshot_issues"]) for e in eps),
+        "true_overlaps": sum(len(e.metrics["true_overlaps"]) for e in eps),
+        "true_protrusions": sum(len(e.metrics["true_protrusions"]) for e in eps),
+        "true_overloaded_boxes": over,
+        "true_overload_rate": over / max(1, placed_boxes),
+        "scenarios_with_true_overload": sum(
+            1 for e in eps if e.metrics.get("true_overloaded_boxes")
+        ),
+        "true_max_load_ratio": max(
+            [e.metrics.get("true_max_load_ratio", 0.0) for e in eps], default=0.0
+        ),
+        "boxes_on_detected_damaged": sum(
+            len(e.metrics.get("boxes_on_detected_damaged", ())) for e in eps
+        ),
+        "step_time_mean_ms": 1e3 * mean(step_times),
+        "step_time_p95_ms": 1e3 * _pct(step_times, 0.95),
+        "step_time_max_ms": 1e3 * max(step_times) if step_times else 0,
+        "reason_share_of_masked": {k: v / max(1, total_masked) for k, v in reasons.most_common()},
+        "reject_code_counts": dict(codes.most_common()),
+    }
+
+
 def summarize(episodes):
     by_family = defaultdict(list)
+    by_strength = defaultdict(list)
     for e in episodes:
         by_family[e.family].append(e)
+        if e.metrics.get("strength_profile"):
+            by_strength[e.metrics["strength_profile"]].append(e)
     by_family["ALL"] = list(episodes)
-    families = {}
-    for family, eps in sorted(by_family.items()):
-        steps = [s for e in eps for s in e.steps]
-        reasons = Counter()
-        codes = Counter()
-        for s in steps:
-            reasons.update(s["reason_counts"])
-            codes.update(s["code_counts"])
-        total_masked = sum(s["generated"] - s["valid"] for s in steps)
-        step_times = [s["generation_sec"] + s["mask_sec"] for s in steps]
-        families[family] = {
-            "scenarios": len(eps),
-            "steps": len(steps),
-            "mean_raw_candidates": statistics.fmean(s["raw"] for s in steps) if steps else 0,
-            "mean_generated": statistics.fmean(s["generated"] for s in steps) if steps else 0,
-            "mean_valid": statistics.fmean(s["valid"] for s in steps) if steps else 0,
-            "valid_ratio": (
-                sum(s["valid"] for s in steps) / max(1, sum(s["generated"] for s in steps))
-            ),
-            "no_valid_steps": sum(1 for s in steps if s["valid"] == 0),
-            "placed_ratio": statistics.fmean(e.metrics["placed_ratio"] for e in eps) if eps else 0,
-            "pallet_volume_utilization": (
-                statistics.fmean(e.metrics["pallet_volume_utilization"] for e in eps) if eps else 0
-            ),
-            "bounding_density": (
-                statistics.fmean(e.metrics["bounding_density"] for e in eps) if eps else 0
-            ),
-            "mean_max_height_m": statistics.fmean(e.metrics["max_height_m"] for e in eps) if eps else 0,
-            "snapshot_issue_boxes": sum(len(e.metrics["snapshot_issues"]) for e in eps),
-            "true_overlaps": sum(len(e.metrics["true_overlaps"]) for e in eps),
-            "true_protrusions": sum(len(e.metrics["true_protrusions"]) for e in eps),
-            "step_time_mean_ms": 1e3 * statistics.fmean(step_times) if step_times else 0,
-            "step_time_p95_ms": 1e3 * _pct(step_times, 0.95),
-            "step_time_max_ms": 1e3 * max(step_times) if step_times else 0,
-            "reason_share_of_masked": {
-                k: v / max(1, total_masked) for k, v in reasons.most_common()
-            },
-            "reject_code_counts": dict(codes.most_common()),
-        }
-    return {"families": families}
+    return {
+        "families": {k: _group_stats(v) for k, v in sorted(by_family.items())},
+        "strength_profiles": {k: _group_stats(v) for k, v in sorted(by_strength.items())},
+    }
 
 
 def summary_markdown(summary):
@@ -246,6 +269,22 @@ def summary_markdown(summary):
             f"{f['snapshot_issue_boxes']} | {f['true_overlaps']} | "
             f"{f['step_time_mean_ms']:.1f}/{f['step_time_p95_ms']:.1f} |"
         )
+    if summary.get("strength_profiles"):
+        lines += [
+            "",
+            "## True carton strength (hidden from the planner)",
+            "",
+            "| strength | scen | placed% | util | H(m) | true-overloaded boxes | rate | scenarios w/ overload | max true load ratio | on detected-damaged |",
+            "|---|---|---|---|---|---|---|---|---|---|",
+        ]
+        for name, f in summary["strength_profiles"].items():
+            lines.append(
+                f"| {name} | {f['scenarios']} | {100 * f['placed_ratio']:.0f} | "
+                f"{f['pallet_volume_utilization']:.3f} | {f['mean_max_height_m']:.2f} | "
+                f"{f['true_overloaded_boxes']} | {100 * f['true_overload_rate']:.2f}% | "
+                f"{f['scenarios_with_true_overload']} | {f['true_max_load_ratio']:.2f} | "
+                f"{f['boxes_on_detected_damaged']} |"
+            )
     allf = fams.get("ALL", {})
     lines += ["", "## Mask reasons (share of masked candidates, ALL)", ""]
     for k, v in allf.get("reason_share_of_masked", {}).items():

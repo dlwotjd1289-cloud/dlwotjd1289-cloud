@@ -38,4 +38,13 @@ done
 echo "== 5. donghan planner (5-3~5-6) with this backend, 1 s soft budget"
 python tools/virtual_data/scripts/planner_benchmark.py --scenes "$OUT/scenes" --sample 30 \
   --output "$REPORTS/planner_benchmark.json" | tail -14
+echo "== 6. carton strength coverage: assumed capacity vs hidden true strength (full pallets)"
+FULL="tools/virtual_data/output/validation_full"
+rm -rf "$FULL"
+python tools/virtual_data/scripts/generate_virtual_data.py \
+  --run-generator sample --sample-per-family 2 --boxes-per-scenario 80 --output "$FULL" \
+  --no-scenes > /dev/null
+cp "$FULL/analysis/summary.md" "$REPORTS/full_pallet_summary.md"
+python tools/virtual_data/scripts/strength_sweep.py --dataset "$FULL/source_dataset" \
+  --safety-factors 1 2 4 8 16 --report "$REPORTS/strength_sweep.json"
 echo "reports -> $REPORTS"

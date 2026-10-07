@@ -23,3 +23,9 @@ virtual_data:
     top_n_random: 5
     scene_every: 1                    # write a planner scene every N steps
     max_steps: 0                      # 0 = whole scenario
+  strength:                           # TRUE carton strength (hidden from the planner)
+    enabled: true
+    profiles: {strong: 1, nominal: 1, weak: 1, humid: 1, mixed: 1, extreme: 1}
+    assignment: round_robin           # round_robin (balanced) | random (by weight)
+    damage_factor: 0.25               # damaged top keeps 25 % of its strength
+    detect_probability: 0.8           # damaged boxes detected by inspection -> capacity override 0 N

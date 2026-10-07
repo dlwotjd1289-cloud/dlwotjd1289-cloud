@@ -10,7 +10,13 @@ from pac_common.adapters import context_from_json, state_from_json
 
 from pac_candidates import CandidateBackend, config_from_dict
 
-FORBIDDEN_SCENE_KEYS = ("arrival_events", "ground_truth", "arrival_index")
+FORBIDDEN_SCENE_KEYS = (
+    "arrival_events",
+    "ground_truth",
+    "arrival_index",
+    "true_capacity_n",
+    "damaged_box_ids",
+)
 
 
 def _scan_keys(value, found):
@@ -114,6 +120,8 @@ def validate_output(out_dir, recheck_rows=30, seed=0):
             failures.append(f"final pallet has stability/load issues in {path.name}: {issues}")
         if ep["metrics"]["true_overlaps"]:
             failures.append(f"true-size interpenetration in {path.name}")
+        if ep["metrics"].get("boxes_on_detected_damaged"):
+            failures.append(f"box stacked on a detected damaged box in {path.name}")
     return failures
 
 

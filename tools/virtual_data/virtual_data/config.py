@@ -74,12 +74,46 @@ class EpisodeSection:
 
 
 @dataclass(frozen=True)
+class StrengthSection:
+    """True carton strength scenarios (see strength.py)."""
+
+    enabled: bool = True
+    # profile -> weight. round_robin cycles through the listed profiles by
+    # scenario index (balanced coverage); random draws by weight.
+    profiles: dict = field(
+        default_factory=lambda: {
+            "strong": 1, "nominal": 1, "weak": 1, "humid": 1, "mixed": 1, "extreme": 1
+        }
+    )
+    assignment: str = "round_robin"
+    damage_factor: float = 0.25
+    detect_probability: float = 0.8
+
+    def __post_init__(self):
+        from .strength import STRENGTH_PROFILES
+
+        if not self.profiles:
+            raise ValueError("strength.profiles must not be empty")
+        for name, weight in self.profiles.items():
+            if name not in STRENGTH_PROFILES:
+                raise ValueError(f"Unknown strength profile {name}")
+            _nonneg(weight, f"strength.profiles.{name}")
+        if self.assignment not in ("round_robin", "random"):
+            raise ValueError("strength.assignment must be round_robin or random")
+        _nonneg(self.damage_factor, "damage_factor")
+        _nonneg(self.detect_probability, "detect_probability")
+        if self.damage_factor > 1 or self.detect_probability > 1:
+            raise ValueError("damage_factor / detect_probability must be <= 1")
+
+
+@dataclass(frozen=True)
 class VirtualDataConfig:
     seed: int = 20261007
     pallet: PalletSection = field(default_factory=PalletSection)
     catalog: CatalogSection = field(default_factory=CatalogSection)
     observation: ObservationSection = field(default_factory=ObservationSection)
     episode: EpisodeSection = field(default_factory=EpisodeSection)
+    strength: StrengthSection = field(default_factory=StrengthSection)
 
     def __post_init__(self):
         if type(self.seed) is not int:
@@ -91,6 +125,7 @@ _SECTIONS = {
     "catalog": CatalogSection,
     "observation": ObservationSection,
     "episode": EpisodeSection,
+    "strength": StrengthSection,
 }
 
 

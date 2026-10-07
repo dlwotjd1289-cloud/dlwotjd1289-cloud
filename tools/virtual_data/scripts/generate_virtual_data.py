@@ -34,6 +34,8 @@ def main():
     parser.add_argument("--run-generator", choices=("sample", "benchmark"))
     parser.add_argument("--sample-per-family", type=int, default=2)
     parser.add_argument("--generator-seed", type=int)
+    parser.add_argument("--boxes-per-scenario", type=int,
+                        help="override the generator's boxes_per_scenario (copy of its config)")
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--candidate-config", type=Path, default=REPO / "config/taehyeon/candidates.yaml")
     parser.add_argument("--virtual-config", type=Path, default=REPO / "config/taehyeon/virtual_data.yaml")
@@ -52,7 +54,8 @@ def main():
             parser.error("jaesung generator not found; run scripts/taehyeon/fetch_team_deps.sh")
         dataset = args.output / "source_dataset"
         print(run_generator(gen_root, common, dataset, args.run_generator,
-                            args.sample_per_family, args.generator_seed))
+                            args.sample_per_family, args.generator_seed,
+                            boxes_per_scenario=args.boxes_per_scenario))
     if dataset is None:
         parser.error("--dataset or --run-generator is required")
 

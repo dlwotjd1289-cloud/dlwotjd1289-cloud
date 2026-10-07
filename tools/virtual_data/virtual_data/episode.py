@@ -24,6 +24,7 @@ from pac_candidates.geometry import rotated_dims
 from .observation import observe
 from .policies import choose
 from .scenario_source import stack_height_limit
+from .strength import PROFILE_ORDER, draw as draw_strength, footprint_capacity_summary, true_overloads
 
 SCENE_SCHEMA = "pac-common-v0.2+planning-v1"
 LABEL_SCHEMA = 1
@@ -40,6 +41,7 @@ class EpisodeResult:
     steps: list  # per-step summary dicts
     final_state: object
     metrics: dict
+    strength: object = None
 
 
 def candidate_rows(candidate_set):
@@ -113,6 +115,32 @@ def true_geometry_violations(placed, truths, pallet_size):
     return overlaps, protrusions
 
 
+def select_strength(spec, vcfg, scenario_index):
+    cfg = vcfg.strength
+    if not cfg.enabled:
+        return None
+    names = [n for n in PROFILE_ORDER if cfg.profiles.get(n, 0) > 0]
+    rng = random.Random(f"{vcfg.seed}:{spec.scenario_id}:strength")
+    if cfg.assignment == "round_robin":
+        profile = names[scenario_index % len(names)]
+    else:
+        total = sum(cfg.profiles[n] for n in names)
+        value = rng.random() * total
+        profile = names[-1]
+        for n in names:
+            value -= cfg.profiles[n]
+            if value <= 0:
+                profile = n
+                break
+    return draw_strength(
+        spec.arrivals,
+        profile,
+        rng,
+        damage_factor=cfg.damage_factor,
+        detect_probability=cfg.detect_probability,
+    )
+
+
 def run_episode(
     spec,
     catalog,
@@ -123,9 +151,11 @@ def run_episode(
     label_sink=None,
     planner_factory=None,
     run_id="virtual",
+    scenario_index=0,
 ):
     rng = random.Random(f"{vcfg.seed}:{spec.scenario_id}")
     policy_rng = random.Random(f"{vcfg.seed}:{spec.scenario_id}:policy")
+    strength = select_strength(spec, vcfg, scenario_index)
     height = stack_height_limit(spec, vcfg)
     pallet_size = Size3D(spec.pallet_xy[0], spec.pallet_xy[1], height)
     max_load = (
@@ -136,6 +166,7 @@ def run_episode(
     tracked = {}
     truths = {}
     uncertain = []
+    overrides = {}
     unplaced = []
     steps = []
     limit = vcfg.episode.max_steps or len(spec.arrivals)
@@ -146,9 +177,13 @@ def run_episode(
         truths[box.box_id] = truth
         if obs.uncertain:
             uncertain.append(box.box_id)
+        if strength is not None and box.box_id in strength.detected:
+            # stage-2 inspection flags the dented top: placeable, nothing on top
+            overrides[box.box_id] = 0.0
         context = PlanningContext(
             catalog=catalog,
             pallet_max_weight_kg=max_load,
+            capacity_overrides_n=dict(overrides),
             uncertain_box_ids=tuple(uncertain),
         )
         state = SystemState(
@@ -184,6 +219,7 @@ def run_episode(
                         "split": split,
                         "step": step,
                         "state_kind": "SIMULATED",
+                        "strength_profile": strength.profile if strength else None,
                         "producer": "taehyeon.virtual_data",
                     },
                 },
@@ -204,6 +240,8 @@ def run_episode(
                     "box_id": box.box_id,
                     "box": plain(box),
                     "box_uncertain": obs.uncertain,
+                    "box_damage_detected": box.box_id in overrides,
+                    "strength_profile": strength.profile if strength else None,
                     "pallet_box_count": len(placed),
                     "raw_count": cset.generation.raw_count,
                     "generated_count": cset.generated_count,
@@ -256,7 +294,28 @@ def run_episode(
     all_volume = sum(t.size.x * t.size.y * t.size.z for t in spec.arrivals[:limit])
     top = model.max_top
     gens = [s["generation_sec"] + s["mask_sec"] for s in steps]
+    strength_metrics = {"strength_profile": None}
+    if strength is not None:
+        over, worst = true_overloads(final_state, strength, cand_config)
+        on_detected = [
+            b.box_id
+            for b in placed
+            if any(
+                c.supporter_id in strength.detected
+                for c in model.contacts.get(b.box_id, ())
+            )
+        ]
+        strength_metrics = {
+            "strength_profile": strength.profile,
+            "true_capacity_kg": footprint_capacity_summary(strength, spec.arrivals[:limit]),
+            "true_overloaded_boxes": over,
+            "true_max_load_ratio": worst if math.isfinite(worst) else 1e6,
+            "damaged_boxes": len(strength.damaged),
+            "damaged_detected": len(strength.detected),
+            "boxes_on_detected_damaged": on_detected,
+        }
     metrics = {
+        **strength_metrics,
         "boxes": min(limit, len(spec.arrivals)),
         "placed": len(placed),
         "unplaced": len(unplaced),
@@ -277,4 +336,6 @@ def run_episode(
     }
     if math.isnan(metrics["mean_step_sec"]):
         metrics["mean_step_sec"] = 0.0
-    return EpisodeResult(spec.scenario_id, spec.family, split, placed, unplaced, steps, final_state, metrics)
+    return EpisodeResult(
+        spec.scenario_id, spec.family, split, placed, unplaced, steps, final_state, metrics, strength
+    )

@@ -96,3 +96,19 @@ def test_true_size_errors_absorbed_by_delta(run_dir):
         assert metrics["true_overlaps"] == []
         assert metrics["true_protrusions"] == []
         assert metrics["snapshot_issues"] == {}
+
+
+def test_strength_scenarios_recorded_and_damage_respected(run_dir):
+    profiles = set()
+    for path in (run_dir / "episodes").glob("*.json"):
+        ep = json.loads(path.read_text())
+        m = ep["metrics"]
+        profiles.add(m["strength_profile"])
+        assert set(ep["damage_detected_box_ids"]) <= set(ep["damaged_box_ids"])
+        assert m["boxes_on_detected_damaged"] == []
+        assert len(ep["true_capacity_n"]) == 24
+    assert len(profiles) == 3  # round robin over the 3 fixture scenarios
+    scene = json.loads(sorted((run_dir / "scenes").rglob("*-T020.json"))[0].read_text())
+    assert scene["source"]["strength_profile"] in profiles
+    # true capacities are ground truth: never exposed in planner scenes
+    assert "true_capacity" not in json.dumps(scene)
