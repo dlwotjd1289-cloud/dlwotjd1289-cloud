@@ -63,6 +63,7 @@ class GenerationConfig:
     # there, so EMS on top of lighter boxes are also scanned (20 mm grid,
     # vectorised estimates) for a few load-balanced anchors.
     balance_anchors: bool = True
+    balance_step_m: float = 0.04  # scan grid of the balance anchors
 
     def __post_init__(self):
         object.__setattr__(self, "yaw_set_rad", tuple(self.yaw_set_rad))

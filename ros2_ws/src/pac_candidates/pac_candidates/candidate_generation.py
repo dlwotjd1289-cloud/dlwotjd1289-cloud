@@ -77,65 +77,69 @@ def candidate_yaws(box, config):
     return result
 
 
-def _balance_raw(model, box, ems, width, depth, hol, min_support, dims, margin, step=0.02, keep=6,
+def _balance_raw(model, box, dims, margin, hol, min_support, step, max_level=math.inf, keep=6,
                  spacing=0.08):
     """Balanced anchors for heavy-on-light ``share`` mode.
 
     A heavy box may rest on lighter boxes only where its weight is split
     between them, often a narrow window over a seam or a junction of several
-    supporters that corner/centre anchors miss. Only for EMS resting on a box
-    lighter than the new one: scan the EMS on a ``step`` grid with the cheap
-    vectorised estimates (drop height, support ratio, load split), then keep
-    up to ``keep`` passing points at least ``spacing`` apart (deepest-bottom-
-    left first). The hard mask still re-checks every candidate exactly.
+    supporters that corner/centre anchors miss. For every top-surface level
+    that has a box lighter than the new one, the area covered by that level's
+    boxes is scanned once on a ``step`` grid with the vectorised estimates
+    (drop height = level, support ratio, load split); up to ``keep`` passing
+    points and ``keep // 2`` nearly passing ones (the area estimate can be
+    stricter than the mask's lever shares), ``spacing`` apart, become anchors.
+    The hard mask still re-checks every candidate exactly.
     """
-    r = ems.rect
-    if ems.level <= model.height_tol:
-        return []
-    supporters = [
-        g for g in model.boxes
-        if abs(g.top - ems.level) <= model.height_tol
-        and g.rect.x0 < r.x1 and r.x0 < g.rect.x1 and g.rect.y0 < r.y1 and r.y0 < g.rect.y1
-    ]
-    if not supporters:
-        return []
-    lightest = min(g.weight_kg for g in supporters)
-    if box.weight_kg <= hol.max_weight_ratio * lightest + hol.tolerance_kg:
-        return []
-    xs = np.arange(r.x0, r.x1 - width + LEN_EPS, step)
-    ys = np.arange(r.y0, r.y1 - depth + LEN_EPS, step)
-    if xs.size == 0 or ys.size == 0:
-        return []
-    gx, gy = np.meshgrid(xs, ys, indexing="ij")
-    gx, gy = gx.ravel(), gy.ravel()
-    rects = [(x, y, x + width, y + depth) for x, y in zip(gx.tolist(), gy.tolist())]
-    zs = model.resting_z_many(rects)
-    actual = [(x0 + margin, y0 + margin, x1 - margin, y1 - margin) for x0, y0, x1, y1 in rects]
-    sup, heavy, excess = model.support_estimates(actual, zs, box.weight_kg, hol, with_excess=True)
-    base = (
-        (np.abs(zs - ems.level) <= model.height_tol)
-        & (sup >= min_support - 1e-9)
-        & (zs + dims[2] <= model.pallet_size.z + 1e-9)
-    )
+    width = dims[0] + 2.0 * margin
+    depth = dims[1] + 2.0 * margin
+    bound = model.expanded_bounds
+    limit = hol.max_weight_ratio
+    levels = {}
+    for g in model.boxes:
+        key = round(g.top / max(model.height_tol, 1e-6))
+        levels.setdefault(key, []).append(g)
     out = []
-    # the area-share estimate can be stricter than the mask's lever shares,
-    # so the points it rejects by the smallest margin get a second, smaller
-    # quota; the mask decides
-    passing = sorted(np.flatnonzero(base & ~heavy).tolist(), key=lambda i: (gy[i], gx[i]))
-    nearly = sorted(np.flatnonzero(base & heavy).tolist(), key=lambda i: (excess[i], gy[i], gx[i]))
-    for order, quota in ((passing, keep), (nearly, keep // 2)):
-        taken = 0
-        for i in order:
-            x, y = float(gx[i]), float(gy[i])
-            if all(abs(x - px) >= spacing or abs(y - py) >= spacing for px, py, *_ in out):
-                out.append((x, y, "EMS", "balance", ems))
-                taken += 1
-                if taken >= quota:
-                    break
+    for group in levels.values():
+        level = max(g.top for g in group)
+        if level <= model.height_tol or level >= max_level:
+            continue
+        if level + dims[2] > model.pallet_size.z + 1e-9:
+            continue
+        if box.weight_kg <= limit * min(g.weight_kg for g in group) + hol.tolerance_kg:
+            continue
+        x0 = max(bound.x0, min(g.expanded.x0 for g in group) - width)
+        y0 = max(bound.y0, min(g.expanded.y0 for g in group) - depth)
+        x1 = min(bound.x1, max(g.expanded.x1 for g in group) + width) - width
+        y1 = min(bound.y1, max(g.expanded.y1 for g in group) + depth) - depth
+        xs = np.arange(x0, x1 + LEN_EPS, step)
+        ys = np.arange(y0, y1 + LEN_EPS, step)
+        if xs.size == 0 or ys.size == 0:
+            continue
+        gx, gy = np.meshgrid(xs, ys, indexing="ij")
+        gx, gy = gx.ravel(), gy.ravel()
+        rects = np.stack([gx, gy, gx + width, gy + depth], axis=1)
+        zs = model.resting_z_many(rects)
+        actual = rects + np.array([margin, margin, -margin, -margin])
+        sup, heavy, excess = model.support_estimates(actual, zs, box.weight_kg, hol, with_excess=True)
+        base = (np.abs(zs - level) <= model.height_tol) & (sup >= min_support - 1e-9)
+        passing = sorted(np.flatnonzero(base & ~heavy).tolist(), key=lambda i: (gy[i], gx[i]))
+        nearly = sorted(np.flatnonzero(base & heavy).tolist(), key=lambda i: (excess[i], gy[i], gx[i]))
+        chosen = []
+        for order, quota in ((passing, keep), (nearly, keep // 2)):
+            taken = 0
+            for i in order:
+                x, y = float(gx[i]), float(gy[i])
+                if all(abs(x - px) >= spacing or abs(y - py) >= spacing for px, py in chosen):
+                    chosen.append((x, y))
+                    taken += 1
+                    if taken >= quota:
+                        break
+        out.extend((x, y, "EMS", "balance", None) for x, y in chosen)
     return out
 
 
-def _ems_raw(model, box, yaw, dims, margin, anchors, balance=None):
+def _ems_raw(model, box, yaw, dims, margin, anchors):
     out = []
     width = dims[0] + 2.0 * margin
     depth = dims[1] + 2.0 * margin
@@ -156,9 +160,6 @@ def _ems_raw(model, box, yaw, dims, margin, anchors, balance=None):
         for anchor in anchors:
             ex, ey = points[anchor]
             out.append((ex, ey, "EMS", anchor, ems))
-        if balance is not None:
-            hol, min_support = balance
-            out.extend(_balance_raw(model, box, ems, width, depth, hol, min_support, dims, margin))
     return out
 
 
@@ -227,6 +228,24 @@ def containing_ems(model, expanded, z):
     return best
 
 
+def _estimate(model, box, config, anchors, w, d, margin, dims, tol):
+    """Drop height, support estimate and pre-mask verdict per anchor."""
+    if not anchors:
+        return np.zeros(0), np.zeros(0), np.zeros(0, dtype=bool)
+    rects = np.array([(ex, ey, ex + w, ey + d) for ex, ey, _, _, _ in anchors], dtype=float)
+    zs_arr = model.resting_z_many(rects)
+    actual = rects + np.array([margin, margin, -margin, -margin])
+    sup_arr, heavy_arr = model.support_estimates(
+        actual, zs_arr, box.weight_kg, config.constraints.heavy_on_light
+    )
+    ok_arr = (
+        (sup_arr >= config.constraints.min_support_ratio - 1e-9)
+        & ~heavy_arr
+        & (zs_arr + dims[2] + tol <= model.pallet_size.z + 1e-9)
+    )
+    return zs_arr, sup_arr, ok_arr
+
+
 def raw_candidates(model, box, config):
     """All candidates before deduplication, sorted by priority."""
     gen = config.generation
@@ -235,34 +254,34 @@ def raw_candidates(model, box, config):
     margin = model.half_gap + tol
     seen = set()
     result = []
+    hol = config.constraints.heavy_on_light
+    balance = gen.use_ems and gen.balance_anchors and hol.enabled and hol.mode == "share"
     for yaw in candidate_yaws(box, config):
         dims = rotated_dims(box.size, yaw)
         anchors = []
         if gen.use_ems:
-            hol = config.constraints.heavy_on_light
-            balance = (
-                (hol, config.constraints.min_support_ratio)
-                if gen.balance_anchors and hol.enabled and hol.mode == "share"
-                else None
-            )
-            anchors.extend(_ems_raw(model, box, yaw, dims, margin, gen.ems_anchors, balance))
+            anchors.extend(_ems_raw(model, box, yaw, dims, margin, gen.ems_anchors))
         if gen.use_extreme_points:
             anchors.extend(_ep_raw(model, box, dims, margin))
-        if not anchors:
-            continue
         w = dims[0] + 2.0 * margin
         d = dims[1] + 2.0 * margin
-        rects = [(ex, ey, ex + w, ey + d) for ex, ey, _, _, _ in anchors]
-        zs_arr = model.resting_z_many(rects)
-        actual = [(r[0] + margin, r[1] + margin, r[2] - margin, r[3] - margin) for r in rects]
-        sup_arr, heavy_arr = model.support_estimates(
-            actual, zs_arr, box.weight_kg, config.constraints.heavy_on_light
-        )
-        ok_arr = (
-            (sup_arr >= config.constraints.min_support_ratio - 1e-9)
-            & ~heavy_arr
-            & (zs_arr + dims[2] + tol <= model.pallet_size.z + 1e-9)
-        )
+        zs_arr, sup_arr, ok_arr = _estimate(model, box, config, anchors, w, d, margin, dims, tol)
+        if balance and model.boxes:
+            # only levels below the lowest likely-valid regular anchor can
+            # improve the (deepest-first) result; also keeps 5-3 probes cheap
+            best = float(zs_arr[ok_arr].min()) if ok_arr.any() else math.inf
+            extra = _balance_raw(
+                model, box, dims, margin, hol, config.constraints.min_support_ratio,
+                gen.balance_step_m, max_level=best - model.height_tol,
+            )
+            if extra:
+                z2, s2, o2 = _estimate(model, box, config, extra, w, d, margin, dims, tol)
+                anchors.extend(extra)
+                zs_arr = np.concatenate([zs_arr, z2])
+                sup_arr = np.concatenate([sup_arr, s2])
+                ok_arr = np.concatenate([ok_arr, o2])
+        if not anchors:
+            continue
         zs = zs_arr.tolist()
         for (ex, ey, source, anchor, ems), z, sup, ok in zip(
             anchors, zs, sup_arr.tolist(), ok_arr.tolist()
