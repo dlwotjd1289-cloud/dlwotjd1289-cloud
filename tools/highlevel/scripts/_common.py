@@ -1,7 +1,13 @@
 """Shared setup for the stage-4 scripts."""
 
+import os
 import sys
 from pathlib import Path
+
+# Worker processes each run single-threaded BLAS; nested BLAS threads in 4+
+# forked workers oversubscribe the CPU (sb3 vector step 170 -> 128 ms).
+for _var in ("OPENBLAS_NUM_THREADS", "OMP_NUM_THREADS", "MKL_NUM_THREADS"):
+    os.environ.setdefault(_var, "1")
 
 REPO = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(REPO / "scripts" / "taehyeon"))

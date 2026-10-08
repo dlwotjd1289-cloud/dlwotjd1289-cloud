@@ -33,7 +33,9 @@ def main():
     parser.add_argument("--learning-rate", type=float)
     parser.add_argument("--entropy-coef", type=float)
     parser.add_argument("--imitation-episodes", type=int, default=120)
-    parser.add_argument("--imitation-epochs", type=int, default=30)
+    parser.add_argument("--imitation-epochs", type=int, default=20)
+    parser.add_argument("--imitation-lr", type=float, default=3e-4)
+    parser.add_argument("--no-normalize", action="store_true", help="disable VecNormalize")
     parser.add_argument("--output", type=Path,
                         default=REPO / "ros2_ws/src/pac_highlevel/models/highlevel_sb3.zip")
     parser.add_argument("--log", type=Path)
@@ -50,12 +52,13 @@ def main():
     history = []
     started = time.perf_counter()
 
-    env = sb3.make_vec_env(make_world, hl.buffer.slots, n_envs=args.envs)
+    env = sb3.make_vec_env(make_world, hl.buffer.slots, n_envs=args.envs, normalize=not args.no_normalize)
     model = sb3.new_model(env, hl.ppo)
     if args.imitation_episodes:
         data = collect_teacher(make_world, RulePolicy(hl), args.imitation_episodes,
                                gamma=hl.ppo.gamma, workers=args.envs)
-        hist = sb3.imitate(model, data, epochs=args.imitation_epochs, batch_size=hl.ppo.batch_size)
+        hist = sb3.imitate(model, data, epochs=args.imitation_epochs, batch_size=hl.ppo.batch_size,
+                           lr=args.imitation_lr)
         history += hist
         print("imitation", json.dumps(hist[-1]), flush=True)
 
@@ -89,7 +92,8 @@ def main():
     env.close()
     sb3.save(model, args.output, hl.buffer.slots, contract, extra={
         "trained_on": {"split": "train", "scenarios": [s.scenario_id for s in specs], "steps": steps,
-                       "imitation_episodes": args.imitation_episodes},
+                       "imitation_episodes": args.imitation_episodes,
+                       "imitation_lr": args.imitation_lr, "normalize": not args.no_normalize},
         "history": history,
     })
     if args.log:

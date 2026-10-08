@@ -5,8 +5,14 @@ implementation in ``ppo.py`` stays as the dependency-free fallback; both use
 the identical world, observation, masks and rule-teacher warm start, so their
 results are directly comparable.
 
-Files: ``<name>.zip`` (sb3 model) + ``<name>.contract.json`` (feature layout
-and value-provider contract, checked on load like the NumPy policy).
+Files: ``<name>.zip`` (sb3 model) + ``<name>.contract.json`` (feature layout,
+value-provider contract and observation-normalisation statistics, checked on
+load like the NumPy policy).
+
+Observations are normalised with ``VecNormalize`` (running mean/std, clip 10),
+like the NumPy learner's ``RunningNorm``. The statistics are seeded from the
+rule-teacher data before imitation and stored with the policy, so evaluation
+and deployment normalise exactly as training did.
 """
 
 import json
@@ -19,6 +25,8 @@ from .features import feature_names, observe
 from .gym_env import HighLevelGymEnv
 
 FORMAT = "pac_highlevel.sb3_maskable_ppo.v1"
+CLIP_OBS = 10.0
+NORM_EPS = 1e-8
 
 
 def _require():
@@ -31,10 +39,14 @@ def _require():
     torch.set_num_threads(1)
 
 
-def make_vec_env(make_world, slots, n_envs=4, subprocess=True):
-    """``n_envs`` environments; env k plays episodes k, k + n, k + 2n, ..."""
+def make_vec_env(make_world, slots, n_envs=4, subprocess=True, normalize=True):
+    """``n_envs`` environments; env k plays episodes k, k + n, k + 2n, ...
+
+    With ``normalize`` the vector env is wrapped in ``VecNormalize``
+    (observations only; rewards are already in pallet-volume units).
+    """
     _require()
-    from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv
+    from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv, VecNormalize
 
     def env_fn(k):
         def make():
@@ -44,8 +56,12 @@ def make_vec_env(make_world, slots, n_envs=4, subprocess=True):
 
     fns = [env_fn(k) for k in range(n_envs)]
     if subprocess and n_envs > 1:
-        return SubprocVecEnv(fns, start_method="fork")
-    return DummyVecEnv(fns)
+        venv = SubprocVecEnv(fns, start_method="fork")
+    else:
+        venv = DummyVecEnv(fns)
+    if normalize:
+        venv = VecNormalize(venv, norm_obs=True, norm_reward=False, clip_obs=CLIP_OBS, epsilon=NORM_EPS)
+    return venv
 
 
 def new_model(env, ppo_config, seed=None, verbose=0):
@@ -74,13 +90,22 @@ def new_model(env, ppo_config, seed=None, verbose=0):
 
 
 def imitate(model, data, epochs=20, batch_size=128, lr=1e-3):
-    """Rule-teacher warm start: masked cross-entropy + value regression."""
+    """Rule-teacher warm start: masked cross-entropy + value regression.
+
+    With ``VecNormalize`` the running statistics are first updated with the
+    teacher observations, and the policy learns on normalised observations.
+    """
     _require()
     import torch
 
+    raw = np.asarray(data["obs"], dtype=np.float32)
+    vecnorm = model.get_vec_normalize_env()
+    if vecnorm is not None:
+        vecnorm.obs_rms.update(raw)
+        raw = vecnorm.normalize_obs(raw).astype(np.float32)
     policy = model.policy
     opt = torch.optim.Adam(policy.parameters(), lr=lr)
-    obs = torch.as_tensor(data["obs"], dtype=torch.float32)
+    obs = torch.as_tensor(raw, dtype=torch.float32)
     masks = data["masks"]
     actions = torch.as_tensor(data["actions"], dtype=torch.long)
     returns = torch.as_tensor(data["returns"], dtype=torch.float32)
@@ -115,6 +140,11 @@ def save(model, path, slots, contract, extra=None):
     model.save(str(path.with_suffix("")))
     meta = {"format": FORMAT, "feature_names": list(feature_names(slots)),
             "n_actions": action_count(slots), "contract": contract, **(extra or {})}
+    vecnorm = model.get_vec_normalize_env()
+    if vecnorm is not None:
+        rms = vecnorm.obs_rms
+        meta["obs_norm"] = {"mean": rms.mean.tolist(), "var": rms.var.tolist(), "count": float(rms.count),
+                            "clip": float(vecnorm.clip_obs), "eps": float(vecnorm.epsilon)}
     path.with_suffix(".contract.json").write_text(json.dumps(meta, indent=1), encoding="utf-8")
 
 
@@ -132,12 +162,26 @@ def load(path, *, slots, contract=None):
         if meta["contract"].get(key) != value:
             raise ValueError(f"policy contract mismatch on {key}: trained "
                              f"{meta['contract'].get(key)!r}, deployed {value!r}")
-    return MaskablePPO.load(str(path.with_suffix("")), device="cpu")
+    model = MaskablePPO.load(str(path.with_suffix("")), device="cpu")
+    model.pac_obs_norm = meta.get("obs_norm")
+    return model
+
+
+def normalize_obs(obs, norm):
+    """Same formula as ``VecNormalize.normalize_obs`` with frozen statistics."""
+    if not norm:
+        return np.asarray(obs, dtype=np.float32)
+    mean = np.asarray(norm["mean"])
+    var = np.asarray(norm["var"])
+    x = (np.asarray(obs, dtype=float) - mean) / np.sqrt(var + norm["eps"])
+    return np.clip(x, -norm["clip"], norm["clip"]).astype(np.float32)
 
 
 def chooser(model, deterministic=True):
+    norm = getattr(model, "pac_obs_norm", None)
+
     def choose(world):
-        action, _ = model.predict(observe(world), action_masks=world.action_mask(),
+        action, _ = model.predict(normalize_obs(observe(world), norm), action_masks=world.action_mask(),
                                   deterministic=deterministic)
         return from_index(int(action), world.slots)
 

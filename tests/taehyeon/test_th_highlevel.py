@@ -350,6 +350,11 @@ def test_sb3_backend_trains_imitates_and_respects_masks(tmp_path):
     path = tmp_path / "p.zip"
     sb3.save(model, path, 2, policy_contract(cfg))
     loaded = sb3.load(path, slots=2, contract=policy_contract(cfg))
+    # frozen normalisation stored with the policy == VecNormalize at save time
+    assert loaded.pac_obs_norm is not None
+    x = observe(make_world(0))
+    expected = model.get_vec_normalize_env().normalize_obs(x)
+    assert np.allclose(sb3.normalize_obs(x, loaded.pac_obs_norm), expected, atol=1e-5)
     out = run_policy(make_world(0), sb3.chooser(loaded))
     assert out["placed"] == 6 and out["safety_issues"] == 0
     other = replace(cfg, features=replace(cfg.features, value_provider="donghan"))
