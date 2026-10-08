@@ -24,7 +24,7 @@ import math
 import numpy as np
 
 from .geometry import LEN_EPS, Rect, quarter_turns, rotated_dims, same_yaw
-from .pallet_model import box_tolerance
+from .pallet_model import _cluster_levels, box_tolerance
 
 
 @dataclass(frozen=True)
@@ -111,12 +111,15 @@ def _balance_raw(model, box, dims, margin, hol, min_support, step, max_level=mat
     depth = dims[1] + 2.0 * margin
     bound = model.expanded_bounds
     limit = hol.max_weight_ratio
-    levels = {}
-    for g in model.boxes:
-        key = round(g.top / max(model.height_tol, 1e-6))
-        levels.setdefault(key, []).append(g)
+    # one scan per top-surface level; tops within height_tol form one level
+    # (same clustering as the EMS levels, so a level is never split in two)
+    tops = sorted(g.top for g in model.boxes)
+    groups = [
+        [g for g in model.boxes if lo - LEN_EPS <= g.top <= hi + LEN_EPS]
+        for lo, hi in _cluster_levels(tops, model.height_tol)
+    ]
     out = []
-    for group in levels.values():
+    for group in groups:
         level = max(g.top for g in group)
         if level <= model.height_tol or level >= max_level:
             continue
@@ -139,7 +142,11 @@ def _balance_raw(model, box, dims, margin, hol, min_support, step, max_level=mat
         actual = rects + np.array([margin, margin, -margin, -margin])
         sup, heavy, excess = model.support_estimates(actual, zs, box.weight_kg, hol, with_excess=True)
         base = (np.abs(zs - level) <= model.height_tol) & (sup >= min_support - 1e-9)
-        passing = sorted(np.flatnonzero(base & ~heavy).tolist(), key=lambda i: (gy[i], gx[i]))
+        # most balanced first: the edge of the feasible window is where the
+        # area estimate and the mask's lever shares disagree most
+        passing = sorted(
+            np.flatnonzero(base & ~heavy).tolist(), key=lambda i: (round(float(excess[i]), 2), gy[i], gx[i])
+        )
         nearly = sorted(np.flatnonzero(base & heavy).tolist(), key=lambda i: (excess[i], gy[i], gx[i]))
         chosen = []
         for order, quota in ((passing, keep), (nearly, keep // 2)):
@@ -232,16 +239,36 @@ def _ep_raw(model, box, dims, margin):
     return out
 
 
-def containing_ems(model, expanded, z):
-    """Largest EMS at ``z``'s level that contains the inflated footprint."""
-    best = None
-    for ems in model.ems():
-        if abs(ems.level - z) > model.height_tol:
-            continue
-        if ems.rect.contains_rect(expanded, tol=1e-7):
-            if best is None or ems.rect.area > best.rect.area:
-                best = ems
-    return best
+def containing_ems(model, expanded, z, tol=1e-7):
+    """Largest EMS at ``z``'s level that contains the inflated footprint.
+
+    Vectorised over the snapshot's EMS (arrays cached on the model); same
+    result as checking ``ems.rect.contains_rect`` one by one.
+    """
+    arr = getattr(model, "_ems_arrays", None)
+    if arr is None:
+        ems = model.ems()
+        arr = (
+            ems,
+            np.array([(e.rect.x0, e.rect.y0, e.rect.x1, e.rect.y1) for e in ems], dtype=float).reshape(-1, 4),
+            np.array([e.level for e in ems], dtype=float),
+            np.array([e.rect.area for e in ems], dtype=float),
+        )
+        model._ems_arrays = arr
+    ems, rects, levels, areas = arr
+    if not ems:
+        return None
+    ok = (
+        (np.abs(levels - z) <= model.height_tol)
+        & (rects[:, 0] <= expanded.x0 + tol)
+        & (rects[:, 1] <= expanded.y0 + tol)
+        & (rects[:, 2] >= expanded.x1 - tol)
+        & (rects[:, 3] >= expanded.y1 - tol)
+    )
+    idx = np.flatnonzero(ok)
+    if idx.size == 0:
+        return None
+    return ems[int(idx[np.argmax(areas[idx])])]
 
 
 def _lowest_valid_z(model, box, yaw, anchors, zs_arr, ok_arr, margin, tries=6):
@@ -375,20 +402,41 @@ def deduplicate(raws, distance, height_tol, is_valid=None):
                     ):
                         yield j
 
+    def keep(i, bx, by):
+        kept.add(i)
+        location[i] = (bx, by)
+        buckets.setdefault((bx, by), []).append(i)
+
+    dropped = []
+    replaced = False
     for i, c in enumerate(raws):
         bx = math.floor(c.x / distance)
         by = math.floor(c.y / distance)
         hits = list(conflicts(c, bx, by))
         if hits:
             if is_valid is None or not valid(i):
+                dropped.append(i)
                 continue
             invalid_hits = [j for j in hits if not valid(j)]
             if len(invalid_hits) != len(hits):
+                dropped.append(i)
                 continue  # a valid representative already exists
             for j in invalid_hits:
                 kept.discard(j)
                 buckets[location[j]].remove(j)
-        kept.add(i)
-        location[i] = (bx, by)
-        buckets.setdefault((bx, by), []).append(i)
+                dropped.append(j)
+            replaced = True
+        keep(i, bx, by)
+    if replaced:
+        # A replaced representative may have been the only thing that hid
+        # an earlier candidate further away: give dropped candidates another
+        # look (priority order) so no region loses its representative.
+        for i in sorted(dropped):
+            if i in kept:
+                continue
+            c = raws[i]
+            bx = math.floor(c.x / distance)
+            by = math.floor(c.y / distance)
+            if not any(True for _ in conflicts(c, bx, by)):
+                keep(i, bx, by)
     return [raws[i] for i in sorted(kept)], validity

@@ -141,21 +141,18 @@ class CandidateBackend:
             return ValidationResult(
                 False, (R.INVALID_STATE,), {"reasons": ("FRAME_NOT_PALLET",)}
             )
-        if (
-            self.config.uncertainty.uncertain_policy == "reject"
-            and self.context is not None
-            and (
-                box.box_id in self.context.uncertain_box_ids
-                or any(
-                    b.box_id in self.context.uncertain_box_ids
-                    for b in state.pallet.boxes
-                )
-            )
-        ):
+        if self._uncertain_rejects(box, state):
             return ValidationResult(
                 False, (R.SENSOR_UNCERTAIN,), {"reasons": ("UNCERTAIN_POLICY_REJECT",)}
             )
         return None
+
+    def _uncertain_rejects(self, box, state):
+        """``uncertain_policy: reject`` and an uncertain box is involved."""
+        if self.config.uncertainty.uncertain_policy != "reject" or self.context is None:
+            return False
+        ids = self.context.uncertain_box_ids
+        return box.box_id in ids or any(b.box_id in ids for b in state.pallet.boxes)
 
     def _verdict_entry(self, box, pose, state):
         model = self.model_for(state)
@@ -262,7 +259,10 @@ class CandidateBackend:
         started = time.perf_counter()
         model = self.model_for(state)
         gen = self.config.generation
-        kept, raw_count, n_ep = self._kept_raws(box, state, model)
+        if self._uncertain_rejects(box, state):
+            kept, raw_count, n_ep = [], 0, 0  # every candidate would be rejected anyway
+        else:
+            kept, raw_count, n_ep = self._kept_raws(box, state, model)
         tol = box_tolerance(self.config.uncertainty, self._uncertain(box.box_id))
         margin = model.half_gap + tol
         candidates = []

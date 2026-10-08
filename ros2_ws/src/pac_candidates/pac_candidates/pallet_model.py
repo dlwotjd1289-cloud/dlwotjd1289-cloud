@@ -600,7 +600,10 @@ def _margin(poly, center, unc, dx, dy, uncertain):
     return inside_margin(poly, center, ddx, ddy)
 
 
-MERGE_TOL = 1e-7
+# Same tolerance as the overlap tests (LEN_EPS): merging coordinates further
+# apart would let an EMS edge sit inside a neighbour's inflated footprint
+# (review 2026-10-08: a 5e-8 edge offset dropped valid floor candidates).
+MERGE_TOL = LEN_EPS
 
 
 def _merge_close(values, tol=MERGE_TOL):

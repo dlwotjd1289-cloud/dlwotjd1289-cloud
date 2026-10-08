@@ -231,3 +231,25 @@ def test_allowed_yaws_are_matched_by_footprint(backend, yaws):
     for c in cands:
         assert any(abs(c.target_pose.yaw - a) < 1e-9 for a in yaws)  # value from the box's own list
     assert backend.candidate_set(box, make_state()).valid
+
+
+def test_dedup_readmits_candidates_hidden_by_a_replaced_representative():
+    """Review 2026-10-08: R0 (invalid) hides R1; R2 (valid) replaces R0 but
+    is too far from R1 to represent it -> R1 must come back."""
+    from types import SimpleNamespace
+
+    from pac_candidates.candidate_generation import deduplicate
+
+    raws = [SimpleNamespace(x=x, y=0.0, z=0.0, yaw=0.0) for x in (0.10, 0.03, 0.17)]
+    valid = {id(raws[0]): False, id(raws[1]): False, id(raws[2]): True}
+    kept, _ = deduplicate(raws, 0.08, 0.003, lambda r: valid[id(r)])
+    assert [r.x for r in kept] == [0.03, 0.17]
+
+
+def test_uncertain_reject_policy_generates_nothing():
+    from pac_candidates.config import UncertaintyConfig
+
+    cfg = CandidateConfig(uncertainty=UncertaintyConfig(uncertain_policy="reject"))
+    backend = CandidateBackend(make_context(uncertain=("N",)), cfg)
+    assert backend.generate_candidates(make_box("N"), make_state()) == []
+    assert backend.generate_candidates(make_box("M"), make_state())  # certain box unaffected
