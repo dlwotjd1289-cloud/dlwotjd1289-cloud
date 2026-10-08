@@ -135,7 +135,7 @@ PyTorch가 없으면 `sb3` 관련 테스트는 건너뛰고 NumPy 판(`train_hig
 - `per_box` 기준 결과(PPO 4.10, Rule 4.19, 버퍼 없음 5.74)는 `reports/per_box_2026-10-08/`에 보관했습니다. `share`로 바꾸면서 모든 정책이 약 0.3~0.5 팔레트 줄었습니다.
 - 처음부터 PPO만 학습한 경우(모방 없이 30k 단계)는 개선이 없었습니다(`reports/highlevel_train_log_scratch.jsonl`). 그래서 Rule 모방 → PPO 미세조정 순서로 학습합니다.
 - 모든 정책에서 Hard Mask 위반·안전 이슈 0건입니다(마스크가 구조적으로 보장).
-- sb3-contrib 판(Rule 모방 120 에피소드 정확도 95 % → 100k 단계, 약 76분)은 Rule과 거의 같았습니다(−0.03이 아니라 +0.03 팔레트, 12 개선 / 4 같음 / 11 악화).
+- sb3-contrib 판(Rule 모방 120 에피소드 정확도 95 % → 100k 단계, 약 76분)은 Rule과 거의 같았습니다(Rule보다 평균 0.03 팔레트 많음, 12 개선 / 4 같음 / 11 악화).
   같은 데이터·모방 시작점이므로 차이는 학습기 설정에서 옵니다(sb3는 관측 정규화 없음, 배치·업데이트 방식 차이). 그래서 **기본 정책은 NumPy 판(`models/highlevel_ppo.json`)**으로 두고, sb3 판(`models/highlevel_sb3.zip`)은 PyTorch 환경에서 이어 학습할 수 있도록 함께 둡니다.
   다음 시도: `VecNormalize`로 관측 정규화, 학습 단계 확대(300k 이상), 엔트로피 계수 조정.
 
