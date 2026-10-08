@@ -27,7 +27,7 @@ pip install "numpy>=1.23,<3" "PyYAML>=6,<7" "pytest>=7,<9"
 pip install "pybullet>=3.2.6,<4" "networkx>=2.8,<4"       # 물리 교차 검증을 돌릴 때만
 scripts/taehyeon/fetch_team_deps.sh                          # 팀원 코드를 .deps/team 에 읽기 전용으로 추출
 python -m pytest -q tests/taehyeon                           # 124 passed
-scripts/taehyeon/run_validation.sh                           # 모든 검증 리포트 재생성 (약 11분)
+scripts/taehyeon/run_validation.sh                           # 모든 검증 리포트 재생성 (약 6~11분, 머신에 따라 다름)
 ```
 
 `fetch_team_deps.sh`는 팀원 브랜치에서 `pac_common`, `pac_planning`, 재성 님 제너레이터와 시뮬레이터를 꺼내 git 제외 폴더(`.deps/`)에 둡니다.

@@ -3,31 +3,56 @@
 # taehyeon stage 5-1/5-2 code can be tested before every branch is merged.
 # Nothing in teammates' directories is modified; .deps/ is git-ignored.
 #
-# Usage: scripts/taehyeon/fetch_team_deps.sh [DATASET_REF] [SIM_REF]
+# Each package comes from its owner's branch:
+#   pac_common / pac_planning  <- donghan  (feature/donghan-placement-planner)
+#   ahead_dataset_generator    <- jaesung  (feature/jaesung-dataset-generator)
+#   pac_simulation             <- jaesung  (feature/jaesung-physics-simulator)
+# If a branch is missing, the package is searched in the other branches.
+#
+# Usage: scripts/taehyeon/fetch_team_deps.sh [PLANNER_REF] [DATASET_REF] [SIM_REF]
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-DATASET_REF="${1:-origin/feature/jaesung-dataset-generator}"
-SIM_REF="${2:-origin/feature/jaesung-physics-simulator}"
+PLANNER_REF="${1:-origin/feature/donghan-placement-planner}"
+DATASET_REF="${2:-origin/feature/jaesung-dataset-generator}"
+SIM_REF="${3:-origin/feature/jaesung-physics-simulator}"
 OUT="$ROOT/.deps/team"
 
 cd "$ROOT"
-git fetch --quiet origin \
-  "${DATASET_REF#origin/}" "${SIM_REF#origin/}" 2>/dev/null || true
+git fetch --quiet origin 2>/dev/null || true
 
 rm -rf "$OUT"
-mkdir -p "$OUT/dataset_branch" "$OUT/sim_branch"
-git archive "$DATASET_REF" | tar -x -C "$OUT/dataset_branch"
-git archive "$SIM_REF" | tar -x -C "$OUT/sim_branch"
+mkdir -p "$OUT"
+: > "$OUT/SOURCES.txt"
+for pair in "planner_branch:$PLANNER_REF" "dataset_branch:$DATASET_REF" "sim_branch:$SIM_REF"; do
+  name="${pair%%:*}"
+  ref="${pair#*:}"
+  if git rev-parse --verify --quiet "$ref^{commit}" > /dev/null; then
+    mkdir -p "$OUT/$name"
+    git archive "$ref" | tar -x -C "$OUT/$name"
+    echo "$name=$ref $(git rev-parse "$ref")" >> "$OUT/SOURCES.txt"
+  else
+    echo "$name=$ref MISSING" >> "$OUT/SOURCES.txt"
+  fi
+done
 
-# Locate the shared packages regardless of the upload prefix.
-find_dir() {
-  find "$OUT/$1" -type d -path "*$2" -print -quit
+# Locate a package regardless of the upload prefix, preferring the owner's branch.
+find_dir() {  # find_dir <relative path> <branch dirs...>
+  local rel="$1"; shift
+  for branch in "$@"; do
+    [ -d "$OUT/$branch" ] || continue
+    local hit
+    hit="$(find "$OUT/$branch" -type d -path "*$rel" -print -quit)"
+    if [ -n "$hit" ]; then echo "$hit"; return; fi
+  done
 }
-PAC_COMMON="$(find_dir dataset_branch ros2_ws/src/pac_common)"
-PAC_PLANNING="$(find_dir dataset_branch ros2_ws/src/pac_planning)"
-GENERATOR="$(find_dir dataset_branch tools/ahead_dataset_generator)"
-PAC_SIM="$(find_dir sim_branch ros2_ws/src/pac_simulation)"
-DONGHAN_ROOT="$(dirname "$(dirname "$(dirname "$PAC_PLANNING")")")"
+PAC_COMMON="$(find_dir ros2_ws/src/pac_common planner_branch dataset_branch sim_branch)"
+PAC_PLANNING="$(find_dir ros2_ws/src/pac_planning planner_branch dataset_branch sim_branch)"
+GENERATOR="$(find_dir tools/ahead_dataset_generator dataset_branch planner_branch sim_branch)"
+PAC_SIM="$(find_dir ros2_ws/src/pac_simulation sim_branch dataset_branch planner_branch)"
+DONGHAN_ROOT=""
+if [ -n "$PAC_PLANNING" ]; then
+  DONGHAN_ROOT="$(dirname "$(dirname "$(dirname "$PAC_PLANNING")")")"
+fi
 
 cat > "$OUT/paths.env" <<ENV
 PAC_COMMON_SRC=$PAC_COMMON
@@ -36,9 +61,5 @@ PAC_PLANNING_ROOT=$DONGHAN_ROOT
 AHEAD_GENERATOR_ROOT=$GENERATOR
 PAC_SIMULATION_SRC=$PAC_SIM
 ENV
-{
-  echo "dataset_ref=$DATASET_REF $(git rev-parse "$DATASET_REF")"
-  echo "sim_ref=$SIM_REF $(git rev-parse "$SIM_REF")"
-} > "$OUT/SOURCES.txt"
 cat "$OUT/SOURCES.txt"
 cat "$OUT/paths.env"
