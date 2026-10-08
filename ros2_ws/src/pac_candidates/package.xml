@@ -5,6 +5,7 @@
   <description>AHEAD stages 5-1 candidate generation (EMS + extreme points) and 5-2 hard mask (LBCP with uncertainty).</description>
   <maintainer email="taehyeon@example.com">taehyeon</maintainer>
   <license>Proprietary</license>
+  <buildtool_depend>ament_python</buildtool_depend>
   <exec_depend>pac_common</exec_depend>
   <exec_depend>python3-numpy</exec_depend>
   <exec_depend>python3-yaml</exec_depend>
