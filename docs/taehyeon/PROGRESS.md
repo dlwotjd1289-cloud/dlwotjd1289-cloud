@@ -9,8 +9,8 @@
 uv venv --python 3.10 .venv && . .venv/bin/activate      # 또는 python3.10 -m venv .venv
 pip install "numpy>=1.23,<3" "PyYAML>=6,<7" "pytest>=7,<9" "pybullet>=3.2.6,<4" "networkx>=2.8,<4"
 scripts/taehyeon/fetch_team_deps.sh                       # 팀원 코드(읽기 전용)를 .deps/team 에 추출
-python -m pytest -q tests/taehyeon                        # 147 passed
-pip install gymnasium                                     # 4번 Gymnasium 래퍼 테스트용 (선택)
+python -m pytest -q tests/taehyeon                        # 150 passed
+pip install torch sb3-contrib gymnasium                   # 4번 PyTorch 학습 (선택, highlevel.md 3-1)
 scripts/taehyeon/run_validation.sh                        # 전체 검증 리포트 재생성
 ```
 
@@ -26,11 +26,11 @@ PR: https://github.com/yang8988/pac-mission1-shared/pull/1 (Draft, 브랜치 `cl
 | 연결 계약 | 동한 님 `docs/integration.md`의 v0.2 콜백 그대로 | 공통 계약 변경 없음 |
 | 좌표 | target_pose = 회전 후 AABB 최소 모서리, z=0 적재면, PalletState.size.z = 최대 적재 높이 | 동한 님 계약 |
 | 최대 높이 1.5 m | 팔레트 목재(0.15 m) 포함 → 적재 1.35 m | **태현 확정 (2026-10-07)** |
-| 무거운-위-가벼운 | `per_box` (미션 문구 그대로) | **태현 확정 (2026-10-07)** |
+| 무거운-위-가벼운 | ~~`per_box`~~ → **`share`** (지지 박스가 실제로 받는 무게로 비교) | **태현 결정 (2026-10-08)**, VALIDATION 10장 |
 | 박스 강도 | 사양 비공개, 실측 없음 → 가상 강도 시나리오로 대응, 가정 안전계수 4 유지 | extreme 외 실제 눌림 0건 |
 | 이름 | `taehyun` → `taehyeon` (폴더·문서·코드) | 태현 님 요청 |
 | 4번 High-level | 앞 3개 행동(PLACE_CURRENT, BUFFER_CURRENT, RETRIEVE_BUFFER(i)) MaskablePPO, CLOSE·REPACK Rule | **태현 결정 (2026-10-08)** |
-| PPO 구현 | NumPy MaskablePPO (sb3-contrib와 같은 알고리즘), Gymnasium 래퍼로 sb3-contrib 교체 가능 | 이 환경에서 PyTorch 설치 불가 |
+| PPO 구현 | sb3-contrib MaskablePPO (PyTorch) + NumPy 판(PyTorch 없을 때) | 태현 요청으로 PyTorch 사용 (2026-10-08) |
 | 루트 공용 파일 | 만들지 않음 (`.gitignore`도 폴더별로 둠) | 재성 님 브랜치의 루트 파일과 충돌 방지 |
 
 ## 진행 상태
@@ -49,7 +49,9 @@ PR: https://github.com/yang8988/pac-mission1-shared/pull/1 (Draft, 브랜치 `cl
 - [x] 박스 사양 비공개 → 숨겨진 실제 강도 6개 프로필 + 가정 안전계수 sweep으로 대응 (VALIDATION 8장)
 - [ ] 박스 허용하중 실측값이 생기면 반영 (선택)
 - [x] 4번 High-level: 시뮬레이션 세계, 마스크, Rule 정책, PARTIAL_REPACK, NumPy MaskablePPO, 모방 warm start, 테스트 15개
-- [ ] 4번 PPO 학습·평가 리포트(`docs/taehyeon/reports/highlevel_*.json`) 및 highlevel.md 5장 결과
+- [x] 4번 PPO 학습·평가 리포트(`docs/taehyeon/reports/highlevel_*.json`) 및 highlevel.md 5장 결과
+- [x] 무거운-위-가벼운 `share` 전환, 5-② 하중 증분 버그 수정, 5-① 균형 기준점, 전체 검증 재실행
+- [ ] sb3-contrib(PyTorch) 정책 학습·평가 후 기본 정책 결정
 
 ## 다음 할 일
 
@@ -80,3 +82,5 @@ PR: https://github.com/yang8988/pac-mission1-shared/pull/1 (Draft, 브랜치 `cl
 | 2026-10-07 | 박스 강도 숨겨진 6개 프로필, 80박스 팔레트, 안전계수 1~16 sweep | extreme 외 실제 눌림 0, extreme은 SF16에서 0 (적재율 −7 %p) |
 | 2026-10-07 | 컨테이너 재시작 후 시간 수치 1.8배 증가 | 예전 커밋도 동일 → 머신 차이, 코드 회귀 아님 |
 | 2026-10-08 | 팔레트 3규격(T11/T12/1.2×0.8) 기본값으로 전체 재검증 | 132 테스트, 오라클 71/71, 물리 79/79 안정(대조군 58 % 붕괴), planner 평균 556 ms·초과 0, extreme만 눌림 7(SF16에서 1) |
+| 2026-10-08 | `share` 전환 후 전체 재검증 | 150 테스트, 오라클 77/80, 물리 84/84, planner 643 ms (초과 3/24), extreme만 눌림 3 |
+| 2026-10-08 | 4번 NumPy PPO 재학습 (`share`) | test: PPO 3.86 vs Rule 3.91 vs 버퍼 없음 5.20 팔레트 |
