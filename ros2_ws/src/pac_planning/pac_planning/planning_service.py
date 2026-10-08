@@ -70,12 +70,17 @@ def main(args=None):
                 self.get_logger().warning("Planning request rejected: " + str(error))
             return response
 
+    from rclpy.executors import ExternalShutdownException
+
     rclpy.init(args=args)
     node = None
     try:
         node = PlacementNode()
         rclpy.spin(node)
+    except (KeyboardInterrupt, ExternalShutdownException):
+        pass  # Ctrl+C / launch SIGTERM: rclpy already shut the context down
     finally:
         if node is not None:
             node.destroy_node()
-        rclpy.shutdown()
+        if rclpy.ok():
+            rclpy.shutdown()
