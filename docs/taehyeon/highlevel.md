@@ -148,3 +148,62 @@ PyTorch가 없으면 `sb3` 관련 테스트는 건너뛰고 NumPy 판(`train_hig
 - 5번 자리에 DBLF 대신 동한 님 planner를 넣은 평가(느림, 1 결정당 약 0.5 s)
 - `donghan` Future Value 공급자로 학습한 정책 (현재 정책은 `proxy`로 학습, 섞어 쓰면 로드 거부)
 - 흐름도의 Repack MCTS 변형, "대형 SKU Blocking" 발동 조건
+
+## 6. 실제 상태 입구: `HighLevelDecider.decide` (`runtime.py`)
+
+State Manager / ROS 2 노드가 매 결정마다 부르는 함수입니다. 실제 `SystemState`를 받아 **결정 하나만** 돌려주고, 아무것도 실행하거나 바꾸지 않습니다.
+안에서는 학습 때와 같은 세계 로직·마스크·관측·규칙을 실제 상태의 복사본에 적용합니다("학습·실전 동일").
+
+```python
+from pac_highlevel import HighLevelDecider, load_policy
+
+decider = HighLevelDecider(
+    context,                                    # 이번 사이클의 PlanningContext (catalog, 하중 override, 불확실 박스)
+    candidate_config,                           # 5-①/5-② 설정 (load_candidate_config)
+    highlevel_config,                           # load_highlevel_config("config/taehyeon/highlevel.yaml")
+    policy=load_policy("numpy", "ros2_ws/src/pac_highlevel/models/highlevel_ppo.json", config=highlevel_config),
+)
+decision = decider.decide(
+    state,                                      # SystemState (pallet = 현재 팔레트, tracked_boxes에 현재 박스와 BUFFERED 박스)
+    current_box_id="B0123",                     # 대기 중인 박스가 하나뿐이면 생략 가능
+    buffer_slots={0: "B0101", 2: "B0117"},      # 버퍼 칸 → 박스 ID (생략하면 ID 순서로 0번부터 배정)
+    buffer_age={"B0101": 5},                    # 선택: 칸에 들어간 뒤 지난 결정 수
+    repack_attempts=0,                          # 같은 박스에 대해 이미 시도한 재적재 횟수
+)
+```
+
+### 입력 조건
+- `state.pallet.size.z` = 최대 적재 높이(공통 계약). 현재 박스는 `MEASURED / ON_CONVEYOR / READY_FOR_PICK`, 버퍼 박스는 `BUFFERED` 상태여야 합니다.
+- `buffer_slots`는 BUFFERED 박스를 정확히 한 번씩 나열해야 합니다. 칸 번호는 `highlevel.yaml`의 `buffer.slots` 범위 안이어야 하며, 칸 번호가 이동 시간(가까운 칸이 쌈)을 결정합니다.
+- 정책 파일은 특징 목록과 계약(버퍼 칸 수, Future Value 공급자, 5-① 설정 이름)이 맞아야 로드됩니다.
+
+### 출력 `HighLevelDecision`
+
+| 필드 | 의미 |
+|---|---|
+| `action` | `PLACE_CURRENT` / `BUFFER_CURRENT` / `RETRIEVE_BUFFER(i)` / `PALLET_CLOSE` / `PARTIAL_REPACK` / `REJECT_NG`, 할 일이 없으면 `None` |
+| `box` | 이 행동의 대상 박스. PLACE/RETRIEVE이면 **5단계에 넘길 박스**(RETRIEVE는 BUFFERED 상태 그대로) |
+| `requires_low_level` | True이면 `planner.plan(decision.box, state)`로 5단계가 최종 위치를 정합니다 |
+| `slot` | BUFFER_CURRENT의 넣을 칸 / RETRIEVE_BUFFER의 꺼낼 칸 |
+| `candidate` | 행동이 가능하다고 판단한 근거인 5-①/5-② 유효 자세 (참고용, 최종 위치는 5단계가 정함) |
+| `repack_moves` | PARTIAL_REPACK: 순서대로 실행할 `(box_id, Pose3D)` 목록. 실행 후 새 상태로 다시 `decide` |
+| `mask`, `probabilities` | 행동 가능 여부와 정책 확률 (0: PLACE, 1: BUFFER, 2+i: RETRIEVE(i)) |
+| `decided_by`, `reason` | `policy:maskable_ppo_numpy` / `rule:close` / `rule:repack` / `rule:ng`, 사유 코드 |
+| `state_version` | 입력 snapshot 버전. 실행 전에 상태가 바뀌었으면 결정을 버리고 다시 부릅니다 |
+
+`runtime.as_dict(decision)`은 로그·ROS 메시지 변환용 JSON 형태를 돌려줍니다.
+
+### 결정 순서 (학습 세계와 동일)
+1. 현재 박스도 버퍼 박스도 없음 → `None` (`NO_BOX`)
+2. 현재 박스가 빈 팔레트에도 안 들어감 → `REJECT_NG` (2단계 NG 흐름)
+3. 학습 행동 중 하나라도 가능:
+   - 현재 박스도, 버퍼 박스도 놓을 수 없고 채움률이 30 % 이상 → `PALLET_CLOSE` (`FILL_BEFORE_BUFFER`)
+   - 그 외 → 정책이 마스크 안에서 선택
+4. 아무것도 불가능 → 재적재 계획이 있으면 `PARTIAL_REPACK`, 없으면 `PALLET_CLOSE`. 빈 팔레트인데도 불가능하면 `REJECT_NG`
+
+### State Manager가 할 일 (결정 이후)
+- `PLACE_CURRENT` / `RETRIEVE_BUFFER`: 5단계 → 6단계(로봇 검증) → 실행. 결과를 `ExecutionResult`로 반영하고 새 버전 snapshot을 만듭니다.
+- `BUFFER_CURRENT`: 박스를 `slot`으로 옮기고 상태를 `BUFFERED`로 바꿉니다.
+- `PALLET_CLOSE`: 팔레트 교체(PALLET_CHANGE 흐름) 후 빈 팔레트 snapshot을 만듭니다.
+- `PARTIAL_REPACK`: `repack_moves`를 순서대로 실행하고, 다시 `decide`를 부릅니다(`repack_attempts`를 1 늘림).
+- `REJECT_NG`: Inspection/NG 영역으로 보냅니다.

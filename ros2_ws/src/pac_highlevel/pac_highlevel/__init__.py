@@ -11,6 +11,7 @@ from .config import HighLevelConfig, config_from_dict, load_highlevel_config
 from .features import feature_names, observe
 from .ppo import MaskablePPO
 from .rules import GreedyPolicy, RulePolicy
+from .runtime import HighLevelDecider, HighLevelDecision, load_policy
 from .trainer import agent_chooser, imitate_teacher, new_agent, policy_contract, run_policy, train
 from .value import make_value_provider
 from .world import Arrival, PalletizingWorld
@@ -21,6 +22,8 @@ __all__ = [
     "GreedyPolicy",
     "HighLevelAction",
     "HighLevelConfig",
+    "HighLevelDecider",
+    "HighLevelDecision",
     "MaskablePPO",
     "PalletizingWorld",
     "RulePolicy",
@@ -31,6 +34,7 @@ __all__ = [
     "from_index",
     "imitate_teacher",
     "load_highlevel_config",
+    "load_policy",
     "make_value_provider",
     "new_agent",
     "observe",

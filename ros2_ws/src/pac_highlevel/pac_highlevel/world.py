@@ -112,7 +112,11 @@ class PalletizingWorld:
         value_provider=None,
         placer=None,
         remaining_by_sku=None,
+        capacity_overrides_n=None,
+        start=True,
     ):
+        """``start=False`` builds an idle world (no arrival pulled, no rule
+        applied); ``runtime.HighLevelDecider`` fills it from a real snapshot."""
         self.config = config or HighLevelConfig()
         self.cand_config = cand_config
         self.catalog = dict(catalog)
@@ -120,6 +124,8 @@ class PalletizingWorld:
         self.pallet_volume = pallet_size.x * pallet_size.y * pallet_size.z
         self.max_load = float(pallet_max_weight_kg)
         self.base_pallet_id = pallet_id
+        self.fixed_pallet_id = None  # real snapshot: keep the State Manager's id
+        self.capacity_overrides = dict(capacity_overrides_n or {})
         self.arrivals = list(arrivals)
         self.slots = self.config.buffer.slots
         self.travel = self.config.buffer.travel_times()
@@ -153,8 +159,10 @@ class PalletizingWorld:
         self._empty_ok = {}
         self._advance_reward = 0.0
         self._repacks_for_current = 0
-        self._advance()
-        self._pending_reward = self._advance_reward
+        self._pending_reward = 0.0
+        if start:
+            self._advance()
+            self._pending_reward = self._advance_reward
 
     # ------------------------------------------------------------------
     # snapshots for stages 5-1/5-2
@@ -162,6 +170,8 @@ class PalletizingWorld:
 
     @property
     def pallet_id(self):
+        if self.fixed_pallet_id is not None:
+            return self.fixed_pallet_id
         return f"{self.base_pallet_id}-P{self.pallet_index}"
 
     def context(self):
@@ -170,6 +180,7 @@ class PalletizingWorld:
             pallet_max_weight_kg=self.max_load,
             uncertain_box_ids=tuple(self.uncertain),
             buffer_capacity=self.slots,
+            capacity_overrides_n=dict(self.capacity_overrides),
         )
 
     def backend(self):
