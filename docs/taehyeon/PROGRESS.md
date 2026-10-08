@@ -53,16 +53,19 @@ PR: https://github.com/yang8988/pac-mission1-shared/pull/1 (Draft, 브랜치 `cl
 - [x] 무거운-위-가벼운 `share` 전환, 5-② 하중 증분 버그 수정, 5-① 균형 기준점, 전체 검증 재실행
 - [x] sb3-contrib(PyTorch) 정책 학습·평가 → test 3.94 (Rule 3.91, NumPy PPO 3.86) → 기본 정책은 NumPy 판 유지
 - [x] sb3 판 개선 코드: VecNormalize(관측 정규화, 통계를 정책 파일에 저장), 모방 lr 3e-4·20 epoch, BLAS 1스레드
-- [ ] (진행 중, 2026-10-08 07:10 UTC 시작) sb3 v2 학습 150k 단계 → test 비교 → 더 좋으면 기본 정책 교체
-  컨테이너가 회수되어 중단됐다면 다시 실행:
+- [x] 코드 리뷰(2026-10-08) 수정: 5-② 하중 경로·`share` 허점, 5-① 탐색 컷오프·방향, 4번 마감 규칙·주문 목록 설정 등 → 전체 재검증 완료 (162 테스트)
+- [ ] **4번 재학습 (태현 요청으로 중단, 2026-10-08)**: 현재 `models/highlevel_ppo.json`, `highlevel_sb3.zip`은 리뷰 수정 **이전** 세계로 학습한 정책입니다.
+  5-①/5-② 수정과 마감 규칙이 바뀌었으므로 다시 학습·평가해야 합니다:
   ```bash
+  python tools/highlevel/scripts/train_highlevel_ppo.py --run-generator 10 --steps 60000 --workers 4 \
+      --imitation-episodes 120 --learning-rate 0.0001 --entropy-coef 0.003 --output tools/highlevel/output/ppo_np_v3.json
   python tools/highlevel/scripts/train_highlevel_sb3.py --run-generator 10 --steps 150000 --envs 4 \
-      --imitation-episodes 120 --learning-rate 0.0001 --entropy-coef 0.003 --output tools/highlevel/output/sb3_v2.zip
+      --imitation-episodes 120 --learning-rate 0.0001 --entropy-coef 0.003 --output tools/highlevel/output/sb3_v3.zip
   python tools/highlevel/scripts/evaluate_highlevel.py --run-generator 10 --split test --passes 3 \
-      --policies no_buffer greedy rule ppo sb3 --policy-file ros2_ws/src/pac_highlevel/models/highlevel_ppo.json \
-      --sb3-file tools/highlevel/output/sb3_v2.zip
+      --policies no_buffer greedy rule ppo sb3 --policy-file tools/highlevel/output/ppo_np_v3.json \
+      --sb3-file tools/highlevel/output/sb3_v3.zip
   ```
-  (`--run-generator 10`은 학습에 쓴 것과 같은 60개 시나리오를 다시 만듭니다.)
+  (`--run-generator 10`은 학습에 쓴 것과 같은 60개 시나리오를 다시 만듭니다. NumPy 약 20분, sb3 약 1.5시간.)
 
 ## 다음 할 일
 
