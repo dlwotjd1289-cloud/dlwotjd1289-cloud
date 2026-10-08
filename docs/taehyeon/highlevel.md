@@ -116,30 +116,38 @@ PyTorch가 없으면 `sb3` 관련 테스트는 건너뛰고 NumPy 판(`train_hig
   이동은 footprint가 바뀌어야 인정합니다(제자리 90° 회전은 이동, 같은 footprint는 이동 아님). 같은 박스에 대한 재적재 시도는 2회로 제한합니다.
   흐름도의 MCTS 변형과 "대형 SKU Blocking 위험" 발동 조건은 구현하지 않았습니다(현재 발동 조건은 "유효 후보 0개").
 
-## 5. 결과 (2026-10-08, 무거운-위-가벼운 `share` 기준)
+## 5. 결과 (2026-10-08 최종, 코드 리뷰 수정 반영 후 재학습)
 
-데이터: 재성 님 제너레이터 `sample` 모드, 패밀리당 10개 × 80박스 = 60 시나리오(train 42 / val 9 / test 9). 버퍼 4칸.
-학습(NumPy): Rule 정책 120 에피소드 모방(정확도 90 %) → MaskablePPO 60k 단계(lr 1e-4, 엔트로피 0.003, 4 프로세스).
-평가: 같은 박스 흐름·노이즈·팔레트 규격으로 정책끼리 짝지어 비교. 결정적(deterministic) 정책.
+데이터: 재성 님 제너레이터 `sample` 모드, 패밀리당 10개 × 80박스 = 60 시나리오(train 42 / val 9 / test 9). 버퍼 4칸, 채움률 30 % 이상이면 버퍼 대신 마감, 파손 검출 박스는 위에 쌓지 않음.
+학습(NumPy): Rule 정책 120 에피소드 모방(정확도 91 %) → MaskablePPO 60k 단계(lr 1e-4, 엔트로피 0.003, 4 프로세스, 약 20분).
+평가: 같은 박스 흐름·노이즈·팔레트 규격으로 정책끼리 짝지어 비교, 결정적(deterministic) 정책. 유의성은 짝지은 차이의 부호 검정입니다.
 
-**test (학습에 쓰지 않은 9 시나리오 × 3회 = 27 에피소드, `reports/highlevel_eval_test.json`)**
+**test (학습에 쓰지 않은 9 시나리오 × 3회 = 27 에피소드, 위치는 DBLF, `reports/highlevel_eval_test.json`)**
 
 | 정책 | 사용 팔레트(소수) | 팔레트 수 | 채움률 | 로봇 시간 | NG | 안전 이슈 |
 |---|---|---|---|---|---|---|
-| 버퍼 없음 | 5.20 | 6.04 | 20.8 % | 974 s | 0 | 0 |
-| Greedy + 버퍼 | 4.55 | 5.37 | 22.9 % | 994 s | 0 | 0 |
-| Rule (1차) | 3.91 | 4.74 | 26.2 % | 1166 s | 0 | 0 |
-| **MaskablePPO (NumPy, 기본 정책)** | **3.86** | **4.70** | **26.5 %** | 1146 s | 0 | 0 |
-| MaskablePPO (sb3-contrib, PyTorch) | 3.94 | 4.78 | 26.2 % | 1243 s | 0 | 0 |
+| 버퍼 없음 | 5.43 | 6.26 | 19.9 % | 988 s | 0 | 0 |
+| Greedy + 버퍼 | 4.62 | 5.44 | 22.8 % | 986 s | 0 | 0 |
+| **Rule (1차, 현재 권장 기본값)** | **4.09** | **4.93** | **25.2 %** | 1141 s | 0 | 0 |
+| MaskablePPO (NumPy) | 4.25 | 5.07 | 24.4 % | 1174 s | 0 | 0 |
+| MaskablePPO (sb3-contrib, VecNormalize) | (학습 중) | | | | | |
 
-- PPO − Rule: 평균 −0.05 팔레트, 27개 중 15개 개선 / 4개 같음 / 8개 악화. 로봇 시간도 20초 짧습니다.
-- 버퍼의 효과가 가장 큽니다: 버퍼 없음 대비 Rule/PPO는 팔레트 약 1.3개(25 %) 절약.
-- `per_box` 기준 결과(PPO 4.10, Rule 4.19, 버퍼 없음 5.74)는 `reports/per_box_2026-10-08/`에 보관했습니다. `share`로 바꾸면서 모든 정책이 약 0.3~0.5 팔레트 줄었습니다.
-- 처음부터 PPO만 학습한 경우(모방 없이 30k 단계)는 개선이 없었습니다(`reports/highlevel_train_log_scratch.jsonl`). 그래서 Rule 모방 → PPO 미세조정 순서로 학습합니다.
-- 모든 정책에서 Hard Mask 위반·안전 이슈 0건입니다(마스크가 구조적으로 보장).
-- sb3-contrib 판(Rule 모방 120 에피소드 정확도 95 % → 100k 단계, 약 76분)은 Rule과 거의 같았습니다(Rule보다 평균 0.03 팔레트 많음, 12 개선 / 4 같음 / 11 악화).
-  같은 데이터·모방 시작점이므로 차이는 학습기 설정에서 옵니다(sb3는 관측 정규화 없음, 배치·업데이트 방식 차이). 그래서 **기본 정책은 NumPy 판(`models/highlevel_ppo.json`)**으로 두고, sb3 판(`models/highlevel_sb3.zip`)은 PyTorch 환경에서 이어 학습할 수 있도록 함께 둡니다.
-  다음 시도: `VecNormalize`로 관측 정규화, 학습 단계 확대(300k 이상), 엔트로피 계수 조정.
+**동한 님 planner로 위치를 정한 경우** (test 4 시나리오, 1 에피소드 약 2분, `reports/highlevel_eval_donghan_placer.json`)
+
+| 정책 | 사용 팔레트(소수) | 채움률 | 로봇 시간 | 안전 이슈 |
+|---|---|---|---|---|
+| Rule | 3.97 | 26.3 % | 1044 s | 0 |
+| MaskablePPO (NumPy) | 4.14 | 25.0 % | 1152 s | 0 |
+
+**해석 (정직한 결론)**
+- **확실한 효과**: 버퍼(버퍼 없음 → Greedy, 27개 중 24개 개선, p < 0.001)와 Rule의 버퍼 운용(Greedy → Rule, 21개 개선, p = 0.006). 버퍼 없음 대비 Rule은 팔레트 약 1.3개(25 %) 절약.
+- **PPO는 아직 Rule보다 낫지 않습니다**: PPO − Rule = +0.16 팔레트(7 개선 / 6 같음 / 14 악화, p = 0.19, 유의하지 않음). 동한 님 planner로 위치를 정해도 같은 경향(+0.18)입니다.
+  리뷰 수정 전 세계에서는 PPO가 −0.05였지만 그것도 유의하지 않았습니다(p = 0.21).
+- 원인: 학습 곡선이 평평합니다(학습 에피소드의 팔레트 수가 4.0~4.7을 오가고 엔트로피 변화 없음). 에피소드마다 난이도 차이가 커서 60k 단계(약 540 에피소드)로는 Rule을 넘는 신호가 부족합니다.
+- 그래서 **실제 배치 기본값은 Rule**(`load_policy("rule")`, `HighLevelDecider`의 기본값)로 두고, PPO 정책 파일과 학습 파이프라인은 그대로 유지합니다. 흐름도의 "1차: Rule, 확장: PPO" 순서와 같습니다.
+- PPO를 Rule보다 낫게 만들 다음 시도: (1) 학습 단계 대폭 확대(수십만 단계 이상, GPU/PyTorch 환경), (2) 같은 시나리오를 Rule과 짝지어 보상 차이로 학습(분산 감소), (3) 컨베이어 다음 박스 미리보기 등 PPO만 활용할 정보 추가, (4) 평가 시나리오 확대(유의성 확보).
+- 이전 결과: `per_box` 기준(`reports/per_box_2026-10-08/`), 모방 없이 PPO만 학습(`reports/highlevel_train_log_scratch.jsonl`, 개선 없음).
+- 모든 정책·모든 위치 결정 방식에서 Hard Mask 위반·안전 이슈 0건입니다(마스크가 구조적으로 보장).
 
 ### 참고: 무거운-위-가벼운 규칙과 채움률
 
@@ -163,7 +171,7 @@ decider = HighLevelDecider(
     context,                                    # 이번 사이클의 PlanningContext (catalog, 하중 override, 불확실 박스)
     candidate_config,                           # 5-①/5-② 설정 (load_candidate_config)
     highlevel_config,                           # load_highlevel_config("config/taehyeon/highlevel.yaml")
-    policy=load_policy("numpy", "ros2_ws/src/pac_highlevel/models/highlevel_ppo.json", config=highlevel_config),
+    policy=load_policy("rule", config=highlevel_config),   # 현재 권장 기본값 (5장). 학습 정책: load_policy("numpy", ".../highlevel_ppo.json", config=...)
 )
 decision = decider.decide(
     state,                                      # SystemState (pallet = 현재 팔레트, tracked_boxes에 현재 박스와 BUFFERED 박스)
