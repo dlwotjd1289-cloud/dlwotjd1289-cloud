@@ -9,7 +9,7 @@
 uv venv --python 3.10 .venv && . .venv/bin/activate      # 또는 python3.10 -m venv .venv
 pip install "numpy>=1.23,<3" "PyYAML>=6,<7" "pytest>=7,<9" "pybullet>=3.2.6,<4" "networkx>=2.8,<4"
 scripts/taehyeon/fetch_team_deps.sh                       # 팀원 코드(읽기 전용)를 .deps/team 에 추출
-python -m pytest -q tests/taehyeon                        # 172 passed
+python -m pytest -q tests/taehyeon                        # 177 passed
 pip install torch sb3-contrib gymnasium                   # 4번 PyTorch 학습 (선택, highlevel.md 3-1)
 scripts/taehyeon/run_validation.sh                        # 전체 검증 리포트 재생성
 ```
@@ -55,7 +55,8 @@ PR: https://github.com/yang8988/pac-mission1-shared/pull/1 (Draft, 브랜치 `cl
 - [x] sb3 판 개선 코드: VecNormalize(관측 정규화, 통계를 정책 파일에 저장), 모방 lr 3e-4·20 epoch, BLAS 1스레드
 - [x] 코드 리뷰(2026-10-08) 수정: 5-② 하중 경로·`share` 허점, 5-① 탐색 컷오프·방향, 4번 마감 규칙·주문 목록 설정 등 → 전체 재검증 완료 (162 테스트)
 - [x] 4번 실제 상태 입구 `HighLevelDecider.decide` + 인터페이스 문서(highlevel.md 6장), 테스트 10개 (총 172)
-- [ ] **4번 재학습 (태현 요청으로 중단, 2026-10-08)**: 현재 `models/highlevel_ppo.json`, `highlevel_sb3.zip`은 리뷰 수정 **이전** 세계로 학습한 정책입니다.
+- [x] 리뷰 미반영 항목 전부 반영(2026-10-08): 5-① 병합 허용오차·균형 탐색 층 묶음/정렬·중복 제거 복원·불확실 거절·EMS 탐색 벡터화, 4번 파손 박스 반영·재적재 이동 규칙·동한 가치 모델 1회 로드·미사용 설정 삭제, 문서 → 전체 재검증 (177 테스트)
+- [ ] **4번 재학습 (진행 중, 2026-10-08)** — 끝나면 결과를 highlevel.md 5장·PR에 반영: 현재 `models/highlevel_ppo.json`, `highlevel_sb3.zip`은 리뷰 수정 **이전** 세계로 학습한 정책입니다.
   5-①/5-② 수정과 마감 규칙이 바뀌었으므로 다시 학습·평가해야 합니다:
   ```bash
   python tools/highlevel/scripts/train_highlevel_ppo.py --run-generator 10 --steps 60000 --workers 4 \
