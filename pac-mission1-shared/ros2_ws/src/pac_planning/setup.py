@@ -1,4 +1,5 @@
 from setuptools import setup, find_packages
+from glob import glob
 
 setup(
     name="pac_planning",
@@ -10,8 +11,12 @@ setup(
             ["resource/pac_planning"],
         ),
         ("share/pac_planning", ["package.xml"]),
+        ("share/pac_planning/launch", glob("launch/*.launch.py")),
     ],
     install_requires=["setuptools"],
+    entry_points={"console_scripts": [
+        "placement_planner_node = pac_planning.planning_service:main",
+    ]},
     zip_safe=True,
     maintainer="AHEAD team",
     maintainer_email="maintainers@example.invalid",
