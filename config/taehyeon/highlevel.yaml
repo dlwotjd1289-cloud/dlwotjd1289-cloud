@@ -20,6 +20,8 @@ highlevel:
     good_support: 0.95
     retrieve_margin_m: 0.02
     max_buffer_age: 12
+  close:                     # PALLET_CLOSE stays a rule
+    fill_before_buffer: 0.30 # close a pallet this full instead of forcing the box into the buffer (0 = off)
   repack:
     enabled: true
     max_moves: 2
@@ -27,6 +29,7 @@ highlevel:
     min_gain: 0.0
   features:
     value_provider: proxy    # proxy | donghan  (policy refuses to load on mismatch)
+    order_list_known: true   # SKU types/sizes/weights/quantities known in advance, order not (mission brief)
     heightmap_cell_m: 0.02
   ppo:
     hidden: [64, 64]

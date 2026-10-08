@@ -35,6 +35,7 @@ from pac_common import (
 from .actions import ActionType, action_count, from_index, to_index
 from .config import HighLevelConfig
 from .repack import plan_repack
+from .value import make_value_provider
 
 
 @dataclass
@@ -82,6 +83,9 @@ class PalletRecord:
     issues: dict = field(default_factory=dict)
 
 
+MAX_REPACKS_PER_BOX = 2  # guard: repack attempts per waiting current box
+
+
 def box_volume(size):
     return size.x * size.y * size.z
 
@@ -119,6 +123,10 @@ class PalletizingWorld:
         self.arrivals = list(arrivals)
         self.slots = self.config.buffer.slots
         self.travel = self.config.buffer.travel_times()
+        if value_provider is None:
+            # built from the config so the policy contract (which records
+            # features.value_provider) always matches what is computed
+            value_provider = make_value_provider(self.config.features.value_provider)
         self.value_provider = value_provider
         self.placer = placer or dblf_choice
         if remaining_by_sku is None:
@@ -144,7 +152,9 @@ class PalletizingWorld:
         self._options = None
         self._empty_ok = {}
         self._advance_reward = 0.0
+        self._repacks_for_current = 0
         self._advance()
+        self._pending_reward = self._advance_reward
 
     # ------------------------------------------------------------------
     # snapshots for stages 5-1/5-2
@@ -186,8 +196,14 @@ class PalletizingWorld:
             self.version,
             float(self.decisions),
             PalletState(self.pallet_id, self.pallet_size, tuple(placed)),
-            InventoryState(tracked, {k: v for k, v in sorted(self.remaining.items()) if v > 0}),
+            InventoryState(tracked, self.remaining_by_sku()),
         )
+
+    def remaining_by_sku(self):
+        """Unseen boxes per SKU, or {} when the order list is not known."""
+        if not self.config.features.order_list_known:
+            return {}
+        return {k: v for k, v in sorted(self.remaining.items()) if v > 0}
 
     def _box_of(self, box_id):
         return self._boxes[box_id]
@@ -309,6 +325,8 @@ class PalletizingWorld:
             t = self.config.timing.place_time_s + self.travel[action.slot]
             self.time_s += t
             reward -= self.config.reward.time_weight * t
+        reward += self._pending_reward  # rule outcomes before the first decision
+        self._pending_reward = 0.0
         self._advance_reward = 0.0
         self._advance()
         reward += self._advance_reward
@@ -356,6 +374,7 @@ class PalletizingWorld:
         if arrival.uncertain:
             self.uncertain.append(arrival.box.box_id)
         self.current = arrival
+        self._repacks_for_current = 0
         self._invalidate()
 
     def _advance(self):
@@ -371,10 +390,20 @@ class PalletizingWorld:
                 self.current = None
                 self._invalidate()
                 continue
-            if self.action_mask().any():
-                return
+            mask = self.action_mask()
+            if mask.any():
+                if not self._close_before_buffer(mask):
+                    return
+                self._close_pallet()
+                continue
             # nothing learned is feasible -> rule actions
-            if self.current is not None and self.config.repack.enabled and self.placed:
+            if (
+                self.current is not None
+                and self.config.repack.enabled
+                and self.placed
+                and self._repacks_for_current < MAX_REPACKS_PER_BOX
+            ):
+                self._repacks_for_current += 1
                 plan = plan_repack(self)
                 if plan is not None:
                     self._apply_repack(plan)
@@ -391,6 +420,19 @@ class PalletizingWorld:
                     self._reject(e.arrival)
                     self.buffer[i] = None
             self._invalidate()
+
+    def fill(self):
+        return sum(box_volume(p.size) for p in self.placed) / self.pallet_volume
+
+    def _close_before_buffer(self, mask):
+        """CLOSE rule: a well-filled pallet is closed instead of forcing the
+        current box into the buffer when nothing can be placed now."""
+        threshold = self.config.close.fill_before_buffer
+        if threshold <= 0.0 or self.current is None or not self.placed:
+            return False
+        if mask[0] or mask[2:].any():
+            return False
+        return self.fill() >= threshold
 
     def _reject(self, arrival):
         self.ng.append(arrival.box.box_id)

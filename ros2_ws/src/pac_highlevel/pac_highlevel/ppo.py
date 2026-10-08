@@ -205,7 +205,7 @@ class MaskablePPO:
                 k = len(idx)
                 logits, acts = self.pi.forward(x)
                 p = masked_softmax(logits, m)
-                logp_all = np.where(m, np.log(np.where(m, p, 1.0)), 0.0)
+                logp_all = np.where(m, np.log(np.maximum(np.where(m, p, 1.0), 1e-12)), 0.0)
                 logp = logp_all[np.arange(k), a]
                 ratio = np.exp(logp - old_logp[idx])
                 unclipped = ratio * A

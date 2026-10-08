@@ -77,7 +77,7 @@ def observe(world):
     free = sum(e is None for e in world.buffer)
     total = max(1, len(world.arrivals))
     unseen = []
-    for sku, n in world.remaining.items():
+    for sku, n in world.remaining_by_sku().items():
         spec = world.catalog.get(sku)
         if spec is not None and n > 0:
             unseen.append((n, spec.size.x * spec.size.y * spec.size.z, spec.weight_kg))
@@ -89,7 +89,7 @@ def observe(world):
         weight / world.max_load,
         min(1.0, len(world.placed) / 100.0),
         free / max(1, world.slots),
-        (len(world.arrivals) - world.next_arrival) / total,
+        (len(world.arrivals) - world.next_arrival) / total if world.config.features.order_list_known else 0.0,
         min(2.0, unseen_vol / V),
         min(1.0, len(world.closed) / 5.0),
     ]

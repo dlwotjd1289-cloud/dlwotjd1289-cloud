@@ -44,6 +44,8 @@ if gym is not None:
                 self.world = self.make_world(self.episode)
                 if not self.world.done:
                     break
+            else:
+                raise RuntimeError("100 consecutive episodes had nothing to decide")
             return observe(self.world), {}
 
         def step(self, action):

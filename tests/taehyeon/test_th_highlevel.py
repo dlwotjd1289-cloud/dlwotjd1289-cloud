@@ -360,3 +360,41 @@ def test_sb3_backend_trains_imitates_and_respects_masks(tmp_path):
     other = replace(cfg, features=replace(cfg.features, value_provider="donghan"))
     with pytest.raises(ValueError, match="value_provider"):
         sb3.load(path, slots=2, contract=policy_contract(other))
+
+
+def test_close_before_buffer_rule():
+    # 3 light floor boxes fill the 0.62 m pallet (fill 0.4); a heavy box
+    # cannot go on top. Rule on: close instead of buffering it.
+    boxes = [box(i, weight=5.0) for i in range(3)] + [box(3, weight=20.0, sku="H")]
+    no_repack = replace(HighLevelConfig().repack, enabled=False)
+    off = world(boxes, slots=2, repack=no_repack, close=replace(HighLevelConfig().close, fill_before_buffer=0.0))
+    for _ in range(3):
+        off.step(HighLevelAction(ActionType.PLACE_CURRENT))
+    assert off.action_mask().tolist() == [False, True, False, False]  # must buffer
+    on = world(boxes, slots=2, repack=no_repack, close=replace(HighLevelConfig().close, fill_before_buffer=0.3))
+    for _ in range(3):
+        on.step(HighLevelAction(ActionType.PLACE_CURRENT))
+    assert on.counts["PALLET_CLOSE"] == 1 and on.placed == []
+    assert on.action_mask()[0]  # heavy box goes on the new pallet directly
+
+
+def test_order_list_known_flag_controls_remaining_counts():
+    boxes = [box(i) for i in range(4)]
+    known = world(boxes)
+    assert known.state().inventory.remaining_by_sku == {"K": 3}
+    hidden = world(boxes, features=replace(HighLevelConfig().features, order_list_known=False))
+    assert dict(hidden.state().inventory.remaining_by_sku) == {}
+    names = feature_names(2)
+    assert observe(hidden)[names.index("inv.unseen_count")] == 0.0
+    assert observe(known)[names.index("inv.unseen_count")] > 0.0
+
+
+def test_ng_before_first_decision_is_charged_once():
+    boxes = [box(0, size=(0.8, 0.5, 0.1), sku="X"), box(1)]
+    w = world(boxes)
+    assert w.ng == ["B000"]
+    r = w.step(HighLevelAction(ActionType.PLACE_CURRENT))
+    vol = 0.2 * 0.4 * 0.1 / (SMALL.x * SMALL.y * SMALL.z)
+    assert r < vol  # includes the -ng_penalty of the rejected first box
+    assert r == pytest.approx(vol - HighLevelConfig().reward.ng_penalty
+                              - HighLevelConfig().reward.time_weight * HighLevelConfig().timing.place_time_s)

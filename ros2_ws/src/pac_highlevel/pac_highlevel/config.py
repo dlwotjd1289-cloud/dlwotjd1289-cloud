@@ -60,6 +60,16 @@ class RuleConfig:
 
 
 @dataclass(frozen=True)
+class CloseConfig:
+    # PALLET_CLOSE rule (always a rule, never learned). Closes when no learned
+    # action is feasible; additionally, with the current box not placeable and
+    # no buffered box placeable, a pallet filled to at least this volume
+    # fraction is closed right away instead of forcing the box into the
+    # buffer (0 disables; taehyeon 2026-10-08).
+    fill_before_buffer: float = 0.30  # val sweep: pallets ~even (+0.04), robot time -26 s
+
+
+@dataclass(frozen=True)
 class RepackConfig:
     enabled: bool = True
     max_moves: int = 2  # relocated boxes per repack
@@ -70,6 +80,10 @@ class RepackConfig:
 @dataclass(frozen=True)
 class FeatureConfig:
     value_provider: str = "proxy"  # proxy | donghan (must match training and deployment)
+    # the order list (SKU types, sizes, weights and quantities) is known in
+    # advance, only the arrival order is not (mission brief; taehyeon
+    # 2026-10-08). False hides remaining counts from the policy and stages 5.
+    order_list_known: bool = True
     heightmap_cell_m: float = 0.02
 
 
@@ -96,6 +110,7 @@ class HighLevelConfig:
     timing: TimingConfig = field(default_factory=TimingConfig)
     reward: RewardConfig = field(default_factory=RewardConfig)
     rules: RuleConfig = field(default_factory=RuleConfig)
+    close: CloseConfig = field(default_factory=CloseConfig)
     repack: RepackConfig = field(default_factory=RepackConfig)
     features: FeatureConfig = field(default_factory=FeatureConfig)
     ppo: PPOConfig = field(default_factory=PPOConfig)
@@ -104,6 +119,8 @@ class HighLevelConfig:
         if self.buffer.slots < 0:
             raise ValueError("buffer.slots must be >= 0")
         self.buffer.travel_times()
+        if not 0.0 <= self.close.fill_before_buffer <= 1.0:
+            raise ValueError("close.fill_before_buffer must be in [0, 1]")
         if self.features.value_provider not in ("proxy", "donghan"):
             raise ValueError("features.value_provider must be proxy | donghan")
 
