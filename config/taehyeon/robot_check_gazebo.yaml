@@ -1,5 +1,6 @@
 schema_version: 1
-# Stage 6 for the pac2026-ahead Gazebo workcell (robot on the floor at the world origin). Kinematics: official hdr_description URDF.
+# Stage 6 for the pac2026-ahead Gazebo workcell with the robot on a 0.5 m pedestal at world (1.35, 0.15)
+# (tools/runtime/launch/hdr50_pedestal_workcell.launch.py). Kinematics: official hdr_description URDF.
 # Values marked ASSUMPTION must be replaced when the real cell / gripper is known.
 robot_check:
   robot_model: hdr50_22
@@ -10,9 +11,9 @@ robot_check:
     mass_kg: 15.0                 # ASSUMPTION
     clearance_m: 0.01
   cell:
-    base_from_pallet_center: [-1.35, 1.0, -0.15, 0.0]  # pac2026-ahead workcell v2: robot at the world origin, pallet centre (1.35, -1.0), deck top 0.15 m
+    base_from_pallet_center: [0.0, 1.15, 0.35, 0.0]    # pallet centre (1.35, -1.0), deck top 0.15 m; base at world (1.35, 0.15, 0.5)
     deck_height_m: 0.15
-    pick_point_base_m: [-0.3, 1.2, 0.9]                # conveyor_main end (x -3.1..0.1, y 1.2), roller top about 0.9 m
+    pick_point_base_m: [-1.35, 1.05, 0.4]              # conveyor_main at world (0.0, 1.2), roller top about 0.9 m
   motion:
     approach_clearance_m: 0.30
     path_step_m: 0.05

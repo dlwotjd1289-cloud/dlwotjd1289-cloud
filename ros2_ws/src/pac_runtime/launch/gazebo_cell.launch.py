@@ -1,13 +1,14 @@
 """Runtime node + Gazebo cell driver for the pac2026-ahead HDR50-22 workcell.
 
-Start the Gazebo workcell first (pac2026-ahead workspace, other terminal):
-    ros2 launch pac_bringup hdr50_workcell.launch.py
+Start the Gazebo workcell first (pac2026-ahead workspace, other terminal),
+with the robot on the 0.5 m pedestal:
+    ros2 launch ~/pac-mission1-shared/tools/runtime/launch/hdr50_pedestal_workcell.launch.py
 then (this workspace):
     ros2 launch pac_runtime gazebo_cell.launch.py repo:=$HOME/pac-mission1-shared
 
-Both nodes use config/taehyeon/robot_check_gazebo.yaml (robot at the world
-origin, pallet centre (1.35, -1.0)), so the joint values match the robot in
-Gazebo.
+Both nodes use config/taehyeon/robot_check_gazebo.yaml (robot base at world
+(1.35, 0.15, 0.5), pallet centre (1.35, -1.0)), so the joint values match the
+robot in Gazebo.
 """
 
 from launch import LaunchDescription

@@ -18,7 +18,8 @@ pac2026-ahead workcell (``hdr50_workcell.launch.py``).
 ``GazeboDriverCore`` holds the logic (unit-tested without ROS); ``main``
 is the rclpy node. Joint values come from stage 6 (``cmd["robot"]``) and
 ``RobotFeasibility.pick_path`` with the Gazebo cell configuration
-``config/taehyeon/robot_check_gazebo.yaml`` (robot at the world origin).
+``config/taehyeon/robot_check_gazebo.yaml`` (robot on a 0.5 m pedestal at world
+(1.35, 0.15), started by ``tools/runtime/launch/hdr50_pedestal_workcell.launch.py``).
 """
 
 from dataclasses import dataclass, field

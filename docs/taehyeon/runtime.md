@@ -104,15 +104,15 @@ gazebo_cell ◀──/pac/command────── runtime_node
 gazebo_cell ──/pac/execution_result──▶ runtime_node → 다음 박스
 ```
 
-- 관절값은 6단계 결과(`q_approach`, `q_place`)와 `pick_path`(컨베이어 끝)를 씁니다. 두 노드 모두 `config/taehyeon/robot_check_gazebo.yaml`(로봇이 월드 원점·바닥, 팔레트 중심 (1.35, −1.0), 상판 0.15 m, 컨베이어 윗면 약 0.9 m)을 써서 Gazebo의 로봇과 좌표가 맞습니다.
+- 관절값은 6단계 결과(`q_approach`, `q_place`)와 `pick_path`(컨베이어 (0.0, 1.2) 지점)를 씁니다. 두 노드 모두 `config/taehyeon/robot_check_gazebo.yaml`(로봇이 받침대 0.5 m 위, 월드 (1.35, 0.15); 팔레트 중심 (1.35, −1.0), 상판 0.15 m; 컨베이어 윗면 약 0.9 m)을 써서 Gazebo의 로봇과 좌표가 맞습니다.
+- **받침대 배치**: pac2026-ahead의 `hdr50_workcell.launch.py`는 로봇을 월드 원점(바닥)에 두는데, 이 배치는 높이 0.8 m 이상에 거의 닿지 않습니다. 그래서 같은 월드·로봇 모델·컨트롤러를 쓰되 로봇을 받침대 위 (1.35, 0.15, 0.5)에 띄우는 launch 파일 `tools/runtime/launch/hdr50_pedestal_workcell.launch.py`를 따로 두었습니다(pac2026-ahead 파일은 수정하지 않음). 이 배치에서는 1.2 × 1.0 팔레트의 맨 위층(1.35 m)까지 시험한 100곳이 모두 닿습니다.
 - 작업셀에 흡착 그리퍼 플러그인이 없어서, 박스는 로봇이 놓는 자세에 도착했을 때 그 자리에 생성됩니다(들고 가는 모습은 없음). 생성된 박스는 Gazebo 물리로 내려앉습니다.
 - 버퍼에서 꺼낼 때(RETRIEVE_BUFFER)는 버퍼 선반 위치가 정해지지 않아 컨베이어 쪽 집기 동작으로 대신합니다. 팔레트 마감(PALLET_CLOSE) 때는 놓인 박스를 지웁니다.
-- 이 배치(로봇 바닥, 팔레트 모서리에서 1.68 m)는 도달 범위가 좁아 높이 0.8 m 이상은 일부만, 1.1 m 이상은 닿지 않습니다(`robot_check.md` 3장). 6단계가 닿지 않는 자리를 걸러내므로 팔레트를 낮게 쌓고 일찍 마감합니다.
 - 연결 로직(`GazeboDriverCore`)은 ROS 없이 `runtime_node` 로직과 메시지로 이어 테스트했습니다. **ROS 2/Gazebo에서 실제로 띄운 확인은 아직 못 했습니다.**
 
 ```bash
-# 터미널 1 (pac2026-ahead 작업공간)
-ros2 launch pac_bringup hdr50_workcell.launch.py
+# 터미널 1 (pac2026-ahead 작업공간): 받침대 배치의 작업셀
+ros2 launch ~/pac-mission1-shared/tools/runtime/launch/hdr50_pedestal_workcell.launch.py
 # 터미널 2 (pac-mission1-shared 작업공간, pac2026-ahead는 source하지 않음)
 ros2 launch pac_runtime gazebo_cell.launch.py repo:=$HOME/pac-mission1-shared
 ```
