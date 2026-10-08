@@ -27,7 +27,7 @@ python3.10 -m venv .venv && . .venv/bin/activate          # 또는 uv venv --pyt
 pip install "numpy>=1.23,<3" "PyYAML>=6,<7" "pytest>=7,<9"
 pip install "pybullet>=3.2.6,<4" "networkx>=2.8,<4"       # 물리 교차 검증을 돌릴 때만
 scripts/taehyeon/fetch_team_deps.sh                          # 팀원 코드를 .deps/team 에 읽기 전용으로 추출
-python -m pytest -q tests/taehyeon                           # 150 passed (PyTorch 없으면 1 skipped)
+python -m pytest -q tests/taehyeon                           # 162 passed (PyTorch 없으면 1 skipped)
 scripts/taehyeon/run_validation.sh                           # 모든 검증 리포트 재생성 (약 6~11분, 머신에 따라 다름)
 ```
 
@@ -63,7 +63,7 @@ print(cset.summary(), dict(cset.reason_counts))
 | `tools/virtual_data/` | 가상데이터 생성기, 2D 시각화, 오라클·물리·planner·박스 강도 벤치마크 스크립트 |
 | `config/taehyeon/candidates.yaml` | 5-①/5-② 설정 (모든 기본값의 근거는 [algorithms.md](algorithms.md)) |
 | `config/taehyeon/virtual_data.yaml` | 가상데이터 설정 |
-| `tests/taehyeon/` | 150개 테스트 (단위, brute-force 오라클, planner 통합, 가상데이터, 박스 강도, 시각화, 4번 High-level) |
+| `tests/taehyeon/` | 162개 테스트 (단위, brute-force 오라클, planner 통합, 가상데이터, 박스 강도, 시각화, 4번 High-level) |
 | `scripts/taehyeon/` | 팀 코드 추출, 경로 탐색, 전체 검증 스크립트 |
 | `docs/taehyeon/` | 이 문서들 + `reports/` 검증 결과 |
 
@@ -80,11 +80,11 @@ print(cset.summary(), dict(cset.reason_counts))
 
 | 항목 | 결과 |
 |---|---|
-| 5-① 재현율: 20 mm 격자 전수탐색에 놓을 자리가 있으면 유효 후보를 1개 이상 제공 | **96.25 %** (77/80 장면, 놓친 3장면은 자리가 1~5개뿐인 좁은 경우) |
-| 5-② 안전성: Hard Mask 통과 후보를 실제 크기로 PyBullet에 놓았을 때 안정 | **84/84 (100 %)** |
-| 5-② 유의미성: 지지/LBCP로 탈락한 후보 중 실제로 무너짐 | 67/100 (67 %) |
+| 5-① 재현율: 20 mm 격자 전수탐색에 놓을 자리가 있으면 유효 후보를 1개 이상 제공 | **97.5 %** (78/80 장면, 놓친 2장면은 자리가 1개뿐인 좁은 경우) |
+| 5-② 안전성: Hard Mask 통과 후보를 실제 크기로 PyBullet에 놓았을 때 안정 | **83/83 (100 %)** |
+| 5-② 유의미성: 지지/LBCP로 탈락한 후보 중 실제로 무너짐 | 71/110 (65 %) |
 | 측정오차 δ 흡수: 실제 크기 기준 상호 관통/팔레트 돌출 | 0건 (720단계) |
-| 박스 강도 비공개 대응: 숨겨진 실제 강도 6개 프로필, 팔레트 끝까지 적재 | extreme 외 5개 프로필 실제 눌림 **0건**, extreme 3개 |
-| 동한 님 planner 연동 (1 초 소프트 예산) | 평균 643 ms, 초과 3/24 |
+| 박스 강도 비공개 대응: 숨겨진 실제 강도 6개 프로필, 팔레트 끝까지 적재 | 6개 프로필 모두 실제 눌림 **0건** (안전계수 1에서도) |
+| 동한 님 planner 연동 (1 초 소프트 예산) | 평균 689 ms, 초과 6/24 |
 | 4번 High-level (test 27 에피소드, 사용 팔레트) | 버퍼 없음 5.20 → Rule 3.91 → **MaskablePPO 3.86** (sb3-contrib 판 3.94), 안전 이슈 0 |
 | 무거운-위-가벼운 규칙 | `share` 모드 (2026-10-08 결정, `per_box` 대비 팔레트 약 20 % 절약) |
