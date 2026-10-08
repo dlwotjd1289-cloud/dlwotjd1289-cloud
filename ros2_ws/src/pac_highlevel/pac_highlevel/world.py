@@ -211,12 +211,7 @@ class PalletizingWorld:
         backend = self.backend()
         cset = backend.candidate_set(box, state)
         option = Option(box, valid_count=cset.valid_count, generated_count=cset.generated_count)
-        chosen = None
-        if cset.valid:
-            if getattr(self.placer, "wants_context", False):
-                chosen = self.placer(list(cset.valid), box, state, backend)
-            else:
-                chosen = self.placer(list(cset.valid))
+        chosen = self.choose_candidate(list(cset.valid), box, state)
         if chosen is None:
             return option
         verdict = backend.validate_constraints(box, chosen, state)
@@ -237,6 +232,14 @@ class PalletizingWorld:
         else:
             option.future = option.flatness_after
         return option
+
+    def choose_candidate(self, valid, box, state):
+        """Low-level choice among hard-mask-valid candidates (DBLF or planner)."""
+        if not valid:
+            return None
+        if getattr(self.placer, "wants_context", False):
+            return self.placer(valid, box, state, self.backend())
+        return self.placer(valid)
 
     def options(self):
         """Option per learned action slot (cached per world version)."""

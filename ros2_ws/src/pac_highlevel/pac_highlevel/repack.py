@@ -74,7 +74,7 @@ def plan_repack(world):
                 state = world.state(list(new_placed))
                 cset = world.backend().candidate_set(current, state)
                 if cset.valid and gain - cost >= cfg.min_gain:
-                    chosen = world.placer(list(cset.valid))
+                    chosen = world.choose_candidate(list(cset.valid), current, state)
                     if chosen is not None and world.backend().validate_constraints(
                         current, chosen, state
                     ).success:
