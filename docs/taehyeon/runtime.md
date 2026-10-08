@@ -120,6 +120,31 @@ test 9 시나리오(학습에 안 쓴 것), 박스 80개씩, 4단계 Rule, 5단�
 - 그리퍼를 작게 하면 거부가 337건으로 줄고 팔레트가 약간 줄었습니다(5.11). 9 시나리오로는 차이가 유의하지 않습니다.
 - **놓기 오차는 5-②의 여유(박스 사이 4 mm, 가장자리 2 mm) 안에 있어야 합니다.** 3 mm로 키우면 적재의 7 %가 팔레트 밖 돌출(L4)이 되고, HOLD 때문에 시간이 55 % 늘었습니다. 실제 로봇의 놓기 정확도를 측정해 5-② `lateral_clearance_m` / `size_tolerance_m`을 맞춰야 합니다.
 
+### 물리 재현 (`reports/runtime_physics.json`)
+
+기본 조건으로 만든 팔레트를 재성 님 PyBullet 시뮬레이터에서 **실제 크기·실제 자세로 놓인 순서대로 한 박스씩** 다시 쌓았습니다.
+박스마다 0.5 s, 마지막에 2 s를 시뮬레이션하고, 어느 박스든 1 cm 넘게 움직이거나 2° 넘게 기울면 실패로 봅니다(5-② 물리 교차 검증과 같은 기준).
+
+| 대상 | 결과 |
+|---|---|
+| test 9 시나리오의 팔레트 47개, 박스 667개 | **47/47 안정**, 가장 크게 움직인 박스 3.8 mm |
+
+```bash
+python tools/runtime/scripts/physics_replay.py --dataset tools/highlevel/output/dataset80 --split test \
+    --report docs/taehyeon/reports/runtime_physics.json
+```
+
+### 3D로 보기
+
+재성 님(또는 pac2026-ahead) 라이브 시뮬레이터를 띄운 뒤 `--live`로 팔레트 하나를 보내면 브라우저에서 한 박스씩 쌓이는 모습을 볼 수 있습니다.
+시뮬레이터의 팔레트 크기를 보낼 팔레트와 맞춰야 합니다(시나리오마다 1.2 × 1.0 / 1.1 × 1.1 / 1.2 × 0.8 m).
+
+```bash
+python3 scripts/run_ahead_simulator.py --no-browser          # 시뮬레이터 쪽, 브라우저로 http://127.0.0.1:4173
+python tools/runtime/scripts/physics_replay.py --dataset tools/highlevel/output/dataset80 --split test \
+    --scenarios 1 --live http://127.0.0.1:4173 --live-pallet 0
+```
+
 ## 4. 한계
 
 - 1단계와 7단계의 설비는 가상입니다. 확률·허용오차는 가정값이며 `config/taehyeon/runtime.yaml`에 모았습니다.

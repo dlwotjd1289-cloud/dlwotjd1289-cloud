@@ -66,7 +66,9 @@ class RuntimeLoop:
                 vol = sum(tb.size.x * tb.size.y * tb.size.z for tb in true_stack)
                 pallets.append({"pallet_id": sm.pallet_id, "boxes": len(true_stack),
                                 "fill_true": vol / (cell.pallet_size.x * cell.pallet_size.y * cell.pallet_size.z),
+                                "pallet_size": [cell.pallet_size.x, cell.pallet_size.y, cell.pallet_size.z],
                                 "layout": [{"box_id": tb.box_id, "size": [tb.size.x, tb.size.y, tb.size.z],
+                                            "mass_kg": truth[tb.box_id].truth.weight_kg if tb.box_id in truth else None,
                                             "pose": [tb.pose.x, tb.pose.y, tb.pose.z, tb.pose.yaw]}
                                            for tb in true_stack]})
 
