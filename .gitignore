@@ -32,3 +32,8 @@ external/visualizers/3D-bin-packing-visualization/
 
 # AHEAD live simulator (physics branch)
 *.py[cod]
+
+# Local run outputs (datasets, planner/robot logs)
+runs/
+logs/*
+!logs/.gitkeep

@@ -21,10 +21,10 @@ from pac_common import (
     SystemState,
 )
 
-from .config import SCENARIO_FAMILIES, SkuSpec, load_sku_catalog, validate_config
+from .config import SCENARIO_FAMILIES, SkuSpec, load_sku_catalog, resolve_pallet, validate_config
 from .serialization import to_primitive, write_json, write_jsonl
 
-GENERATOR_VERSION = "1.2.0"
+GENERATOR_VERSION = "1.3.0"
 HALF_PI = 1.5707963267948966
 
 WEIGHT_BANDS_KG = (
@@ -395,13 +395,14 @@ def _initial_state(
     cfg: dict[str, Any],
     boxes: list[GeneratedBox],
 ) -> SystemState:
-    pallet_cfg = cfg["pallet"]
+    pallet_cfg = resolve_pallet(cfg)
     pallet = PalletState(
         pallet_id=str(pallet_cfg["pallet_id"]),
         size=Size3D(
-            x=float(pallet_cfg["x_m"]),
-            y=float(pallet_cfg["y_m"]),
-            z=float(pallet_cfg["physical_height_m"]),
+            x=float(pallet_cfg["size_x_m"]),
+            y=float(pallet_cfg["size_y_m"]),
+            # Cargo height above the deck, not the wood thickness.
+            z=float(pallet_cfg["max_stack_height_m"]),
         ),
         boxes=(),
     )
@@ -434,8 +435,11 @@ def _scenario_definition(
         "seed": seed,
         "initial_system_state": _initial_state(cfg, boxes),
         "constraints": {
-            "max_height_m": float(cfg["pallet"]["max_height_m"]),
-            "max_load_kg": cfg["pallet"].get("max_load_kg"),
+            # Explicit references so consumers never guess what 1.5 m means.
+            "max_stack_height_m": float(resolve_pallet(cfg)["max_stack_height_m"]),
+            "height_reference": "above_deck",
+            "deck_height_m": float(resolve_pallet(cfg)["deck_height_m"]),
+            "max_load_kg": float(resolve_pallet(cfg)["max_load_kg"]),
         },
         "planner_contract_note": (
             "This file intentionally contains no exact future arrival order. "

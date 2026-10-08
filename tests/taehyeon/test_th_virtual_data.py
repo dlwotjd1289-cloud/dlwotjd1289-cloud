@@ -10,6 +10,10 @@ from virtual_data import load_virtual_config, virtual_config_from_dict
 from virtual_data.pipeline import generate
 from virtual_data.scenario_source import build_catalog, load_dataset, stack_height_limit
 from virtual_data.validation import validate_output
+from pac_common.config import load_common_config
+
+# Cargo height above the deck: single source in config/default.yaml.
+STACK_H = load_common_config().pallet.max_stack_height_m
 
 FIXTURE = Path(__file__).parent / "fixtures" / "ahead_sample"
 
@@ -30,7 +34,7 @@ def test_dataset_loading_and_catalog():
     assert len(spec.arrivals) == 24
     assert [b.box_id for b in spec.arrivals] == sorted(b.box_id for b in spec.arrivals)
     vcfg = virtual_config_from_dict({})
-    assert stack_height_limit(spec, vcfg) == pytest.approx(1.35)
+    assert stack_height_limit(spec, vcfg) == pytest.approx(STACK_H)
     catalog = build_catalog(ds.sku_ranges, vcfg, CandidateConfig().constraints.load_model)
     assert set(catalog) == set(ds.sku_ranges)
     for spec_ in catalog.values():
@@ -52,7 +56,7 @@ def test_scene_is_donghan_compatible(run_dir):
     state = state_from_json(data["state"])
     context_from_json(data["context"])
     assert data["current_box_id"] in state.inventory.tracked_boxes
-    assert state.pallet.size.z == pytest.approx(1.35)
+    assert state.pallet.size.z == pytest.approx(STACK_H)
     # step 10: 11 boxes arrived (incl. the current one) -> 13 unseen remain;
     # the current box and placed boxes are never counted as unseen.
     assert sum(state.inventory.remaining_by_sku.values()) == 24 - 11

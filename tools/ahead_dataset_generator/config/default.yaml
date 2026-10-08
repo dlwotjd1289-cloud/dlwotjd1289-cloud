@@ -13,13 +13,12 @@ parcel_domain:
     dataset scope, not a robot payload limit.
 
 pallet:
-  pallet_id: P001
+  # Footprint, deck height, cargo height and load limit come from the team
+  # config (repo config/default.yaml, pac_common.config). Add explicit keys
+  # here (pallet_id, size_x_m, size_y_m, deck_height_m, max_stack_height_m,
+  # max_load_kg) only to override them for an experiment.
+  source: common
   standard_name: T11
-  x_m: 1.1
-  y_m: 1.1
-  physical_height_m: 0.15
-  max_height_m: 1.5
-  max_load_kg: null
 
 sku_catalog:
   - sku_id: K01

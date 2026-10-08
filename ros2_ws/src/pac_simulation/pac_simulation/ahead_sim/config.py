@@ -8,10 +8,30 @@ import yaml
 from .models import PalletConfig, PhysicsConfig, SimulatorConfig
 
 
+def _common_pallet() -> Dict[str, float]:
+    """Footprint / deck / cargo height from the team config (config/default.yaml).
+
+    max_height_m here is cargo height above the deck top (z = 0 in Bullet),
+    the same value as PalletState.size.z. Values written in
+    ahead_simulator.yaml still override for experiments.
+    """
+    try:
+        from pac_common.config import load_common_config
+    except ImportError:
+        return {}
+    spec = load_common_config().pallet
+    return {
+        "length_m": spec.size_x_m,
+        "width_m": spec.size_y_m,
+        "deck_height_m": spec.deck_height_m,
+        "max_height_m": spec.max_stack_height_m,
+    }
+
+
 def load_config(path: Path) -> Tuple[SimulatorConfig, Dict[str, Any]]:
     raw = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
 
-    p = raw.get("pallet", {})
+    p = {**_common_pallet(), **raw.get("pallet", {})}
     ph = raw.get("physics", {})
     m = raw.get("metrics", {})
 

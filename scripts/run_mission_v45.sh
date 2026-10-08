@@ -2,10 +2,6 @@
 # V4.5 harness: V4.3 weighing -> team planner (pac-mission1-shared) -> HDR50-22 places
 # the box at the planner's ranked candidate -> ExecutionResult JSON for the State Manager.
 # Requires Gazebo started with: ros2 launch pac_bringup hdr50_workcell_v4_4_pick.launch.py
-#
-# Team code location (defaults shown):
-#   PAC_PLANNER_ROOT=~/AHEAD/team_checkouts/planner/pac-mission1-shared  (feature/donghan-placement-planner)
-#   PAC_TEAM_ROOT=~/AHEAD/team_checkouts/candidates                      (claude/pensive-pasteur-dwbu3g)
 set -eo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 source /opt/ros/humble/setup.bash
@@ -31,8 +27,7 @@ MEASURED_KG="$(python3 -c 'import sys; sys.path.insert(0, sys.argv[1]); import m
 echo ">>> 계량값 ${MEASURED_KG} kg 을 BoxState.weight_kg 로 사용"
 
 echo ">>> ===== 2단계: 적재 위치 계획 (태현 후보 + 동한 순위) ====="
-# The ROS overlay puts this scaffold's pac_common on PYTHONPATH; the planner needs the shared one.
-env -u PYTHONPATH python3 -u "$ROOT/scripts/plan_placement_v45.py" \
+python3 -u "$ROOT/scripts/plan_placement_v45.py" \
   --measured-kg "$MEASURED_KG" --out "$RUN_DIR/placement.json"
 
 echo ">>> ===== 3단계: 로봇 Pick & Place (계획 위치) ====="

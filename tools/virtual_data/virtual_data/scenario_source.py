@@ -144,6 +144,7 @@ def load_dataset(dataset_dir):
         events = sorted(truth["arrival_events"], key=lambda e: e["arrival_index"])
         pallet = planner_safe["initial_system_state"]["pallet"]
         constraints = planner_safe.get("constraints", {})
+        deck_m, total_m = _pallet_heights(pallet, constraints)
         scenarios.append(
             ScenarioSpec(
                 scenario_id=planner_safe["scenario_id"],
@@ -151,13 +152,31 @@ def load_dataset(dataset_dir):
                 seed=int(planner_safe["seed"]),
                 pallet_id=pallet["pallet_id"],
                 pallet_xy=(float(pallet["size"]["x"]), float(pallet["size"]["y"])),
-                pallet_deck_m=float(pallet["size"]["z"]),
-                max_height_m=float(constraints.get("max_height_m", 1.5)),
+                pallet_deck_m=deck_m,
+                max_height_m=total_m,
                 max_load_kg=constraints.get("max_load_kg"),
                 arrivals=tuple(box_from_json(e["box_state"]) for e in events),
             )
         )
     return Dataset(root, tuple(scenarios), load_sku_ranges(root), splits, manifest)
+
+
+def _pallet_heights(pallet, constraints):
+    """(deck height, floor-to-top height limit) in m.
+
+    Team decision 2026-10-08 (common standard v0.3): the pallet height limit
+    is cargo height ABOVE the deck. Generator >= 1.3 states it explicitly
+    (height_reference=above_deck); older datasets put the deck thickness in
+    pallet.size.z and the limit in max_height_m, read with the same meaning.
+    The floor-referenced total keeps stack_height_limit() unchanged.
+    """
+    if constraints.get("height_reference") == "above_deck":
+        deck = float(constraints["deck_height_m"])
+        stack = float(constraints["max_stack_height_m"])
+    else:
+        deck = float(pallet["size"]["z"])
+        stack = float(constraints.get("max_height_m", 1.5))
+    return deck, deck + stack
 
 
 def stack_height_limit(spec, config):

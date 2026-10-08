@@ -1,12 +1,11 @@
 """V4.5 bridge between the Gazebo workcell (V4.3 weighing, V4.4 robot) and the
-team planning pipeline in pac-mission1-shared (Taehyeon candidates + Donghan ranking).
+team planning pipeline (Taehyeon candidates + Donghan ranking).
 
-JSON-only on purpose: the shared repo and this scaffold both ship a package named
-`pac_common` with different contents, so this module never imports either one.
-The planner runs in its own process (plan_placement_v45.py) and exchanges
-plain(SystemState) / plain(PlanningContext) / plain(PlanResult) JSON.
+Plain-JSON helpers (plain(SystemState) / plain(PlanningContext) / plain(PlanningResult))
+so the ROS robot node and the planner process exchange files without sharing
+Python objects.
 
-Planner convention (shared docs/integration.md): target_pose is in frame
+Planner convention (common standard v0.3, section 14): target_pose is in frame
 "pallet", xyz is the lower x/y/z corner of the box AABB after yaw, z=0 is the
 pallet deck top. The robot uses box centres in the Gazebo world frame.
 """
@@ -22,19 +21,35 @@ SCHEMA = "pac-common-v0.2+planning-v1"
 
 @dataclass(frozen=True)
 class GazeboPallet:
-    """pallet_main in ahead_workcell_v4_2_physical_scale.sdf (deck top, not wood centre).
+    """Pallet deck in a world frame: top centre, yaw, footprint, cargo height.
 
-    Team footprint 1100 x 1100 mm (generator / Bullet simulator); the Gazebo top
-    boards span 1.100 x 1.098 m, deck top z = 0.15 m. Stack height 1.35 m above the
-    deck = generator max_height_m 1.5 incl. 0.15 m deck (Taehyeon, 2026-10-07).
-    Note config/workcell.yaml still holds the older (1.35, -1.00) / 1.2 x 1.0 layout.
+    Build it with gazebo_pallet(): footprint / cargo height come from the team
+    config (config/default.yaml) and the position from config/workcell.yaml
+    (pallet_main in the V4.2 world, deck top z = 0.15 m).
     """
 
-    top_center_world: tuple = (0.0, 1.20, 0.15)
+    top_center_world: tuple
+    size_xy: tuple
+    max_stack_height_m: float
     yaw: float = 0.0
-    size_xy: tuple = (1.10, 1.10)
-    max_stack_height_m: float = 1.35
-    pallet_id: str = "PALLET_MAIN"
+    pallet_id: str = "P001"
+
+
+def gazebo_pallet(top_center_world=None) -> GazeboPallet:
+    """Workcell pallet from the shared config; top_center_world overrides the position
+    (e.g. (0, 0, 0) for the standalone Bullet simulator whose deck top is the origin)."""
+    from pac_common.config import load_common_config
+
+    common = load_common_config()
+    spec = common.pallet
+    if top_center_world is None:
+        import yaml
+
+        layout = yaml.safe_load((common.path.parent / "workcell.yaml").read_text(encoding="utf-8"))["layout"]
+        cx, cy, cz = layout["pallet"]["center_world_m"]
+        top_center_world = (cx, cy, cz + spec.deck_height_m / 2)
+    return GazeboPallet(tuple(top_center_world), (spec.size_x_m, spec.size_y_m),
+                        spec.max_stack_height_m, pallet_id=spec.pallet_id)
 
 
 def parse_scale_pass(text: str) -> float:
@@ -51,7 +66,7 @@ def _pose(frame, x, y, z, yaw=0.0):
 
 def build_planning_request(*, box_id: str, sku_id: str, size_m: Sequence[float], measured_kg: float,
                            pick_center_world: Sequence[float], state_version: int, stamp_sec: float,
-                           pallet: GazeboPallet = GazeboPallet(), placed_boxes: Sequence[dict] = (),
+                           pallet: Optional[GazeboPallet] = None, placed_boxes: Sequence[dict] = (),
                            remaining_by_sku: Optional[dict] = None, nominal_kg: Optional[float] = None,
                            top_load_capacity_n: float, pallet_max_weight_kg: float,
                            allowed_yaws_rad: Sequence[float] = (0.0, math.pi / 2)) -> tuple[dict, dict]:
@@ -61,6 +76,7 @@ def build_planning_request(*, box_id: str, sku_id: str, size_m: Sequence[float],
     top_load_capacity_n / pallet_max_weight_kg come from the team config
     (plan_placement_v45.team_limits), never hard-coded here.
     """
+    pallet = pallet or gazebo_pallet()
     if measured_kg <= 0:
         raise ValueError("measured mass must be positive")
     size = {"x": float(size_m[0]), "y": float(size_m[1]), "z": float(size_m[2])}
@@ -102,8 +118,9 @@ def rotated_dims(size_m: Sequence[float], yaw: float) -> tuple[float, float, flo
 
 
 def candidate_to_world(target_pose: dict, size_m: Sequence[float],
-                       pallet: GazeboPallet = GazeboPallet()) -> tuple[float, float, float, float]:
+                       pallet: Optional[GazeboPallet] = None) -> tuple[float, float, float, float]:
     """Planner lower-corner pose (frame 'pallet') -> box centre (x, y, z, yaw) in Gazebo world."""
+    pallet = pallet or gazebo_pallet()
     if target_pose["frame_id"] != "pallet":
         raise ValueError("Expected a pallet-frame candidate")
     if abs(target_pose.get("roll", 0.0)) > 1e-8 or abs(target_pose.get("pitch", 0.0)) > 1e-8:
@@ -118,12 +135,13 @@ def candidate_to_world(target_pose: dict, size_m: Sequence[float],
 
 
 def world_to_pallet_corner(center_world: Sequence[float], yaw_world: float, size_m: Sequence[float],
-                           pallet: GazeboPallet = GazeboPallet()) -> dict:
+                           pallet: Optional[GazeboPallet] = None) -> dict:
     """Measured box centre -> planner lower-corner pose; inverse of candidate_to_world.
 
     yaw is snapped to the nearest 90 deg so the corner matches the AABB the
     planner reasons about; tilt is checked separately by the robot node.
     """
+    pallet = pallet or gazebo_pallet()
     yaw = wrap_pi(yaw_world - pallet.yaw)
     yaw = round(yaw / (math.pi / 2)) * (math.pi / 2)
     yaw = 0.0 if abs(yaw) < 1e-9 else yaw

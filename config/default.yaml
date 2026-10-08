@@ -1,4 +1,21 @@
 schema_version: 1
+# Team common contract config (common standard sections 19 and 26).
+# Change a shared value HERE ONLY; every module reads it through
+# pac_common.config.load_common_config(). tests/test_config_consistency.py
+# fails if a simulator/workcell file drifts from these values.
+
+pallet:
+  pallet_id: P001
+  size_x_m: 1.10              # usable deck footprint (T11)
+  size_y_m: 1.10
+  deck_height_m: 0.15         # physical pallet wood height; deck top is z = 0 of frame "pallet"
+  max_stack_height_m: 1.50    # cargo height ABOVE the deck top (= PalletState.size.z)
+  max_load_kg: 1000.0         # total cargo mass limit
+
+constraint:
+  min_support_ratio: 0.70
+
+# Placement planner 5-3..5-6 (Donghan). Read by pac_planning.config.load_config.
 planning:
   top_k: 4
   scenario_count: 7
@@ -21,3 +38,7 @@ planning:
     future: 0.40
     risk: 0.10
     time: 0.05
+
+logging:
+  format: jsonl
+  directory: logs

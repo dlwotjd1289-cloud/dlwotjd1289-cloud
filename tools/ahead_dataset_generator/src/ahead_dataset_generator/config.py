@@ -91,10 +91,7 @@ def validate_config(cfg: dict[str, Any]) -> None:
     if min(max_weight, max_sum, max_side) <= 0.0:
         raise ValueError("parcel-domain limits must be positive")
 
-    pallet = cfg["pallet"]
-    for key in ("x_m", "y_m", "physical_height_m", "max_height_m"):
-        if float(pallet[key]) <= 0.0:
-            raise ValueError(f"pallet.{key} must be positive")
+    resolve_pallet(cfg)  # raises on missing / invalid pallet values
 
     catalog = load_sku_catalog(cfg)
     if not catalog:
@@ -144,3 +141,33 @@ def validate_config(cfg: dict[str, Any]) -> None:
     ]
     if min(ratios) < 0.0 or abs(sum(ratios) - 1.0) > 1e-12:
         raise ValueError("train/val/test ratios must be non-negative and sum to 1")
+
+
+PALLET_KEYS = ("pallet_id", "size_x_m", "size_y_m", "deck_height_m",
+               "max_stack_height_m", "max_load_kg")
+
+
+def resolve_pallet(cfg: dict[str, Any]) -> dict[str, Any]:
+    """Pallet values: team config (pac_common.config) + explicit overrides.
+
+    max_stack_height_m is the cargo height ABOVE the deck top and becomes
+    PalletState.size.z (team decision 2026-10-08, common standard v0.3).
+    """
+    from pac_common.config import load_common_config
+
+    raw = dict(cfg["pallet"])
+    if raw.get("source", "common") == "common":
+        spec = load_common_config().pallet
+        merged = {key: getattr(spec, key) for key in PALLET_KEYS}
+    else:
+        merged = {}
+    merged.update({key: raw[key] for key in PALLET_KEYS if key in raw})
+    missing = [key for key in PALLET_KEYS if key not in merged]
+    if missing:
+        raise ValueError(f"pallet config missing: {missing}")
+    for key in PALLET_KEYS[1:]:
+        if float(merged[key]) <= 0.0:
+            raise ValueError(f"pallet.{key} must be positive")
+    merged["standard_name"] = raw.get("standard_name")
+    return merged
+

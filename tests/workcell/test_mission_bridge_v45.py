@@ -12,7 +12,7 @@ from pick_place_plan_v45 import plan_pick_place_yaw
 
 BOX = (0.40, 0.30, 0.25)
 PICK = (-1.06, 1.20, 1.02)
-P = MB.GazeboPallet()
+P = MB.gazebo_pallet()        # config/default.yaml + config/workcell.yaml
 
 
 def corner(x, y, z=0.0, yaw=0.0):
@@ -20,6 +20,10 @@ def corner(x, y, z=0.0, yaw=0.0):
 
 
 class TestFrames(unittest.TestCase):
+    def test_pallet_from_shared_config(self):
+        self.assertEqual(P.top_center_world, (0.0, 1.20, 0.15))   # V4.2 pallet_main deck top
+        self.assertEqual(P.size_xy, (1.10, 1.10))
+
     def test_origin_corner_maps_to_pallet_corner(self):
         x, y, z, yaw = MB.candidate_to_world(corner(0.0, 0.0), BOX, P)
         self.assertAlmostEqual(x, -0.55 + 0.20)
@@ -65,7 +69,8 @@ class TestBridge(unittest.TestCase):
         self.assertEqual(box["status"], "READY_FOR_PICK")
         self.assertEqual(ctx["catalog"]["S"]["weight_kg"], 5.0)
         self.assertEqual(state["state_version"], 3)
-        self.assertEqual(state["pallet"]["size"], {"x": 1.10, "y": 1.10, "z": 1.35})
+        self.assertEqual(state["pallet"]["size"], {"x": P.size_xy[0], "y": P.size_xy[1],
+                                                   "z": P.max_stack_height_m})
 
     def test_yaw_delta_short_turn(self):
         self.assertAlmostEqual(MB.gripper_yaw_delta(math.pi / 2, 0.0), math.pi / 2)

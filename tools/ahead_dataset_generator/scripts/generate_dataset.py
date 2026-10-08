@@ -5,6 +5,8 @@ import sys
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
+# Team pac_common (monorepo ros2_ws/src) when not already on PYTHONPATH.
+sys.path.append(str(PROJECT_ROOT.parents[1] / "ros2_ws" / "src" / "pac_common"))
 
 from ahead_dataset_generator.config import load_yaml
 from ahead_dataset_generator.generator import generate_dataset

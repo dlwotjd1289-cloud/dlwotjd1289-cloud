@@ -1,8 +1,7 @@
 pallet:
-  length_m: 1.10
-  width_m: 1.10
-  deck_height_m: 0.15
-  max_height_m: 1.60
+  # length_m / width_m / deck_height_m / max_height_m (cargo height above the
+  # deck) come from config/default.yaml `pallet:`; add them here only to
+  # override for an experiment.
 
   # Development collision geometry, not an official pallet specification.
   # Replace these values when the actual competition pallet geometry is known.

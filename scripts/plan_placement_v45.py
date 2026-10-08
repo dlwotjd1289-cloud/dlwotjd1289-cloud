@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""V4.5: ask the team planner (pac-mission1-shared) where to place the weighed box.
+"""V4.5: ask the team planner where to place the weighed box.
 
 Runs Taehyeon's CandidateBackend (5-1/5-2) + Donghan's PlacementPlanner (5-3..5-6)
 through Donghan's own `plan_request` entry point -- the same function behind the
@@ -7,18 +7,13 @@ through Donghan's own `plan_request` entry point -- the same function behind the
 world box centres for the robot node. Output is still PLANNED: the robot node
 validates IK per candidate and only an ExecutionResult reports what happened.
 
-Run WITHOUT this scaffold's ROS overlay on PYTHONPATH (the overlay contains a
-different `pac_common`); run_mission_v45.sh uses `env -u PYTHONPATH`.
-
-Environment:
-  PAC_PLANNER_ROOT  .../pac-mission1-shared (branch feature/donghan-placement-planner)
-  PAC_TEAM_ROOT     checkout of branch claude/pensive-pasteur-dwbu3g (pac_candidates)
+Limits: pallet footprint / cargo height / total mass from config/default.yaml,
+carton top load from Taehyeon's McKee model (config/taehyeon/candidates.yaml).
 """
 from __future__ import annotations
 
 import argparse
 import json
-import os
 import sys
 import time
 from pathlib import Path
@@ -27,37 +22,33 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import mission_bridge_v45 as MB  # noqa: E402
 
-DEFAULT_ROOT = Path.home() / "AHEAD" / "team_checkouts"
+ROOT = HERE.parent
+PACKAGES = ("pac_common", "pac_planning", "pac_candidates")
 
 
-def _team_paths():
-    planner = Path(os.environ.get("PAC_PLANNER_ROOT", DEFAULT_ROOT / "planner" / "pac-mission1-shared"))
-    team = Path(os.environ.get("PAC_TEAM_ROOT", DEFAULT_ROOT / "candidates"))
-    for p in (planner / "ros2_ws/src/pac_common", planner / "ros2_ws/src/pac_planning",
-              team / "ros2_ws/src/pac_candidates"):
-        if not p.is_dir():
-            raise SystemExit(f"ERROR: team package not found: {p} (set PAC_PLANNER_ROOT / PAC_TEAM_ROOT)")
-        sys.path.insert(0, str(p))
-    return planner, team
+def ensure_team_packages():
+    """Make the monorepo packages importable when not run from colcon/pytest."""
+    for name in reversed(PACKAGES):
+        path = str(ROOT / "ros2_ws" / "src" / name)
+        if path not in sys.path:
+            sys.path.insert(0, path)
 
 
-def team_limits(team_root: Path):
-    """Pallet total-mass limit and McKee top-load model from Taehyeon's candidates.yaml.
-
-    Same source the team's virtual-data pipeline uses (build_catalog), so the
-    Gazebo box and the Bullet multi-box check see identical limits.
-    """
+def team_limits():
+    """(candidate config, pallet max load kg, top-load function) from the team configs."""
+    ensure_team_packages()
     from pac_candidates import load_candidate_config
     from pac_candidates.loads import mckee_capacity_n
+    from pac_common.config import load_common_config
 
-    cfg = load_candidate_config(str(team_root / "config/taehyeon/candidates.yaml"))
+    cfg = load_candidate_config(str(ROOT / "config/taehyeon/candidates.yaml"))
     lm = cfg.constraints.load_model
 
     def top_load_n(size_m):
         return round(mckee_capacity_n(size_m[0], size_m[1], lm.ect_n_per_m, lm.board_thickness_m,
                                       lm.safety_factor), 3)
 
-    return cfg, cfg.constraints.default_pallet_max_weight_kg, top_load_n
+    return cfg, load_common_config().pallet.max_load_kg, top_load_n
 
 
 def main() -> int:
@@ -74,12 +65,11 @@ def main() -> int:
     ap.add_argument("--out", required=True, help="placement JSON for run_mission_v45.py")
     args = ap.parse_args()
 
-    planner_root, team_root = _team_paths()
+    cand_cfg, pallet_max_kg, top_load_n = team_limits()
     from pac_planning.config import load_config
     from pac_planning.planning_service import plan_request
 
     print(">>> [계획 1/2] 계량 결과로 상태 snapshot 생성 중...", flush=True)
-    cand_cfg, pallet_max_kg, top_load_n = team_limits(team_root)
     stamp = time.time()
     state, context = MB.build_planning_request(
         box_id=args.box_id, sku_id=args.sku_id, size_m=args.box_size, measured_kg=args.measured_kg,
@@ -92,7 +82,7 @@ def main() -> int:
     result = json.loads(plan_request(
         json.dumps(state), json.dumps(context), args.box_id, args.state_version,
         cand_cfg,
-        load_config(str(planner_root / "config/default.yaml")),
+        load_config(str(ROOT / "config/default.yaml")),
         seed=args.seed, use_time_budget=False,
     ))
     if not result["ranked"]:
@@ -111,7 +101,7 @@ def main() -> int:
     out = {
         "schema": "pac-v45-placement-1", "state_mode": result["state_mode"],
         "requires_robot_validation": True, "box_id": args.box_id, "box_size_m": list(args.box_size),
-        "measured_kg": args.measured_kg, "pallet": MB.GazeboPallet().__dict__,
+        "measured_kg": args.measured_kg, "pallet": MB.gazebo_pallet().__dict__,
         "placements": placements, "state": state, "context": context,
         "diagnostics": result["diagnostics"],
     }
