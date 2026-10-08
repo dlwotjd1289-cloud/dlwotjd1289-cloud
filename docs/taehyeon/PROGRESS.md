@@ -52,7 +52,17 @@ PR: https://github.com/yang8988/pac-mission1-shared/pull/1 (Draft, 브랜치 `cl
 - [x] 4번 PPO 학습·평가 리포트(`docs/taehyeon/reports/highlevel_*.json`) 및 highlevel.md 5장 결과
 - [x] 무거운-위-가벼운 `share` 전환, 5-② 하중 증분 버그 수정, 5-① 균형 기준점, 전체 검증 재실행
 - [x] sb3-contrib(PyTorch) 정책 학습·평가 → test 3.94 (Rule 3.91, NumPy PPO 3.86) → 기본 정책은 NumPy 판 유지
-- [ ] (선택) sb3 판 개선: VecNormalize, 300k+ 단계, 엔트로피 조정
+- [x] sb3 판 개선 코드: VecNormalize(관측 정규화, 통계를 정책 파일에 저장), 모방 lr 3e-4·20 epoch, BLAS 1스레드
+- [ ] (진행 중, 2026-10-08 07:10 UTC 시작) sb3 v2 학습 150k 단계 → test 비교 → 더 좋으면 기본 정책 교체
+  컨테이너가 회수되어 중단됐다면 다시 실행:
+  ```bash
+  python tools/highlevel/scripts/train_highlevel_sb3.py --run-generator 10 --steps 150000 --envs 4 \
+      --imitation-episodes 120 --learning-rate 0.0001 --entropy-coef 0.003 --output tools/highlevel/output/sb3_v2.zip
+  python tools/highlevel/scripts/evaluate_highlevel.py --run-generator 10 --split test --passes 3 \
+      --policies no_buffer greedy rule ppo sb3 --policy-file ros2_ws/src/pac_highlevel/models/highlevel_ppo.json \
+      --sb3-file tools/highlevel/output/sb3_v2.zip
+  ```
+  (`--run-generator 10`은 학습에 쓴 것과 같은 60개 시나리오를 다시 만듭니다.)
 
 ## 다음 할 일
 
