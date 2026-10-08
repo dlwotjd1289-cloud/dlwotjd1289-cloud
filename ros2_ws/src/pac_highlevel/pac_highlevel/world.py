@@ -320,7 +320,9 @@ class PalletizingWorld:
         return self.config.reward.volume_weight * box_volume(box.size) / self.pallet_volume
 
     def placeable_on_empty(self, box):
-        key = (box.size.x, box.size.y, box.size.z, round(box.weight_kg, 6), tuple(box.allowed_yaws_rad))
+        """NG test: can this box be placed on an empty pallet at all?"""
+        uncertain = box.box_id in self.uncertain
+        key = (box.size, round(box.weight_kg, 6), tuple(box.allowed_yaws_rad), uncertain)
         if key not in self._empty_ok:
             state = SystemState(
                 0,
@@ -328,7 +330,11 @@ class PalletizingWorld:
                 PalletState("EMPTY", self.pallet_size, ()),
                 InventoryState({box.box_id: box}, {}),
             )
-            ctx = PlanningContext(catalog=self.catalog, pallet_max_weight_kg=self.max_load)
+            ctx = PlanningContext(
+                catalog=self.catalog,
+                pallet_max_weight_kg=self.max_load,
+                uncertain_box_ids=(box.box_id,) if uncertain else (),
+            )
             cset = CandidateBackend(ctx, self.cand_config).candidate_set(box, state)
             self._empty_ok[key] = bool(cset.valid)
         return self._empty_ok[key]
