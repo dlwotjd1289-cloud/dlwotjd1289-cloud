@@ -9,8 +9,10 @@ setup(
     data_files=[
         ("share/ament_index/resource_index/packages", ["resource/" + package_name]),
         ("share/" + package_name, ["package.xml"]),
+        ("share/" + package_name + "/launch", ["launch/runtime.launch.py"]),
     ],
     install_requires=["setuptools", "PyYAML"],
+    entry_points={"console_scripts": ["runtime_node = pac_runtime.ros_node:main"]},
     zip_safe=True,
     maintainer="taehyeon",
     maintainer_email="taehyeon@example.com",

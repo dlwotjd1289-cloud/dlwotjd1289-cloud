@@ -208,3 +208,64 @@ def test_full_loop_places_everything_safely_and_handles_anomalies():
 
 def test_runtime_yaml_round_trip():
     assert load_runtime_config(REPO / "config/taehyeon/runtime.yaml") == RuntimeConfig()
+
+
+def test_core_event_api_like_a_real_cell():
+    """Drive RuntimeCore by hand: observation -> command -> measured result."""
+    from pac_runtime import ExecutionReport, RawObservation, RuntimeCore
+
+    hl = replace(HighLevelConfig(), buffer=replace(HighLevelConfig().buffer, slots=2))
+    core = RuntimeCore(_cell((), {"K": 2}), CandidateConfig(), hl, RuntimeConfig(), RobotFeasibility(),
+                       load_policy("rule", config=hl))
+    assert core.next_command().action == "WAIT"
+    obs = RawObservation("A", "K", 4.0, Size3D(0.4, 0.3, 0.2), 1.0, False, "top", 0.0)
+    assert core.on_observation(obs).kind == Anomaly.OK
+    cmd = core.next_command()
+    assert cmd.action == "PLACE_CURRENT" and cmd.box_id == "A"
+    assert cmd.robot["cycle_time_s"] > 0 and len(cmd.robot["q_place"]) == 6
+    p = cmd.candidate.target_pose
+    level = core.on_result(cmd, ExecutionReport(measured_pose=Pose3D("pallet", p.x + 0.003, p.y, p.z, yaw=p.yaw)))
+    assert level == "L0" and core.sm.snapshot().pallet.boxes[0].pose.x == pytest.approx(p.x + 0.003)
+    # second box: the top view reports a protrusion -> L4, HOLD, box recorded at the planned pose
+    core.on_observation(RawObservation("B", "K", 4.0, Size3D(0.4, 0.3, 0.2), 1.0, False, "top", 1.0))
+    cmd = core.next_command()
+    t0 = core.sm.t
+    assert core.on_result(cmd, ExecutionReport(measured_pose=cmd.candidate.target_pose,
+                                               issues=("PROTRUSION",))) == "L4"
+    assert core.sm.t - t0 == pytest.approx(RuntimeConfig().supervisor.operator_time_s)
+    assert core.supervisor.log[-2]["to"] == "HOLD"
+    # unreadable label and no base view -> inspection, order list keeps the box for MISSING
+    core.on_observation(RawObservation("C", None, 4.0, Size3D(0.4, 0.3, 0.2), 1.0, False, "top", 2.0))
+    assert core.inspection[-1] == {"box_id": "C", "reason": "RECOGNITION_FAIL", "stage": 2}
+    assert core.on_conveyor_idle(60.0) == Counter() and not core.has_work()
+
+
+def test_order_file_and_ros_bridge_messages():
+    import json
+
+    from pac_runtime import RuntimeCore
+    from pac_runtime.order import cell_from_order, load_order
+    from pac_runtime.ros_node import CoreBridge
+
+    cell = load_order(REPO / "config/taehyeon/example_order.json", CandidateConfig())
+    assert cell.pallet_size.z == pytest.approx(1.35) and sum(cell.expected_by_sku.values()) > 0
+    sku, spec = next(iter(cell.catalog.items()))
+    assert spec.top_load_capacity_n > 0 and cell.weight_ranges[sku][0] <= spec.weight_kg
+    order = {"pallet": {"size_m": [1.2, 1.0, 1.35], "id_prefix": "R"},
+             "skus": {"K": {"size_m": [0.4, 0.3, 0.2], "weight_kg": [2.0, 6.0], "count": 2}}}
+    hl = replace(HighLevelConfig(), buffer=replace(HighLevelConfig().buffer, slots=2))
+    bridge = CoreBridge(RuntimeCore(cell_from_order(order, CandidateConfig()), CandidateConfig(), hl,
+                                    RuntimeConfig(), RobotFeasibility(), load_policy("rule", config=hl)))
+    obs = {"box_id": "A", "label_sku": "K", "weight_kg": 4.0, "size_m": [0.4, 0.3, 0.2]}
+    verdict, cmd = bridge.on_observation(json.dumps(obs))
+    assert verdict.kind == Anomaly.OK and cmd["action"] == "PLACE_CURRENT"
+    x, y, z, yaw = cmd["target_min_corner"]
+    cx, cy, cz, _ = cmd["target_center"]
+    assert cz == pytest.approx(z + 0.1) and len(cmd["robot"]["q_place"]) == 6
+    with pytest.raises(ValueError):
+        bridge.on_result(json.dumps({"state_version": cmd["state_version"] + 5}))
+    level, nxt = bridge.on_result(json.dumps({"state_version": cmd["state_version"], "ok": True,
+                                              "measured_pose": [x, y, z, yaw]}))
+    assert level == "L0" and nxt is None and bridge.status()["placed"] == 1
+    missing, _ = bridge.on_idle(json.dumps({"idle_s": 60}))
+    assert missing == {"K": 1}
