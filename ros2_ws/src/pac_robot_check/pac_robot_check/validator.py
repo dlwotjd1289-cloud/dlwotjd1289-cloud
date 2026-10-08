@@ -181,6 +181,19 @@ class RobotFeasibility:
             self._pick_q[key] = ik(target, self.cfg.gripper.tcp_offset_m, seeds=[_j1_seed(target), HOME])
         return self._pick_q[key]
 
+    def pick_path(self, box_height):
+        """(q above the pick point, q at the pick point) for a box of this
+        height lying on the conveyor; None where unreachable."""
+        px, py, pz = self.cfg.cell.pick_point_base_m
+        tcp = self.cfg.gripper.tcp_offset_m
+        top = pz + box_height
+        up = ik(transform(DOWN, (px, py, top + self.cfg.motion.approach_clearance_m)), tcp,
+                seeds=[_j1_seed(transform(DOWN, (px, py, top))), HOME])
+        if up is None:
+            return None, None
+        down = ik(transform(DOWN, (px, py, top)), tcp, seeds=[up])
+        return up, down
+
     def cycle_time(self, box, q_place_top, q_pick=None):
         """Estimated pick-and-place cycle (s): two vertical moves at each end,
         a joint-space transfer each way and the grip / release times."""
