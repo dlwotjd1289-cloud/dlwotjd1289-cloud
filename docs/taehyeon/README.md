@@ -27,7 +27,7 @@ python3.10 -m venv .venv && . .venv/bin/activate          # 또는 uv venv --pyt
 pip install "numpy>=1.23,<3" "PyYAML>=6,<7" "pytest>=7,<9"
 pip install "pybullet>=3.2.6,<4" "networkx>=2.8,<4"       # 물리 교차 검증을 돌릴 때만
 scripts/taehyeon/fetch_team_deps.sh                          # 팀원 코드를 .deps/team 에 읽기 전용으로 추출
-python -m pytest -q tests/taehyeon                           # 162 passed (PyTorch 없으면 1 skipped)
+python -m pytest -q tests/taehyeon                           # 172 passed (PyTorch 없으면 1 skipped)
 scripts/taehyeon/run_validation.sh                           # 모든 검증 리포트 재생성 (약 6~11분, 머신에 따라 다름)
 ```
 
@@ -63,7 +63,7 @@ print(cset.summary(), dict(cset.reason_counts))
 | `tools/virtual_data/` | 가상데이터 생성기, 2D 시각화, 오라클·물리·planner·박스 강도 벤치마크 스크립트 |
 | `config/taehyeon/candidates.yaml` | 5-①/5-② 설정 (모든 기본값의 근거는 [algorithms.md](algorithms.md)) |
 | `config/taehyeon/virtual_data.yaml` | 가상데이터 설정 |
-| `tests/taehyeon/` | 162개 테스트 (단위, brute-force 오라클, planner 통합, 가상데이터, 박스 강도, 시각화, 4번 High-level) |
+| `tests/taehyeon/` | 172개 테스트 (단위, brute-force 오라클, planner 통합, 가상데이터, 박스 강도, 시각화, 4번 High-level) |
 | `scripts/taehyeon/` | 팀 코드 추출, 경로 탐색, 전체 검증 스크립트 |
 | `docs/taehyeon/` | 이 문서들 + `reports/` 검증 결과 |
 
