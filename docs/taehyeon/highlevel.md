@@ -120,6 +120,7 @@ PyTorch가 없으면 `sb3` 관련 테스트는 건너뛰고 NumPy 판(`train_hig
 
 데이터: 재성 님 제너레이터 `sample` 모드, 패밀리당 10개 × 80박스 = 60 시나리오(train 42 / val 9 / test 9). 버퍼 4칸, 채움률 30 % 이상이면 버퍼 대신 마감, 파손 검출 박스는 위에 쌓지 않음.
 학습(NumPy): Rule 정책 120 에피소드 모방(정확도 91 %) → MaskablePPO 60k 단계(lr 1e-4, 엔트로피 0.003, 4 프로세스, 약 20분).
+학습(sb3-contrib, PyTorch): 같은 모방(정확도 95 %) → MaskablePPO 150k 단계(약 1,400 에피소드, VecNormalize, 4 환경, 약 1.6시간). `models/highlevel_sb3.zip`.
 평가: 같은 박스 흐름·노이즈·팔레트 규격으로 정책끼리 짝지어 비교, 결정적(deterministic) 정책. 유의성은 짝지은 차이의 부호 검정입니다.
 
 **test (학습에 쓰지 않은 9 시나리오 × 3회 = 27 에피소드, 위치는 DBLF, `reports/highlevel_eval_test.json`)**
@@ -130,7 +131,7 @@ PyTorch가 없으면 `sb3` 관련 테스트는 건너뛰고 NumPy 판(`train_hig
 | Greedy + 버퍼 | 4.62 | 5.44 | 22.8 % | 986 s | 0 | 0 |
 | **Rule (1차, 현재 권장 기본값)** | **4.09** | **4.93** | **25.2 %** | 1141 s | 0 | 0 |
 | MaskablePPO (NumPy) | 4.25 | 5.07 | 24.4 % | 1174 s | 0 | 0 |
-| MaskablePPO (sb3-contrib, VecNormalize) | (학습 중) | | | | | |
+| MaskablePPO (sb3-contrib, VecNormalize) | 4.23 | 5.07 | 24.5 % | 1176 s | 0 | 0 |
 
 **동한 님 planner로 위치를 정한 경우** (test 4 시나리오, 1 에피소드 약 2분, `reports/highlevel_eval_donghan_placer.json`)
 
@@ -142,8 +143,9 @@ PyTorch가 없으면 `sb3` 관련 테스트는 건너뛰고 NumPy 판(`train_hig
 **해석 (정직한 결론)**
 - **확실한 효과**: 버퍼(버퍼 없음 → Greedy, 27개 중 24개 개선, p < 0.001)와 Rule의 버퍼 운용(Greedy → Rule, 21개 개선, p = 0.006). 버퍼 없음 대비 Rule은 팔레트 약 1.3개(25 %) 절약.
 - **PPO는 아직 Rule보다 낫지 않습니다**: PPO − Rule = +0.16 팔레트(7 개선 / 6 같음 / 14 악화, p = 0.19, 유의하지 않음). 동한 님 planner로 위치를 정해도 같은 경향(+0.18)입니다.
+  sb3-contrib 판도 같습니다: sb3 − Rule = +0.14 팔레트(10 개선 / 3 같음 / 14 악화, p = 0.54). 학습 중 팔레트 수는 4.57 → 4.30으로 조금 줄었지만 Rule(4.09)에는 못 미칩니다.
   리뷰 수정 전 세계에서는 PPO가 −0.05였지만 그것도 유의하지 않았습니다(p = 0.21).
-- 원인: 학습 곡선이 평평합니다(학습 에피소드의 팔레트 수가 4.0~4.7을 오가고 엔트로피 변화 없음). 에피소드마다 난이도 차이가 커서 60k 단계(약 540 에피소드)로는 Rule을 넘는 신호가 부족합니다.
+- 원인: 학습 곡선이 거의 평평합니다(NumPy 판은 4.0~4.7을 오가고, sb3 판은 150k 단계에서 4.57 → 4.30). 에피소드마다 난이도 차이가 커서 수백~1,400 에피소드로는 Rule을 넘는 신호가 부족합니다.
 - 그래서 **실제 배치 기본값은 Rule**(`load_policy("rule")`, `HighLevelDecider`의 기본값)로 두고, PPO 정책 파일과 학습 파이프라인은 그대로 유지합니다. 흐름도의 "1차: Rule, 확장: PPO" 순서와 같습니다.
 - PPO를 Rule보다 낫게 만들 다음 시도: (1) 학습 단계 대폭 확대(수십만 단계 이상, GPU/PyTorch 환경), (2) 같은 시나리오를 Rule과 짝지어 보상 차이로 학습(분산 감소), (3) 컨베이어 다음 박스 미리보기 등 PPO만 활용할 정보 추가, (4) 평가 시나리오 확대(유의성 확보).
 - 이전 결과: `per_box` 기준(`reports/per_box_2026-10-08/`), 모방 없이 PPO만 학습(`reports/highlevel_train_log_scratch.jsonl`, 개선 없음).

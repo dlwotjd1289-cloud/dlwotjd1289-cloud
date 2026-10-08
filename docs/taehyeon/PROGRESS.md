@@ -56,18 +56,7 @@ PR: https://github.com/yang8988/pac-mission1-shared/pull/1 (Draft, 브랜치 `cl
 - [x] 코드 리뷰(2026-10-08) 수정: 5-② 하중 경로·`share` 허점, 5-① 탐색 컷오프·방향, 4번 마감 규칙·주문 목록 설정 등 → 전체 재검증 완료 (162 테스트)
 - [x] 4번 실제 상태 입구 `HighLevelDecider.decide` + 인터페이스 문서(highlevel.md 6장), 테스트 10개 (총 172)
 - [x] 리뷰 미반영 항목 전부 반영(2026-10-08): 5-① 병합 허용오차·균형 탐색 층 묶음/정렬·중복 제거 복원·불확실 거절·EMS 탐색 벡터화, 4번 파손 박스 반영·재적재 이동 규칙·동한 가치 모델 1회 로드·미사용 설정 삭제, 문서 → 전체 재검증 (177 테스트)
-- [ ] **4번 재학습 (진행 중, 2026-10-08)** — 끝나면 결과를 highlevel.md 5장·PR에 반영: 현재 `models/highlevel_ppo.json`, `highlevel_sb3.zip`은 리뷰 수정 **이전** 세계로 학습한 정책입니다.
-  5-①/5-② 수정과 마감 규칙이 바뀌었으므로 다시 학습·평가해야 합니다:
-  ```bash
-  python tools/highlevel/scripts/train_highlevel_ppo.py --run-generator 10 --steps 60000 --workers 4 \
-      --imitation-episodes 120 --learning-rate 0.0001 --entropy-coef 0.003 --output tools/highlevel/output/ppo_np_v3.json
-  python tools/highlevel/scripts/train_highlevel_sb3.py --run-generator 10 --steps 150000 --envs 4 \
-      --imitation-episodes 120 --learning-rate 0.0001 --entropy-coef 0.003 --output tools/highlevel/output/sb3_v3.zip
-  python tools/highlevel/scripts/evaluate_highlevel.py --run-generator 10 --split test --passes 3 \
-      --policies no_buffer greedy rule ppo sb3 --policy-file tools/highlevel/output/ppo_np_v3.json \
-      --sb3-file tools/highlevel/output/sb3_v3.zip
-  ```
-  (`--run-generator 10`은 학습에 쓴 것과 같은 60개 시나리오를 다시 만듭니다. NumPy 약 20분, sb3 약 1.5시간.)
+- [x] 4번 재학습 (2026-10-08, 리뷰 수정 반영 세계): test 27 에피소드 Rule 4.09 / NumPy PPO 4.25 / sb3 PPO 4.23 / 버퍼 없음 5.43 팔레트 → 두 PPO 모두 Rule과 유의한 차이 없음, **기본값 Rule** 유지. `models/`의 두 정책 파일 모두 새 세계로 교체
 
 ## 다음 할 일
 
@@ -101,3 +90,4 @@ PR: https://github.com/yang8988/pac-mission1-shared/pull/1 (Draft, 브랜치 `cl
 | 2026-10-08 | `share` 전환 후 전체 재검증 | 150 테스트, 오라클 77/80, 물리 84/84, planner 643 ms (초과 3/24), extreme만 눌림 3 |
 | 2026-10-08 | 4번 NumPy PPO 재학습 (`share`) | test: PPO 3.86 vs Rule 3.91 vs 버퍼 없음 5.20 팔레트 |
 | 2026-10-08 | 4번 sb3-contrib MaskablePPO (PyTorch) 100k 단계 | test 3.94 팔레트 (Rule 3.91, NumPy 3.86) → 기본 정책 NumPy 유지 |
+| 2026-10-08 | 4번 리뷰 수정 후 재학습 (NumPy 60k, sb3 150k) | test 27 에피소드: Rule 4.09, NumPy 4.25 (p=0.19), sb3 4.23 (p=0.54) → 기본값 Rule |
