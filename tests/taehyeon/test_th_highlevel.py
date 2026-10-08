@@ -317,7 +317,7 @@ def test_imitation_warm_start_reproduces_the_rule_teacher():
         return PalletizingWorld([Arrival(b) for b in boxes], SMALL, cat, CandidateConfig(), cfg)
 
     agent = new_agent(cfg)
-    hist = imitate_teacher(agent, make_world, RulePolicy(cfg), 4, epochs=60)
+    hist = imitate_teacher(agent, make_world, RulePolicy(cfg), 4, epochs=60, workers=2)
     assert hist[-1]["bc_accuracy"] > 0.95
     rule = run_policy(make_world(0), RulePolicy(cfg))
     clone = run_policy(make_world(0), agent_chooser(agent))

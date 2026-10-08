@@ -167,8 +167,11 @@ def _merge(parts, cfg):
     return batch, finished
 
 
-def _teacher_episode(job):
-    make_world, policy, i, gamma = job
+_TEACHER = None  # (make_world, policy, gamma); set before forking workers
+
+
+def _teacher_episode(i):
+    make_world, policy, gamma = _TEACHER
     world = make_world(i)
     obs, masks, actions, rewards = [], [], [], []
     while not world.done:
@@ -188,12 +191,17 @@ def _teacher_episode(job):
 def imitate_teacher(agent, make_world, policy, episodes, *, workers=1, epochs=20, first_episode=10**6):
     """Warm-start the agent from a teacher policy (episode ids are offset so
     they do not repeat the PPO episodes)."""
-    jobs = [(make_world, policy, first_episode + i, agent.cfg.gamma) for i in range(episodes)]
-    if workers > 1:
-        with mp.get_context("fork").Pool(workers) as pool:
-            parts = pool.map(_teacher_episode, jobs, chunksize=1)
-    else:
-        parts = [_teacher_episode(j) for j in jobs]
+    global _TEACHER
+    _TEACHER = (make_world, policy, agent.cfg.gamma)
+    ids = [first_episode + i for i in range(episodes)]
+    try:
+        if workers > 1:
+            with mp.get_context("fork").Pool(workers) as pool:
+                parts = pool.map(_teacher_episode, ids, chunksize=1)
+        else:
+            parts = [_teacher_episode(i) for i in ids]
+    finally:
+        _TEACHER = None
     raw = np.asarray([o for p in parts for o in p[0]], dtype=float)
     masks = np.asarray([m for p in parts for m in p[1]], dtype=bool)
     actions = np.asarray([a for p in parts for a in p[2]], dtype=int)

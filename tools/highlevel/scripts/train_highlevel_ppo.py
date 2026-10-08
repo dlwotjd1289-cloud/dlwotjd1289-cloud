@@ -21,6 +21,8 @@ def main():
     parser.add_argument("--steps", type=int)
     parser.add_argument("--workers", type=int, default=4)
     parser.add_argument("--seed", type=int)
+    parser.add_argument("--learning-rate", type=float, help="override ppo.learning_rate")
+    parser.add_argument("--entropy-coef", type=float, help="override ppo.entropy_coef")
     parser.add_argument("--output", type=Path,
                         default=REPO / "ros2_ws/src/pac_highlevel/models/highlevel_ppo.json")
     parser.add_argument("--log", type=Path)
@@ -29,8 +31,10 @@ def main():
     parser.add_argument("--imitation-epochs", type=int, default=20)
     args = parser.parse_args()
     dataset, cand, vcfg, hl = load_all(args)
-    if args.seed is not None:
-        hl = replace(hl, ppo=replace(hl.ppo, seed=args.seed))
+    overrides = {k: v for k, v in (("seed", args.seed), ("learning_rate", args.learning_rate),
+                                   ("entropy_coef", args.entropy_coef)) if v is not None}
+    if overrides:
+        hl = replace(hl, ppo=replace(hl.ppo, **overrides))
     steps = args.steps or hl.ppo.total_steps
     specs = split_ids(dataset, "train")
     make_world = world_factory(dataset, specs, cand, vcfg, hl, shuffle_seed=hl.ppo.seed)
