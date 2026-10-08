@@ -416,3 +416,74 @@ def test_off_centre_load_on_a_bridge_shifts_the_split():
     for box_id in ("A", "B", "C"):
         assert model.top_load_n[box_id] + extra.get(box_id, 0.0) == pytest.approx(after.top_load_n[box_id])
     assert after.top_load_n["B"] > after.top_load_n["A"] + 50  # D's weight goes mostly to B
+
+
+def test_loads_on_a_supporters_overhang_do_not_tip_it():
+    """Review 2026-10-08: C rests on B's unsupported overhang and on D. Load
+    must reach B only through B's load-bearing part, so B's resultant stays
+    on A (it used to end 2 cm past A's edge, unnoticed)."""
+    from pac_candidates.pallet_model import PalletModel
+
+    ctx = make_context(capacity_n=1e5)
+    cfg = CandidateConfig()
+    boxes = [
+        placed("A", TOL, TOL, 0.0, size=(0.70, 0.3, 0.2), weight=10),
+        placed("B", TOL, TOL, 0.2, size=(1.0, 0.3, 0.1), weight=1.0),
+        placed("D", 0.6, 0.312, 0.0, size=(0.49, 0.3, 0.3), weight=10),
+    ]
+    plan = [("C", 0.6, 0.1, 0.3, (0.49, 0.4, 0.1), 1.5), ("E0", 0.604, 0.104, 0.4, (0.2, 0.18, 0.1), 2.0)]
+    for v, (bid, x, y, z, size, w) in enumerate(plan, start=1):
+        b = make_box(bid, size, weight=w)
+        r = CandidateBackend(ctx, cfg).validate_constraints(
+            b, candidate(b, x, y, z, version=v), make_state(boxes, version=v)
+        )
+        if r.success:
+            boxes.append(placed(bid, x, y, z, size=size, weight=w))
+    after = PalletModel(make_state(boxes, version=9), ctx, cfg)
+    assert after.snapshot_issues() == {}
+    total = after._total_n["B"]
+    assert after._moment["B"][0] / total <= 0.702 + 1e-9  # resultant on A
+
+
+def test_share_mode_checks_supporters_below_min_share():
+    from dataclasses import replace as dc_replace
+
+    s = placed("S", TOL, TOL, 0.0, size=(0.848, 0.3, 0.2), weight=50)
+    light = placed("L", 0.858, TOL, 0.0, size=(0.2, 0.3, 0.2), weight=0.5)
+    c0 = CandidateConfig()
+    cfg = dc_replace(c0, constraints=dc_replace(c0.constraints, pallet_cog=PalletCogConfig(enabled=False)))
+    backend = CandidateBackend(make_context(capacity_n=1e5), cfg)
+    h = make_box("H", (0.928, 0.3, 0.2), weight=40)
+    result = check(backend, h, make_state([s, light], version=0), TOL, TOL, 0.2)
+    shares = result.details["metrics"]["supporter_shares"]
+    assert shares["L"] < cfg.constraints.heavy_on_light.min_share
+    assert "HEAVY_ON_LIGHT" in reasons(result)  # 40 kg x 8.5 % = 3.4 kg on a 0.5 kg box
+
+
+def test_lever_split_with_collinear_contacts_is_exact():
+    from pac_candidates.loads import lever_shares
+
+    shares = lever_shares([1.0, 1.0], [(0.1, 0.15), (0.5, 0.15)], (0.2, 0.2))
+    assert shares == pytest.approx([0.75, 0.25])
+
+
+def test_mask_accepted_stacks_always_pass_a_full_recheck():
+    """Property: whatever the mask accepts, a from-scratch snapshot re-check
+    finds no instability, tipping supporter or overload (random stacks)."""
+    from pac_candidates.pallet_model import PalletModel
+
+    for seed in range(6):
+        rng = random.Random(100 + seed)
+        ctx = make_context(capacity_n=rng.choice([60.0, 150.0, 1e5]))
+        cfg = CandidateConfig()
+        boxes = []
+        for i in range(30):
+            size = rng.choice([(0.4, 0.3, 0.2), (0.3, 0.2, 0.15), (0.5, 0.4, 0.25), (0.6, 0.25, 0.1)])
+            box = make_box(f"N{i}", size, weight=rng.uniform(0.5, 30))
+            state = make_state(boxes, version=i)
+            valid = CandidateBackend(ctx, cfg).candidate_set(box, state).valid
+            if not valid:
+                continue
+            p = rng.choice(valid[:8]).target_pose
+            boxes.append(placed(box.box_id, p.x, p.y, p.z, size, box.weight_kg, p.yaw))
+            assert PalletModel(make_state(boxes, version=i + 1), ctx, cfg).snapshot_issues() == {}, (seed, i)

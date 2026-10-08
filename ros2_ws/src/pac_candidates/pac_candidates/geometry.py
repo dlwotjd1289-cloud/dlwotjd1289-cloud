@@ -145,6 +145,21 @@ def polygon_area(poly):
     return 0.5 * total
 
 
+def polygon_centroid(poly):
+    """Area centroid of a simple polygon (vertex mean if degenerate)."""
+    a = polygon_area(poly)
+    if abs(a) <= 1e-15:
+        n = max(1, len(poly))
+        return (sum(q[0] for q in poly) / n, sum(q[1] for q in poly) / n)
+    cx = cy = 0.0
+    for i, p in enumerate(poly):
+        q = poly[(i + 1) % len(poly)]
+        cross = p[0] * q[1] - q[0] * p[1]
+        cx += (p[0] + q[0]) * cross
+        cy += (p[1] + q[1]) * cross
+    return (cx / (6.0 * a), cy / (6.0 * a))
+
+
 def rect_polygon(rect):
     return rect.corners()
 

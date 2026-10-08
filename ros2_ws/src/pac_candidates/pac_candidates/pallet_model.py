@@ -30,10 +30,13 @@ from .geometry import (
     clip_polygon_to_rect,
     convex_hull,
     footprint,
+    inside_margin,
+    polygon_area,
+    polygon_centroid,
     rotated_dims,
     shrink_rect_polygon,
 )
-from .loads import mckee_capacity_n, split_force
+from .loads import load_ratio, mckee_capacity_n, overloaded, split_force
 
 G = 9.80665
 
@@ -256,19 +259,25 @@ class PalletModel:
     # ------------------------------------------------------------------
 
     def contact_list(self, rect, found, point):
-        """Contacts with load shares for a force applied at ``point``."""
-        usable = [
-            (g, a, poly)
-            for g, a, poly in found
-            if a > LEN_EPS * LEN_EPS
-        ]
+        """Contacts with load shares for a force applied at ``point``.
+
+        A supporter bears load only inside its LBCP, so each contact is the
+        overlap clipped to the supporter's LBCP (``found`` already holds that
+        polygon): its area and centroid drive the share. Contacts without a
+        load-bearing part (e.g. resting on a supporter's unsupported
+        overhang) carry no load.
+        """
+        usable = []
+        for g, _, poly in found:
+            if len(poly) < 3:
+                continue
+            area = polygon_area(poly)
+            if area > LEN_EPS * LEN_EPS:
+                usable.append((g, area, poly))
         if not usable:
             return ()
         areas = [a for _, a, _ in usable]
-        centroids = []
-        for g, a, poly in usable:
-            inter = rect.intersection(g.rect)
-            centroids.append(inter.center if inter else g.rect.center)
+        centroids = [polygon_centroid(poly) for _, _, poly in usable]
         shares = split_force(
             self.config.constraints.load_model.share_model,
             areas,
@@ -318,15 +327,11 @@ class PalletModel:
         self.base_max_load_ratio = 0.0
         self.base_min_load_margin = 1.0
         for g in self.boxes:
-            load = self.top_load_n[g.box_id]
-            if g.capacity_n > 0:
-                ratio = load / g.capacity_n
-            else:
-                ratio = 0.0 if load <= 0 else math.inf
+            ratio = load_ratio(self.top_load_n[g.box_id], g.capacity_n)
             self.base_max_load_ratio = max(self.base_max_load_ratio, ratio)
             self.base_min_load_margin = min(self.base_min_load_margin, 1 - ratio)
 
-    def propagate(self, contacts, force_n):
+    def propagate(self, contacts, force_n, unstable=None):
         """Extra top load (N) on each box below when ``force_n`` is added.
 
         Exact for both share models: every affected box re-splits its new
@@ -355,6 +360,10 @@ class PalletModel:
             mx, my = self._moment[box_id]
             ex, ey = extra_m[box_id]
             point = ((mx + ex) / total, (my + ey) / total) if total > 0 else geom.rect.center
+            if unstable is not None and not self.on_floor[box_id]:
+                # safety net: the box's new resultant must stay on its LBCP
+                if inside_margin(self.lbcp[box_id], point) < -STABILITY_EPS:
+                    unstable.append(box_id)
             new_contacts = self.contact_list(geom.rect, self.raw_contacts[box_id], point)
             old_parts = {c.supporter_id: old_total * c.share for c in self.contacts[box_id]}
             for contact in new_contacts:
@@ -443,10 +452,12 @@ class PalletModel:
             )
             limit = heavy_cfg.max_weight_ratio * self._weight + heavy_cfg.tolerance_kg
             load = weight_kg * share if heavy_cfg.mode == "share" else weight_kg
-            bad = (share >= heavy_cfg.min_share) & (load > limit[None, :])
+            min_share = 0.0 if heavy_cfg.mode == "share" else heavy_cfg.min_share
+            counted = (share >= min_share) & (share > 0)
+            bad = counted & (load > limit[None, :])
             heavy = lifted & bad.any(axis=1)
             if with_excess:
-                rel = np.where(share >= heavy_cfg.min_share, load / limit[None, :], 0.0)
+                rel = np.where(counted, load / limit[None, :], 0.0)
                 excess = np.where(lifted, rel.max(axis=1), 0.0)
         return (ratio, heavy, excess) if with_excess else (ratio, heavy)
 
@@ -562,7 +573,12 @@ class PalletModel:
                 margin = _margin(poly, g.rect.center, unc, dx, dy, g.uncertain)
                 if margin < self.config.constraints.min_lbcp_margin_m - STABILITY_EPS:
                     codes.append("UNSTABLE")
-            if self.top_load_n[g.box_id] > g.capacity_n + 1e-6:
+                force = self._total_n[g.box_id]
+                if force > 0:
+                    mx, my = self._moment[g.box_id]
+                    if inside_margin(poly, (mx / force, my / force)) < -STABILITY_EPS:
+                        codes.append("RESULTANT_OUTSIDE")
+            if overloaded(self.top_load_n[g.box_id], g.capacity_n):
                 codes.append("OVERLOADED")
             if codes:
                 issues[g.box_id] = tuple(codes)

@@ -185,12 +185,12 @@ class CandidateBackend:
                 entry[2] = ValidationResult(
                     False,
                     outcome.codes,
-                    {"reasons": outcome.reasons, "metrics": outcome.metrics},
+                    {"reasons": outcome.reasons, "metrics": dict(outcome.metrics)},
                 )
             else:
                 entry[2] = ValidationResult(
                     True,
-                    details={"evidence": outcome.evidence, "metrics": outcome.metrics},
+                    details={"evidence": outcome.evidence, "metrics": dict(outcome.metrics)},
                 )
         return entry[2]
 

@@ -35,6 +35,7 @@ from .geometry import (
     rotated_dims,
     same_yaw,
 )
+from .loads import load_ratio, overloaded
 from .pallet_model import G, box_tolerance, cog_delta
 
 EVIDENCE_SOURCE = "LBCP_EMS_DELTA_V1"
@@ -189,21 +190,27 @@ def evaluate(model, box, pose, *, is_uncertain=False, collect_all=True):
     contacts = ()
     if not on_floor and found:
         contacts = model.contact_list(rect, found, center)
-    extra = model.propagate(contacts, weight_n)
+    tipping = []
+    extra = model.propagate(contacts, weight_n, unstable=tipping)
+    for box_id in tipping:
+        fail(R.COG_VIOLATION, "SUPPORTER_TIPS:" + box_id)
     max_ratio = model.base_max_load_ratio
     load_margin = model.base_min_load_margin
     for box_id, add in extra.items():
         g = model.by_id[box_id]
         load = model.top_load_n[box_id] + add
-        ratio = load / g.capacity_n if g.capacity_n > 0 else math.inf
+        ratio = load_ratio(load, g.capacity_n)
         max_ratio = max(max_ratio, ratio)
         load_margin = min(load_margin, 1.0 - ratio)
-        if ratio > 1.0 + 1e-9:
+        if overloaded(load, g.capacity_n):
             fail(R.LOAD_VIOLATION, "BOX_CAPACITY:" + box_id)
     hol = cons.heavy_on_light
     if hol.enabled:
         for contact in contacts:
-            if contact.share < hol.min_share:
+            # per_box: supporters carrying a negligible share are ignored;
+            # share: the compared load is already scaled by the share, so
+            # every supporter is checked (no min_share loophole)
+            if hol.mode != "share" and contact.share < hol.min_share:
                 continue
             sup = model.by_id[contact.supporter_id]
             load_kg = box.weight_kg * (contact.share if hol.mode == "share" else 1.0)

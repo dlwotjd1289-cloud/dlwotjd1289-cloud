@@ -15,6 +15,8 @@ compressive forces (the resultant lies outside the contact centroids' hull),
 ``area``. Stability itself is never decided here; that is the LBCP check.
 """
 
+import math
+
 import numpy as np
 
 
@@ -23,6 +25,25 @@ def area_shares(areas):
     if total <= 0.0:
         raise ValueError("Contacts need positive area")
     return [a / total for a in areas]
+
+
+def _constraints(pts, point):
+    """Force + moment equations that are satisfiable for these centroids.
+
+    Moments are taken about the centroids' mean along the principal axes the
+    centroids actually span: 2 axes in general, 1 if they are collinear (the
+    point is then projected onto that line, i.e. moment balance across the
+    line is impossible and must not distort the split along it), 0 if they
+    coincide. The total-force equation is always kept exactly.
+    """
+    c = pts.mean(axis=0)
+    q = pts - c
+    _, sv, vt = np.linalg.svd(q, full_matrices=False)
+    rank = int(np.sum(sv > 1e-9 * max(1.0, float(sv[0]) if sv.size else 1.0)))
+    basis = vt[:rank]
+    a = np.vstack([np.ones(len(pts)), (q @ basis.T).T])
+    b = np.concatenate([[1.0], (np.asarray(point, dtype=float) - c) @ basis.T])
+    return a, b
 
 
 def lever_shares(areas, centroids, point):
@@ -37,10 +58,9 @@ def lever_shares(areas, centroids, point):
         raise ValueError("Contacts need positive area")
     pts = np.asarray(centroids, dtype=float)
     active = np.ones(n, dtype=bool)
-    target = np.array([1.0, point[0], point[1]])
     for _ in range(n):
         idx = np.flatnonzero(active)
-        a = np.vstack([np.ones(idx.size), pts[idx, 0], pts[idx, 1]])
+        a, target = _constraints(pts[idx], point)
         d = weights[idx]
         # f = D A^T (A D A^T)^+ b   (minimises sum f_i^2 / a_i s.t. A f = b)
         gram = (a * d) @ a.T
@@ -51,8 +71,6 @@ def lever_shares(areas, centroids, point):
             total = shares.sum()
             if total <= 1e-12:
                 break
-            # If moment balance is unattainable with this active set the
-            # pseudo-inverse returns the least-squares compromise.
             return list(shares / total)
         # Drop the most tensile contact and retry.
         worst = idx[int(np.argmin(f_active))]
@@ -68,6 +86,21 @@ def split_force(model, areas, centroids, point):
     if model == "lever":
         return lever_shares(areas, centroids, point)
     raise ValueError(f"Unknown load share model: {model}")
+
+
+LOAD_REL_TOL = 1e-9
+LOAD_ABS_TOL_N = 1e-9
+
+
+def overloaded(load_n, capacity_n):
+    """Single capacity test shared by the hard mask and snapshot re-checks."""
+    return load_n > capacity_n * (1.0 + LOAD_REL_TOL) + LOAD_ABS_TOL_N
+
+
+def load_ratio(load_n, capacity_n):
+    if capacity_n > 0:
+        return load_n / capacity_n
+    return 0.0 if load_n <= LOAD_ABS_TOL_N else math.inf
 
 
 def mckee_capacity_n(dx, dy, ect_n_per_m, board_thickness_m, safety_factor):
