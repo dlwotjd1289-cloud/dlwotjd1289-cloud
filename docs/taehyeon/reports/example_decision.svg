@@ -1,0 +1,257 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="660" viewBox="0 0 900 660" font-family="sans-serif">
+<rect width="900" height="660" fill="white"/>
+<text x="30" y="42" font-size="16" fill="#222">S0002-T015: 5-1 candidates / 5-2 hard mask</text>
+<rect x="30.0" y="70.0" width="560.0" height="560.0" fill="#f7f3ea" stroke="#555" stroke-width="2"/>
+<rect x="31.0" y="526.9" width="137.7" height="102.1" fill="rgb(210,210,230)" stroke="#333" stroke-width="1"><title>S0002-B001 top=0.131 m, 1.3 kg</title></rect>
+<text x="34.0" y="538.9" font-size="9" fill="#222">0.13</text>
+<rect x="172.8" y="471.7" width="208.0" height="157.3" fill="rgb(193,193,213)" stroke="#333" stroke-width="1"><title>S0002-B002 top=0.280 m, 15.4 kg</title></rect>
+<text x="175.8" y="483.7" font-size="9" fill="#222">0.28</text>
+<rect x="384.8" y="537.7" width="137.5" height="91.3" fill="rgb(208,208,228)" stroke="#333" stroke-width="1"><title>S0002-B003 top=0.149 m, 1.4 kg</title></rect>
+<text x="387.8" y="549.7" font-size="9" fill="#222">0.15</text>
+<rect x="384.8" y="421.7" width="157.4" height="111.9" fill="rgb(210,210,230)" stroke="#333" stroke-width="1"><title>S0002-B004 top=0.131 m, 6.3 kg</title></rect>
+<text x="387.8" y="433.7" font-size="9" fill="#222">0.13</text>
+<rect x="31.0" y="364.6" width="111.0" height="158.3" fill="rgb(210,210,230)" stroke="#333" stroke-width="1"><title>S0002-B005 top=0.131 m, 3.0 kg</title></rect>
+<text x="34.0" y="376.6" font-size="9" fill="#222">0.13</text>
+<rect x="146.1" y="365.9" width="127.4" height="101.7" fill="rgb(208,208,228)" stroke="#333" stroke-width="1"><title>S0002-B006 top=0.151 m, 3.6 kg</title></rect>
+<text x="149.1" y="377.9" font-size="9" fill="#222">0.15</text>
+<rect x="277.6" y="285.0" width="173.1" height="132.6" fill="rgb(208,208,228)" stroke="#333" stroke-width="1"><title>S0002-B007 top=0.150 m, 1.3 kg</title></rect>
+<text x="280.6" y="297.0" font-size="9" fill="#222">0.15</text>
+<rect x="454.8" y="244.1" width="126.6" height="173.5" fill="rgb(201,201,221)" stroke="#333" stroke-width="1"><title>S0002-B008 top=0.209 m, 5.6 kg</title></rect>
+<text x="457.8" y="256.1" font-size="9" fill="#222">0.21</text>
+<rect x="31.0" y="227.8" width="173.1" height="132.7" fill="rgb(208,208,228)" stroke="#333" stroke-width="1"><title>S0002-B009 top=0.149 m, 6.7 kg</title></rect>
+<text x="34.0" y="239.8" font-size="9" fill="#222">0.15</text>
+<rect x="208.2" y="153.5" width="178.6" height="127.5" fill="rgb(208,208,228)" stroke="#333" stroke-width="1"><title>S0002-B010 top=0.150 m, 2.1 kg</title></rect>
+<text x="211.2" y="165.5" font-size="9" fill="#222">0.15</text>
+<rect x="390.9" y="148.2" width="138.3" height="91.8" fill="rgb(208,208,228)" stroke="#333" stroke-width="1"><title>S0002-B012 top=0.149 m, 3.6 kg</title></rect>
+<text x="393.9" y="160.2" font-size="9" fill="#222">0.15</text>
+<rect x="31.0" y="248.3" width="157.7" height="112.2" fill="rgb(194,194,214)" stroke="#333" stroke-width="1"><title>S0002-B014 top=0.279 m, 6.4 kg</title></rect>
+<text x="34.0" y="260.3" font-size="9" fill="#222">0.28</text>
+<rect x="303.7" y="293.1" width="132.8" height="174.5" fill="rgb(191,191,211)" stroke="#333" stroke-width="1"><title>S0002-B013 top=0.301 m, 1.1 kg</title></rect>
+<text x="306.7" y="305.1" font-size="9" fill="#222">0.30</text>
+<rect x="172.8" y="455.0" width="126.8" height="174.0" fill="rgb(170,170,190)" stroke="#333" stroke-width="1"><title>S0002-B011 top=0.489 m, 11.4 kg</title></rect>
+<text x="175.8" y="467.0" font-size="9" fill="#222">0.49</text>
+<rect x="32.0" y="113.0" width="101.0" height="109.7" fill="#2e9d5b" fill-opacity="0.07" stroke="#2e9d5b" stroke-opacity="0.8" stroke-width="1" stroke-dasharray=""><title>S0015-S0002-B016-C001 valid z=0.000</title></rect>
+<circle cx="82.5" cy="167.8" r="2.5" fill="#2e9d5b"/>
+<rect x="93.4" y="121.7" width="109.7" height="101.0" fill="#2e9d5b" fill-opacity="0.07" stroke="#2e9d5b" stroke-opacity="0.8" stroke-width="1" stroke-dasharray=""><title>S0015-S0002-B016-C002 valid z=0.000</title></rect>
+<circle cx="148.3" cy="172.2" r="2.5" fill="#2e9d5b"/>
+<rect x="102.1" y="113.0" width="101.0" height="109.7" fill="#2e9d5b" fill-opacity="0.07" stroke="#2e9d5b" stroke-opacity="0.8" stroke-width="1" stroke-dasharray=""><title>S0015-S0002-B016-C003 valid z=0.000</title></rect>
+<circle cx="152.6" cy="167.8" r="2.5" fill="#2e9d5b"/>
+<rect x="32.0" y="72.0" width="101.0" height="109.7" fill="#2e9d5b" fill-opacity="0.07" stroke="#2e9d5b" stroke-opacity="0.8" stroke-width="1" stroke-dasharray=""><title>S0015-S0002-B016-C004 valid z=0.000</title></rect>
+<circle cx="82.5" cy="126.9" r="2.5" fill="#2e9d5b"/>
+<rect x="102.1" y="72.0" width="101.0" height="109.7" fill="#2e9d5b" fill-opacity="0.07" stroke="#2e9d5b" stroke-opacity="0.8" stroke-width="1" stroke-dasharray=""><title>S0015-S0002-B016-C005 valid z=0.000</title></rect>
+<circle cx="152.6" cy="126.9" r="2.5" fill="#2e9d5b"/>
+<rect x="32.0" y="72.0" width="109.7" height="101.0" fill="#2e9d5b" fill-opacity="0.07" stroke="#2e9d5b" stroke-opacity="0.8" stroke-width="1" stroke-dasharray=""><title>S0015-S0002-B016-C006 valid z=0.000</title></rect>
+<circle cx="86.9" cy="122.5" r="2.5" fill="#2e9d5b"/>
+<rect x="93.4" y="72.0" width="109.7" height="101.0" fill="#2e9d5b" fill-opacity="0.07" stroke="#2e9d5b" stroke-opacity="0.8" stroke-width="1" stroke-dasharray=""><title>S0015-S0002-B016-C007 valid z=0.000</title></rect>
+<circle cx="148.3" cy="122.5" r="2.5" fill="#2e9d5b"/>
+<rect x="32.0" y="527.0" width="109.7" height="101.0" fill="#2e9d5b" fill-opacity="0.07" stroke="#2e9d5b" stroke-opacity="0.8" stroke-width="1" stroke-dasharray=""><title>S0015-S0002-B016-C008 valid z=0.131</title></rect>
+<circle cx="86.9" cy="577.5" r="2.5" fill="#2e9d5b"/>
+<rect x="32.0" y="518.3" width="101.0" height="109.7" fill="#2e9d5b" fill-opacity="0.07" stroke="#2e9d5b" stroke-opacity="0.8" stroke-width="1" stroke-dasharray=""><title>S0015-S0002-B016-C009 valid z=0.131</title></rect>
+<circle cx="82.5" cy="573.1" r="2.5" fill="#2e9d5b"/>
+<rect x="32.0" y="472.7" width="101.0" height="109.7" fill="#2e9d5b" fill-opacity="0.07" stroke="#2e9d5b" stroke-opacity="0.8" stroke-width="1" stroke-dasharray=""><title>S0015-S0002-B016-C010 valid z=0.131</title></rect>
+<circle cx="82.5" cy="527.6" r="2.5" fill="#2e9d5b"/>
+<rect x="32.0" y="472.7" width="109.7" height="101.0" fill="#2e9d5b" fill-opacity="0.07" stroke="#2e9d5b" stroke-opacity="0.8" stroke-width="1" stroke-dasharray=""><title>S0015-S0002-B016-C011 valid z=0.131</title></rect>
+<circle cx="86.9" cy="523.2" r="2.5" fill="#2e9d5b"/>
+<rect x="441.6" y="431.6" width="109.7" height="101.0" fill="#2e9d5b" fill-opacity="0.07" stroke="#2e9d5b" stroke-opacity="0.8" stroke-width="1" stroke-dasharray=""><title>S0015-S0002-B016-C012 valid z=0.131</title></rect>
+<circle cx="496.5" cy="482.1" r="2.5" fill="#2e9d5b"/>
+<rect x="441.6" y="422.9" width="101.0" height="109.7" fill="#2e9d5b" fill-opacity="0.07" stroke="#2e9d5b" stroke-opacity="0.8" stroke-width="1" stroke-dasharray=""><title>S0015-S0002-B016-C013 valid z=0.131</title></rect>
+<circle cx="492.1" cy="477.8" r="2.5" fill="#2e9d5b"/>
+<rect x="32.0" y="412.1" width="101.0" height="109.7" fill="#2e9d5b" fill-opacity="0.07" stroke="#2e9d5b" stroke-opacity="0.8" stroke-width="1" stroke-dasharray=""><title>S0015-S0002-B016-C014 valid z=0.131</title></rect>
+<circle cx="82.5" cy="467.0" r="2.5" fill="#2e9d5b"/>
+<rect x="32.0" y="365.6" width="101.0" height="109.7" fill="#2e9d5b" fill-opacity="0.07" stroke="#2e9d5b" stroke-opacity="0.8" stroke-width="1" stroke-dasharray=""><title>S0015-S0002-B016-C015 valid z=0.131</title></rect>
+<circle cx="82.5" cy="420.4" r="2.5" fill="#2e9d5b"/>
+<rect x="385.9" y="527.0" width="109.7" height="101.0" fill="#d64545" fill-opacity="0.07" stroke="#d64545" stroke-opacity="0.8" stroke-width="1" stroke-dasharray="3,2"><title>S0015-S0002-B016-C016 masked: BOX_CAPACITY:S0002-B003 z=0.149</title></rect>
+<circle cx="440.7" cy="577.5" r="2.5" fill="#d64545"/>
+<rect x="385.9" y="518.3" width="101.0" height="109.7" fill="#d64545" fill-opacity="0.07" stroke="#d64545" stroke-opacity="0.8" stroke-width="1" stroke-dasharray="3,2"><title>S0015-S0002-B016-C017 masked: BOX_CAPACITY:S0002-B003 z=0.149</title></rect>
+<circle cx="436.4" cy="573.1" r="2.5" fill="#d64545"/>
+<rect x="391.9" y="138.0" width="109.7" height="101.0" fill="#2e9d5b" fill-opacity="0.07" stroke="#2e9d5b" stroke-opacity="0.8" stroke-width="1" stroke-dasharray=""><title>S0015-S0002-B016-C018 valid z=0.149</title></rect>
+<circle cx="446.8" cy="188.5" r="2.5" fill="#2e9d5b"/>
+<rect x="391.9" y="129.3" width="101.0" height="109.7" fill="#2e9d5b" fill-opacity="0.07" stroke="#2e9d5b" stroke-opacity="0.8" stroke-width="1" stroke-dasharray=""><title>S0015-S0002-B016-C019 valid z=0.149</title></rect>
+<circle cx="442.4" cy="184.1" r="2.5" fill="#2e9d5b"/>
+<rect x="209.3" y="178.9" width="109.7" height="101.0" fill="#2e9d5b" fill-opacity="0.07" stroke="#2e9d5b" stroke-opacity="0.8" stroke-width="1" stroke-dasharray=""><title>S0015-S0002-B016-C020 valid z=0.150</title></rect>
+<circle cx="264.1" cy="229.4" r="2.5" fill="#2e9d5b"/>
+<rect x="209.3" y="170.2" width="101.0" height="109.7" fill="#2e9d5b" fill-opacity="0.07" stroke="#2e9d5b" stroke-opacity="0.8" stroke-width="1" stroke-dasharray=""><title>S0015-S0002-B016-C021 valid z=0.150</title></rect>
+<circle cx="259.8" cy="225.1" r="2.5" fill="#2e9d5b"/>
+<rect x="278.6" y="178.9" width="109.7" height="101.0" fill="#2e9d5b" fill-opacity="0.07" stroke="#2e9d5b" stroke-opacity="0.8" stroke-width="1" stroke-dasharray=""><title>S0015-S0002-B016-C022 valid z=0.150</title></rect>
+<circle cx="333.5" cy="229.4" r="2.5" fill="#2e9d5b"/>
+<rect x="278.6" y="170.2" width="101.0" height="109.7" fill="#2e9d5b" fill-opacity="0.07" stroke="#2e9d5b" stroke-opacity="0.8" stroke-width="1" stroke-dasharray=""><title>S0015-S0002-B016-C023 valid z=0.150</title></rect>
+<circle cx="329.1" cy="225.1" r="2.5" fill="#2e9d5b"/>
+<rect x="340.0" y="142.2" width="109.7" height="101.0" fill="#2e9d5b" fill-opacity="0.07" stroke="#2e9d5b" stroke-opacity="0.8" stroke-width="1" stroke-dasharray=""><title>S0015-S0002-B016-C024 valid z=0.150</title></rect>
+<circle cx="394.9" cy="192.7" r="2.5" fill="#2e9d5b"/>
+<rect x="348.7" y="133.5" width="101.0" height="109.7" fill="#2e9d5b" fill-opacity="0.07" stroke="#2e9d5b" stroke-opacity="0.8" stroke-width="1" stroke-dasharray=""><title>S0015-S0002-B016-C025 valid z=0.150</title></rect>
+<circle cx="399.2" cy="188.3" r="2.5" fill="#2e9d5b"/>
+<rect x="259.5" y="125.2" width="101.0" height="109.7" fill="#2e9d5b" fill-opacity="0.07" stroke="#2e9d5b" stroke-opacity="0.8" stroke-width="1" stroke-dasharray=""><title>S0015-S0002-B016-C026 valid z=0.150</title></rect>
+<circle cx="310.0" cy="180.0" r="2.5" fill="#2e9d5b"/>
+<rect x="255.1" y="129.5" width="109.7" height="101.0" fill="#2e9d5b" fill-opacity="0.07" stroke="#2e9d5b" stroke-opacity="0.8" stroke-width="1" stroke-dasharray=""><title>S0015-S0002-B016-C027 valid z=0.150</title></rect>
+<circle cx="310.0" cy="180.0" r="2.5" fill="#2e9d5b"/>
+<rect x="340.0" y="187.0" width="109.7" height="101.0" fill="#2e9d5b" fill-opacity="0.07" stroke="#2e9d5b" stroke-opacity="0.8" stroke-width="1" stroke-dasharray=""><title>S0015-S0002-B016-C028 valid z=0.150</title></rect>
+<circle cx="394.9" cy="237.5" r="2.5" fill="#2e9d5b"/>
+<rect x="348.7" y="178.3" width="101.0" height="109.7" fill="#2e9d5b" fill-opacity="0.07" stroke="#2e9d5b" stroke-opacity="0.8" stroke-width="1" stroke-dasharray=""><title>S0015-S0002-B016-C029 valid z=0.150</title></rect>
+<circle cx="399.2" cy="233.2" r="2.5" fill="#2e9d5b"/>
+<rect x="193.8" y="340.2" width="101.0" height="109.7" fill="#2e9d5b" fill-opacity="0.07" stroke="#2e9d5b" stroke-opacity="0.8" stroke-width="1" stroke-dasharray=""><title>S0015-S0002-B016-C030 valid z=0.151</title></rect>
+<circle cx="244.3" cy="395.0" r="2.5" fill="#2e9d5b"/>
+<rect x="455.9" y="315.6" width="109.7" height="101.0" fill="#2e9d5b" fill-opacity="0.07" stroke="#2e9d5b" stroke-opacity="0.8" stroke-width="1" stroke-dasharray=""><title>S0015-S0002-B016-C031 valid z=0.209</title></rect>
+<circle cx="510.7" cy="366.1" r="2.5" fill="#2e9d5b"/>
+<rect x="455.9" y="306.9" width="101.0" height="109.7" fill="#2e9d5b" fill-opacity="0.07" stroke="#2e9d5b" stroke-opacity="0.8" stroke-width="1" stroke-dasharray=""><title>S0015-S0002-B016-C032 valid z=0.209</title></rect>
+<circle cx="506.4" cy="361.7" r="2.5" fill="#2e9d5b"/>
+<rect x="32.0" y="258.5" width="109.7" height="101.0" fill="#2e9d5b" fill-opacity="0.07" stroke="#2e9d5b" stroke-opacity="0.8" stroke-width="1" stroke-dasharray=""><title>S0015-S0002-B016-C033 valid z=0.279</title></rect>
+<circle cx="86.9" cy="309.0" r="2.5" fill="#2e9d5b"/>
+<rect x="32.0" y="249.8" width="101.0" height="109.7" fill="#2e9d5b" fill-opacity="0.07" stroke="#2e9d5b" stroke-opacity="0.8" stroke-width="1" stroke-dasharray=""><title>S0015-S0002-B016-C034 valid z=0.279</title></rect>
+<circle cx="82.5" cy="304.6" r="2.5" fill="#2e9d5b"/>
+<rect x="304.7" y="518.3" width="101.0" height="109.7" fill="#2e9d5b" fill-opacity="0.07" stroke="#2e9d5b" stroke-opacity="0.8" stroke-width="1" stroke-dasharray=""><title>S0015-S0002-B016-C035 valid z=0.280</title></rect>
+<circle cx="355.2" cy="573.1" r="2.5" fill="#2e9d5b"/>
+<rect x="304.7" y="472.7" width="101.0" height="109.7" fill="#2e9d5b" fill-opacity="0.07" stroke="#2e9d5b" stroke-opacity="0.8" stroke-width="1" stroke-dasharray=""><title>S0015-S0002-B016-C036 valid z=0.280</title></rect>
+<circle cx="355.2" cy="527.6" r="2.5" fill="#2e9d5b"/>
+<rect x="304.7" y="365.6" width="109.7" height="101.0" fill="#d64545" fill-opacity="0.07" stroke="#d64545" stroke-opacity="0.8" stroke-width="1" stroke-dasharray="3,2"><title>S0015-S0002-B016-C037 masked: LBCP_UNSTABLE z=0.301</title></rect>
+<circle cx="359.6" cy="416.1" r="2.5" fill="#d64545"/>
+<rect x="304.7" y="356.9" width="101.0" height="109.7" fill="#d64545" fill-opacity="0.07" stroke="#d64545" stroke-opacity="0.8" stroke-width="1" stroke-dasharray="3,2"><title>S0015-S0002-B016-C038 masked: LBCP_UNSTABLE z=0.301</title></rect>
+<circle cx="355.2" cy="411.8" r="2.5" fill="#d64545"/>
+<rect x="278.6" y="315.6" width="109.7" height="101.0" fill="#2e9d5b" fill-opacity="0.07" stroke="#2e9d5b" stroke-opacity="0.8" stroke-width="1" stroke-dasharray=""><title>S0015-S0002-B016-C039 valid z=0.301</title></rect>
+<circle cx="333.5" cy="366.1" r="2.5" fill="#2e9d5b"/>
+<rect x="278.6" y="306.9" width="101.0" height="109.7" fill="#2e9d5b" fill-opacity="0.07" stroke="#2e9d5b" stroke-opacity="0.8" stroke-width="1" stroke-dasharray=""><title>S0015-S0002-B016-C040 valid z=0.301</title></rect>
+<circle cx="329.1" cy="361.7" r="2.5" fill="#2e9d5b"/>
+<rect x="173.8" y="527.0" width="109.7" height="101.0" fill="#2e9d5b" fill-opacity="0.07" stroke="#2e9d5b" stroke-opacity="0.8" stroke-width="1" stroke-dasharray=""><title>S0015-S0002-B016-C041 valid z=0.489</title></rect>
+<circle cx="228.7" cy="577.5" r="2.5" fill="#2e9d5b"/>
+<rect x="173.8" y="518.3" width="101.0" height="109.7" fill="#2e9d5b" fill-opacity="0.07" stroke="#2e9d5b" stroke-opacity="0.8" stroke-width="1" stroke-dasharray=""><title>S0015-S0002-B016-C042 valid z=0.489</title></rect>
+<circle cx="224.3" cy="573.1" r="2.5" fill="#2e9d5b"/>
+<rect x="487.0" y="422.9" width="101.0" height="109.7" fill="#d64545" fill-opacity="0.07" stroke="#d64545" stroke-opacity="0.8" stroke-width="1" stroke-dasharray="3,2"><title>S0015-S0002-B016-C043 masked: SUPPORT_RATIO, LBCP_UNSTABLE z=0.131</title></rect>
+<circle cx="537.5" cy="477.8" r="2.5" fill="#d64545"/>
+<rect x="441.6" y="527.0" width="109.7" height="101.0" fill="#d64545" fill-opacity="0.07" stroke="#d64545" stroke-opacity="0.8" stroke-width="1" stroke-dasharray="3,2"><title>S0015-S0002-B016-C044 masked: SUPPORT_RATIO, BOX_CAPACITY:S0002-B003 z=0.149</title></rect>
+<circle cx="496.5" cy="577.5" r="2.5" fill="#d64545"/>
+<rect x="441.6" y="518.3" width="101.0" height="109.7" fill="#d64545" fill-opacity="0.07" stroke="#d64545" stroke-opacity="0.8" stroke-width="1" stroke-dasharray="3,2"><title>S0015-S0002-B016-C045 masked: SUPPORT_RATIO, BOX_CAPACITY:S0002-B003 z=0.149</title></rect>
+<circle cx="492.1" cy="573.1" r="2.5" fill="#d64545"/>
+<rect x="487.0" y="518.3" width="101.0" height="109.7" fill="#d64545" fill-opacity="0.07" stroke="#d64545" stroke-opacity="0.8" stroke-width="1" stroke-dasharray="3,2"><title>S0015-S0002-B016-C046 masked: SUPPORT_RATIO, LBCP_UNSTABLE, BOX_CAPACITY:S0002-B003 z=0.149</title></rect>
+<circle cx="537.5" cy="573.1" r="2.5" fill="#d64545"/>
+<rect x="385.9" y="472.7" width="101.0" height="109.7" fill="#d64545" fill-opacity="0.07" stroke="#d64545" stroke-opacity="0.8" stroke-width="1" stroke-dasharray="3,2"><title>S0015-S0002-B016-C047 masked: SUPPORT_RATIO, LBCP_UNSTABLE, BOX_CAPACITY:S0002-B003 z=0.149</title></rect>
+<circle cx="436.4" cy="527.6" r="2.5" fill="#d64545"/>
+<rect x="487.0" y="472.7" width="101.0" height="109.7" fill="#d64545" fill-opacity="0.07" stroke="#d64545" stroke-opacity="0.8" stroke-width="1" stroke-dasharray="3,2"><title>S0015-S0002-B016-C048 masked: SUPPORT_RATIO, LBCP_UNSTABLE, BOX_CAPACITY:S0002-B003 z=0.149</title></rect>
+<circle cx="537.5" cy="527.6" r="2.5" fill="#d64545"/>
+<rect x="459.9" y="474.8" width="109.7" height="101.0" fill="#d64545" fill-opacity="0.07" stroke="#d64545" stroke-opacity="0.8" stroke-width="1" stroke-dasharray="3,2"><title>S0015-S0002-B016-C049 masked: SUPPORT_RATIO, LBCP_UNSTABLE, BOX_CAPACITY:S0002-B003 z=0.149</title></rect>
+<circle cx="514.8" cy="525.3" r="2.5" fill="#d64545"/>
+<rect x="385.9" y="472.7" width="109.7" height="101.0" fill="#d64545" fill-opacity="0.07" stroke="#d64545" stroke-opacity="0.8" stroke-width="1" stroke-dasharray="3,2"><title>S0015-S0002-B016-C050 masked: SUPPORT_RATIO, LBCP_UNSTABLE, BOX_CAPACITY:S0002-B003 z=0.149</title></rect>
+<circle cx="440.7" cy="523.2" r="2.5" fill="#d64545"/>
+<rect x="32.0" y="142.2" width="109.7" height="101.0" fill="#d64545" fill-opacity="0.07" stroke="#d64545" stroke-opacity="0.8" stroke-width="1" stroke-dasharray="3,2"><title>S0015-S0002-B016-C051 masked: SUPPORT_RATIO, LBCP_UNSTABLE z=0.149</title></rect>
+<circle cx="86.9" cy="192.7" r="2.5" fill="#d64545"/>
+<rect x="32.0" y="133.5" width="101.0" height="109.7" fill="#d64545" fill-opacity="0.07" stroke="#d64545" stroke-opacity="0.8" stroke-width="1" stroke-dasharray="3,2"><title>S0015-S0002-B016-C052 masked: SUPPORT_RATIO, LBCP_UNSTABLE z=0.149</title></rect>
+<circle cx="82.5" cy="188.3" r="2.5" fill="#d64545"/>
+<rect x="455.9" y="138.0" width="109.7" height="101.0" fill="#d64545" fill-opacity="0.07" stroke="#d64545" stroke-opacity="0.8" stroke-width="1" stroke-dasharray="3,2"><title>S0015-S0002-B016-C053 masked: SUPPORT_RATIO z=0.149</title></rect>
+<circle cx="510.7" cy="188.5" r="2.5" fill="#d64545"/>
+<rect x="455.9" y="129.3" width="101.0" height="109.7" fill="#d64545" fill-opacity="0.07" stroke="#d64545" stroke-opacity="0.8" stroke-width="1" stroke-dasharray="3,2"><title>S0015-S0002-B016-C054 masked: SUPPORT_RATIO z=0.149</title></rect>
+<circle cx="506.4" cy="184.1" r="2.5" fill="#d64545"/>
+<rect x="441.6" y="72.0" width="101.0" height="109.7" fill="#d64545" fill-opacity="0.07" stroke="#d64545" stroke-opacity="0.8" stroke-width="1" stroke-dasharray="3,2"><title>S0015-S0002-B016-C055 masked: SUPPORT_RATIO, LBCP_UNSTABLE z=0.149</title></rect>
+<circle cx="492.1" cy="126.9" r="2.5" fill="#d64545"/>
+<rect x="487.0" y="72.0" width="101.0" height="109.7" fill="#d64545" fill-opacity="0.07" stroke="#d64545" stroke-opacity="0.8" stroke-width="1" stroke-dasharray="3,2"><title>S0015-S0002-B016-C056 masked: SUPPORT_RATIO, LBCP_UNSTABLE z=0.149</title></rect>
+<circle cx="537.5" cy="126.9" r="2.5" fill="#d64545"/>
+<rect x="441.6" y="72.0" width="109.7" height="101.0" fill="#d64545" fill-opacity="0.07" stroke="#d64545" stroke-opacity="0.8" stroke-width="1" stroke-dasharray="3,2"><title>S0015-S0002-B016-C057 masked: SUPPORT_RATIO, LBCP_UNSTABLE z=0.149</title></rect>
+<circle cx="496.5" cy="122.5" r="2.5" fill="#d64545"/>
+<rect x="190.4" y="102.8" width="101.0" height="109.7" fill="#d64545" fill-opacity="0.07" stroke="#d64545" stroke-opacity="0.8" stroke-width="1" stroke-dasharray="3,2"><title>S0015-S0002-B016-C058 masked: SUPPORT_RATIO, LBCP_UNSTABLE z=0.150</title></rect>
+<circle cx="240.9" cy="157.6" r="2.5" fill="#d64545"/>
+<rect x="186.0" y="107.1" width="109.7" height="101.0" fill="#d64545" fill-opacity="0.07" stroke="#d64545" stroke-opacity="0.8" stroke-width="1" stroke-dasharray="3,2"><title>S0015-S0002-B016-C059 masked: SUPPORT_RATIO, LBCP_UNSTABLE z=0.150</title></rect>
+<circle cx="240.9" cy="157.6" r="2.5" fill="#d64545"/>
+<rect x="304.7" y="72.0" width="101.0" height="109.7" fill="#d64545" fill-opacity="0.07" stroke="#d64545" stroke-opacity="0.8" stroke-width="1" stroke-dasharray="3,2"><title>S0015-S0002-B016-C060 masked: SUPPORT_RATIO, LBCP_UNSTABLE z=0.150</title></rect>
+<circle cx="355.2" cy="126.9" r="2.5" fill="#d64545"/>
+<rect x="348.7" y="72.0" width="101.0" height="109.7" fill="#d64545" fill-opacity="0.07" stroke="#d64545" stroke-opacity="0.8" stroke-width="1" stroke-dasharray="3,2"><title>S0015-S0002-B016-C061 masked: SUPPORT_RATIO, LBCP_UNSTABLE z=0.150</title></rect>
+<circle cx="399.2" cy="126.9" r="2.5" fill="#d64545"/>
+<rect x="304.7" y="72.0" width="109.7" height="101.0" fill="#d64545" fill-opacity="0.07" stroke="#d64545" stroke-opacity="0.8" stroke-width="1" stroke-dasharray="3,2"><title>S0015-S0002-B016-C062 masked: SUPPORT_RATIO, LBCP_UNSTABLE z=0.150</title></rect>
+<circle cx="359.6" cy="122.5" r="2.5" fill="#d64545"/>
+<rect x="193.8" y="249.8" width="101.0" height="109.7" fill="#d64545" fill-opacity="0.07" stroke="#d64545" stroke-opacity="0.8" stroke-width="1" stroke-dasharray="3,2"><title>S0015-S0002-B016-C063 masked: SUPPORT_RATIO z=0.150</title></rect>
+<circle cx="244.3" cy="304.6" r="2.5" fill="#d64545"/>
+<rect x="49.4" y="441.9" width="101.0" height="109.7" fill="#d64545" fill-opacity="0.07" stroke="#d64545" stroke-opacity="0.8" stroke-width="1" stroke-dasharray="3,2"><title>S0015-S0002-B016-C064 masked: SUPPORT_RATIO, LBCP_UNSTABLE z=0.151</title></rect>
+<circle cx="99.9" cy="496.8" r="2.5" fill="#d64545"/>
+<rect x="45.0" y="446.3" width="109.7" height="101.0" fill="#d64545" fill-opacity="0.07" stroke="#d64545" stroke-opacity="0.8" stroke-width="1" stroke-dasharray="3,2"><title>S0015-S0002-B016-C065 masked: SUPPORT_RATIO, LBCP_UNSTABLE z=0.151</title></rect>
+<circle cx="99.9" cy="496.8" r="2.5" fill="#d64545"/>
+<rect x="66.7" y="365.6" width="101.0" height="109.7" fill="#d64545" fill-opacity="0.07" stroke="#d64545" stroke-opacity="0.8" stroke-width="1" stroke-dasharray="3,2"><title>S0015-S0002-B016-C066 masked: SUPPORT_RATIO, LBCP_UNSTABLE z=0.151</title></rect>
+<circle cx="117.2" cy="420.4" r="2.5" fill="#d64545"/>
+<rect x="32.0" y="365.6" width="109.7" height="101.0" fill="#d64545" fill-opacity="0.07" stroke="#d64545" stroke-opacity="0.8" stroke-width="1" stroke-dasharray="3,2"><title>S0015-S0002-B016-C067 masked: SUPPORT_RATIO, LBCP_UNSTABLE z=0.151</title></rect>
+<circle cx="86.9" cy="416.1" r="2.5" fill="#d64545"/>
+<rect x="441.6" y="365.6" width="109.7" height="101.0" fill="#d64545" fill-opacity="0.07" stroke="#d64545" stroke-opacity="0.8" stroke-width="1" stroke-dasharray="3,2"><title>S0015-S0002-B016-C068 masked: SUPPORT_RATIO, LBCP_UNSTABLE z=0.209</title></rect>
+<circle cx="496.5" cy="416.1" r="2.5" fill="#d64545"/>
+<rect x="441.6" y="356.9" width="101.0" height="109.7" fill="#d64545" fill-opacity="0.07" stroke="#d64545" stroke-opacity="0.8" stroke-width="1" stroke-dasharray="3,2"><title>S0015-S0002-B016-C069 masked: SUPPORT_RATIO, LBCP_UNSTABLE z=0.209</title></rect>
+<circle cx="492.1" cy="411.8" r="2.5" fill="#d64545"/>
+<rect x="478.3" y="187.0" width="109.7" height="101.0" fill="#d64545" fill-opacity="0.07" stroke="#d64545" stroke-opacity="0.8" stroke-width="1" stroke-dasharray="3,2"><title>S0015-S0002-B016-C070 masked: SUPPORT_RATIO, LBCP_UNSTABLE z=0.209</title></rect>
+<circle cx="533.1" cy="237.5" r="2.5" fill="#d64545"/>
+<rect x="487.0" y="178.3" width="101.0" height="109.7" fill="#d64545" fill-opacity="0.07" stroke="#d64545" stroke-opacity="0.8" stroke-width="1" stroke-dasharray="3,2"><title>S0015-S0002-B016-C071 masked: SUPPORT_RATIO, LBCP_UNSTABLE z=0.209</title></rect>
+<circle cx="537.5" cy="233.2" r="2.5" fill="#d64545"/>
+<rect x="391.9" y="178.9" width="109.7" height="101.0" fill="#d64545" fill-opacity="0.07" stroke="#d64545" stroke-opacity="0.8" stroke-width="1" stroke-dasharray="3,2"><title>S0015-S0002-B016-C072 masked: SUPPORT_RATIO, LBCP_UNSTABLE z=0.209</title></rect>
+<circle cx="446.8" cy="229.4" r="2.5" fill="#d64545"/>
+<rect x="391.9" y="170.2" width="101.0" height="109.7" fill="#d64545" fill-opacity="0.07" stroke="#d64545" stroke-opacity="0.8" stroke-width="1" stroke-dasharray="3,2"><title>S0015-S0002-B016-C073 masked: SUPPORT_RATIO, LBCP_UNSTABLE z=0.209</title></rect>
+<circle cx="442.4" cy="225.1" r="2.5" fill="#d64545"/>
+<rect x="478.3" y="142.2" width="109.7" height="101.0" fill="#d64545" fill-opacity="0.07" stroke="#d64545" stroke-opacity="0.8" stroke-width="1" stroke-dasharray="3,2"><title>S0015-S0002-B016-C074 masked: SUPPORT_RATIO, LBCP_UNSTABLE z=0.209</title></rect>
+<circle cx="533.1" cy="192.7" r="2.5" fill="#d64545"/>
+<rect x="487.0" y="133.5" width="101.0" height="109.7" fill="#d64545" fill-opacity="0.07" stroke="#d64545" stroke-opacity="0.8" stroke-width="1" stroke-dasharray="3,2"><title>S0015-S0002-B016-C075 masked: SUPPORT_RATIO, LBCP_UNSTABLE z=0.209</title></rect>
+<circle cx="537.5" cy="188.3" r="2.5" fill="#d64545"/>
+<rect x="32.0" y="348.9" width="109.7" height="101.0" fill="#d64545" fill-opacity="0.07" stroke="#d64545" stroke-opacity="0.8" stroke-width="1" stroke-dasharray="3,2"><title>S0015-S0002-B016-C076 masked: SUPPORT_RATIO, LBCP_UNSTABLE z=0.279</title></rect>
+<circle cx="86.9" cy="399.4" r="2.5" fill="#d64545"/>
+<rect x="32.0" y="340.2" width="101.0" height="109.7" fill="#d64545" fill-opacity="0.07" stroke="#d64545" stroke-opacity="0.8" stroke-width="1" stroke-dasharray="3,2"><title>S0015-S0002-B016-C077 masked: SUPPORT_RATIO, LBCP_UNSTABLE z=0.279</title></rect>
+<circle cx="82.5" cy="395.0" r="2.5" fill="#d64545"/>
+<rect x="173.8" y="348.9" width="109.7" height="101.0" fill="#d64545" fill-opacity="0.07" stroke="#d64545" stroke-opacity="0.8" stroke-width="1" stroke-dasharray="3,2"><title>S0015-S0002-B016-C078 masked: SUPPORT_RATIO, LBCP_UNSTABLE z=0.279</title></rect>
+<circle cx="228.7" cy="399.4" r="2.5" fill="#d64545"/>
+<rect x="173.8" y="340.2" width="101.0" height="109.7" fill="#d64545" fill-opacity="0.07" stroke="#d64545" stroke-opacity="0.8" stroke-width="1" stroke-dasharray="3,2"><title>S0015-S0002-B016-C079 masked: SUPPORT_RATIO, LBCP_UNSTABLE z=0.279</title></rect>
+<circle cx="224.3" cy="395.0" r="2.5" fill="#d64545"/>
+<rect x="49.4" y="295.1" width="101.0" height="109.7" fill="#d64545" fill-opacity="0.07" stroke="#d64545" stroke-opacity="0.8" stroke-width="1" stroke-dasharray="3,2"><title>S0015-S0002-B016-C080 masked: SUPPORT_RATIO, LBCP_UNSTABLE z=0.279</title></rect>
+<circle cx="99.9" cy="350.0" r="2.5" fill="#d64545"/>
+<rect x="45.0" y="299.5" width="109.7" height="101.0" fill="#d64545" fill-opacity="0.07" stroke="#d64545" stroke-opacity="0.8" stroke-width="1" stroke-dasharray="3,2"><title>S0015-S0002-B016-C081 masked: SUPPORT_RATIO, LBCP_UNSTABLE z=0.279</title></rect>
+<circle cx="99.9" cy="350.0" r="2.5" fill="#d64545"/>
+<rect x="147.1" y="259.8" width="109.7" height="101.0" fill="#d64545" fill-opacity="0.07" stroke="#d64545" stroke-opacity="0.8" stroke-width="1" stroke-dasharray="3,2"><title>S0015-S0002-B016-C082 masked: SUPPORT_RATIO, LBCP_UNSTABLE z=0.279</title></rect>
+<circle cx="202.0" cy="310.3" r="2.5" fill="#d64545"/>
+<rect x="147.1" y="251.1" width="101.0" height="109.7" fill="#d64545" fill-opacity="0.07" stroke="#d64545" stroke-opacity="0.8" stroke-width="1" stroke-dasharray="3,2"><title>S0015-S0002-B016-C083 masked: SUPPORT_RATIO, LBCP_UNSTABLE z=0.279</title></rect>
+<circle cx="197.6" cy="306.0" r="2.5" fill="#d64545"/>
+<rect x="114.8" y="206.1" width="101.0" height="109.7" fill="#d64545" fill-opacity="0.07" stroke="#d64545" stroke-opacity="0.8" stroke-width="1" stroke-dasharray="3,2"><title>S0015-S0002-B016-C084 masked: SUPPORT_RATIO z=0.279</title></rect>
+<circle cx="165.3" cy="261.0" r="2.5" fill="#d64545"/>
+<rect x="110.5" y="210.5" width="109.7" height="101.0" fill="#d64545" fill-opacity="0.07" stroke="#d64545" stroke-opacity="0.8" stroke-width="1" stroke-dasharray="3,2"><title>S0015-S0002-B016-C085 masked: SUPPORT_RATIO z=0.279</title></rect>
+<circle cx="165.3" cy="261.0" r="2.5" fill="#d64545"/>
+<rect x="32.0" y="187.0" width="109.7" height="101.0" fill="#d64545" fill-opacity="0.07" stroke="#d64545" stroke-opacity="0.8" stroke-width="1" stroke-dasharray="3,2"><title>S0015-S0002-B016-C086 masked: SUPPORT_RATIO, LBCP_UNSTABLE z=0.279</title></rect>
+<circle cx="86.9" cy="237.5" r="2.5" fill="#d64545"/>
+<rect x="32.0" y="178.3" width="101.0" height="109.7" fill="#d64545" fill-opacity="0.07" stroke="#d64545" stroke-opacity="0.8" stroke-width="1" stroke-dasharray="3,2"><title>S0015-S0002-B016-C087 masked: SUPPORT_RATIO, LBCP_UNSTABLE z=0.279</title></rect>
+<circle cx="82.5" cy="233.2" r="2.5" fill="#d64545"/>
+<rect x="304.7" y="527.0" width="109.7" height="101.0" fill="#d64545" fill-opacity="0.07" stroke="#d64545" stroke-opacity="0.8" stroke-width="1" stroke-dasharray="3,2"><title>S0015-S0002-B016-C088 masked: SUPPORT_RATIO z=0.280</title></rect>
+<circle cx="359.6" cy="577.5" r="2.5" fill="#d64545"/>
+<rect x="304.7" y="472.7" width="109.7" height="101.0" fill="#d64545" fill-opacity="0.07" stroke="#d64545" stroke-opacity="0.8" stroke-width="1" stroke-dasharray="3,2"><title>S0015-S0002-B016-C089 masked: SUPPORT_RATIO z=0.280</title></rect>
+<circle cx="359.6" cy="523.2" r="2.5" fill="#d64545"/>
+<rect x="385.9" y="431.6" width="109.7" height="101.0" fill="#d64545" fill-opacity="0.07" stroke="#d64545" stroke-opacity="0.8" stroke-width="1" stroke-dasharray="3,2"><title>S0015-S0002-B016-C090 masked: SUPPORT_RATIO, LBCP_UNSTABLE z=0.301</title></rect>
+<circle cx="440.7" cy="482.1" r="2.5" fill="#d64545"/>
+<rect x="385.9" y="422.9" width="101.0" height="109.7" fill="#d64545" fill-opacity="0.07" stroke="#d64545" stroke-opacity="0.8" stroke-width="1" stroke-dasharray="3,2"><title>S0015-S0002-B016-C091 masked: SUPPORT_RATIO, LBCP_UNSTABLE z=0.301</title></rect>
+<circle cx="436.4" cy="477.8" r="2.5" fill="#d64545"/>
+<rect x="193.8" y="348.9" width="109.7" height="101.0" fill="#d64545" fill-opacity="0.07" stroke="#d64545" stroke-opacity="0.8" stroke-width="1" stroke-dasharray="3,2"><title>S0015-S0002-B016-C092 masked: SUPPORT_RATIO, LBCP_UNSTABLE z=0.301</title></rect>
+<circle cx="248.7" cy="399.4" r="2.5" fill="#d64545"/>
+<rect x="385.9" y="315.6" width="109.7" height="101.0" fill="#d64545" fill-opacity="0.07" stroke="#d64545" stroke-opacity="0.8" stroke-width="1" stroke-dasharray="3,2"><title>S0015-S0002-B016-C093 masked: SUPPORT_RATIO, LBCP_UNSTABLE z=0.301</title></rect>
+<circle cx="440.7" cy="366.1" r="2.5" fill="#d64545"/>
+<rect x="385.9" y="306.9" width="101.0" height="109.7" fill="#d64545" fill-opacity="0.07" stroke="#d64545" stroke-opacity="0.8" stroke-width="1" stroke-dasharray="3,2"><title>S0015-S0002-B016-C094 masked: SUPPORT_RATIO, LBCP_UNSTABLE z=0.301</title></rect>
+<circle cx="436.4" cy="361.7" r="2.5" fill="#d64545"/>
+<rect x="209.3" y="259.8" width="109.7" height="101.0" fill="#d64545" fill-opacity="0.07" stroke="#d64545" stroke-opacity="0.8" stroke-width="1" stroke-dasharray="3,2"><title>S0015-S0002-B016-C095 masked: SUPPORT_RATIO, LBCP_UNSTABLE z=0.301</title></rect>
+<circle cx="264.1" cy="310.3" r="2.5" fill="#d64545"/>
+<rect x="209.3" y="251.1" width="101.0" height="109.7" fill="#d64545" fill-opacity="0.07" stroke="#d64545" stroke-opacity="0.8" stroke-width="1" stroke-dasharray="3,2"><title>S0015-S0002-B016-C096 masked: SUPPORT_RATIO, LBCP_UNSTABLE z=0.301</title></rect>
+<circle cx="259.8" cy="306.0" r="2.5" fill="#d64545"/>
+<rect x="259.5" y="206.1" width="101.0" height="109.7" fill="#d64545" fill-opacity="0.07" stroke="#d64545" stroke-opacity="0.8" stroke-width="1" stroke-dasharray="3,2"><title>S0015-S0002-B016-C097 masked: SUPPORT_RATIO, LBCP_UNSTABLE z=0.301</title></rect>
+<circle cx="310.0" cy="261.0" r="2.5" fill="#d64545"/>
+<rect x="255.1" y="210.5" width="109.7" height="101.0" fill="#d64545" fill-opacity="0.07" stroke="#d64545" stroke-opacity="0.8" stroke-width="1" stroke-dasharray="3,2"><title>S0015-S0002-B016-C098 masked: SUPPORT_RATIO, LBCP_UNSTABLE z=0.301</title></rect>
+<circle cx="310.0" cy="261.0" r="2.5" fill="#d64545"/>
+<rect x="147.1" y="420.8" width="109.7" height="101.0" fill="#d64545" fill-opacity="0.07" stroke="#d64545" stroke-opacity="0.8" stroke-width="1" stroke-dasharray="3,2"><title>S0015-S0002-B016-C099 masked: SUPPORT_RATIO, LBCP_UNSTABLE z=0.489</title></rect>
+<circle cx="202.0" cy="471.3" r="2.5" fill="#d64545"/>
+<rect x="147.1" y="412.1" width="101.0" height="109.7" fill="#d64545" fill-opacity="0.07" stroke="#d64545" stroke-opacity="0.8" stroke-width="1" stroke-dasharray="3,2"><title>S0015-S0002-B016-C100 masked: SUPPORT_RATIO, LBCP_UNSTABLE z=0.489</title></rect>
+<circle cx="197.6" cy="467.0" r="2.5" fill="#d64545"/>
+<rect x="147.1" y="365.6" width="109.7" height="101.0" fill="#d64545" fill-opacity="0.07" stroke="#d64545" stroke-opacity="0.8" stroke-width="1" stroke-dasharray="3,2"><title>S0015-S0002-B016-C101 masked: SUPPORT_RATIO, LBCP_UNSTABLE z=0.489</title></rect>
+<circle cx="202.0" cy="416.1" r="2.5" fill="#d64545"/>
+<rect x="147.1" y="356.9" width="101.0" height="109.7" fill="#d64545" fill-opacity="0.07" stroke="#d64545" stroke-opacity="0.8" stroke-width="1" stroke-dasharray="3,2"><title>S0015-S0002-B016-C102 masked: SUPPORT_RATIO, LBCP_UNSTABLE z=0.489</title></rect>
+<circle cx="197.6" cy="411.8" r="2.5" fill="#d64545"/>
+<rect x="278.6" y="365.6" width="109.7" height="101.0" fill="#d64545" fill-opacity="0.07" stroke="#d64545" stroke-opacity="0.8" stroke-width="1" stroke-dasharray="3,2"><title>S0015-S0002-B016-C103 masked: SUPPORT_RATIO, LBCP_UNSTABLE z=0.489</title></rect>
+<circle cx="333.5" cy="416.1" r="2.5" fill="#d64545"/>
+<rect x="278.6" y="356.9" width="101.0" height="109.7" fill="#d64545" fill-opacity="0.07" stroke="#d64545" stroke-opacity="0.8" stroke-width="1" stroke-dasharray="3,2"><title>S0015-S0002-B016-C104 masked: SUPPORT_RATIO, LBCP_UNSTABLE z=0.489</title></rect>
+<circle cx="329.1" cy="411.8" r="2.5" fill="#d64545"/>
+<rect x="32.0" y="72.0" width="171.1" height="150.6" fill="none" stroke="#8a5cd6" stroke-width="2" stroke-dasharray="6,3"><title>EMS of the chosen candidate</title></rect>
+<rect x="32.0" y="121.7" width="109.7" height="101.0" fill="#1f5fbf" fill-opacity="0.35" stroke="#1f5fbf" stroke-width="2.5"><title>chosen S0015-S0002-B016-C000 z=0.000</title></rect>
+<text x="630" y="80" font-size="12" fill="#222">box S0002-B016  0.22x0.20x0.10 m  1.1 kg</text>
+<text x="630" y="98" font-size="12" fill="#222">105 generated -&gt; 66 masked -&gt; 39 valid</text>
+<text x="630" y="116" font-size="12" fill="#222">pallet 14 boxes, max top 0.49 / 1.35 m</text>
+<text x="630" y="134" font-size="12" fill="#222"></text>
+<text x="630" y="152" font-size="12" fill="#555">placed box: darker = higher, label = top (m)</text>
+<text x="630" y="170" font-size="12" fill="#2e9d5b">valid candidate</text>
+<text x="630" y="188" font-size="12" fill="#d64545">masked candidate (dashed)</text>
+<text x="630" y="206" font-size="12" fill="#1f5fbf">chosen candidate</text>
+<text x="630" y="224" font-size="12" fill="#8a5cd6">EMS of chosen</text>
+<text x="630" y="242" font-size="12" fill="#222"></text>
+<text x="630" y="260" font-size="12" fill="#222">mask reasons (candidates, all failing checks):</text>
+<text x="630" y="278" font-size="12" fill="#d64545">  SUPPORT_RATIO: 62</text>
+<text x="630" y="296" font-size="12" fill="#d64545">  LBCP_UNSTABLE: 55</text>
+<text x="630" y="314" font-size="12" fill="#d64545">  BOX_CAPACITY: 9</text>
+</svg>

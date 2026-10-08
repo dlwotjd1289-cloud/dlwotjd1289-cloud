@@ -29,7 +29,10 @@ def main():
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--candidate-config", type=Path, default=REPO / "config/taehyeon/candidates.yaml")
     args = parser.parse_args()
-    cfg = load_candidate_config(args.candidate_config)
+    from dataclasses import replace
+
+    # every failing check is listed (verdicts are identical to runtime mode)
+    cfg = replace(load_candidate_config(args.candidate_config), collect_all_reasons=True)
     args.output.mkdir(parents=True, exist_ok=True)
     for path in args.scenes:
         data = json.loads(path.read_text(encoding="utf-8"))

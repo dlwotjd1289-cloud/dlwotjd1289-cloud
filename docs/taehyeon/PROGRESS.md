@@ -9,7 +9,7 @@
 uv venv --python 3.10 .venv && . .venv/bin/activate      # 또는 python3.10 -m venv .venv
 pip install "numpy>=1.23,<3" "PyYAML>=6,<7" "pytest>=7,<9" "pybullet>=3.2.6,<4" "networkx>=2.8,<4"
 scripts/taehyeon/fetch_team_deps.sh                       # 팀원 코드(읽기 전용)를 .deps/team 에 추출
-python -m pytest -q tests/taehyeon                        # 124 passed
+python -m pytest -q tests/taehyeon                        # 130 passed
 scripts/taehyeon/run_validation.sh                        # 전체 검증 리포트 재생성
 ```
 

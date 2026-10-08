@@ -116,7 +116,7 @@ def decision_svg(state, box, candidate_set, chosen_id=None, title=None, width=90
         ("chosen candidate", CHOSEN),
         ("EMS of chosen", EMS),
         ("", "#222"),
-        ("mask reasons (candidates):", "#222"),
+        ("mask reasons (candidates, all failing checks):", "#222"),
     ] + [(f"  {k}: {v}", MASKED) for k, v in reasons.most_common(8)]
     for i, (text, color) in enumerate(lines):
         parts.append(
