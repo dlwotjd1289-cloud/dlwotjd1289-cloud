@@ -3,12 +3,12 @@
   "scenes": 30,
   "scenes_with_valid": 24,
   "budget": "1s soft budget",
-  "time_mean_ms": 643.4366579585458,
-  "time_p95_ms": 1000.433511000665,
-  "time_max_ms": 1073.8746250008262,
-  "budget_exceeded": 3,
+  "time_mean_ms": 689.0800178333999,
+  "time_p95_ms": 1011.4451569997982,
+  "time_max_ms": 1136.3218769993182,
+  "budget_exceeded": 6,
   "degraded": 11,
-  "full_7_scenarios": 16,
+  "full_7_scenarios": 14,
   "ems_supplied_ratio": 1.0
  },
  "rows": [
@@ -18,26 +18,7 @@
    "generated": 34,
    "valid": 34,
    "ranked": 2,
-   "time_sec": 0.6760640360007528,
-   "completed_scenarios": 7,
-   "degradation": [
-    "REDUCED_TOP_K"
-   ],
-   "budget_exceeded": false,
-   "ems_supplied": 2,
-   "evaluations": 2,
-   "top": {
-    "id": "S0002-S0002-B003-C029",
-    "score": 0.3873250177797146
-   }
-  },
-  {
-   "scene": "S0002-T006.json",
-   "pallet_boxes": 6,
-   "generated": 63,
-   "valid": 38,
-   "ranked": 2,
-   "time_sec": 0.8373419119998289,
+   "time_sec": 0.9180589990000954,
    "completed_scenarios": 3,
    "degradation": [
     "REDUCED_TOP_K",
@@ -48,8 +29,29 @@
    "ems_supplied": 2,
    "evaluations": 2,
    "top": {
+    "id": "S0002-S0002-B003-C029",
+    "score": 0.3791768079031714
+   }
+  },
+  {
+   "scene": "S0002-T006.json",
+   "pallet_boxes": 6,
+   "generated": 63,
+   "valid": 38,
+   "ranked": 2,
+   "time_sec": 1.0488734190003015,
+   "completed_scenarios": 0,
+   "degradation": [
+    "REDUCED_TOP_K",
+    "REDUCED_SCENARIOS",
+    "HORIZON_ONE"
+   ],
+   "budget_exceeded": true,
+   "ems_supplied": 2,
+   "evaluations": 2,
+   "top": {
     "id": "S0006-S0002-B007-C005",
-    "score": 0.38558047249966626
+    "score": 0.3834873243515181
    }
   },
   {
@@ -58,7 +60,7 @@
    "generated": 61,
    "valid": 4,
    "ranked": 4,
-   "time_sec": 1.000433511000665,
+   "time_sec": 1.0003853219996017,
    "completed_scenarios": 5,
    "degradation": [],
    "budget_exceeded": true,
@@ -75,7 +77,7 @@
    "generated": 52,
    "valid": 3,
    "ranked": 3,
-   "time_sec": 0.5812285209995025,
+   "time_sec": 0.8099616879999303,
    "completed_scenarios": 7,
    "degradation": [],
    "budget_exceeded": false,
@@ -92,17 +94,17 @@
    "generated": 49,
    "valid": 15,
    "ranked": 2,
-   "time_sec": 0.9335318419998657,
-   "completed_scenarios": 7,
+   "time_sec": 1.0005191870004637,
+   "completed_scenarios": 6,
    "degradation": [
     "REDUCED_TOP_K"
    ],
-   "budget_exceeded": false,
+   "budget_exceeded": true,
    "ems_supplied": 2,
    "evaluations": 2,
    "top": {
     "id": "S0011-S0008-B012-C001",
-    "score": 0.38359027101635307
+    "score": 0.38204754798578283
    }
   },
   {
@@ -111,7 +113,7 @@
    "generated": 52,
    "valid": 36,
    "ranked": 2,
-   "time_sec": 0.8249037340010545,
+   "time_sec": 0.9235926020000989,
    "completed_scenarios": 3,
    "degradation": [
     "REDUCED_TOP_K",
@@ -132,18 +134,19 @@
    "generated": 52,
    "valid": 32,
    "ranked": 2,
-   "time_sec": 0.8829739249995328,
+   "time_sec": 0.8488605010006722,
    "completed_scenarios": 3,
    "degradation": [
     "REDUCED_TOP_K",
-    "REDUCED_SCENARIOS"
+    "REDUCED_SCENARIOS",
+    "HORIZON_ONE"
    ],
    "budget_exceeded": false,
    "ems_supplied": 2,
    "evaluations": 2,
    "top": {
     "id": "S0006-S0018-B007-C015",
-    "score": 0.3767512280525818
+    "score": 0.3938634965711003
    }
   },
   {
@@ -152,7 +155,7 @@
    "generated": 34,
    "valid": 0,
    "ranked": 0,
-   "time_sec": 0.003620573999796761,
+   "time_sec": 0.0036538550002660486,
    "completed_scenarios": 0,
    "degradation": [],
    "budget_exceeded": false,
@@ -166,7 +169,7 @@
    "generated": 76,
    "valid": 4,
    "ranked": 4,
-   "time_sec": 0.747568221999245,
+   "time_sec": 0.6926102249999531,
    "completed_scenarios": 7,
    "degradation": [],
    "budget_exceeded": false,
@@ -183,19 +186,18 @@
    "generated": 73,
    "valid": 19,
    "ranked": 2,
-   "time_sec": 0.8450818310011528,
-   "completed_scenarios": 3,
+   "time_sec": 1.0114451569997982,
+   "completed_scenarios": 1,
    "degradation": [
     "REDUCED_TOP_K",
-    "REDUCED_SCENARIOS",
-    "HORIZON_ONE"
+    "REDUCED_SCENARIOS"
    ],
-   "budget_exceeded": false,
+   "budget_exceeded": true,
    "ems_supplied": 2,
    "evaluations": 2,
    "top": {
     "id": "S0019-S0001-B020-C015",
-    "score": 0.36647602420009573
+    "score": 0.3426457211697927
    }
   },
   {
@@ -204,7 +206,7 @@
    "generated": 28,
    "valid": 0,
    "ranked": 0,
-   "time_sec": 0.0031394139987241942,
+   "time_sec": 0.003165715000250202,
    "completed_scenarios": 0,
    "degradation": [],
    "budget_exceeded": false,
@@ -218,7 +220,7 @@
    "generated": 10,
    "valid": 10,
    "ranked": 4,
-   "time_sec": 0.3180744600012986,
+   "time_sec": 0.4105929360002847,
    "completed_scenarios": 7,
    "degradation": [],
    "budget_exceeded": false,
@@ -235,7 +237,7 @@
    "generated": 60,
    "valid": 0,
    "ranked": 0,
-   "time_sec": 0.005443243999252445,
+   "time_sec": 0.004288916999939829,
    "completed_scenarios": 0,
    "degradation": [],
    "budget_exceeded": false,
@@ -249,7 +251,7 @@
    "generated": 79,
    "valid": 0,
    "ranked": 0,
-   "time_sec": 0.008820668999760528,
+   "time_sec": 0.007961063000038848,
    "completed_scenarios": 0,
    "degradation": [],
    "budget_exceeded": false,
@@ -263,7 +265,7 @@
    "generated": 51,
    "valid": 0,
    "ranked": 0,
-   "time_sec": 0.004715999999461928,
+   "time_sec": 0.004753745000016352,
    "completed_scenarios": 0,
    "degradation": [],
    "budget_exceeded": false,
@@ -274,10 +276,10 @@
   {
    "scene": "S0015-T016.json",
    "pallet_boxes": 14,
-   "generated": 78,
+   "generated": 77,
    "valid": 25,
    "ranked": 2,
-   "time_sec": 1.0738746250008262,
+   "time_sec": 1.1363218769993182,
    "completed_scenarios": 0,
    "degradation": [
     "REDUCED_TOP_K",
@@ -288,8 +290,8 @@
    "ems_supplied": 2,
    "evaluations": 2,
    "top": {
-    "id": "S0016-S0015-B017-C008",
-    "score": 0.3408129072281416
+    "id": "S0016-S0015-B017-C002",
+    "score": 0.3371408110428577
    }
   },
   {
@@ -298,7 +300,7 @@
    "generated": 40,
    "valid": 36,
    "ranked": 2,
-   "time_sec": 0.6595546249991457,
+   "time_sec": 0.6638436729999739,
    "completed_scenarios": 7,
    "degradation": [
     "REDUCED_TOP_K"
@@ -315,9 +317,9 @@
    "scene": "S0020-T008.json",
    "pallet_boxes": 8,
    "generated": 50,
-   "valid": 27,
+   "valid": 26,
    "ranked": 2,
-   "time_sec": 0.6535746419995121,
+   "time_sec": 0.8259243850006897,
    "completed_scenarios": 7,
    "degradation": [
     "REDUCED_TOP_K"
@@ -334,9 +336,9 @@
    "scene": "S0021-T012.json",
    "pallet_boxes": 12,
    "generated": 47,
-   "valid": 5,
+   "valid": 4,
    "ranked": 4,
-   "time_sec": 0.9527624570000626,
+   "time_sec": 0.9114701000007699,
    "completed_scenarios": 7,
    "degradation": [],
    "budget_exceeded": false,
@@ -350,35 +352,35 @@
   {
    "scene": "S0021-T015.json",
    "pallet_boxes": 15,
-   "generated": 73,
-   "valid": 4,
-   "ranked": 4,
-   "time_sec": 1.0005013789996156,
-   "completed_scenarios": 6,
-   "degradation": [],
-   "budget_exceeded": true,
-   "ems_supplied": 4,
-   "evaluations": 4,
-   "top": {
-    "id": "S0015-S0021-B016-C000",
-    "score": 0.30909706804838205
-   }
-  },
-  {
-   "scene": "S0021-T023.json",
-   "pallet_boxes": 17,
-   "generated": 97,
+   "generated": 75,
    "valid": 2,
    "ranked": 2,
-   "time_sec": 0.017791150999983074,
+   "time_sec": 0.5352674079995268,
    "completed_scenarios": 7,
    "degradation": [],
    "budget_exceeded": false,
    "ems_supplied": 2,
    "evaluations": 2,
    "top": {
+    "id": "S0015-S0021-B016-C000",
+    "score": 0.3094126746371702
+   }
+  },
+  {
+   "scene": "S0021-T023.json",
+   "pallet_boxes": 17,
+   "generated": 101,
+   "valid": 4,
+   "ranked": 4,
+   "time_sec": 0.018023648000053072,
+   "completed_scenarios": 7,
+   "degradation": [],
+   "budget_exceeded": false,
+   "ems_supplied": 4,
+   "evaluations": 4,
+   "top": {
     "id": "S0023-S0021-B024-C000",
-    "score": 0.36182361152093473
+    "score": 0.3667004241774797
    }
   },
   {
@@ -387,7 +389,7 @@
    "generated": 10,
    "valid": 10,
    "ranked": 4,
-   "time_sec": 0.3290652899995621,
+   "time_sec": 0.3026332650006225,
    "completed_scenarios": 7,
    "degradation": [],
    "budget_exceeded": false,
@@ -404,7 +406,7 @@
    "generated": 28,
    "valid": 28,
    "ranked": 2,
-   "time_sec": 0.544681771998512,
+   "time_sec": 0.6531797389998246,
    "completed_scenarios": 7,
    "degradation": [
     "REDUCED_TOP_K"
@@ -423,7 +425,7 @@
    "generated": 57,
    "valid": 2,
    "ranked": 2,
-   "time_sec": 0.05915941199964436,
+   "time_sec": 0.05975790499996947,
    "completed_scenarios": 7,
    "degradation": [],
    "budget_exceeded": false,
@@ -440,7 +442,7 @@
    "generated": 10,
    "valid": 10,
    "ranked": 4,
-   "time_sec": 0.2512028020009893,
+   "time_sec": 0.30532427600064693,
    "completed_scenarios": 7,
    "degradation": [],
    "budget_exceeded": false,
@@ -457,7 +459,7 @@
    "generated": 19,
    "valid": 0,
    "ranked": 0,
-   "time_sec": 0.004919281000184128,
+   "time_sec": 0.00813646599999629,
    "completed_scenarios": 0,
    "degradation": [],
    "budget_exceeded": false,
@@ -471,7 +473,7 @@
    "generated": 18,
    "valid": 6,
    "ranked": 4,
-   "time_sec": 0.19165405800049484,
+   "time_sec": 0.22031042399976286,
    "completed_scenarios": 7,
    "degradation": [],
    "budget_exceeded": false,
@@ -488,15 +490,15 @@
    "generated": 36,
    "valid": 32,
    "ranked": 4,
-   "time_sec": 0.7819015590011986,
-   "completed_scenarios": 7,
+   "time_sec": 1.0007131920001484,
+   "completed_scenarios": 6,
    "degradation": [],
-   "budget_exceeded": false,
+   "budget_exceeded": true,
    "ems_supplied": 4,
    "evaluations": 4,
    "top": {
     "id": "S0006-S0029-B007-C007",
-    "score": 0.4300472533056629
+    "score": 0.43112785441050644
    }
   },
   {
@@ -505,7 +507,7 @@
    "generated": 55,
    "valid": 1,
    "ranked": 1,
-   "time_sec": 0.38807002600151463,
+   "time_sec": 0.42256270999951084,
    "completed_scenarios": 7,
    "degradation": [],
    "budget_exceeded": false,
@@ -522,7 +524,7 @@
    "generated": 41,
    "valid": 38,
    "ranked": 2,
-   "time_sec": 0.8914839990011387,
+   "time_sec": 0.8176877899995816,
    "completed_scenarios": 3,
    "degradation": [
     "REDUCED_TOP_K",
