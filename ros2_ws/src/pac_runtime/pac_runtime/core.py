@@ -172,8 +172,11 @@ class RuntimeCore:
             self.closed.append((sm.pallet_id, tuple(sm.placed)))
             sm.close_pallet()
         elif a == "PARTIAL_REPACK":
+            tol = max(self.cfg.verify.max_overlap_m, self.cfg.verify.max_protrusion_m)
             for box_id, cand, _ in cmd.repack:
-                sm.move_placed(box_id, report.repack_poses.get(box_id, cand.target_pose))
+                pb = next(p for p in sm.placed if p.box_id == box_id)
+                pose, _ = sm.reconcile(pb.size, report.repack_poses.get(box_id, cand.target_pose), tol, ignore=box_id)
+                sm.move_placed(box_id, pose)
                 self.counts["repack_moves"] += 1
         elif a in ("PLACE_CURRENT", "RETRIEVE_BUFFER"):
             if report.attempts > 1:
@@ -196,6 +199,10 @@ class RuntimeCore:
             if level == "L4":
                 self.sm.t += self.supervisor.hold(self.sm.t, "L4: " + ",".join(issues))
                 measured = report.corrected_pose or cmd.candidate.target_pose
+            tol = max(self.cfg.verify.max_overlap_m, self.cfg.verify.max_protrusion_m)
+            measured, shift = sm.reconcile(box.size, measured, tol)
+            if shift > 1e-9:
+                self.counts["stage8_reconciled"] += 1
             sm.place(cmd.box_id, measured)
             return level
         return None

@@ -269,3 +269,20 @@ def test_order_file_and_ros_bridge_messages():
     assert level == "L0" and nxt is None and bridge.status()["placed"] == 1
     missing, _ = bridge.on_idle(json.dumps({"idle_s": 60}))
     assert missing == {"K": 1}
+
+
+def test_state_manager_reconciles_measurement_noise():
+    sm = StateManager(PALLET, CAT, {"K": 3}, pallet_max_weight_kg=500, buffer_slots=2)
+    for i, pose in enumerate([Pose3D("pallet", 0.0, 0.0, 0.0), Pose3D("pallet", 0.4, 0.0, 0.0)]):
+        sm.arrive(replace(truth(i), status=BoxStatus.MEASURED))
+        sm.place(f"B{i:03d}", pose)
+    # 1.5 mm into the right neighbour and 1 mm into the box below -> pushed out / lifted
+    pose, shift = sm.reconcile(Size3D(0.4, 0.3, 0.2), Pose3D("pallet", 0.0015 + 0.4 - 0.4, 0.0, 0.199), 0.002)
+    assert pose.z == pytest.approx(0.2) and shift > 0
+    side, _ = sm.reconcile(Size3D(0.4, 0.3, 0.2), Pose3D("pallet", 0.8 - 0.0015, 0.0, 0.0), 0.002)
+    assert side.x == pytest.approx(0.8)
+    # 1 mm over the pallet edge -> clamped; 1 cm penetration -> left for L4
+    edge, _ = sm.reconcile(Size3D(0.4, 0.3, 0.2), Pose3D("pallet", 0.801, 0.701, 0.0), 0.002)
+    assert edge.x == pytest.approx(0.8) and edge.y == pytest.approx(0.7)
+    deep, shift = sm.reconcile(Size3D(0.4, 0.3, 0.2), Pose3D("pallet", 0.79, 0.0, 0.0), 0.002)
+    assert deep.x == pytest.approx(0.79) and shift == 0.0

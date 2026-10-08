@@ -106,6 +106,52 @@ class StateManager:
         self.tracked[box_id] = replace(self.tracked[box_id], status=BoxStatus.BUFFERED)
         self._bump()
 
+    def reconcile(self, size, pose, tol=0.002, ignore=None):
+        """Make a measured pose consistent with the stored state.
+
+        Measurement noise can leave the measured box a millimetre inside a
+        neighbour (e.g. the lower box was measured slightly taller than it
+        is) or outside the pallet edge. Downstream planners require a
+        consistent state (no overlaps, inside the pallet), so overlaps and
+        protrusions up to ``tol`` are resolved: z is lifted onto the stored
+        top of the box below, x / y are pushed out along the smaller
+        penetration. Larger conflicts are left for the post check (L4).
+        Returns (pose, shift in m).
+        """
+        from pac_candidates.geometry import rotated_dims
+
+        dx, dy, dz = rotated_dims(size, pose.yaw)
+        x, y, z = pose.x, pose.y, pose.z
+        for _ in range(4):
+            moved = False
+            for p in self.placed:
+                if p.box_id == ignore:
+                    continue
+                px, py, pz = rotated_dims(p.size, p.pose.yaw)
+                ox = min(x + dx, p.pose.x + px) - max(x, p.pose.x)
+                oy = min(y + dy, p.pose.y + py) - max(y, p.pose.y)
+                oz = min(z + dz, p.pose.z + pz) - max(z, p.pose.z)
+                if ox <= 1e-9 or oy <= 1e-9 or oz <= 1e-9:
+                    continue
+                if oz <= tol and p.pose.z < z:          # resting on it: lift onto its stored top
+                    z = p.pose.z + pz
+                elif min(ox, oy) <= tol:                 # side contact: push out
+                    if ox <= oy:
+                        x += -ox if x < p.pose.x else ox
+                    else:
+                        y += -oy if y < p.pose.y else oy
+                else:
+                    continue
+                moved = True
+            X, Y = self.pallet_size.x, self.pallet_size.y
+            nx, ny = min(max(x, 0.0), X - dx) if dx <= X else x, min(max(y, 0.0), Y - dy) if dy <= Y else y
+            if abs(nx - x) <= tol and abs(ny - y) <= tol and (nx, ny) != (x, y):
+                x, y, moved = nx, ny, True
+            if not moved:
+                break
+        shift = ((x - pose.x) ** 2 + (y - pose.y) ** 2 + (z - pose.z) ** 2) ** 0.5
+        return replace(pose, x=x, y=y, z=z), shift
+
     def place(self, box_id, measured_pose):
         """Record the box at its measured pose (stage 7 result)."""
         box = self.tracked.pop(box_id)
