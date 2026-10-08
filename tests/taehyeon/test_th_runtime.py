@@ -281,6 +281,9 @@ def test_state_manager_reconciles_measurement_noise():
     assert pose.z == pytest.approx(0.2) and shift > 0
     side, _ = sm.reconcile(Size3D(0.4, 0.3, 0.2), Pose3D("pallet", 0.8 - 0.0015, 0.0, 0.0), 0.002)
     assert side.x == pytest.approx(0.8)
+    # lower box stored 3.7 mm taller than it is: the box on top is lifted onto the stored top
+    lifted, _ = sm.reconcile(Size3D(0.4, 0.3, 0.2), Pose3D("pallet", 0.0, 0.0, 0.1963), 0.002)
+    assert lifted.z == pytest.approx(0.2)
     # 1 mm over the pallet edge -> clamped; 1 cm penetration -> left for L4
     edge, _ = sm.reconcile(Size3D(0.4, 0.3, 0.2), Pose3D("pallet", 0.801, 0.701, 0.0), 0.002)
     assert edge.x == pytest.approx(0.8) and edge.y == pytest.approx(0.7)

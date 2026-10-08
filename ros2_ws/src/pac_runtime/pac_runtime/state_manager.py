@@ -106,16 +106,17 @@ class StateManager:
         self.tracked[box_id] = replace(self.tracked[box_id], status=BoxStatus.BUFFERED)
         self._bump()
 
-    def reconcile(self, size, pose, tol=0.002, ignore=None):
+    def reconcile(self, size, pose, tol=0.002, ignore=None, z_tol=0.015):
         """Make a measured pose consistent with the stored state.
 
         Measurement noise can leave the measured box a millimetre inside a
         neighbour (e.g. the lower box was measured slightly taller than it
         is) or outside the pallet edge. Downstream planners require a
         consistent state (no overlaps, inside the pallet), so overlaps and
-        protrusions up to ``tol`` are resolved: z is lifted onto the stored
-        top of the box below, x / y are pushed out along the smaller
-        penetration. Larger conflicts are left for the post check (L4).
+        protrusions are resolved: z is lifted onto the stored top of the box
+        below (up to ``z_tol``, the height error of a low-confidence
+        measurement), x / y are pushed out along the smaller penetration (up
+        to ``tol``). Larger conflicts are left for the post check (L4).
         Returns (pose, shift in m).
         """
         from pac_candidates.geometry import rotated_dims
@@ -133,7 +134,7 @@ class StateManager:
                 oz = min(z + dz, p.pose.z + pz) - max(z, p.pose.z)
                 if ox <= 1e-9 or oy <= 1e-9 or oz <= 1e-9:
                     continue
-                if oz <= tol and p.pose.z < z:          # resting on it: lift onto its stored top
+                if oz <= z_tol and p.pose.z < z and min(ox, oy) > tol:  # resting on it: lift onto its stored top
                     z = p.pose.z + pz
                 elif min(ox, oy) <= tol:                 # side contact: push out
                     if ox <= oy:
