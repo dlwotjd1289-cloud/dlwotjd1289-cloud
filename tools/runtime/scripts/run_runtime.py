@@ -21,6 +21,7 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "highlevel" / "scripts"))
 from _common import REPO, add_common_args, load_all  # noqa: E402
+import team_paths  # noqa: E402
 
 from pac_common import ValidationResult  # noqa: E402
 from pac_highlevel import load_policy  # noqa: E402
@@ -57,7 +58,14 @@ def _run(task):
     if variant == "noisy3mm":
         rt = replace(rt, execution=replace(rt.execution, place_xy_noise_std_m=0.003))
     rt = replace(rt, seed=seed)
-    out = RuntimeLoop(cell, cand, hl, rt, robot, load_policy("rule", config=hl), log_events=False).run()
+    ranker = None
+    if JOB["ranker"] == "donghan":
+        team_paths.add_optional("pac_planning")
+        from pac_runtime import donghan_ranker
+
+        ranker = donghan_ranker()
+    out = RuntimeLoop(cell, cand, hl, rt, robot, load_policy("rule", config=hl), ranker=ranker,
+                      log_events=False).run()
     out.pop("events", None)
     for p in out["pallet_list"]:
         p.pop("layout", None)
@@ -76,18 +84,23 @@ def main():
     parser.add_argument("--runtime-config", type=Path, default=REPO / "config/taehyeon/runtime.yaml")
     parser.add_argument("--robot-config", type=Path, default=REPO / "config/taehyeon/robot_check.yaml")
     parser.add_argument("--workers", type=int, default=2)
+    parser.add_argument("--ranker", choices=("dblf", "donghan"), default="dblf",
+                        help="5-3~5-6 ranking: DBLF or donghan's planner (slow)")
+    parser.add_argument("--scenarios", type=int, default=0, help="first N scenarios (0 = all)")
     parser.add_argument("--report", type=Path)
     args = parser.parse_args()
     dataset, cand, vcfg, hl = load_all(args)
     rt = load_runtime_config(args.runtime_config)
     rcfg = load_robot_check_config(args.robot_config)
     specs = split_ids(dataset, args.split)
+    if args.scenarios:
+        specs = specs[: args.scenarios]
     fam = family_indices(dataset)
     pos = {s.scenario_id: i for i, s in enumerate(dataset.scenarios)}
     JOB = {"specs": [(s, {"family_index": fam[s.scenario_id], "scenario_index": pos[s.scenario_id],
                           "spec_mismatch_probability": args.spec_mismatch,
                           "missing_probability": args.missing}) for s in specs],
-           "cfg": (cand, hl, rt, rcfg, dataset, vcfg)}
+           "cfg": (cand, hl, rt, rcfg, dataset, vcfg), "ranker": args.ranker}
     tasks = [(v, k, p) for v in args.variants for k in range(len(specs)) for p in range(args.passes)]
     with mp.get_context("fork").Pool(args.workers) as pool:
         rows = pool.map(_run, tasks, chunksize=1)

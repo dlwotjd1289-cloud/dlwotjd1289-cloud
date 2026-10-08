@@ -136,6 +136,11 @@ python tools/runtime/scripts/physics_replay.py --dataset tools/highlevel/output/
 
 ### 3D로 보기
 
+**파일 하나로 보기**: `reports/runtime_viewer.html`을 브라우저로 열면 위 47개 팔레트를 고르고, 적재 순서를 한 박스씩 재생할 수 있습니다(색: 무게, 빨간 선: 무게중심, 회색 틀: 높이 한계, PyBullet 안정 여부 표시).
+three.js를 CDN에서 불러오므로 인터넷이 필요합니다. 다시 만들려면 `python tools/runtime/scripts/export_viewer.py docs/taehyeon/reports/runtime_physics.json docs/taehyeon/reports/runtime_viewer.html`.
+
+**물리 시뮬레이터로 보기**:
+
 재성 님(또는 pac2026-ahead) 라이브 시뮬레이터를 띄운 뒤 `--live`로 팔레트 하나를 보내면 브라우저에서 한 박스씩 쌓이는 모습을 볼 수 있습니다.
 시뮬레이터의 팔레트 크기를 보낼 팔레트와 맞춰야 합니다(시나리오마다 1.2 × 1.0 / 1.1 × 1.1 / 1.2 × 0.8 m).
 
