@@ -53,6 +53,7 @@ def locate(name):
 def own_source_dirs():
     return [
         REPO_ROOT / "ros2_ws" / "src" / "pac_candidates",
+        REPO_ROOT / "ros2_ws" / "src" / "pac_highlevel",
         REPO_ROOT / "tools" / "virtual_data",
     ]
 
