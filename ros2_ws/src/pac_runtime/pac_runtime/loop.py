@@ -47,9 +47,10 @@ class RuntimeLoop:
 
     def run(self):
         cell, cfg = self.cell, self.cfg
-        rng = random.Random(cfg.seed)
-        perception = PerceptionSim(cfg.perception, rng)
-        executor = ExecutorSim(cfg.execution, cfg.verify, rng)
+        # separate streams: every variant sees the same observations of the
+        # same boxes, whatever the decisions and executions in between
+        perception = PerceptionSim(cfg.perception, random.Random(f"{cfg.seed}:perception"))
+        executor = ExecutorSim(cfg.execution, cfg.verify, random.Random(f"{cfg.seed}:execution"))
         core = RuntimeCore(cell, self.cand_config, self.hl, cfg, self.robot, self.policy, self.ranker)
         sm, supervisor = core.sm, core.supervisor
         travel = self.hl.buffer.travel_times()

@@ -8,6 +8,7 @@ Variants (paired, same streams and seeds):
   full       stage 6 on (HDR50-22 check inside the placer)
   no_robot   stage 6 off (every hard-mask-valid candidate counts as executable)
   noisy3mm   stage 6 on, placement error 3 mm (outside the 5-2 budget)
+  small_gripper  stage 6 on, 0.20 x 0.15 m vacuum pad instead of 0.34 x 0.26 m
 """
 
 import argparse
@@ -50,6 +51,8 @@ def _run(task):
     spec, cell_kwargs = JOB["specs"][k]
     cand, hl, rt, rcfg, dataset, vcfg = JOB["cfg"]
     cell = runtime_cell(spec, dataset, cand, vcfg, seed=seed, **cell_kwargs)
+    if variant == "small_gripper":
+        rcfg = replace(rcfg, gripper=replace(rcfg.gripper, footprint_m=(0.20, 0.15)))
     robot = NoRobot() if variant == "no_robot" else RobotFeasibility(rcfg)
     if variant == "noisy3mm":
         rt = replace(rt, execution=replace(rt.execution, place_xy_noise_std_m=0.003))
@@ -67,7 +70,7 @@ def main():
     add_common_args(parser)
     parser.add_argument("--split", default="test")
     parser.add_argument("--passes", type=int, default=1)
-    parser.add_argument("--variants", nargs="+", default=["full", "no_robot", "noisy3mm"])
+    parser.add_argument("--variants", nargs="+", default=["full", "no_robot", "noisy3mm", "small_gripper"])
     parser.add_argument("--spec-mismatch", type=float, default=0.02)
     parser.add_argument("--missing", type=float, default=0.02)
     parser.add_argument("--runtime-config", type=Path, default=REPO / "config/taehyeon/runtime.yaml")
