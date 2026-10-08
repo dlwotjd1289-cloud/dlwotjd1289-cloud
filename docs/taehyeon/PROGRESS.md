@@ -51,7 +51,8 @@ PR: https://github.com/yang8988/pac-mission1-shared/pull/1 (Draft, 브랜치 `cl
 - [x] 4번 High-level: 시뮬레이션 세계, 마스크, Rule 정책, PARTIAL_REPACK, NumPy MaskablePPO, 모방 warm start, 테스트 15개
 - [x] 4번 PPO 학습·평가 리포트(`docs/taehyeon/reports/highlevel_*.json`) 및 highlevel.md 5장 결과
 - [x] 무거운-위-가벼운 `share` 전환, 5-② 하중 증분 버그 수정, 5-① 균형 기준점, 전체 검증 재실행
-- [ ] sb3-contrib(PyTorch) 정책 학습·평가 후 기본 정책 결정
+- [x] sb3-contrib(PyTorch) 정책 학습·평가 → test 3.94 (Rule 3.91, NumPy PPO 3.86) → 기본 정책은 NumPy 판 유지
+- [ ] (선택) sb3 판 개선: VecNormalize, 300k+ 단계, 엔트로피 조정
 
 ## 다음 할 일
 
@@ -84,3 +85,4 @@ PR: https://github.com/yang8988/pac-mission1-shared/pull/1 (Draft, 브랜치 `cl
 | 2026-10-08 | 팔레트 3규격(T11/T12/1.2×0.8) 기본값으로 전체 재검증 | 132 테스트, 오라클 71/71, 물리 79/79 안정(대조군 58 % 붕괴), planner 평균 556 ms·초과 0, extreme만 눌림 7(SF16에서 1) |
 | 2026-10-08 | `share` 전환 후 전체 재검증 | 150 테스트, 오라클 77/80, 물리 84/84, planner 643 ms (초과 3/24), extreme만 눌림 3 |
 | 2026-10-08 | 4번 NumPy PPO 재학습 (`share`) | test: PPO 3.86 vs Rule 3.91 vs 버퍼 없음 5.20 팔레트 |
+| 2026-10-08 | 4번 sb3-contrib MaskablePPO (PyTorch) 100k 단계 | test 3.94 팔레트 (Rule 3.91, NumPy 3.86) → 기본 정책 NumPy 유지 |

@@ -86,5 +86,5 @@ print(cset.summary(), dict(cset.reason_counts))
 | 측정오차 δ 흡수: 실제 크기 기준 상호 관통/팔레트 돌출 | 0건 (720단계) |
 | 박스 강도 비공개 대응: 숨겨진 실제 강도 6개 프로필, 팔레트 끝까지 적재 | extreme 외 5개 프로필 실제 눌림 **0건**, extreme 3개 |
 | 동한 님 planner 연동 (1 초 소프트 예산) | 평균 643 ms, 초과 3/24 |
-| 4번 High-level (test 27 에피소드, 사용 팔레트) | 버퍼 없음 5.20 → Rule 3.91 → **MaskablePPO 3.86**, 안전 이슈 0 |
+| 4번 High-level (test 27 에피소드, 사용 팔레트) | 버퍼 없음 5.20 → Rule 3.91 → **MaskablePPO 3.86** (sb3-contrib 판 3.94), 안전 이슈 0 |
 | 무거운-위-가벼운 규칙 | `share` 모드 (2026-10-08 결정, `per_box` 대비 팔레트 약 20 % 절약) |
