@@ -11,6 +11,6 @@ setup(
     install_requires=["setuptools"],
     zip_safe=True,
     maintainer="PAC 2026 Team",
-    description="Robot capability adapters and HDP160-31 integration boundary.",
+    description="Robot capability adapters; target robot HDR50-22.",
     license="Apache-2.0",
 )

@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="3">
   <name>pac_robot</name><version>0.1.0</version>
-  <description>Robot capability adapters and HDP160-31 integration boundary.</description>
+  <description>Robot capability adapters; target robot HDR50-22.</description>
   <maintainer email="team@example.com">PAC 2026 Team</maintainer>
   <license>Apache-2.0</license>
   <buildtool_depend>ament_python</buildtool_depend>

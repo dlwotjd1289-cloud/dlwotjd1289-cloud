@@ -2,7 +2,10 @@ from pac_common.models import RejectCode, ValidationResult
 from .capability import RobotCapability
 
 class Hdp16031Adapter:
-    """Fail-closed until a verified HDP160-31 planning backend is loaded."""
+    """ARCHIVED former target (HDP160-31); the team target is HDR50-22 since 2026-10-08.
+
+    Kept fail-closed for reference: no verified HDP160-31 kinematics exist here.
+    """
     capability = RobotCapability('hdp160_31',4,160.0,3.128,None,None)
     def __init__(self, backend=None): self._backend=backend
     @property

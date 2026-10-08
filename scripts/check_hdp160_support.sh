@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# ARCHIVED: HDP160-31 was the target robot until 2026-10-08 (now HDR50-22).
+# Kept to re-check public support if the decision is revisited.
 set -eo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"; DEST="$ROOT/external/hyundai_robotics"
 if [ ! -d "$DEST" ]; then echo '[FAIL] references not fetched'; exit 1; fi
