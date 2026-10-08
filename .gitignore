@@ -37,3 +37,6 @@ external/visualizers/3D-bin-packing-visualization/
 runs/
 logs/*
 !logs/.gitkeep
+*.egg-info/
+build/
+.venv/

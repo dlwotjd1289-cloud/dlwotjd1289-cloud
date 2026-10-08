@@ -1,5 +1,7 @@
 # PAC 2026 — AHEAD Mixed Palletizing (HDP160-31)
 
+> **2026-10-08 팀 결정:** 목표 로봇은 **HDR50-22**입니다. 아래의 'HDP160-31 목표 / HDR50-22 대용' 서술은 이전 결정 기록입니다. 팔레트 값은 `config/default.yaml`, 작업셀 배치는 `config/workcell.yaml`(V4.2)을 따릅니다.
+
 Target robot: **HD Hyundai Robotics HDP160-31**.
 
 This scaffold follows the team common development standard:

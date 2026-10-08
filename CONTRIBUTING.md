@@ -23,7 +23,7 @@
 완성된 이 PR을 먼저 합치고 팀원들이 최신 `main`에서 각자 브랜치를 만들면 공통 자료형을 다시 만들 필요가 없습니다.
 긴급히 병렬 진행해야 하면 이 기능 브랜치를 기준으로 작업하고, 선행 PR 병합 뒤 자신의 PR 대상은 `main`으로 맞춥니다.
 
-첫 리뷰에서 확인할 추가 약속은 [integration.md](docs/integration.md)의 세 가지입니다.
+첫 리뷰에서 확인할 추가 약속은 [integration.md](docs/donghan/integration.md)의 세 가지입니다.
 좌표 원점, `PlanningContext`, 검사기의 `ConstraintEvidence`입니다. 기존 v0.2 원문은 수정하지 않았습니다.
 
 ## GitHub Desktop으로 작업

@@ -1,5 +1,7 @@
 # HDP160-31 integration plan
 
+> **2026-10-08 팀 결정:** 목표 로봇은 HDR50-22입니다 (HDP160-31은 보관). 이 문서는 이전 계획 기록입니다.
+
 ## Gate 0: do not fabricate
 Do not copy kinematics from another HDR model. Do not infer joint origins, inertias, collision geometry, tool CoM, or torque limits.
 

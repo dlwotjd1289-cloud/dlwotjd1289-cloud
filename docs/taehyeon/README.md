@@ -1,5 +1,7 @@
 # 태현 담당 파트: 5-① 후보 생성 · 5-② Hard Mask · 가상데이터 생성 · 4. High-level 행동 선택
 
+> **모노레포 통합 (2026-10-08):** 팀원 패키지가 이미 `ros2_ws/src`에 있어 `fetch_team_deps.sh`는 필요 없습니다. 의존성은 루트 `pyproject.toml`. 팔레트 적재 높이는 데크 위 **1.5 m**로 바뀌었습니다 (`config/default.yaml`). 아래 1.35 m 기준 수치는 변경 전 기록입니다.
+
 흐름도 **5. Low-level Placement Planner** 중 앞의 두 단계와 학습·검증용 가상데이터를 담당합니다.
 2026-10-08부터 **4. High-level 행동 선택**(앞 3개 행동 MaskablePPO, CLOSE·REPACK Rule)도 맡았습니다 → [highlevel.md](highlevel.md).
 결과물은 동한 님 5-③~⑥(`pac_planning`)이 그대로 호출하는 두 콜백과, 그 콜백을 대량으로 돌려 만든 데이터입니다.

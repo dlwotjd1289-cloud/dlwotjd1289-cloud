@@ -1,3 +1,5 @@
+> **모노레포 통합 (2026-10-08):** 이 문서의 경로는 저장소 루트 기준으로 바뀌었습니다 (`docs/` → `docs/donghan/`, `tests/` → `tests/donghan/`, `reports/` → `reports/donghan/`). 의존성은 루트 `pyproject.toml`, 팀 공통 값은 `config/default.yaml`입니다.
+
 **흐름도 5번 Low-level Placement Planner의 ③~⑥**.
 2026-10-08 팀 후보 검사기·PPO·물리 작업셀 연결 변경과 실행 순서는
 [팀 통합 기록](docs/team_integration_20261008.md)을 먼저 확인하세요.

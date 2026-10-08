@@ -1,8 +1,8 @@
 # PAC 2026 팀 공통 개발 기준서
 
 > **프로젝트:** HD현대로보틱스 미션 1 — Mixed Palletizing  
-> **문서 버전:** v0.2  
-> **상태:** 통합 테스트 반영 초안  
+> **문서 버전:** v0.3  
+> **상태:** 모노레포 통합 반영 — **팀 확인 대기** (26장: 공통 계약 변경은 팀원 1명 이상 확인)  
 > **목적:** 3인이 독립적으로 모듈을 개발해도 공통 데이터 계약을 통해 쉽게 통합되도록 한다.
 
 ---
@@ -40,6 +40,9 @@
 
 의존성은 `requirements.txt` 또는 `pyproject.toml` 중 팀에서 하나를 선택해 저장소 전체에서 동일하게 사용한다.
 
+**v0.3 결정:** 저장소 루트 `pyproject.toml` 하나만 사용한다 (`pip install -e '.[dev,sim]'`, 선택: `rl`).
+Ubuntu 22.04 기본 pytest(6.2)도 지원하도록 패키지 경로는 루트 `conftest.py`가 추가한다.
+
 ---
 
 # 3. 저장소 구조
@@ -74,6 +77,24 @@ pac2026/
 ```
 
 각 ROS package에는 필요에 따라 `package.xml`, `setup.py/setup.cfg`, `resource/`, launch 파일을 둔다.
+
+**v0.3 실제 배치 (담당자별 폴더):**
+
+```text
+ros2_ws/src/
+  pac_common/               공통 dataclass · StateManager · config · frames (단일 원본)
+  pac_planning/             5-③~⑥ 동한 (+ physics/, interfaces.py: 작업셀 분석 물리)
+  pac_planning_interfaces/  /pac/plan_placement 서비스 정의
+  pac_candidates/           5-①② 태현
+  pac_highlevel/            4 태현 (Rule / PPO)
+  pac_perception/ pac_robot/ pac_eoat/ pac_simulation/ pac_bringup/   작업셀·로봇·시뮬 재성
+  hdr_*                     현대로보틱스 공식 저장소 (external/ 서브모듈 심볼릭 링크)
+tools/ahead_dataset_generator/   재성 데이터 생성기
+tools/virtual_data/ tools/highlevel/   태현 가상데이터·학습 도구
+config/  docs/  tests/  scripts/  test_data/   공통 파일 + <담당자>/ 하위 폴더
+```
+
+같은 이름의 패키지를 두 벌 두지 않는다.
 
 알고리즘을 ROS와 독립적으로 테스트할 수 있도록 핵심 계산 로직과 ROS Node wrapper를 분리한다.
 
@@ -213,6 +234,12 @@ box_<id>
 
 모든 Pose에는 반드시 `frame_id`가 존재해야 한다.
 
+## 8.1 `pallet` frame (v0.3)
+
+- 원점: 사용 가능한 적재면(데크 윗면)의 한쪽 아래 모서리, `z = 0`은 데크 윗면
+- `PalletState.size.x/y` = 적재면 크기, **`PalletState.size.z` = 데크 위 최대 적재 높이** (목재 두께가 아님)
+- 팔레트 목재 두께는 `config/default.yaml`의 `pallet.deck_height_m`로 따로 둔다
+
 ---
 
 # 9. 공통 자료형
@@ -314,6 +341,12 @@ pallet
 
 이다.
 
+### 10.1 박스 기준점 (v0.3, MUST)
+
+`PlacedBox.pose`와 `PlacementCandidate.target_pose`의 x/y/z는 **yaw 회전 후 박스 AABB의 최소 x/y/z 모서리**다.
+로봇·비전처럼 박스 중심이 필요한 모듈은 `pac_common.frames.corner_to_center()` / `center_to_corner()`로 변환한다.
+이것은 TF 변환이 아니다. `pallet → robot_base` 변환과 TCP/그리퍼 offset은 로봇 adapter가 적용한다.
+
 ---
 
 # 11. InventoryState
@@ -374,6 +407,24 @@ Result 검증
 ```
 
 여러 모듈이 실제 상태를 직접 수정하는 것을 금지한다.
+
+## 12.2 State Manager 구현과 확정 규칙 (v0.3)
+
+구현: `pac_common.state_manager.StateManager`
+
+```text
+commit_observation(box)   새 박스 추적 시작, remaining_by_sku 1 감소, version+1
+register_plan(candidate)  실행기로 보낸 후보 기록 (버전 일치 필수, 박스당 1개)
+commit_execution(result)  ExecutionResult → CommitOutcome(state, placed, codes, reason)
+```
+
+실행 결과 확정 규칙 (팀 결정 2026-10-08):
+
+- 측정 pose와 계획 pose(둘 다 `pallet` frame 모서리)의 차이가 **xy 5 mm, z 3 mm, yaw 1°** 이내이면 **계획 pose를 확정**한다.
+  (물리 접촉·센서 오차로 0.01 mm 수준의 겹침이 생기면 플래너의 1e-8 m 기하 검사가 기존 상태 전체를 거부하기 때문)
+- 범위를 벗어나면 PLACED로 기록하지 않고 박스를 `FAILED`로 두며 `SENSOR_UNCERTAIN`을 반환한다. 다시 인식한 뒤 재계획한다.
+- 계획 이후 팔레트가 바뀌었으면 `STALE_PLAN`, 등록되지 않았거나 중복된 실행 결과는 거부한다.
+- yaw는 박스 대칭(180°)을 고려해 비교한다. 허용 오차는 `CommitTolerance`로 바꿀 수 있다.
 
 ---
 
@@ -550,6 +601,9 @@ def evaluate_future_value(
 
 ## 16.6 Robot Feasibility
 
+**목표 로봇 (v0.3, 팀 결정 2026-10-08): HD현대로보틱스 HDR50-22.** (이전 목표 HDP160-31은 검증된 모델이 없어 보관만 한다.)
+구현: `pac_robot.Hdr50_22Adapter`. 명령은 x/y/z/yaw 팔레타이저 공간의 **박스 중심**이다 (10.1).
+
 ```python
 def validate_robot_motion(
     box: BoxState,
@@ -649,25 +703,34 @@ config/
 
 `local.yaml`은 개인 경로/장치명처럼 환경별 값만 저장하고 Git에서 제외한다.
 
-예:
+**v0.3: 팀 공통 값은 `config/default.yaml` 한 곳에만 쓴다.** 모든 모듈은 `pac_common.config.load_common_config()`로 읽는다.
+시뮬레이터·작업셀 파일이 이 값과 어긋나면 `tests/test_config_consistency.py`가 실패한다.
+
+현재 값 (팀 결정 2026-10-08):
 
 ```yaml
 schema_version: 1
 
 pallet:
-  x_m: 1.2
-  y_m: 1.0
-  max_height_m: 1.5
+  pallet_id: P001
+  size_x_m: 1.10              # T11
+  size_y_m: 1.10
+  deck_height_m: 0.15         # 목재 높이
+  max_stack_height_m: 1.50    # 데크 위 적재 높이 (= PalletState.size.z)
+  max_load_kg: 1000.0
 
 constraint:
   min_support_ratio: 0.70
 
-planning:
-  max_candidates: 30
-  lookahead_depth: 3
-  rollout_count: 20
+planning:          # 동한 5-③~⑥ PlannerConfig (top_k, horizon, scenario_count, timeout_sec, weights ...)
+  top_k: 4
+  horizon: 3
+  scenario_count: 7
   timeout_sec: 1.0
 ```
+
+모듈 전용 설정은 `config/<담당자>/` (예: `config/taehyeon/candidates.yaml`), 시뮬레이션 설정은
+`config/ahead_simulator.yaml`, 작업셀 배치는 `config/workcell.yaml`, 로봇은 `config/robot.yaml`에 둔다.
 
 ---
 
@@ -946,6 +1009,7 @@ Sensor / Simulation
 |---|---|---|
 | v0.1 | 2026-10-06 | 최초 공통 개발 기준 |
 | v0.2 | 2026-10-06 | 모의 3인 통합 테스트 결과 반영: Validator 입력, frame, orientation, state copy, inventory, single-writer 수정 |
+| v0.3 | 2026-10-08 | 모노레포 통합 (팀 확인 대기): pyproject 단일화, 실제 폴더 배치, `pallet` frame·`size.z` 의미, 박스 기준점=AABB 최소 모서리, State Manager 확정 규칙, 공통 값 단일 원본(1.10×1.10 m, 데크 위 1.5 m, 1000 kg), 목표 로봇 HDR50-22 |
 
 ---
 

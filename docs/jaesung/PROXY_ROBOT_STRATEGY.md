@@ -1,5 +1,7 @@
 # Robot proxy strategy
 
+> **2026-10-08 팀 결정:** HDR50-22가 대용이 아니라 목표 로봇이 되었습니다. 이 문서는 이전 전략 기록입니다.
+
 ## Final target vs simulation proxy
 
 - Final target: `HDP160-31`
