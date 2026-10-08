@@ -77,7 +77,7 @@ PR: https://github.com/yang8988/pac-mission1-shared/pull/1 (Draft, 브랜치 `cl
        --policy-file ros2_ws/src/pac_highlevel/models/highlevel_ppo.json --report docs/taehyeon/reports/highlevel_eval.json
    ```
 
-1. 팀 확인 사항([interface.md](interface.md) 8장) 결정 후 YAML 기본값 갱신
+1. ~~팀 확인 사항~~ → 모두 확정 사항으로 정리됨 ([interface.md](interface.md) 8장, 2026-10-08)
 2. 재성 님 benchmark 모드(600 시나리오) 전체로 가상데이터 생성 → 동한 님 교사 데이터 재학습에 제공
 3. 2차 확장: yaw 0/90 외 방향, 팔레트 slat 지지 모델
 
