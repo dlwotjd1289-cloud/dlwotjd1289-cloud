@@ -11,7 +11,7 @@ import random
 from pac_common import Size3D
 from pac_highlevel import Arrival, PalletizingWorld
 
-from .episode import select_pallet_xy
+from .episode import select_pallet_xy, select_strength
 from .observation import observe
 from .scenario_source import build_catalog, stack_height_limit
 
@@ -33,6 +33,7 @@ def world_from_spec(
     hl_config,
     *,
     family_index=0,
+    scenario_index=0,
     episode_seed=0,
     value_provider=None,
     placer=None,
@@ -40,10 +41,14 @@ def world_from_spec(
 ):
     """Fresh world for one scenario. ``episode_seed`` varies the noise only."""
     rng = random.Random(f"{vcfg.seed}:{spec.scenario_id}:hl:{episode_seed}")
+    # same hidden strength draw as the 5-1/5-2 virtual data: damaged boxes
+    # found by inspection get a 0 N capacity override when they arrive
+    strength = select_strength(spec, vcfg, scenario_index)
+    detected = strength.detected if strength is not None else ()
     arrivals = []
     for step, truth in enumerate(spec.arrivals):
         obs = observe(truth, rng, vcfg.observation, float(step))
-        arrivals.append(Arrival(obs.box, truth, obs.uncertain))
+        arrivals.append(Arrival(obs.box, truth, obs.uncertain, obs.box.box_id in detected))
     xy = pallet_xy or select_pallet_xy(spec, vcfg, family_index)
     size = Size3D(xy[0], xy[1], stack_height_limit(spec, vcfg))
     max_load = (
@@ -80,6 +85,7 @@ def world_factory(dataset, specs, cand_config, vcfg, hl_config, *, shuffle_seed=
     if not specs:
         raise ValueError("no scenarios for this split")
     fam = family_indices(dataset)
+    position = {s.scenario_id: i for i, s in enumerate(dataset.scenarios)}
     sizes = list(vcfg.pallet.sizes_m) or [None]
 
     def make_world(i):
@@ -92,7 +98,8 @@ def world_factory(dataset, specs, cand_config, vcfg, hl_config, *, shuffle_seed=
             xy = sizes[(fam[spec.scenario_id] + epoch) % len(sizes)]
         return world_from_spec(
             spec, dataset, cand_config, vcfg, hl_config,
-            family_index=fam[spec.scenario_id], episode_seed=epoch, pallet_xy=xy,
+            family_index=fam[spec.scenario_id], scenario_index=position[spec.scenario_id],
+            episode_seed=epoch, pallet_xy=xy,
             value_provider=value_provider, placer=placer,
         )
 

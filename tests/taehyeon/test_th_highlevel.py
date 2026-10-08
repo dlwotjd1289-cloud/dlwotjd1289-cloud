@@ -398,3 +398,42 @@ def test_ng_before_first_decision_is_charged_once():
     assert r < vol  # includes the -ng_penalty of the rejected first box
     assert r == pytest.approx(vol - HighLevelConfig().reward.ng_penalty
                               - HighLevelConfig().reward.time_weight * HighLevelConfig().timing.place_time_s)
+
+
+def test_detected_damage_box_never_carries_anything():
+    # B000 is damaged (detected): it may be placed, but nothing on top of it
+    boxes = [box(i, size=(0.2, 0.4, 0.1)) for i in range(6)]
+    cfg = HighLevelConfig()
+    cfg = replace(cfg, buffer=replace(cfg.buffer, slots=0))
+    cat = catalog(("K", (0.2, 0.4, 0.1), 5.0))
+    arrivals = [Arrival(b, damage_detected=(b.box_id == "B000")) for b in boxes]
+    w = PalletizingWorld(arrivals, SMALL, cat, CandidateConfig(), cfg)
+    policy = GreedyPolicy()
+    saw_b000 = False
+    while not w.done:
+        w.step(policy(w))
+        if any(p.box_id == "B000" for p in w.placed):
+            saw_b000 = True
+            model = w.backend().model_for(w.state())
+            assert all(c.supporter_id != "B000" for cs in model.contacts.values() for c in cs)
+    assert saw_b000 and w.capacity_overrides == {"B000": 0.0}
+    assert w.summary()["placed"] == 6 and w.summary()["safety_issues"] == 0
+
+
+def test_repack_footprint_rule():
+    from pac_highlevel.repack import _footprint
+
+    a = Pose3D("pallet", 0.1, 0.1, 0.0, yaw=0.0)
+    turned = Pose3D("pallet", 0.1, 0.1, 0.0, yaw=HALF_PI)
+    flipped = Pose3D("pallet", 0.1, 0.1, 0.0, yaw=math.pi)
+    size = Size3D(0.4, 0.2, 0.1)
+    assert _footprint(a, size) != _footprint(turned, size)  # rotate in place: a real move
+    assert _footprint(a, size) == _footprint(flipped, size)  # same footprint: not a move
+
+
+def test_donghan_value_provider_requires_a_model():
+    pytest.importorskip("pac_planning")
+    from pac_highlevel.value import make_value_provider
+
+    with pytest.raises(ValueError, match="model_path"):
+        make_value_provider("donghan")

@@ -21,6 +21,8 @@ from dataclasses import replace
 
 from pac_common import BoxStatus
 
+from pac_candidates.geometry import rotated_dims
+
 
 def accessible_ids(world, placed):
     model = world.backend().model_for(world.state(placed))
@@ -34,13 +36,10 @@ def _relocations(world, placed, box_id, limit=3):
     box = replace(world._box_of(box_id), status=BoxStatus.READY_FOR_PICK)
     state = world.state(rest, extra=(box,))
     cset = world.backend().candidate_set(box, state)
-    valid = [
-        c
-        for c in cset.valid
-        if abs(c.target_pose.x - moving.pose.x) > 1e-6
-        or abs(c.target_pose.y - moving.pose.y) > 1e-6
-        or abs(c.target_pose.z - moving.pose.z) > 1e-6
-    ]
+    old_fp = _footprint(moving.pose, moving.size)
+    # a move must change where the box is; rotating in place counts when it
+    # changes the footprint, an identical footprint is not a move
+    valid = [c for c in cset.valid if _footprint(c.target_pose, moving.size) != old_fp]
     valid.sort(key=lambda c: (round(c.target_pose.z, 6), round(c.target_pose.y, 6), round(c.target_pose.x, 6)))
     return rest, moving, valid[:limit]
 
@@ -83,6 +82,11 @@ def plan_repack(world):
                 if expanded >= cfg.max_nodes:
                     break
     return None
+
+
+def _footprint(pose, size):
+    dx, dy, _ = rotated_dims(size, pose.yaw)
+    return tuple(round(v, 6) for v in (pose.x, pose.y, pose.z, dx, dy))
 
 
 def _volume(size):

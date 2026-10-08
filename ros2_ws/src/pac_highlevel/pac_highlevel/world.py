@@ -43,6 +43,9 @@ class Arrival:
     box: object  # measured BoxState (what the planner sees)
     truth: object = None  # true BoxState (metrics only)
     uncertain: bool = False
+    # stage-2 inspection found a dented top: placeable, nothing on top
+    # (capacity override 0 N from the moment the box is observed)
+    damage_detected: bool = False
 
 
 @dataclass
@@ -132,7 +135,9 @@ class PalletizingWorld:
         if value_provider is None:
             # built from the config so the policy contract (which records
             # features.value_provider) always matches what is computed
-            value_provider = make_value_provider(self.config.features.value_provider)
+            feat = self.config.features
+            kwargs = {"model_path": feat.value_model_path} if feat.value_provider == "donghan" else {}
+            value_provider = make_value_provider(feat.value_provider, **kwargs)
         self.value_provider = value_provider
         self.placer = placer or dblf_choice
         if remaining_by_sku is None:
@@ -184,7 +189,7 @@ class PalletizingWorld:
         )
 
     def backend(self):
-        key = len(self.uncertain)
+        key = (len(self.uncertain), len(self.capacity_overrides))
         if self._backend is None or self._backend_key != key:
             self._backend = CandidateBackend(self.context(), self.cand_config)
             self._backend_key = key
@@ -384,6 +389,8 @@ class PalletizingWorld:
             del self.remaining[arrival.box.sku_id]
         if arrival.uncertain:
             self.uncertain.append(arrival.box.box_id)
+        if arrival.damage_detected:
+            self.capacity_overrides[arrival.box.box_id] = 0.0
         self.current = arrival
         self._repacks_for_current = 0
         self._invalidate()

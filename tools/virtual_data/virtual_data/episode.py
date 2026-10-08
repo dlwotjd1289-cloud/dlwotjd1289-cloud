@@ -178,7 +178,9 @@ def run_episode(
     max_load = (
         float(spec.max_load_kg) if spec.max_load_kg is not None else vcfg.pallet.default_max_load_kg
     )
-    remaining = Counter(b.sku_id for b in spec.arrivals)
+    limit = vcfg.episode.max_steps or len(spec.arrivals)
+    # the unseen pool is the (possibly truncated) stream actually replayed
+    remaining = Counter(b.sku_id for b in spec.arrivals[:limit])
     placed = []
     tracked = {}
     truths = {}
@@ -186,7 +188,6 @@ def run_episode(
     overrides = {}
     unplaced = []
     steps = []
-    limit = vcfg.episode.max_steps or len(spec.arrivals)
     for step, truth in enumerate(spec.arrivals[:limit]):
         remaining[truth.sku_id] -= 1  # now observed -> leaves the unseen pool
         obs = observe(truth, rng, vcfg.observation, float(step))

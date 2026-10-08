@@ -18,8 +18,8 @@ class BufferConfig:
     travel_time_s: tuple = ()
     base_travel_time_s: float = 4.0
     per_slot_extra_s: float = 1.0
-    # A box may visit the buffer once (flowchart: "박스당 1회만").
-    once_per_box: bool = True
+    # "박스당 1회만" (one buffer visit per box) holds by construction: only
+    # the current conveyor box can be buffered and a retrieved box is placed.
 
     def travel_times(self):
         if self.travel_time_s:
@@ -80,6 +80,7 @@ class RepackConfig:
 @dataclass(frozen=True)
 class FeatureConfig:
     value_provider: str = "proxy"  # proxy | donghan (must match training and deployment)
+    value_model_path: str = ""  # donghan: path of dual_head_ranker.json
     # the order list (SKU types, sizes, weights and quantities) is known in
     # advance, only the arrival order is not (mission brief; taehyeon
     # 2026-10-08). False hides remaining counts from the policy and stages 5.

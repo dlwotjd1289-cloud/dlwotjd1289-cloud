@@ -29,6 +29,7 @@ highlevel:
     min_gain: 0.0
   features:
     value_provider: proxy    # proxy | donghan  (policy refuses to load on mismatch)
+    value_model_path: ""     # donghan: path of dual_head_ranker.json
     order_list_known: true   # SKU types/sizes/weights/quantities known in advance, order not (mission brief)
     heightmap_cell_m: 0.02
   ppo:

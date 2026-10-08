@@ -15,8 +15,20 @@ def proxy_value(world, box, candidate, state, option):
     return option.flatness_after
 
 
+def _load_ranker(model_path):
+    from pac_planning.model import DualHeadRanker
+
+    if model_path is None:
+        raise ValueError("donghan value provider needs model_path (dual_head_ranker.json)")
+    return DualHeadRanker.load(model_path)
+
+
 class DonghanValue:
-    """Wraps donghan's PlacementPlanner value head (optional dependency)."""
+    """Future value from donghan's 5-4 value head (``plan`` in ranking mode).
+
+    The trained model is loaded once; without a model the planner would
+    return zero future values, so a model path is required.
+    """
 
     name = "donghan"
 
@@ -25,7 +37,7 @@ class DonghanValue:
 
         self._planner_cls = PlacementPlanner
         self._config = planner_config or PlannerConfig()
-        self._model_path = model_path
+        self._model = _load_ranker(model_path)
 
     def __call__(self, world, box, candidate, state, option):
         backend = world.backend()
@@ -34,8 +46,9 @@ class DonghanValue:
             config=self._config,
             generate_candidates=backend.generate_candidates,
             validate_constraints=backend.validate_constraints,
-            model_path=self._model_path,
+            model=self._model,
         )
+        box = state.inventory.tracked_boxes.get(box.box_id, box)
         result = planner.plan(box, state, [candidate], mode="ranking", use_time_budget=False)
         if not result.evaluations:
             return 0.0
@@ -47,7 +60,8 @@ class DonghanPlacer:
 
     Called with the hard-mask-valid candidates of 5-1/5-2; returns the
     planner's rank-1 candidate. Slow (one ``plan`` per option and decision),
-    used for evaluation, not for PPO training.
+    used for evaluation, not for PPO training. The model (optional: without
+    it the planner uses its heuristic) is loaded once.
     """
 
     wants_context = True
@@ -57,7 +71,7 @@ class DonghanPlacer:
 
         self._planner_cls = PlacementPlanner
         self._config = planner_config or PlannerConfig()
-        self._model_path = model_path
+        self._model = _load_ranker(model_path) if model_path is not None else None
         self._seed = seed
         self.calls = 0
 
@@ -68,7 +82,7 @@ class DonghanPlacer:
             config=self._config,
             generate_candidates=backend.generate_candidates,
             validate_constraints=backend.validate_constraints,
-            model_path=self._model_path,
+            model=self._model,
         )
         # the planner requires the State Manager's copy (e.g. status BUFFERED)
         box = state.inventory.tracked_boxes.get(box.box_id, box)
