@@ -60,7 +60,7 @@ class GenerationConfig:
     # heavy-on-light ``share`` mode: a heavy box may rest on light boxes only
     # where its weight is split between them (e.g. centred on the seam of two
     # supporters or over a junction). Corner/centre anchors rarely land
-    # there, so EMS on top of lighter boxes are also scanned (20 mm grid,
+    # there, so levels on top of lighter boxes are also scanned (40 mm grid,
     # vectorised estimates) for a few load-balanced anchors.
     balance_anchors: bool = True
     balance_step_m: float = 0.04  # scan grid of the balance anchors
@@ -82,6 +82,7 @@ class GenerationConfig:
             raise ValueError(f"dedup_mode must be one of {DEDUP_MODES}")
         if self.order not in ("priority", "likely_valid_first"):
             raise ValueError("order must be priority or likely_valid_first")
+        _number(self.balance_step_m, "balance_step_m", 0.0, strict_min=True)
         if type(self.max_candidates) is not int or self.max_candidates < 0:
             raise ValueError("max_candidates must be a nonnegative integer")
 

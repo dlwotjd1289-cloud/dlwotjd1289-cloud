@@ -206,3 +206,28 @@ def test_priority_order_option():
     cands = backend.generate_candidates(make_box("N"), state)
     keys = [(round(c.target_pose.z, 6), round(c.target_pose.y, 6), round(c.target_pose.x, 6)) for c in cands]
     assert keys == sorted(keys)
+
+
+def test_balance_scan_runs_when_the_low_estimate_fails_the_mask():
+    """Review 2026-10-08: the lowest estimate-passing spot (on X, z=0.1) is
+    rejected by the mask (X's capacity override 1 N), so the level above the
+    light boxes must still be scanned; it used to be cut off (0 valid)."""
+    boxes = [placed("X", 0.002, 0.002, 0.0, size=(0.3, 1.096, 0.1), weight=20.0)]
+    x = 0.31
+    for i, w in enumerate((0.35, 0.43)):
+        boxes.append(placed(f"L{i}", x, 0.002, 0.0, size=(w, 1.096, 0.2), weight=2.0))
+        x += w + 0.008
+    backend = CandidateBackend(make_context(overrides={"X": 1.0}), CandidateConfig())
+    cset = backend.candidate_set(make_box("H", (0.3, 0.3, 0.2), weight=4.0), make_state(boxes))
+    assert cset.valid
+    assert all(c.target_pose.z == pytest.approx(0.2) for c in cset.valid)
+
+
+@pytest.mark.parametrize("yaws", [(math.pi,), (-math.pi / 2,), (3 * math.pi / 2,), (0.0, math.pi)])
+def test_allowed_yaws_are_matched_by_footprint(backend, yaws):
+    box = make_box("N", (0.4, 0.3, 0.2), yaws=yaws)
+    cands = backend.generate_candidates(box, make_state())
+    assert cands
+    for c in cands:
+        assert any(abs(c.target_pose.yaw - a) < 1e-9 for a in yaws)  # value from the box's own list
+    assert backend.candidate_set(box, make_state()).valid

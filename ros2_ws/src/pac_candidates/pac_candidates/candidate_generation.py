@@ -23,7 +23,7 @@ import math
 
 import numpy as np
 
-from .geometry import LEN_EPS, Rect, rotated_dims, same_yaw
+from .geometry import LEN_EPS, Rect, quarter_turns, rotated_dims, same_yaw
 from .pallet_model import box_tolerance
 
 
@@ -59,21 +59,37 @@ def _rank(x, y, z, anchor, yaw):
 
 
 def candidate_yaws(box, config):
-    """Allowed yaws in configured order; equal-footprint yaws deduplicated."""
+    """Allowed yaws in configured order; equal-footprint yaws deduplicated.
+
+    A configured yaw is matched to the box's own allowed yaw with the same
+    footprint (same quarter-turn parity), and that allowed value is output,
+    so boxes listing e.g. ``pi`` or ``-pi/2`` still get candidates and the
+    hard mask's orientation check accepts them.
+    """
+    allowed = []
+    for a in box.allowed_yaws_rad:
+        try:
+            allowed.append((a, quarter_turns(a) % 2))
+        except ValueError:
+            continue
     result = []
     footprints = set()
     for yaw in config.generation.yaw_set_rad:
-        if not any(same_yaw(yaw, allowed) for allowed in box.allowed_yaws_rad):
-            continue
         try:
-            dims = rotated_dims(box.size, yaw)
+            parity = quarter_turns(yaw) % 2
         except ValueError:
             continue
+        exact = [a for a, _ in allowed if same_yaw(yaw, a)]
+        same_fp = [a for a, par in allowed if par == parity]
+        if not (exact or same_fp):
+            continue
+        chosen = (exact or same_fp)[0]
+        dims = rotated_dims(box.size, chosen)
         key = (round(dims[0], 9), round(dims[1], 9))
         if key in footprints:
             continue
         footprints.add(key)
-        result.append(yaw)
+        result.append(chosen)
     return result
 
 
@@ -228,6 +244,22 @@ def containing_ems(model, expanded, z):
     return best
 
 
+def _lowest_valid_z(model, box, yaw, anchors, zs_arr, ok_arr, margin, tries=6):
+    """Lowest z of a likely-valid anchor that passes the exact hard mask."""
+    from pac_common import Pose3D
+
+    from .hard_mask import evaluate
+
+    uncertain = box.box_id in model.uncertain_ids
+    order = sorted(np.flatnonzero(ok_arr).tolist(), key=lambda i: zs_arr[i])
+    for i in order[:tries]:
+        ex, ey = anchors[i][0], anchors[i][1]
+        pose = Pose3D("pallet", ex + margin, ey + margin, float(zs_arr[i]), yaw=yaw)
+        if not evaluate(model, box, pose, is_uncertain=uncertain, collect_all=False).codes:
+            return float(zs_arr[i])
+    return math.inf
+
+
 def _estimate(model, box, config, anchors, w, d, margin, dims, tol):
     """Drop height, support estimate and pre-mask verdict per anchor."""
     if not anchors:
@@ -267,9 +299,11 @@ def raw_candidates(model, box, config):
         d = dims[1] + 2.0 * margin
         zs_arr, sup_arr, ok_arr = _estimate(model, box, config, anchors, w, d, margin, dims, tol)
         if balance and model.boxes:
-            # only levels below the lowest likely-valid regular anchor can
-            # improve the (deepest-first) result; also keeps 5-3 probes cheap
-            best = float(zs_arr[ok_arr].min()) if ok_arr.any() else math.inf
+            # only levels below the lowest regular anchor that the exact hard
+            # mask accepts can improve the (deepest-first) result; the cheap
+            # estimate alone is not a verdict (capacity, LBCP, CoG, lever
+            # shares), so the cutoff is confirmed with the mask
+            best = _lowest_valid_z(model, box, yaw, anchors, zs_arr, ok_arr, margin)
             extra = _balance_raw(
                 model, box, dims, margin, hol, config.constraints.min_support_ratio,
                 gen.balance_step_m, max_level=best - model.height_tol,
