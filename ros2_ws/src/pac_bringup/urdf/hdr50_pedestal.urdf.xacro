@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<robot xmlns:xacro="http://wiki.ros.org/xacro" name="$(arg name)">
+
+  <xacro:arg name="name" default="hdr_robot"/>
+  <xacro:arg name="use_sim" default="true"/>
+  <xacro:arg name="use_mock_hardware" default="false"/>
+  <xacro:arg name="hdr_ros2_control" default=""/>
+  <xacro:arg name="hw_interface" default=""/>
+  <xacro:arg name="openapi_ip" default="192.168.1.150"/>
+  <xacro:arg name="command_buffer_size" default="2"/>
+  <xacro:arg name="initial_positions_file" default=""/>
+  <xacro:arg name="update_rate" default="100"/>
+
+  <xacro:property
+      name="initial_positions_file"
+      value="$(arg initial_positions_file)"/>
+
+  <!-- Official HDR50-22 model with only world_joint Z changed -->
+  <xacro:include
+      filename="$(find pac_bringup)/urdf/hdr50_22_pedestal.urdf.xacro"/>
+
+  <xacro:include
+      filename="$(find hdr_description)/urdf/hdr.ros2_control.xacro"/>
+
+  <xacro:hdr_ros2_control
+      name="$(arg name)"
+      robot_model="hdr50_22"
+      use_sim="$(arg use_sim)"
+      use_mock_hardware="$(arg use_mock_hardware)"
+      initial_positions_file="$(arg initial_positions_file)"
+      openapi_ip="$(arg openapi_ip)"
+      command_buffer_size="$(arg command_buffer_size)"
+      update_rate="$(arg update_rate)"/>
+
+  <xacro:include
+      filename="$(find hdr_description)/urdf/hdr_transmissions.xacro"/>
+
+  <xacro:hdr_transmission
+      hw_interface="$(arg hw_interface)"/>
+
+  <xacro:if value="$(arg use_sim)">
+    <gazebo>
+      <plugin
+          filename="libgz_ros2_control-system.so"
+          name="gz_ros2_control::GazeboSimROS2ControlPlugin">
+
+        <parameters>$(arg hdr_ros2_control)</parameters>
+        <controller_manager_node_name>
+          controller_manager
+        </controller_manager_node_name>
+
+      </plugin>
+    </gazebo>
+  </xacro:if>
+
+</robot>
