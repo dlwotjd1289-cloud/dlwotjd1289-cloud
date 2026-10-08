@@ -9,11 +9,13 @@
   두 박스의 확장 footprint가 겹치지 않으면 실제 간격 ≥ `lateral_clearance + 두 박스의 size_tolerance`가 보장됩니다.
   팔레트 경계도 `lateral_clearance/2`만큼 넓혀서, 가장자리에는 `size_tolerance`만 남깁니다.
 - **지지 그래프**: 박스 B의 바닥 높이와 박스 A의 윗면 높이 차가 `height_tolerance`(3 mm) 이내이고 footprint가 겹치면 A가 B를 지지합니다.
-- **LBCP (Load-Bearing Convex Polygon)**: 각 박스 윗면에서 하중을 안전하게 받을 수 있는 영역입니다.
+- **LBCP (Load Bearable Convex Polygon)**: 각 박스 윗면에서 하중을 안전하게 받을 수 있는 영역입니다.
+  출처: Z. Gao, L. Wang, Y. Kong, N. Y. Chong, *Online 3D Bin Packing with Fast Stability Validation and Stable Rearrangement Planning*, arXiv:2507.09123 (2025).
+  같은 논문의 **Stable Rearrangement Planning(SRP)**이 흐름도의 Partial Repack에 해당합니다(4번 `repack.py`는 단순화한 탐색).
   - 바닥에 놓인 박스: footprint(허용오차만큼 축소)
   - 다른 박스 위에 놓인 박스: (자기 footprint ∩ 각 지지 박스의 LBCP)들의 convex hull
-  - 새 박스의 최악 CoG(중심 ± δ)가 이 다각형 안에 있으면, 새 박스가 전달하는 힘은 모두 지지 박스의 LBCP 안에 작용합니다.
-    따라서 **아래쪽 박스 전체의 안정성이 유지**됩니다. 층마다 물리 해석을 할 필요가 없어서 빠릅니다.
+  - 새 박스의 최악 CoG(중심 ± δ)가 이 다각형 안에 있으면 안정입니다. 하중은 **LBCP로 잘린 접촉 영역**(지지 박스가 실제로 받칠 수 있는 부분)으로만 전달하므로, 아래 박스들의 합력도 각자의 LBCP 안에 머뭅니다.
+    층마다 물리 해석을 할 필요가 없어서 빠릅니다. 안전장치로 영향을 받는 모든 박스의 새 합력이 LBCP 안인지도 검사합니다(2026-10-08 리뷰에서 겹친 면적 중심을 쓰던 버그 수정).
 - **누적 하중**: 위에서 아래로 내려가며 각 박스가 받는 총 힘과 합력 위치를 계산합니다.
   하중은 `lever` 모델로 지지 박스들에 나눕니다. 힘·모멘트 평형을 만족하면서 면적 가중 최소노름이 되는 해이고, 인장(음수)은 제거합니다.
   합력 바로 아래 박스가 더 많이 받기 때문에, 면적 비례(`area`)보다 현실적이고 보수적입니다.

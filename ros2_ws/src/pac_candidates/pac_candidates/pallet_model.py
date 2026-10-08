@@ -10,7 +10,7 @@ candidate generator (5-1) and the hard mask (5-2):
 * pallet mass / CoG totals,
 * a coordinate-compressed heightmap and Empty Maximal Spaces (lazy).
 
-LBCP (Load-Bearing Convex Polygon): a box resting on the pallet bears load
+LBCP (Load Bearable Convex Polygon): a box resting on the pallet bears load
 anywhere on its (tolerance-shrunk) footprint. A box resting on other boxes
 bears load inside the convex hull of its contact regions clipped to the
 supporters' own LBCPs. A placement is stable when the worst-case CoG (centre
