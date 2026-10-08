@@ -1,0 +1,33 @@
+schema_version: 1
+
+frames:
+  world: world
+  pallet: pallet
+  conveyor: conveyor
+  robot_base: robot_base
+  camera_2d: camera_2d
+  camera_3d: camera_3d
+  gripper: gripper
+
+# These are demo-layout coordinates, not claimed field dimensions.
+layout:
+  robot_base_world_m: [0.0, 0.0, 0.0]
+  conveyor:
+    center_world_m: [-1.55, 1.20, 0.75]
+    length_m: 3.20
+    width_m: 0.80
+  inline_scale:
+    center_world_m: [-1.90, 1.20, 0.82]
+  pick_zone:
+    center_world_m: [-0.45, 1.20, 0.85]
+  pallet:
+    center_world_m: [1.35, -1.00, 0.075]
+    size_m: [1.20, 1.00, 0.15]
+  buffer_rack:
+    center_world_m: [-1.80, -1.75, 0.90]
+  top_camera:
+    position_world_m: [0.20, 0.00, 4.50]
+    topic: /pac/top_camera/image
+
+simulation:
+  observation_mode: ground_truth

@@ -1,0 +1,9 @@
+PAC2026 HDR50-22 proxy scaffold validation
+=========================================
+[PASS] Python syntax
+[PASS] Bash syntax
+[PASS] pytest
+[INFO] target_model=hdp160_31
+[INFO] simulation_proxy=hdr50_22
+[INFO] EOAT=vacuum_gripper_v1 (robot-independent)
+[INFO] palletizer command space=x,y,z,yaw

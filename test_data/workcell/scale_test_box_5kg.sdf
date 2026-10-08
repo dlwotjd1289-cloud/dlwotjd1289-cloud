@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<sdf version="1.8">
+  <model name="scale_test_box_5kg">
+    <static>false</static>
+    <link name="box_link">
+
+      <inertial>
+        <mass>5.0</mass>
+        <inertia>
+          <ixx>0.063542</ixx>
+          <iyy>0.092708</iyy>
+          <izz>0.104167</izz>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyz>0</iyz>
+        </inertia>
+      </inertial>
+
+      <collision name="collision">
+        <geometry>
+          <box><size>0.40 0.30 0.25</size></box>
+        </geometry>
+      </collision>
+
+      <visual name="visual">
+        <geometry>
+          <box><size>0.40 0.30 0.25</size></box>
+        </geometry>
+        <material>
+          <ambient>0.55 0.32 0.12 1</ambient>
+          <diffuse>0.75 0.48 0.22 1</diffuse>
+        </material>
+      </visual>
+
+    </link>
+  </model>
+</sdf>

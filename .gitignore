@@ -1,4 +1,34 @@
+# ROS 2 build outputs
+ros2_ws/build/
+ros2_ws/install/
+ros2_ws/log/
 
-# Python cache
+# Python
 __pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+*~
+
+# Generated simulator artifacts
+artifacts/
+*.log
+
+# External reference repositories
+external/visualizers/3D-bin-packing-visualization/
+
+# Temporary files
+/tmp/
+
+
+# Gazebo world backup files
+*.bak_before_trackcontroller
+*.bak_pre_track
+
+# AHEAD live simulator (physics branch)
 *.py[cod]

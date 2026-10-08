@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- V4.4 SRDF generated from hdr50_22_moveit_config/config/hdr50_22.srdf.xacro:
+     tip_link tool0 -> suction_tcp, no virtual_joint (URDF has world_joint), suction cup collision pairs. -->
+<robot name="hdr_robot">
+  <group name="hdr_manipulator">
+    <chain base_link="base_link" tip_link="suction_tcp"/>
+  </group>
+  <group_state group="hdr_manipulator" name="home">
+    <joint name="j1" value="0"/>
+    <joint name="j2" value="1.5707"/>
+    <joint name="j3" value="0"/>
+    <joint name="j4" value="0"/>
+    <joint name="j5" value="0"/>
+    <joint name="j6" value="0"/>
+  </group_state>
+  <disable_collisions link1="arm_link" link2="flange_link" reason="Never"/>
+  <disable_collisions link1="arm_link" link2="motor_h" reason="Never"/>
+  <disable_collisions link1="arm_link" link2="motor_s" reason="Never"/>
+  <disable_collisions link1="arm_link" link2="motor_v" reason="Adjacent"/>
+  <disable_collisions link1="arm_link" link2="motor_w1" reason="Adjacent"/>
+  <disable_collisions link1="arm_link" link2="motor_w2" reason="Adjacent"/>
+  <disable_collisions link1="arm_link" link2="motor_w3" reason="Adjacent"/>
+  <disable_collisions link1="arm_link" link2="upper_frame_link" reason="Adjacent"/>
+  <disable_collisions link1="arm_link" link2="wrist_body_link" reason="Adjacent"/>
+  <disable_collisions link1="arm_link" link2="wrist_holder_link" reason="Never"/>
+  <disable_collisions link1="base_link" link2="lower_frame_link" reason="Adjacent"/>
+  <disable_collisions link1="base_link" link2="motor_h" reason="Never"/>
+  <disable_collisions link1="base_link" link2="motor_s" reason="Never"/>
+  <disable_collisions link1="base_link" link2="motor_v" reason="Never"/>
+  <disable_collisions link1="base_link" link2="motor_w1" reason="Never"/>
+  <disable_collisions link1="base_link" link2="motor_w2" reason="Never"/>
+  <disable_collisions link1="base_link" link2="motor_w3" reason="Never"/>
+  <disable_collisions link1="flange_link" link2="motor_h" reason="Never"/>
+  <disable_collisions link1="flange_link" link2="motor_v" reason="Never"/>
+  <disable_collisions link1="flange_link" link2="motor_w1" reason="Never"/>
+  <disable_collisions link1="flange_link" link2="motor_w2" reason="Never"/>
+  <disable_collisions link1="flange_link" link2="motor_w3" reason="Never"/>
+  <disable_collisions link1="flange_link" link2="upper_frame_link" reason="Never"/>
+  <disable_collisions link1="flange_link" link2="wrist_body_link" reason="Never"/>
+  <disable_collisions link1="flange_link" link2="wrist_holder_link" reason="Adjacent"/>
+  <disable_collisions link1="lower_frame_link" link2="motor_h" reason="Adjacent"/>
+  <disable_collisions link1="lower_frame_link" link2="motor_s" reason="Adjacent"/>
+  <disable_collisions link1="lower_frame_link" link2="motor_v" reason="Never"/>
+  <disable_collisions link1="lower_frame_link" link2="motor_w1" reason="Never"/>
+  <disable_collisions link1="lower_frame_link" link2="motor_w2" reason="Never"/>
+  <disable_collisions link1="lower_frame_link" link2="motor_w3" reason="Never"/>
+  <disable_collisions link1="lower_frame_link" link2="upper_frame_link" reason="Adjacent"/>
+  <disable_collisions link1="motor_h" link2="motor_s" reason="Never"/>
+  <disable_collisions link1="motor_h" link2="motor_v" reason="Never"/>
+  <disable_collisions link1="motor_h" link2="motor_w1" reason="Never"/>
+  <disable_collisions link1="motor_h" link2="motor_w2" reason="Never"/>
+  <disable_collisions link1="motor_h" link2="motor_w3" reason="Never"/>
+  <disable_collisions link1="motor_h" link2="upper_frame_link" reason="Never"/>
+  <disable_collisions link1="motor_h" link2="wrist_body_link" reason="Never"/>
+  <disable_collisions link1="motor_h" link2="wrist_holder_link" reason="Never"/>
+  <disable_collisions link1="motor_s" link2="motor_v" reason="Never"/>
+  <disable_collisions link1="motor_s" link2="motor_w1" reason="Never"/>
+  <disable_collisions link1="motor_s" link2="motor_w2" reason="Never"/>
+  <disable_collisions link1="motor_s" link2="motor_w3" reason="Never"/>
+  <disable_collisions link1="motor_s" link2="upper_frame_link" reason="Never"/>
+  <disable_collisions link1="motor_v" link2="motor_w1" reason="Never"/>
+  <disable_collisions link1="motor_v" link2="motor_w2" reason="Never"/>
+  <disable_collisions link1="motor_v" link2="motor_w3" reason="Never"/>
+  <disable_collisions link1="motor_v" link2="upper_frame_link" reason="Never"/>
+  <disable_collisions link1="motor_v" link2="wrist_body_link" reason="Never"/>
+  <disable_collisions link1="motor_v" link2="wrist_holder_link" reason="Never"/>
+  <disable_collisions link1="motor_w1" link2="motor_w2" reason="Never"/>
+  <disable_collisions link1="motor_w1" link2="motor_w3" reason="Never"/>
+  <disable_collisions link1="motor_w1" link2="upper_frame_link" reason="Never"/>
+  <disable_collisions link1="motor_w1" link2="wrist_body_link" reason="Never"/>
+  <disable_collisions link1="motor_w1" link2="wrist_holder_link" reason="Never"/>
+  <disable_collisions link1="motor_w2" link2="motor_w3" reason="Never"/>
+  <disable_collisions link1="motor_w2" link2="upper_frame_link" reason="Never"/>
+  <disable_collisions link1="motor_w2" link2="wrist_body_link" reason="Never"/>
+  <disable_collisions link1="motor_w2" link2="wrist_holder_link" reason="Never"/>
+  <disable_collisions link1="motor_w3" link2="upper_frame_link" reason="Never"/>
+  <disable_collisions link1="motor_w3" link2="wrist_body_link" reason="Never"/>
+  <disable_collisions link1="motor_w3" link2="wrist_holder_link" reason="Never"/>
+  <disable_collisions link1="upper_frame_link" link2="wrist_body_link" reason="Never"/>
+  <disable_collisions link1="upper_frame_link" link2="wrist_holder_link" reason="Never"/>
+  <disable_collisions link1="wrist_body_link" link2="wrist_holder_link" reason="Adjacent"/>
+  <disable_collisions link1="suction_cup_link" link2="flange_link" reason="Adjacent"/>
+  <disable_collisions link1="suction_cup_link" link2="wrist_holder_link" reason="Never"/>
+  <disable_collisions link1="suction_cup_link" link2="wrist_body_link" reason="Never"/>
+  <disable_collisions link1="suction_cup_link" link2="arm_link" reason="Never"/>
+</robot>

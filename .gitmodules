@@ -1,0 +1,12 @@
+[submodule "external/hyundai_robotics/hdr_client_driver"]
+	path = external/hyundai_robotics/hdr_client_driver
+	url = https://github.com/hyundai-robotics/hdr_client_driver.git
+[submodule "external/hyundai_robotics/hdr_description"]
+	path = external/hyundai_robotics/hdr_description
+	url = https://github.com/hyundai-robotics/hdr_description.git
+[submodule "external/hyundai_robotics/hdr_ros2_driver"]
+	path = external/hyundai_robotics/hdr_ros2_driver
+	url = https://github.com/hyundai-robotics/hdr_ros2_driver.git
+[submodule "external/hyundai_robotics/hdr_simulation_gz"]
+	path = external/hyundai_robotics/hdr_simulation_gz
+	url = https://github.com/hyundai-robotics/hdr_simulation_gz.git

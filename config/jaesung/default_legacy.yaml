@@ -1,0 +1,19 @@
+schema_version: 1
+
+pallet:
+  id: P001
+  size_m: {x: 1.20, y: 1.00, z: 0.15}
+  max_stack_height_m: 1.50
+
+constraint:
+  min_support_ratio: 0.70
+
+planning:
+  max_candidates: 30
+  lookahead_depth: 3
+  rollout_count: 20
+  timeout_sec: 1.0
+
+logging:
+  format: jsonl
+  directory: logs

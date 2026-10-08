@@ -1,0 +1,45 @@
+PAC2026 HDP160-31 scaffold validation
+============================================
+[PASS] py_compile tests/test_observation_boundary.py
+[PASS] py_compile tests/test_state_manager.py
+[PASS] py_compile tests/test_common_models.py
+[PASS] py_compile tests/test_robot_adapter.py
+[PASS] py_compile tests/conftest.py
+[PASS] py_compile ros2_ws/src/pac_planning/setup.py
+[PASS] py_compile ros2_ws/src/pac_robot/setup.py
+[PASS] py_compile ros2_ws/src/pac_perception/setup.py
+[PASS] py_compile ros2_ws/src/pac_common/setup.py
+[PASS] py_compile ros2_ws/src/pac_simulation/setup.py
+[PASS] py_compile ros2_ws/src/pac_bringup/setup.py
+[PASS] py_compile ros2_ws/src/pac_bringup/pac_bringup/__init__.py
+[PASS] py_compile ros2_ws/src/pac_bringup/launch/workcell_only.launch.py
+[PASS] py_compile ros2_ws/src/pac_simulation/pac_simulation/__init__.py
+[PASS] py_compile ros2_ws/src/pac_common/pac_common/models.py
+[PASS] py_compile ros2_ws/src/pac_common/pac_common/state_manager.py
+[PASS] py_compile ros2_ws/src/pac_common/pac_common/__init__.py
+[PASS] py_compile ros2_ws/src/pac_common/pac_common/validation.py
+[PASS] py_compile ros2_ws/src/pac_perception/pac_perception/__init__.py
+[PASS] py_compile ros2_ws/src/pac_perception/pac_perception/observation_generator.py
+[PASS] py_compile ros2_ws/src/pac_robot/pac_robot/capability.py
+[PASS] py_compile ros2_ws/src/pac_robot/pac_robot/hdp160_31_adapter.py
+[PASS] py_compile ros2_ws/src/pac_robot/pac_robot/__init__.py
+[PASS] py_compile ros2_ws/src/pac_planning/pac_planning/__init__.py
+[PASS] py_compile ros2_ws/src/pac_planning/pac_planning/interfaces.py
+[PASS] py_compile ros2_ws/src/pac_planning/pac_planning/ahead_bridge.py
+[PASS] xml ros2_ws/src/pac_planning/package.xml
+[PASS] xml ros2_ws/src/pac_robot/package.xml
+[PASS] xml ros2_ws/src/pac_perception/package.xml
+[PASS] xml ros2_ws/src/pac_common/package.xml
+[PASS] xml ros2_ws/src/pac_simulation/package.xml
+[PASS] xml ros2_ws/src/pac_bringup/package.xml
+[PASS] SDF XML parse
+[PASS] json test_data/scenario_001_basic.json
+[PASS] json test_data/scenario_007_robot_infeasible.json
+[PASS] bash -n check_hdp160_support.sh
+[PASS] bash -n fetch_hyundai_refs.sh
+[PASS] bash -n build_ros_ws.sh
+[PASS] bash -n run_tests.sh
+[PASS] bash -n preflight.sh
+[PASS] pytest
+  ......                                                                   [100%]
+  6 passed in 0.07s
