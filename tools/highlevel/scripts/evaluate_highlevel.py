@@ -50,6 +50,8 @@ def main():
     parser.add_argument("--policy-file", type=Path, help="NumPy MaskablePPO policy (ppo)")
     parser.add_argument("--sb3-file", type=Path, help="sb3-contrib MaskablePPO policy (sb3)")
     parser.add_argument("--policies", nargs="+", default=["no_buffer", "greedy", "rule", "ppo"])
+    parser.add_argument("--sb3-extra", nargs="*", default=[], metavar="NAME=PATH",
+                        help="more sb3 policies, evaluated under NAME")
     parser.add_argument("--workers", type=int, default=4)
     parser.add_argument("--report", type=Path)
     args = parser.parse_args()
@@ -58,6 +60,8 @@ def main():
     episodes = len(specs) * args.passes
     no_buf = replace(hl, buffer=replace(hl.buffer, slots=0))
     FACTORIES, CHOOSERS = {}, {}
+    extra = dict(item.split("=", 1) for item in args.sb3_extra)
+    args.policies = list(args.policies) + [n for n in extra if n not in args.policies]
     for name in args.policies:
         cfg = no_buf if name == "no_buffer" else hl
         FACTORIES[name] = world_factory(dataset, specs, cand, vcfg, cfg, shuffle_seed=12345)
@@ -71,12 +75,13 @@ def main():
             agent = MaskablePPO.load(args.policy_file, feature_names=feature_names(hl.buffer.slots),
                                      contract=policy_contract(hl, args.candidate_config.name))
             CHOOSERS[name] = agent_chooser(agent, deterministic=True)
-        elif name == "sb3":
-            if args.sb3_file is None:
+        elif name == "sb3" or name in extra:
+            path = Path(extra[name]) if name in extra else args.sb3_file
+            if path is None:
                 parser.error("--sb3-file is required for sb3")
             from pac_highlevel import sb3
 
-            model = sb3.load(args.sb3_file, slots=hl.buffer.slots,
+            model = sb3.load(path, slots=hl.buffer.slots,
                              contract=policy_contract(hl, args.candidate_config.name))
             CHOOSERS[name] = sb3.chooser(model)
         else:

@@ -437,3 +437,65 @@ def test_donghan_value_provider_requires_a_model():
 
     with pytest.raises(ValueError, match="model_path"):
         make_value_provider("donghan")
+
+
+def test_rule_baseline_reward_and_teacher_labels():
+    gym_env = pytest.importorskip("pac_highlevel.gym_env")
+    if gym_env.HighLevelGymEnv is None:
+        pytest.skip("gymnasium not installed")
+    from pac_highlevel.trainer import collect_teacher
+
+    weights = [5, 20, 5, 5, 20, 20]
+    boxes = [box(i, weight=w, sku="H" if w > 10 else "K") for i, w in enumerate(weights)]
+    cfg = replace(HighLevelConfig(), buffer=replace(HighLevelConfig().buffer, slots=2))
+    cat = catalog(("K", (0.2, 0.4, 0.1), 5.0), ("H", (0.2, 0.4, 0.1), 20.0))
+
+    def make_world(i):
+        return PalletizingWorld([Arrival(b) for b in boxes], SMALL, cat, CandidateConfig(), cfg)
+
+    rule = RulePolicy(cfg)
+    rule_return = run_policy(make_world(0), rule)["return"]
+    env = gym_env.HighLevelGymEnv(make_world, 2, baseline=lambda w: run_policy(w, rule)["return"], teacher=rule)
+    env.reset(seed=0)
+    total, done, labels = 0.0, False, []
+    while not done:  # follow the teacher: relative return must be 0
+        expected = to_index(rule(env.world))
+        _, r, done, _, info = env.step(expected)
+        labels.append(info["teacher_action"] == expected)
+        total += r
+    assert all(labels)
+    assert info["summary"]["baseline_return"] == pytest.approx(rule_return)
+    assert info["summary"]["return"] == pytest.approx(rule_return)
+    assert total == pytest.approx(0.0, abs=1e-9)
+    data = collect_teacher(make_world, rule, 1, gamma=1.0, relative=True)
+    assert data["returns"][0] == pytest.approx(0.0, abs=1e-9)
+
+
+def test_sb3_teacher_bc_callback_pulls_policy_to_the_rule():
+    pytest.importorskip("torch")
+    pytest.importorskip("sb3_contrib")
+    from pac_highlevel import sb3
+
+    weights = [5, 20, 5, 5, 20, 20]
+    boxes = [box(i, weight=w, sku="H" if w > 10 else "K") for i, w in enumerate(weights)]
+    cfg = HighLevelConfig()
+    cfg = replace(cfg, buffer=replace(cfg.buffer, slots=2),
+                  ppo=replace(cfg.ppo, n_steps=64, batch_size=16, n_epochs=1, hidden=(16, 16), learning_rate=3e-3))
+    cat = catalog(("K", (0.2, 0.4, 0.1), 5.0), ("H", (0.2, 0.4, 0.1), 20.0))
+
+    def make_world(i):
+        return PalletizingWorld([Arrival(b) for b in boxes], SMALL, cat, CandidateConfig(), cfg)
+
+    rule = RulePolicy(cfg)
+    env = sb3.make_vec_env(make_world, 2, n_envs=2, subprocess=False, teacher=rule,
+                           baseline=lambda w: run_policy(w, rule)["return"])
+    model = sb3.new_model(env, cfg.ppo)
+    cb = sb3.teacher_bc_callback(5.0, 5.0, epochs=20, batch_size=16)
+    model.learn(total_timesteps=64 * 6, callback=cb)
+    assert model.logger.name_to_value.get("bc/agreement", 0.0) > 0.9 or cb.pending is not None
+    cb._clone(*cb.pending)
+    norm = model.get_vec_normalize_env()
+    model.pac_obs_norm = {"mean": norm.obs_rms.mean.tolist(), "var": norm.obs_rms.var.tolist(),
+                          "clip": float(norm.clip_obs), "eps": float(norm.epsilon)}
+    out = run_policy(make_world(0), sb3.chooser(model))
+    assert out["counts"] == run_policy(make_world(0), rule)["counts"]
