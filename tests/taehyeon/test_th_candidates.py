@@ -137,7 +137,9 @@ def test_mask_aware_dedup_never_loses_valid_cluster():
     geo = CandidateBackend(
         make_context(), CandidateConfig(generation=GenerationConfig(dedup_mode="geometric"))
     )
-    aware = CandidateBackend(make_context())
+    aware = CandidateBackend(
+        make_context(), CandidateConfig(generation=GenerationConfig(dedup_mode="mask_aware"))
+    )
     off = CandidateBackend(
         make_context(), CandidateConfig(generation=GenerationConfig(dedup_mode="off"))
     )

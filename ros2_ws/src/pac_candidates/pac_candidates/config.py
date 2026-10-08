@@ -57,6 +57,12 @@ class GenerationConfig:
     order: str = "likely_valid_first"
     # 0 = unlimited. When >0 the first ``max_candidates`` (output order) remain.
     max_candidates: int = 0
+    # heavy-on-light ``share`` mode: a heavy box may rest on light boxes only
+    # where its weight is split between them (e.g. centred on the seam of two
+    # supporters or over a junction). Corner/centre anchors rarely land
+    # there, so EMS on top of lighter boxes are also scanned (20 mm grid,
+    # vectorised estimates) for a few load-balanced anchors.
+    balance_anchors: bool = True
 
     def __post_init__(self):
         object.__setattr__(self, "yaw_set_rad", tuple(self.yaw_set_rad))

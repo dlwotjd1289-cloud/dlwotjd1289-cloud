@@ -21,6 +21,8 @@ something. Feasibility is decided by the hard mask (5-2), not here.
 from dataclasses import dataclass
 import math
 
+import numpy as np
+
 from .geometry import LEN_EPS, Rect, rotated_dims, same_yaw
 from .pallet_model import box_tolerance
 
@@ -75,7 +77,65 @@ def candidate_yaws(box, config):
     return result
 
 
-def _ems_raw(model, box, yaw, dims, margin, anchors):
+def _balance_raw(model, box, ems, width, depth, hol, min_support, dims, margin, step=0.02, keep=6,
+                 spacing=0.08):
+    """Balanced anchors for heavy-on-light ``share`` mode.
+
+    A heavy box may rest on lighter boxes only where its weight is split
+    between them, often a narrow window over a seam or a junction of several
+    supporters that corner/centre anchors miss. Only for EMS resting on a box
+    lighter than the new one: scan the EMS on a ``step`` grid with the cheap
+    vectorised estimates (drop height, support ratio, load split), then keep
+    up to ``keep`` passing points at least ``spacing`` apart (deepest-bottom-
+    left first). The hard mask still re-checks every candidate exactly.
+    """
+    r = ems.rect
+    if ems.level <= model.height_tol:
+        return []
+    supporters = [
+        g for g in model.boxes
+        if abs(g.top - ems.level) <= model.height_tol
+        and g.rect.x0 < r.x1 and r.x0 < g.rect.x1 and g.rect.y0 < r.y1 and r.y0 < g.rect.y1
+    ]
+    if not supporters:
+        return []
+    lightest = min(g.weight_kg for g in supporters)
+    if box.weight_kg <= hol.max_weight_ratio * lightest + hol.tolerance_kg:
+        return []
+    xs = np.arange(r.x0, r.x1 - width + LEN_EPS, step)
+    ys = np.arange(r.y0, r.y1 - depth + LEN_EPS, step)
+    if xs.size == 0 or ys.size == 0:
+        return []
+    gx, gy = np.meshgrid(xs, ys, indexing="ij")
+    gx, gy = gx.ravel(), gy.ravel()
+    rects = [(x, y, x + width, y + depth) for x, y in zip(gx.tolist(), gy.tolist())]
+    zs = model.resting_z_many(rects)
+    actual = [(x0 + margin, y0 + margin, x1 - margin, y1 - margin) for x0, y0, x1, y1 in rects]
+    sup, heavy, excess = model.support_estimates(actual, zs, box.weight_kg, hol, with_excess=True)
+    base = (
+        (np.abs(zs - ems.level) <= model.height_tol)
+        & (sup >= min_support - 1e-9)
+        & (zs + dims[2] <= model.pallet_size.z + 1e-9)
+    )
+    out = []
+    # the area-share estimate can be stricter than the mask's lever shares,
+    # so the points it rejects by the smallest margin get a second, smaller
+    # quota; the mask decides
+    passing = sorted(np.flatnonzero(base & ~heavy).tolist(), key=lambda i: (gy[i], gx[i]))
+    nearly = sorted(np.flatnonzero(base & heavy).tolist(), key=lambda i: (excess[i], gy[i], gx[i]))
+    for order, quota in ((passing, keep), (nearly, keep // 2)):
+        taken = 0
+        for i in order:
+            x, y = float(gx[i]), float(gy[i])
+            if all(abs(x - px) >= spacing or abs(y - py) >= spacing for px, py, *_ in out):
+                out.append((x, y, "EMS", "balance", ems))
+                taken += 1
+                if taken >= quota:
+                    break
+    return out
+
+
+def _ems_raw(model, box, yaw, dims, margin, anchors, balance=None):
     out = []
     width = dims[0] + 2.0 * margin
     depth = dims[1] + 2.0 * margin
@@ -96,6 +156,9 @@ def _ems_raw(model, box, yaw, dims, margin, anchors):
         for anchor in anchors:
             ex, ey = points[anchor]
             out.append((ex, ey, "EMS", anchor, ems))
+        if balance is not None:
+            hol, min_support = balance
+            out.extend(_balance_raw(model, box, ems, width, depth, hol, min_support, dims, margin))
     return out
 
 
@@ -176,7 +239,13 @@ def raw_candidates(model, box, config):
         dims = rotated_dims(box.size, yaw)
         anchors = []
         if gen.use_ems:
-            anchors.extend(_ems_raw(model, box, yaw, dims, margin, gen.ems_anchors))
+            hol = config.constraints.heavy_on_light
+            balance = (
+                (hol, config.constraints.min_support_ratio)
+                if gen.balance_anchors and hol.enabled and hol.mode == "share"
+                else None
+            )
+            anchors.extend(_ems_raw(model, box, yaw, dims, margin, gen.ems_anchors, balance))
         if gen.use_extreme_points:
             anchors.extend(_ep_raw(model, box, dims, margin))
         if not anchors:

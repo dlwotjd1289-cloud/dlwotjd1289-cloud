@@ -9,6 +9,7 @@ candidates:
     use_ems: true
     use_extreme_points: true
     ems_anchors: [corner_ll, corner_lr, corner_ul, corner_ur, center]
+    balance_anchors: true                     # share mode: scan EMS for load-balanced spots of heavy boxes
     dedup_distance_m: 0.08                    # 80 mm duplicate removal
     dedup_mode: support_aware                 # geometric | support_aware | mask_aware | off
     order: likely_valid_first                 # priority | likely_valid_first

@@ -407,10 +407,12 @@ class PalletModel:
         tops = np.where(hit, self._top[None, :], 0.0)
         return tops.max(axis=1)
 
-    def support_estimates(self, rects, zs, weight_kg, heavy_cfg):
+    def support_estimates(self, rects, zs, weight_kg, heavy_cfg, with_excess=False):
         """Vectorised pre-mask estimates for actual footprints at ``zs``.
 
-        Returns (support_ratio, heavy_on_light_violation) arrays. Used only
+        Returns (support_ratio, heavy_on_light_violation) arrays, plus the
+        worst estimated load / heavy-on-light limit ratio when
+        ``with_excess`` (``> 1`` means the estimate rejects). Used only
         to order / de-duplicate candidates in 5-1; the hard mask computes the
         authoritative values (contact clipping, LBCP, lever load shares).
         """
@@ -419,8 +421,9 @@ class PalletModel:
         k = rects.shape[0]
         ratio = np.ones(k)
         heavy = np.zeros(k, dtype=bool)
+        excess = np.zeros(k)
         if not self.boxes or k == 0:
-            return ratio, heavy
+            return (ratio, heavy, excess) if with_excess else (ratio, heavy)
         b = self._act
         ox = np.minimum(rects[:, None, 2], b[None, :, 2]) - np.maximum(
             rects[:, None, 0], b[None, :, 0]
@@ -442,7 +445,10 @@ class PalletModel:
             load = weight_kg * share if heavy_cfg.mode == "share" else weight_kg
             bad = (share >= heavy_cfg.min_share) & (load > limit[None, :])
             heavy = lifted & bad.any(axis=1)
-        return ratio, heavy
+            if with_excess:
+                rel = np.where(share >= heavy_cfg.min_share, load / limit[None, :], 0.0)
+                excess = np.where(lifted, rel.max(axis=1), 0.0)
+        return (ratio, heavy, excess) if with_excess else (ratio, heavy)
 
     # ------------------------------------------------------------------
     # Compressed heightmap and Empty Maximal Spaces
