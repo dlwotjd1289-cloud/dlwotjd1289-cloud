@@ -166,8 +166,13 @@ def side_support(box, candidate, state):
 
 
 def has_placement(box, state, generator, validator, limit):
-    # A bounded finite-search feature, NOT proof that no feasible placement exists.
-    for candidate in generator(box, state)[:limit]:
+    # The generator defines a finite search. Invalid early proposals must not
+    # hide a later valid one. Keep limit for callers; existence needs only the
+    # first valid proposal, so the rollout's valid-candidate limit is not a
+    # raw-proposal cutoff here. False is NOT proof of geometric infeasibility.
+    if type(limit) is not int or limit < 1:
+        raise ValueError("Placement probe limit must be positive")
+    for candidate in generator(box, state):
         if (
             candidate.box_id != box.box_id
             or candidate.base_state_version != state.state_version

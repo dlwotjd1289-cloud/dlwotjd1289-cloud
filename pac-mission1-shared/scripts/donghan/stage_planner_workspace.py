@@ -9,11 +9,15 @@ def main():
     parser.add_argument("--team-root", type=Path, required=True,
                         help="checkout containing taehyeon's ros2_ws/src/pac_candidates")
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--include-highlevel", action="store_true",
+                        help="also stage pac_highlevel for the stage-4 runtime handoff")
     args = parser.parse_args()
     own = Path(__file__).resolve().parents[2]
     sources = {n: own / "ros2_ws/src" / n for n in
                ("pac_common", "pac_planning", "pac_planning_interfaces")}
     sources["pac_candidates"] = args.team_root.resolve() / "ros2_ws/src/pac_candidates"
+    if args.include_highlevel:
+        sources["pac_highlevel"] = args.team_root.resolve() / "ros2_ws/src/pac_highlevel"
     for name, source in sources.items():
         if not (source / "package.xml").is_file():
             parser.error("Missing source for " + name + ": " + str(source))

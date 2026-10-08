@@ -8,11 +8,13 @@ import json
 from pac_common import plain
 from pac_common.adapters import context_from_json, state_from_json
 from .config import load_config
+from .model import DualHeadRanker
 from .team_bridge import plan_with_backend
 
 
 def plan_request(state_json, context_json, box_id, expected_version,
-                 candidate_config, planner_config, *, seed=7, use_time_budget=True):
+                 candidate_config, planner_config, *, seed=7, use_time_budget=True,
+                 model=None):
     from pac_candidates import CandidateBackend
 
     state = state_from_json(json.loads(state_json))
@@ -22,7 +24,7 @@ def plan_request(state_json, context_json, box_id, expected_version,
     box = state.inventory.tracked_boxes[box_id]
     result = plan_with_backend(
         box, state, CandidateBackend(context, candidate_config),
-        config=planner_config, seed=seed, use_time_budget=use_time_budget,
+        config=planner_config, model=model, seed=seed, use_time_budget=use_time_budget,
     )
     return json.dumps(plain(result), ensure_ascii=False, allow_nan=False)
 
@@ -38,12 +40,15 @@ def main(args=None):
             super().__init__("placement_planner")
             self.declare_parameter("candidate_config", "")
             self.declare_parameter("planner_config", "")
+            self.declare_parameter("model_path", "")
             candidate_path = self.get_parameter("candidate_config").value
             planner_path = self.get_parameter("planner_config").value
             if not candidate_path or not planner_path:
                 raise ValueError("Provide candidate_config and planner_config YAML paths")
             self.candidates = load_candidate_config(candidate_path)
             self.planner = load_config(planner_path)
+            model_path = self.get_parameter("model_path").value
+            self.model = DualHeadRanker.load(model_path) if model_path else None
             self.service = self.create_service(PlanPlacement, "/pac/plan_placement", self.plan)
             self.get_logger().info("Placement service ready; robot validation remains required")
 
@@ -53,7 +58,7 @@ def main(args=None):
                 response.result_json = plan_request(
                     request.state_json, request.context_json, request.box_id,
                     request.expected_state_version, self.candidates, self.planner,
-                    seed=request.seed,
+                    seed=request.seed, model=self.model,
                 )
                 result = json.loads(response.result_json)
                 response.success = bool(result["ranked"])

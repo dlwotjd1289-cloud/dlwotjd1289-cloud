@@ -43,7 +43,7 @@
 | 미션 ④ 이상 박스 | 앞단 상태 결과와 capacity override 연결 | 무조건 정상 처리하지 않음; 불확실 상태는 참조기 거절 |
 | 미션 ⑤ 시각화·비교·로봇 | 현재/계획 2D SVG + 5모드 비교 | 실제 IK·충돌은 6번 담당 연결 필요 |
 | 필수: 관통·돌출·무거운 상부 하중 | 외부 hard callback; reference는 보수적 검사 | 경계/지지/하중 회귀 테스트 |
-| 필수: 가반하중·접근 자세 | `requires_robot_validation=True` | UR20/HS220 능력을 가정하지 않음 |
+| 필수: 가반하중·접근 자세 | `requires_robot_validation=True` | 현재 팀 선택은 HDR50-22; 실제 EOAT·가반하중·접근 검증은 6단계에서 수행 |
 
 ## 첨부 논문 묶음 사용 방법
 
@@ -65,8 +65,9 @@
 
 ## 아직 팀 통합이 필요한 사항
 
-실제 EMS/EP와 80mm 후보 중복 제거, LBCP/불확실성 포함 hard mask,
-High-level 버퍼·팔레트 교체·부분 재배치, 카메라 상태 갱신,
-ROS node/message 연결, MoveIt2 IK/접근·하강·후퇴 및 충돌/EOAT/Load CoM 검증,
-실제 배치 후 heightmap 보정은 다른 담당 단계 또는 후속 통합입니다.
+2026-10-08 업데이트: 실제 EMS와 LBCP hard mask는 team_bridge에서 연결해 Python으로 검증했다.
+HighLevelDecider의 현재/버퍼 박스 인계도 추가 패치에서 검증했다. ROS 계획 service 코드는
+원격 146797e에 올라갔지만 Humble에서 build/호출은 하지 않았다.
+카메라 상태 갱신, MoveIt2 IK/접근·하강·후퇴 및 충돌/EOAT/Load CoM 검증,
+실제 버퍼 이동·팔레트 교체·부분 재배치 실행과 배치 후 heightmap 보정은 후속 통합이다.
 이 작업으로 전체 로봇 시스템이 완성됐다고 표시하지 않습니다.

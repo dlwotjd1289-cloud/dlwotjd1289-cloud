@@ -149,16 +149,25 @@ class PlacementPlanner:
                     {"reason": "Missing typed ConstraintEvidence"},
                 )
                 continue
-            feature = compute_features(
-                box,
-                candidate,
-                state,
-                evidence,
-                self.context,
-                self.config,
-                self.generate_candidates,
-                self.validate_constraints,
-            )
+            try:
+                feature = compute_features(
+                    box,
+                    candidate,
+                    state,
+                    evidence,
+                    self.context,
+                    self.config,
+                    self.generate_candidates,
+                    self.validate_constraints,
+                )
+            except ValueError as error:
+                # Bad feature/EMS input is never scored. Preserve the other
+                # candidates and record the failure instead of killing the plan.
+                rejected[candidate.candidate_id] = ValidationResult(
+                    False, (R.INVALID_STATE,),
+                    {"reason": "FEATURE_INPUT_INVALID", "error": str(error)},
+                )
+                continue
             rows.append((candidate, feature))
         return rows, rejected
 
