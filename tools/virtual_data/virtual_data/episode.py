@@ -116,6 +116,20 @@ def true_geometry_violations(placed, truths, pallet_size):
     return overlaps, protrusions
 
 
+def select_pallet_xy(spec, vcfg, family_index=0):
+    """Pallet footprint for this scenario (covers pallet-spec changes).
+
+    Round robin over the configured sizes *within each scenario family*, so
+    every family (e.g. late_heavy) is tested on every footprint and size is
+    not confounded with family or with the strength profile (which cycles
+    over the global scenario index).
+    """
+    sizes = vcfg.pallet.sizes_m
+    if not sizes:
+        return spec.pallet_xy
+    return sizes[family_index % len(sizes)]
+
+
 def select_strength(spec, vcfg, scenario_index):
     cfg = vcfg.strength
     if not cfg.enabled:
@@ -153,12 +167,14 @@ def run_episode(
     planner_factory=None,
     run_id="virtual",
     scenario_index=0,
+    family_index=0,
 ):
     rng = random.Random(f"{vcfg.seed}:{spec.scenario_id}")
     policy_rng = random.Random(f"{vcfg.seed}:{spec.scenario_id}:policy")
     strength = select_strength(spec, vcfg, scenario_index)
     height = stack_height_limit(spec, vcfg)
-    pallet_size = Size3D(spec.pallet_xy[0], spec.pallet_xy[1], height)
+    pallet_xy = select_pallet_xy(spec, vcfg, family_index)
+    pallet_size = Size3D(pallet_xy[0], pallet_xy[1], height)
     max_load = (
         float(spec.max_load_kg) if spec.max_load_kg is not None else vcfg.pallet.default_max_load_kg
     )
@@ -221,6 +237,7 @@ def run_episode(
                         "step": step,
                         "state_kind": "SIMULATED",
                         "strength_profile": strength.profile if strength else None,
+                        "pallet_xy_m": list(pallet_xy),
                         "producer": "taehyeon.virtual_data",
                     },
                 },
@@ -325,6 +342,7 @@ def run_episode(
         }
     metrics = {
         **strength_metrics,
+        "pallet_xy_m": list(pallet_xy),
         "boxes": min(limit, len(spec.arrivals)),
         "placed": len(placed),
         "unplaced": len(unplaced),

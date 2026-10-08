@@ -112,3 +112,27 @@ def test_strength_scenarios_recorded_and_damage_respected(run_dir):
     assert scene["source"]["strength_profile"] in profiles
     # true capacities are ground truth: never exposed in planner scenes
     assert "true_capacity" not in json.dumps(scene)
+
+
+def test_pallet_sizes_cover_spec_changes(run_dir):
+    vcfg = load_virtual_config(REPO / "config/taehyeon/virtual_data.yaml")
+    allowed = {tuple(xy) for xy in vcfg.pallet.sizes_m}
+    assert {(1.1, 1.1), (1.2, 1.0), (1.2, 0.8)} <= allowed
+    for path in (run_dir / "episodes").glob("*.json"):
+        ep = json.loads(path.read_text())
+        xy = tuple(ep["metrics"]["pallet_xy_m"])
+        assert xy in allowed
+        state = state_from_json(ep["final_state"])
+        assert (state.pallet.size.x, state.pallet.size.y) == xy
+        for b in state.pallet.boxes:  # nothing outside the drawn pallet
+            assert b.pose.x >= 0 and b.pose.y >= 0
+        assert ep["metrics"]["true_protrusions"] == []
+    summary = json.loads((run_dir / "analysis" / "summary.json").read_text())
+    assert summary["pallet_sizes"]
+
+
+def test_pallet_size_config_validation():
+    with pytest.raises(ValueError):
+        virtual_config_from_dict({"pallet": {"sizes_m": [[1.1, -1.0]]}})
+    cfg = virtual_config_from_dict({"pallet": {"sizes_m": []}})
+    assert cfg.pallet.sizes_m == ()

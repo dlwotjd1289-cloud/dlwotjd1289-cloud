@@ -8,6 +8,9 @@ virtual_data:
     # usable stack height = 1.5 - 0.15 = 1.35 m (confirmed by taehyeon 2026-10-07).
     height_limit_includes_pallet: true
     default_max_load_kg: 1000.0      # generator max_load_kg is null
+    # pallet-spec change coverage: T11, KS T12 and a narrow 1.2 x 0.8 deck;
+    # round robin inside each scenario family. [] keeps the generator's pallet.
+    sizes_m: [[1.1, 1.1], [1.2, 1.0], [1.2, 0.8]]
   catalog:
     nominal_weight: midpoint          # SkuSpec.weight_kg for unseen boxes: midpoint | max
   observation:                        # stage-2 measurement model (delta source)

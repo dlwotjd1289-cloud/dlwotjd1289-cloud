@@ -29,10 +29,11 @@ class PhysicsOutcome:
     insertion_error: str | None
 
 
-def _make_world(sim_module, collision_model):
-    cfg = sim_module.SimulatorConfig(
-        pallet=sim_module.PalletConfig(collision_model=collision_model)
-    )
+def _make_world(sim_module, collision_model, pallet_size=None):
+    pallet_kwargs = {"collision_model": collision_model}
+    if pallet_size is not None:  # match the scene's footprint (T11, T12, ...)
+        pallet_kwargs.update(length_m=pallet_size.x, width_m=pallet_size.y)
+    cfg = sim_module.SimulatorConfig(pallet=sim_module.PalletConfig(**pallet_kwargs))
     from pac_simulation.ahead_sim.world import BulletPalletWorld
 
     return BulletPalletWorld(cfg)
@@ -93,7 +94,7 @@ def check_candidate(
 ):
     import pybullet as p
 
-    world = _make_world(sim_module, collision_model)
+    world = _make_world(sim_module, collision_model, pallet_size)
     true_boxes = []
     try:
         for b in sorted(placed, key=lambda q: q.pose.z):

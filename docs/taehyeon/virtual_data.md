@@ -37,6 +37,7 @@ python tools/virtual_data/scripts/validate_virtual_data.py tools/virtual_data/ou
 |---|---|---|
 | `pallet.height_limit_includes_pallet` | true | 1.5 m − 팔레트 0.15 m = 적재 높이 1.35 m |
 | `pallet.default_max_load_kg` | 1000 | 제너레이터의 `max_load_kg`가 null일 때 사용 |
+| `pallet.sizes_m` | [1.1, 1.1], [1.2, 1.0], [1.2, 0.8] | 팔레트 규격 변경 대응: T11, KS T12, 폭 좁은 1.2×0.8. 패밀리별 round robin으로 배정. `[]`이면 제너레이터 규격 그대로 |
 | `catalog.nominal_weight` | midpoint | 미입고 박스의 `SkuSpec.weight_kg` (무게 범위의 중앙) |
 | `observation.dimension_noise_std_m` / `clip` | 1 mm / 3 mm | 측정 치수 노이즈 |
 | `observation.weight_noise_std_ratio` | 1 % | 무게 측정 노이즈 |

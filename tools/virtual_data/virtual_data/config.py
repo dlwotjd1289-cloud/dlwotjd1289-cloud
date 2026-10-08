@@ -20,8 +20,16 @@ def _nonneg(value, name):
 class PalletSection:
     height_limit_includes_pallet: bool = True
     default_max_load_kg: float = 1000.0
+    # Pallet footprints (x, y) m to cover pallet-spec changes, assigned round
+    # robin inside each scenario family. Empty = keep the generator's pallet.
+    sizes_m: tuple = ((1.1, 1.1), (1.2, 1.0), (1.2, 0.8))
 
     def __post_init__(self):
+        sizes = tuple(tuple(float(v) for v in xy) for xy in self.sizes_m)
+        for xy in sizes:
+            if len(xy) != 2 or min(xy) <= 0 or not all(math.isfinite(v) for v in xy):
+                raise ValueError("pallet.sizes_m entries must be positive [x, y] pairs")
+        object.__setattr__(self, "sizes_m", sizes)
         _nonneg(self.default_max_load_kg, "default_max_load_kg")
         if self.default_max_load_kg <= 0:
             raise ValueError("default_max_load_kg must be positive")

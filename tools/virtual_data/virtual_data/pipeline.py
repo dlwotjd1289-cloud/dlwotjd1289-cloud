@@ -100,6 +100,11 @@ def generate(dataset_dir, out_dir, cand_config, vcfg, scenario_ids=None, repo_ro
 
     episodes = []
     dataset_index = {s.scenario_id: k for k, s in enumerate(dataset.scenarios)}
+    family_index = {}
+    seen_per_family = Counter()
+    for s in dataset.scenarios:  # ordinal of each scenario inside its family
+        family_index[s.scenario_id] = seen_per_family[s.family]
+        seen_per_family[s.family] += 1
     specs = [s for s in dataset.scenarios if not scenario_ids or s.scenario_id in scenario_ids]
     if max_scenarios:
         specs = specs[:max_scenarios]
@@ -118,6 +123,7 @@ def generate(dataset_dir, out_dir, cand_config, vcfg, scenario_ids=None, repo_ro
                 run_id=run_id,
                 # position in the FULL dataset, so filtering keeps assignments
                 scenario_index=dataset_index[spec.scenario_id],
+                family_index=family_index[spec.scenario_id],
             )
             episodes.append(result)
             _dump(
@@ -242,14 +248,19 @@ def _group_stats(eps):
 def summarize(episodes):
     by_family = defaultdict(list)
     by_strength = defaultdict(list)
+    by_pallet = defaultdict(list)
     for e in episodes:
         by_family[e.family].append(e)
+        xy = e.metrics.get("pallet_xy_m")
+        if xy:
+            by_pallet[f"{xy[0]:.2f}x{xy[1]:.2f}"].append(e)
         if e.metrics.get("strength_profile"):
             by_strength[e.metrics["strength_profile"]].append(e)
     by_family["ALL"] = list(episodes)
     return {
         "families": {k: _group_stats(v) for k, v in sorted(by_family.items())},
         "strength_profiles": {k: _group_stats(v) for k, v in sorted(by_strength.items())},
+        "pallet_sizes": {k: _group_stats(v) for k, v in sorted(by_pallet.items())},
     }
 
 
@@ -285,6 +296,21 @@ def summary_markdown(summary):
                 f"{f['true_overloaded_boxes']} | {100 * f['true_overload_rate']:.2f}% | "
                 f"{f['scenarios_with_true_overload']} | {f['true_max_load_ratio']:.2f} | "
                 f"{f['boxes_on_detected_damaged']} |"
+            )
+    if summary.get("pallet_sizes"):
+        lines += [
+            "",
+            "## Pallet footprints (m)",
+            "",
+            "| pallet | scen | steps | valid | no-valid | placed% | util | H(m) | issues | true overlap | true protrusion |",
+            "|---|---|---|---|---|---|---|---|---|---|---|",
+        ]
+        for name, f in summary["pallet_sizes"].items():
+            lines.append(
+                f"| {name} | {f['scenarios']} | {f['steps']} | {f['mean_valid']:.1f} | "
+                f"{f['no_valid_steps']} | {100 * f['placed_ratio']:.0f} | "
+                f"{f['pallet_volume_utilization']:.3f} | {f['mean_max_height_m']:.2f} | "
+                f"{f['snapshot_issue_boxes']} | {f['true_overlaps']} | {f['true_protrusions']} |"
             )
     allf = fams.get("ALL", {})
     lines += ["", "## Mask reasons (share of masked candidates, ALL)", ""]
