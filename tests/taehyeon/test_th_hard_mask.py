@@ -352,3 +352,66 @@ def test_grid_maps_nearly_coincident_edges_consistently(backend):
     for cx, h in zip(centers, row):
         inside = any(g.expanded.x0 <= cx <= g.expanded.x1 for g in model.boxes)
         assert (h > 0) == inside
+
+
+def test_incremental_loads_match_a_full_rebuild_with_lever_shares():
+    """Regression: the mask must predict exactly the loads a re-check of the
+    resulting pallet computes. With lever shares the split moves with the
+    resultant, so re-using the old shares under-estimated loads (found as an
+    OVERLOADED re-check on a heavy stack, 2026-10-08)."""
+    from dataclasses import replace as dc_replace
+
+    from pac_candidates.config import HeavyOnLightConfig
+    from pac_candidates.pallet_model import G, PalletModel
+
+    cfg = CandidateConfig()
+    cfg = dc_replace(
+        cfg, constraints=dc_replace(cfg.constraints, heavy_on_light=HeavyOnLightConfig(enabled=False))
+    )
+    ctx = make_context(capacity_n=1e6)
+    rng = random.Random(5)
+    boxes = []
+    checked = 0
+    for i in range(40):
+        size = rng.choice([(0.4, 0.3, 0.2), (0.3, 0.2, 0.15), (0.5, 0.4, 0.25), (0.2, 0.2, 0.2)])
+        box = make_box(f"N{i}", size, weight=rng.uniform(1, 40))
+        state = make_state(boxes, version=i)
+        backend = CandidateBackend(ctx, cfg)
+        cset = backend.candidate_set(box, state)
+        if not cset.valid:
+            continue
+        cand = rng.choice(cset.valid[:6])
+        model = backend.model_for(state)
+        verdict = backend.validate_constraints(box, cand, state)
+        p = cand.target_pose
+        new = placed(box.box_id, p.x, p.y, p.z, size, box.weight_kg, p.yaw)
+        after = PalletModel(make_state([*boxes, new], version=i + 1), ctx, cfg)
+        contacts = after.contacts[box.box_id]
+        extra = model.propagate(contacts, box.weight_kg * G)
+        for g in model.boxes:
+            expected = after.top_load_n[g.box_id]
+            got = model.top_load_n[g.box_id] + extra.get(g.box_id, 0.0)
+            assert got == pytest.approx(expected, rel=1e-9, abs=1e-7), (i, g.box_id)
+        assert verdict.success
+        boxes.append(new)
+        checked += 1
+    assert checked >= 20
+    assert any(len(PalletModel(make_state(boxes), ctx, cfg).contacts[b.box_id]) > 1 for b in boxes)
+
+
+def test_off_centre_load_on_a_bridge_shifts_the_split():
+    from pac_candidates.pallet_model import G, PalletModel
+
+    ctx = make_context(capacity_n=1e6)
+    cfg = CandidateConfig()
+    a = placed("A", TOL, TOL, 0.0, size=(0.3, 0.3, 0.2), weight=30)
+    b = placed("B", TOL + 0.3 + GAP, TOL, 0.0, size=(0.3, 0.3, 0.2), weight=30)
+    c = placed("C", TOL, TOL, 0.2, size=(0.6 + GAP, 0.3, 0.1), weight=10)
+    state = make_state([a, b, c], version=1)
+    model = PalletModel(state, ctx, cfg)
+    d = placed("D", TOL + 0.4, TOL, 0.3, size=(0.2, 0.3, 0.2), weight=10)  # over B's side
+    after = PalletModel(make_state([a, b, c, d], version=2), ctx, cfg)
+    extra = model.propagate(after.contacts["D"], d.weight_kg * G)
+    for box_id in ("A", "B", "C"):
+        assert model.top_load_n[box_id] + extra.get(box_id, 0.0) == pytest.approx(after.top_load_n[box_id])
+    assert after.top_load_n["B"] > after.top_load_n["A"] + 50  # D's weight goes mostly to B

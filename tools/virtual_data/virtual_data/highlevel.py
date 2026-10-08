@@ -69,7 +69,7 @@ def split_ids(dataset, split):
 
 
 def world_factory(dataset, specs, cand_config, vcfg, hl_config, *, shuffle_seed=0, vary_pallet=True,
-                  value_provider=None):
+                  value_provider=None, placer=None):
     """``make_world(i)``: episode i cycles over ``specs`` in a seeded order.
 
     Each pass uses new measurement noise, and with ``vary_pallet`` the pallet
@@ -93,7 +93,7 @@ def world_factory(dataset, specs, cand_config, vcfg, hl_config, *, shuffle_seed=
         return world_from_spec(
             spec, dataset, cand_config, vcfg, hl_config,
             family_index=fam[spec.scenario_id], episode_seed=epoch, pallet_xy=xy,
-            value_provider=value_provider,
+            value_provider=value_provider, placer=placer,
         )
 
     return make_world

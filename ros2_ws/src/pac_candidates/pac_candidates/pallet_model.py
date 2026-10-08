@@ -309,6 +309,9 @@ class PalletModel:
                     mx + part * contact.centroid[0],
                     my + part * contact.centroid[1],
                 )
+        # resultant force/moment each box passes down (for exact increments)
+        self._total_n = total
+        self._moment = moment
         self.top_load_n = {
             g.box_id: total[g.box_id] - g.weight_kg * G for g in self.boxes
         }
@@ -326,22 +329,42 @@ class PalletModel:
     def propagate(self, contacts, force_n):
         """Extra top load (N) on each box below when ``force_n`` is added.
 
-        Linear superposition with the snapshot's load shares.
+        Exact for both share models: every affected box re-splits its new
+        resultant (old load + extra, at the shifted point) exactly as the
+        top-down pass of a full snapshot would, so the hard mask and a
+        re-check of the resulting pallet always agree. (Re-using the old
+        shares is only exact for the linear ``area`` model; with ``lever``
+        the shares move with the resultant.)
         """
-        extra = {}
+        extra_f = {}
+        extra_m = {}
+
+        def add(box_id, force, centroid):
+            extra_f[box_id] = extra_f.get(box_id, 0.0) + force
+            mx, my = extra_m.get(box_id, (0.0, 0.0))
+            extra_m[box_id] = (mx + force * centroid[0], my + force * centroid[1])
+
         for contact in contacts:
-            extra[contact.supporter_id] = (
-                extra.get(contact.supporter_id, 0.0) + force_n * contact.share
-            )
-        for geom in reversed(self.boxes):
-            add = extra.get(geom.box_id, 0.0)
-            if add <= 0.0:
+            add(contact.supporter_id, force_n * contact.share, contact.centroid)
+        for geom in reversed(self.boxes):  # same top-down order as _build_loads
+            box_id = geom.box_id
+            if box_id not in extra_f:
                 continue
-            for contact in self.contacts[geom.box_id]:
-                extra[contact.supporter_id] = (
-                    extra.get(contact.supporter_id, 0.0) + add * contact.share
-                )
-        return extra
+            old_total = self._total_n[box_id]
+            total = old_total + extra_f[box_id]
+            mx, my = self._moment[box_id]
+            ex, ey = extra_m[box_id]
+            point = ((mx + ex) / total, (my + ey) / total) if total > 0 else geom.rect.center
+            new_contacts = self.contact_list(geom.rect, self.raw_contacts[box_id], point)
+            old_parts = {c.supporter_id: old_total * c.share for c in self.contacts[box_id]}
+            for contact in new_contacts:
+                delta = total * contact.share - old_parts.pop(contact.supporter_id, 0.0)
+                if delta:
+                    add(contact.supporter_id, delta, contact.centroid)
+            for supporter_id, part in old_parts.items():  # not expected: same contact set
+                old = next(c for c in self.contacts[box_id] if c.supporter_id == supporter_id)
+                add(supporter_id, -part, old.centroid)
+        return extra_f
 
     def ancestors(self, supporter_ids):
         seen = set()

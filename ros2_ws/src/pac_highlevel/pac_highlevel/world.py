@@ -211,7 +211,12 @@ class PalletizingWorld:
         backend = self.backend()
         cset = backend.candidate_set(box, state)
         option = Option(box, valid_count=cset.valid_count, generated_count=cset.generated_count)
-        chosen = self.placer(list(cset.valid)) if cset.valid else None
+        chosen = None
+        if cset.valid:
+            if getattr(self.placer, "wants_context", False):
+                chosen = self.placer(list(cset.valid), box, state, backend)
+            else:
+                chosen = self.placer(list(cset.valid))
         if chosen is None:
             return option
         verdict = backend.validate_constraints(box, chosen, state)
