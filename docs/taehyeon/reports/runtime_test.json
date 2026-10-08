@@ -10,28 +10,28 @@
   "full": {
    "episodes": 9,
    "placed_per_episode": 74.11111111111111,
-   "pallets_per_episode": 5.222222222222222,
-   "fill_true_mean": 0.23371328429024624,
-   "time_s_per_episode": 1164.4777777777776,
+   "pallets_per_episode": 5.444444444444445,
+   "fill_true_mean": 0.22457820398617676,
+   "time_s_per_episode": 1168.2,
    "inspection_per_episode": 4.444444444444445,
    "missing_per_episode": 2.0,
    "levels": {
-    "L0": 653,
+    "L0": 644,
     "L1": 0,
-    "L2": 14,
+    "L2": 23,
     "L3": 0,
     "L4": 0
    },
-   "repack": 10,
-   "repack_aborted_stage6": 4,
+   "repack": 12,
+   "repack_aborted_stage6": 6,
    "stage6": {
-    "calls": 1523,
-    "code:APPROACH_FAIL": 9,
+    "calls": 1557,
+    "code:APPROACH_FAIL": 10,
     "code:IK_FAIL": 1,
-    "code:ROBOT_COLLISION": 1883,
-    "fell_back": 371,
-    "no_executable": 107,
-    "robot_rejected": 1893
+    "code:ROBOT_COLLISION": 2054,
+    "fell_back": 370,
+    "no_executable": 141,
+    "robot_rejected": 2065
    },
    "anomalies": {
     "DAMAGED": 35,
@@ -47,22 +47,22 @@
   "no_robot": {
    "episodes": 9,
    "placed_per_episode": 74.11111111111111,
-   "pallets_per_episode": 5.222222222222222,
-   "fill_true_mean": 0.235232474176506,
+   "pallets_per_episode": 5.111111111111111,
+   "fill_true_mean": 0.23826648404202622,
    "time_s_per_episode": 1145.7777777777778,
    "inspection_per_episode": 4.444444444444445,
    "missing_per_episode": 2.0,
    "levels": {
-    "L0": 649,
+    "L0": 646,
     "L1": 0,
-    "L2": 17,
+    "L2": 20,
     "L3": 0,
     "L4": 1
    },
-   "repack": 9,
+   "repack": 11,
    "repack_aborted_stage6": 0,
    "stage6": {
-    "calls": 1336,
+    "calls": 1343,
     "robot_rejected": 0
    },
    "anomalies": {
@@ -79,28 +79,28 @@
   "noisy3mm": {
    "episodes": 9,
    "placed_per_episode": 74.11111111111111,
-   "pallets_per_episode": 5.111111111111111,
-   "fill_true_mean": 0.2386122630772343,
-   "time_s_per_episode": 1807.9888888888888,
+   "pallets_per_episode": 5.333333333333333,
+   "fill_true_mean": 0.22932615453813965,
+   "time_s_per_episode": 1809.4111111111113,
    "inspection_per_episode": 4.444444444444445,
    "missing_per_episode": 2.0,
    "levels": {
-    "L0": 451,
-    "L1": 153,
-    "L2": 14,
+    "L0": 442,
+    "L1": 155,
+    "L2": 22,
     "L3": 0,
-    "L4": 49
+    "L4": 48
    },
-   "repack": 11,
+   "repack": 8,
    "repack_aborted_stage6": 2,
    "stage6": {
-    "calls": 1477,
-    "code:APPROACH_FAIL": 23,
-    "code:IK_FAIL": 1,
-    "code:ROBOT_COLLISION": 1658,
-    "fell_back": 400,
-    "no_executable": 82,
-    "robot_rejected": 1681
+    "calls": 1514,
+    "code:APPROACH_FAIL": 17,
+    "code:IK_FAIL": 3,
+    "code:ROBOT_COLLISION": 1823,
+    "fell_back": 419,
+    "no_executable": 78,
+    "robot_rejected": 1842
    },
    "anomalies": {
     "DAMAGED": 35,
@@ -116,28 +116,28 @@
   "small_gripper": {
    "episodes": 9,
    "placed_per_episode": 74.11111111111111,
-   "pallets_per_episode": 5.111111111111111,
-   "fill_true_mean": 0.24174468925659984,
-   "time_s_per_episode": 1133.7666666666667,
+   "pallets_per_episode": 5.0,
+   "fill_true_mean": 0.24726055202523264,
+   "time_s_per_episode": 1129.3333333333333,
    "inspection_per_episode": 4.444444444444445,
    "missing_per_episode": 2.0,
    "levels": {
-    "L0": 649,
+    "L0": 641,
     "L1": 0,
-    "L2": 18,
+    "L2": 26,
     "L3": 0,
     "L4": 0
    },
-   "repack": 15,
+   "repack": 13,
    "repack_aborted_stage6": 2,
    "stage6": {
-    "calls": 1387,
+    "calls": 1392,
     "code:APPROACH_FAIL": 14,
     "code:IK_FAIL": 3,
-    "code:ROBOT_COLLISION": 322,
-    "fell_back": 65,
-    "no_executable": 50,
-    "robot_rejected": 337
+    "code:ROBOT_COLLISION": 324,
+    "fell_back": 66,
+    "no_executable": 39,
+    "robot_rejected": 339
    },
    "anomalies": {
     "DAMAGED": 35,
@@ -161,9 +161,9 @@
    "boxes_in_stream": 80,
    "expected": 80,
    "placed": 78,
-   "pallets": 6,
-   "fill_true_mean": 0.24821382458847738,
-   "time_s": 1272.7,
+   "pallets": 7,
+   "fill_true_mean": 0.21275470679012345,
+   "time_s": 1299.4,
    "inspection": [
     {
      "box_id": "S0003-B026",
@@ -178,12 +178,13 @@
    ],
    "missing": {},
    "decisions": {
-    "PLACE_CURRENT": 41,
-    "L0": 76,
-    "BUFFER_CURRENT": 37,
-    "RETRIEVE_BUFFER": 37,
-    "L2": 2,
-    "PALLET_CLOSE": 5,
+    "PLACE_CURRENT": 46,
+    "L0": 74,
+    "BUFFER_CURRENT": 32,
+    "RETRIEVE_BUFFER": 32,
+    "L2": 4,
+    "stage8_reconciled": 6,
+    "PALLET_CLOSE": 6,
     "PARTIAL_REPACK": 2,
     "repack_aborted_stage6": 2
    },
@@ -193,72 +194,84 @@
     "DAMAGED": 2
    },
    "stage6": {
-    "calls": 173,
-    "robot_rejected": 247,
-    "code:ROBOT_COLLISION": 247,
-    "fell_back": 57,
-    "no_executable": 9
+    "calls": 183,
+    "robot_rejected": 363,
+    "code:ROBOT_COLLISION": 363,
+    "fell_back": 55,
+    "no_executable": 13
    },
    "supervisor_time_s": {
-    "PALLET_CHANGE": 300.0
+    "PALLET_CHANGE": 360.0
    },
    "supervisor_log": [
     {
-     "t": 131.209,
+     "t": 158.017,
      "from": "NORMAL",
      "to": "PALLET_CHANGE",
      "reason": "PALLET_CLOSE"
     },
     {
-     "t": 191.209,
+     "t": 218.017,
      "from": "PALLET_CHANGE",
      "to": "NORMAL",
      "reason": "new pallet in place"
     },
     {
-     "t": 338.737,
+     "t": 354.498,
      "from": "NORMAL",
      "to": "PALLET_CHANGE",
      "reason": "PALLET_CLOSE"
     },
     {
-     "t": 398.737,
+     "t": 414.498,
      "from": "PALLET_CHANGE",
      "to": "NORMAL",
      "reason": "new pallet in place"
     },
     {
-     "t": 479.573,
+     "t": 499.332,
      "from": "NORMAL",
      "to": "PALLET_CHANGE",
      "reason": "PALLET_CLOSE"
     },
     {
-     "t": 539.573,
+     "t": 559.332,
      "from": "PALLET_CHANGE",
      "to": "NORMAL",
      "reason": "new pallet in place"
     },
     {
-     "t": 780.197,
+     "t": 701.459,
      "from": "NORMAL",
      "to": "PALLET_CHANGE",
      "reason": "PALLET_CLOSE"
     },
     {
-     "t": 840.197,
+     "t": 761.459,
      "from": "PALLET_CHANGE",
      "to": "NORMAL",
      "reason": "new pallet in place"
     },
     {
-     "t": 1162.967,
+     "t": 938.815,
      "from": "NORMAL",
      "to": "PALLET_CHANGE",
      "reason": "PALLET_CLOSE"
     },
     {
-     "t": 1222.967,
+     "t": 998.815,
+     "from": "PALLET_CHANGE",
+     "to": "NORMAL",
+     "reason": "new pallet in place"
+    },
+    {
+     "t": 1215.483,
+     "from": "NORMAL",
+     "to": "PALLET_CHANGE",
+     "reason": "PALLET_CLOSE"
+    },
+    {
+     "t": 1275.483,
      "from": "PALLET_CHANGE",
      "to": "NORMAL",
      "reason": "new pallet in place"
@@ -267,33 +280,73 @@
    "pallet_list": [
     {
      "pallet_id": "P001-01",
-     "boxes": 13,
-     "fill_true": 0.21409336419753083
+     "boxes": 15,
+     "fill_true": 0.2255054012345679,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-02",
      "boxes": 12,
-     "fill_true": 0.20615972222222223
+     "fill_true": 0.2278325617283951,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-03",
-     "boxes": 7,
-     "fill_true": 0.3598996913580247
+     "boxes": 6,
+     "fill_true": 0.26865586419753085,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-04",
-     "boxes": 22,
-     "fill_true": 0.2521712962962963
+     "boxes": 14,
+     "fill_true": 0.14890046296296292,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-05",
-     "boxes": 20,
-     "fill_true": 0.2858130401234568
+     "boxes": 15,
+     "fill_true": 0.2732245370370371,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-06",
-     "boxes": 4,
-     "fill_true": 0.17114583333333333
+     "boxes": 14,
+     "fill_true": 0.1910900462962963,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
+    },
+    {
+     "pallet_id": "P001-07",
+     "boxes": 2,
+     "fill_true": 0.15407407407407406,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     }
    ]
   },
@@ -317,6 +370,7 @@
     "BUFFER_CURRENT": 39,
     "RETRIEVE_BUFFER": 39,
     "PALLET_CLOSE": 5,
+    "stage8_reconciled": 5,
     "L2": 1
    },
    "anomalies": {
@@ -371,32 +425,32 @@
      "reason": "new pallet in place"
     },
     {
-     "t": 954.82,
+     "t": 954.819,
      "from": "NORMAL",
      "to": "PALLET_CHANGE",
      "reason": "PALLET_CLOSE"
     },
     {
-     "t": 1014.82,
+     "t": 1014.819,
      "from": "PALLET_CHANGE",
      "to": "NORMAL",
      "reason": "new pallet in place"
     },
     {
-     "t": 1175.668,
+     "t": 1175.667,
      "event": "MISSING",
      "by_sku": {
       "K11": 1
      }
     },
     {
-     "t": 1175.668,
+     "t": 1175.667,
      "from": "NORMAL",
      "to": "PALLET_CHANGE",
      "reason": "PALLET_CLOSE"
     },
     {
-     "t": 1235.668,
+     "t": 1235.667,
      "from": "PALLET_CHANGE",
      "to": "NORMAL",
      "reason": "new pallet in place"
@@ -406,32 +460,62 @@
     {
      "pallet_id": "P001-01",
      "boxes": 14,
-     "fill_true": 0.12215509259259259
+     "fill_true": 0.12215509259259259,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-02",
      "boxes": 19,
-     "fill_true": 0.1489452160493827
+     "fill_true": 0.1489452160493827,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-03",
      "boxes": 15,
-     "fill_true": 0.2419606481481481
+     "fill_true": 0.2419606481481481,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-04",
      "boxes": 14,
-     "fill_true": 0.3401003086419753
+     "fill_true": 0.3401003086419753,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-05",
      "boxes": 12,
-     "fill_true": 0.23724228395061728
+     "fill_true": 0.23724228395061728,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-06",
      "boxes": 5,
-     "fill_true": 0.1266527777777778
+     "fill_true": 0.1266527777777778,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     }
    ]
   },
@@ -482,6 +566,7 @@
     "BUFFER_CURRENT": 30,
     "RETRIEVE_BUFFER": 30,
     "PALLET_CLOSE": 5,
+    "stage8_reconciled": 6,
     "PARTIAL_REPACK": 2,
     "repack_aborted_stage6": 2
    },
@@ -574,32 +659,62 @@
     {
      "pallet_id": "P001-01",
      "boxes": 13,
-     "fill_true": 0.13588734567901237
+     "fill_true": 0.13588734567901237,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-02",
      "boxes": 15,
-     "fill_true": 0.1905717592592593
+     "fill_true": 0.1905717592592593,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-03",
      "boxes": 17,
-     "fill_true": 0.20729861111111114
+     "fill_true": 0.20729861111111114,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-04",
      "boxes": 14,
-     "fill_true": 0.2929652777777778
+     "fill_true": 0.2929652777777778,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-05",
      "boxes": 11,
-     "fill_true": 0.13621720679012347
+     "fill_true": 0.13621720679012347,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-06",
      "boxes": 4,
-     "fill_true": 0.14161095679012345
+     "fill_true": 0.14161095679012345,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     }
    ]
   },
@@ -681,6 +796,7 @@
     "BUFFER_CURRENT": 22,
     "RETRIEVE_BUFFER": 22,
     "PALLET_CLOSE": 3,
+    "stage8_reconciled": 2,
     "L2": 1
    },
    "anomalies": {
@@ -713,31 +829,31 @@
      "reason": "new pallet in place"
     },
     {
-     "t": 528.664,
+     "t": 528.663,
      "from": "NORMAL",
      "to": "PALLET_CHANGE",
      "reason": "PALLET_CLOSE"
     },
     {
-     "t": 588.664,
+     "t": 588.663,
      "from": "PALLET_CHANGE",
      "to": "NORMAL",
      "reason": "new pallet in place"
     },
     {
-     "t": 750.662,
+     "t": 750.661,
      "from": "NORMAL",
      "to": "PALLET_CHANGE",
      "reason": "PALLET_CLOSE"
     },
     {
-     "t": 810.662,
+     "t": 810.661,
      "from": "PALLET_CHANGE",
      "to": "NORMAL",
      "reason": "new pallet in place"
     },
     {
-     "t": 911.092,
+     "t": 911.091,
      "event": "MISSING",
      "by_sku": {
       "K02": 1,
@@ -750,22 +866,42 @@
     {
      "pallet_id": "P001-01",
      "boxes": 23,
-     "fill_true": 0.26678950617283953
+     "fill_true": 0.26678950617283953,
+     "pallet_size": [
+      1.2,
+      1.0,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-02",
      "boxes": 19,
-     "fill_true": 0.18658641975308643
+     "fill_true": 0.18658641975308643,
+     "pallet_size": [
+      1.2,
+      1.0,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-03",
      "boxes": 14,
-     "fill_true": 0.3661907407407407
+     "fill_true": 0.3661907407407407,
+     "pallet_size": [
+      1.2,
+      1.0,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-04",
      "boxes": 10,
-     "fill_true": 0.11160987654320989
+     "fill_true": 0.11160987654320989,
+     "pallet_size": [
+      1.2,
+      1.0,
+      1.35
+     ]
     }
    ]
   },
@@ -809,6 +945,7 @@
     "L0": 71,
     "BUFFER_CURRENT": 30,
     "RETRIEVE_BUFFER": 30,
+    "stage8_reconciled": 5,
     "PALLET_CLOSE": 3,
     "L2": 2
    },
@@ -876,22 +1013,42 @@
     {
      "pallet_id": "P001-01",
      "boxes": 33,
-     "fill_true": 0.279690847872666
+     "fill_true": 0.279690847872666,
+     "pallet_size": [
+      1.1,
+      1.1,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-02",
      "boxes": 13,
-     "fill_true": 0.33195898377716554
+     "fill_true": 0.33195898377716554,
+     "pallet_size": [
+      1.1,
+      1.1,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-03",
      "boxes": 17,
-     "fill_true": 0.30811937557392105
+     "fill_true": 0.30811937557392105,
+     "pallet_size": [
+      1.1,
+      1.1,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-04",
      "boxes": 10,
-     "fill_true": 0.2562093663911845
+     "fill_true": 0.2562093663911845,
+     "pallet_size": [
+      1.1,
+      1.1,
+      1.35
+     ]
     }
    ]
   },
@@ -902,9 +1059,9 @@
    "boxes_in_stream": 78,
    "expected": 80,
    "placed": 73,
-   "pallets": 4,
-   "fill_true_mean": 0.23378302469135803,
-   "time_s": 1101.1,
+   "pallets": 5,
+   "fill_true_mean": 0.1870264197530864,
+   "time_s": 1136.1,
    "inspection": [
     {
      "box_id": "S0028-B002",
@@ -938,11 +1095,12 @@
     "K08": 1
    },
    "decisions": {
-    "PLACE_CURRENT": 37,
+    "PLACE_CURRENT": 40,
     "L0": 71,
-    "BUFFER_CURRENT": 36,
-    "RETRIEVE_BUFFER": 36,
-    "PALLET_CLOSE": 3,
+    "BUFFER_CURRENT": 33,
+    "RETRIEVE_BUFFER": 33,
+    "stage8_reconciled": 5,
+    "PALLET_CLOSE": 4,
     "L2": 2
    },
    "anomalies": {
@@ -951,14 +1109,14 @@
     "RECOGNITION_FAIL": 1
    },
    "stage6": {
-    "calls": 153,
-    "robot_rejected": 234,
-    "code:ROBOT_COLLISION": 234,
-    "fell_back": 55,
-    "no_executable": 4
+    "calls": 156,
+    "robot_rejected": 269,
+    "code:ROBOT_COLLISION": 269,
+    "fell_back": 53,
+    "no_executable": 11
    },
    "supervisor_time_s": {
-    "PALLET_CHANGE": 180.0
+    "PALLET_CHANGE": 240.0
    },
    "supervisor_log": [
     {
@@ -974,19 +1132,19 @@
      "reason": "new pallet in place"
     },
     {
-     "t": 644.192,
+     "t": 644.528,
      "from": "NORMAL",
      "to": "PALLET_CHANGE",
      "reason": "PALLET_CLOSE"
     },
     {
-     "t": 704.192,
+     "t": 704.528,
      "from": "PALLET_CHANGE",
      "to": "NORMAL",
      "reason": "new pallet in place"
     },
     {
-     "t": 985.996,
+     "t": 948.599,
      "event": "MISSING",
      "by_sku": {
       "K10": 1,
@@ -995,13 +1153,25 @@
      }
     },
     {
-     "t": 1003.667,
+     "t": 966.127,
      "from": "NORMAL",
      "to": "PALLET_CHANGE",
      "reason": "PALLET_CLOSE"
     },
     {
-     "t": 1063.667,
+     "t": 1026.127,
+     "from": "PALLET_CHANGE",
+     "to": "NORMAL",
+     "reason": "new pallet in place"
+    },
+    {
+     "t": 1062.765,
+     "from": "NORMAL",
+     "to": "PALLET_CHANGE",
+     "reason": "PALLET_CLOSE"
+    },
+    {
+     "t": 1122.765,
      "from": "PALLET_CHANGE",
      "to": "NORMAL",
      "reason": "new pallet in place"
@@ -1011,22 +1181,52 @@
     {
      "pallet_id": "P001-01",
      "boxes": 26,
-     "fill_true": 0.23358765432098763
+     "fill_true": 0.23358765432098763,
+     "pallet_size": [
+      1.2,
+      1.0,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-02",
-     "boxes": 23,
-     "fill_true": 0.3030617283950618
+     "boxes": 24,
+     "fill_true": 0.3250296296296296,
+     "pallet_size": [
+      1.2,
+      1.0,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-03",
-     "boxes": 21,
-     "fill_true": 0.27660370370370363
+     "boxes": 19,
+     "fill_true": 0.19300617283950616,
+     "pallet_size": [
+      1.2,
+      1.0,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-04",
      "boxes": 3,
-     "fill_true": 0.12187901234567901
+     "fill_true": 0.12187901234567901,
+     "pallet_size": [
+      1.2,
+      1.0,
+      1.35
+     ]
+    },
+    {
+     "pallet_id": "P001-05",
+     "boxes": 1,
+     "fill_true": 0.061629629629629624,
+     "pallet_size": [
+      1.2,
+      1.0,
+      1.35
+     ]
     }
    ]
   },
@@ -1039,7 +1239,7 @@
    "placed": 78,
    "pallets": 5,
    "fill_true_mean": 0.23443974288337924,
-   "time_s": 1208.0,
+   "time_s": 1183.9,
    "inspection": [
     {
      "box_id": "S0034-B048",
@@ -1054,12 +1254,15 @@
    ],
    "missing": {},
    "decisions": {
-    "PLACE_CURRENT": 40,
-    "L0": 76,
-    "BUFFER_CURRENT": 38,
-    "RETRIEVE_BUFFER": 38,
-    "L2": 2,
-    "PALLET_CLOSE": 4
+    "PLACE_CURRENT": 43,
+    "L0": 75,
+    "BUFFER_CURRENT": 35,
+    "RETRIEVE_BUFFER": 35,
+    "L2": 3,
+    "stage8_reconciled": 4,
+    "PALLET_CLOSE": 4,
+    "PARTIAL_REPACK": 2,
+    "repack_aborted_stage6": 2
    },
    "anomalies": {
     "OK": 73,
@@ -1067,61 +1270,61 @@
     "DAMAGED": 2
    },
    "stage6": {
-    "calls": 179,
-    "robot_rejected": 73,
-    "code:APPROACH_FAIL": 9,
-    "fell_back": 28,
-    "code:ROBOT_COLLISION": 64,
-    "no_executable": 1
+    "calls": 199,
+    "robot_rejected": 94,
+    "code:APPROACH_FAIL": 10,
+    "fell_back": 31,
+    "code:ROBOT_COLLISION": 84,
+    "no_executable": 24
    },
    "supervisor_time_s": {
     "PALLET_CHANGE": 240.0
    },
    "supervisor_log": [
     {
-     "t": 323.566,
+     "t": 331.415,
      "from": "NORMAL",
      "to": "PALLET_CHANGE",
      "reason": "PALLET_CLOSE"
     },
     {
-     "t": 383.566,
+     "t": 391.415,
      "from": "PALLET_CHANGE",
      "to": "NORMAL",
      "reason": "new pallet in place"
     },
     {
-     "t": 722.16,
+     "t": 712.95,
      "from": "NORMAL",
      "to": "PALLET_CHANGE",
      "reason": "PALLET_CLOSE"
     },
     {
-     "t": 782.16,
+     "t": 772.95,
      "from": "PALLET_CHANGE",
      "to": "NORMAL",
      "reason": "new pallet in place"
     },
     {
-     "t": 936.933,
+     "t": 912.314,
      "from": "NORMAL",
      "to": "PALLET_CHANGE",
      "reason": "PALLET_CLOSE"
     },
     {
-     "t": 996.933,
+     "t": 972.314,
      "from": "PALLET_CHANGE",
      "to": "NORMAL",
      "reason": "new pallet in place"
     },
     {
-     "t": 1086.498,
+     "t": 1062.336,
      "from": "NORMAL",
      "to": "PALLET_CHANGE",
      "reason": "PALLET_CLOSE"
     },
     {
-     "t": 1146.498,
+     "t": 1122.336,
      "from": "PALLET_CHANGE",
      "to": "NORMAL",
      "reason": "new pallet in place"
@@ -1130,28 +1333,53 @@
    "pallet_list": [
     {
      "pallet_id": "P001-01",
-     "boxes": 29,
-     "fill_true": 0.12978083868992962
+     "boxes": 30,
+     "fill_true": 0.13529048056320786,
+     "pallet_size": [
+      1.1,
+      1.1,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-02",
-     "boxes": 27,
-     "fill_true": 0.20891827364554627
+     "boxes": 25,
+     "fill_true": 0.1924811753902662,
+     "pallet_size": [
+      1.1,
+      1.1,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-03",
      "boxes": 11,
-     "fill_true": 0.2769523109886746
+     "fill_true": 0.2499146617692072,
+     "pallet_size": [
+      1.1,
+      1.1,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-04",
-     "boxes": 7,
-     "fill_true": 0.3120661157024793
+     "boxes": 8,
+     "fill_true": 0.35003122130394854,
+     "pallet_size": [
+      1.1,
+      1.1,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-05",
      "boxes": 4,
-     "fill_true": 0.24448117539026623
+     "fill_true": 0.24448117539026623,
+     "pallet_size": [
+      1.1,
+      1.1,
+      1.35
+     ]
     }
    ]
   },
@@ -1225,6 +1453,7 @@
     "L0": 68,
     "BUFFER_CURRENT": 33,
     "RETRIEVE_BUFFER": 33,
+    "stage8_reconciled": 5,
     "PARTIAL_REPACK": 2,
     "repack_moves": 2,
     "PALLET_CLOSE": 5,
@@ -1343,32 +1572,62 @@
     {
      "pallet_id": "P001-01",
      "boxes": 30,
-     "fill_true": 0.18577314814814821
+     "fill_true": 0.18577314814814821,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-02",
      "boxes": 18,
-     "fill_true": 0.19309567901234564
+     "fill_true": 0.19309567901234564,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-03",
      "boxes": 9,
-     "fill_true": 0.2026064814814815
+     "fill_true": 0.2026064814814815,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-04",
      "boxes": 6,
-     "fill_true": 0.2959043209876543
+     "fill_true": 0.2959043209876543,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-05",
      "boxes": 4,
-     "fill_true": 0.2789629629629629
+     "fill_true": 0.2789629629629629,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-06",
      "boxes": 2,
-     "fill_true": 0.15407407407407406
+     "fill_true": 0.15407407407407406,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     }
    ]
   },
@@ -1381,7 +1640,7 @@
    "placed": 77,
    "pallets": 6,
    "fill_true_mean": 0.2548568287037037,
-   "time_s": 1283.1,
+   "time_s": 1279.0,
    "inspection": [
     {
      "box_id": "S0043-B018",
@@ -1395,11 +1654,12 @@
     "K08": 1
    },
    "decisions": {
-    "PLACE_CURRENT": 41,
-    "L0": 74,
-    "BUFFER_CURRENT": 36,
-    "RETRIEVE_BUFFER": 36,
-    "L2": 3,
+    "PLACE_CURRENT": 42,
+    "L0": 68,
+    "BUFFER_CURRENT": 35,
+    "RETRIEVE_BUFFER": 35,
+    "L2": 9,
+    "stage8_reconciled": 9,
     "PALLET_CLOSE": 5,
     "PARTIAL_REPACK": 4,
     "repack_moves": 4
@@ -1410,7 +1670,7 @@
     "RECOGNITION_FAIL": 1
    },
    "stage6": {
-    "calls": 179,
+    "calls": 180,
     "robot_rejected": 147,
     "code:ROBOT_COLLISION": 147,
     "fell_back": 36,
@@ -1422,115 +1682,115 @@
    },
    "supervisor_log": [
     {
-     "t": 280.861,
+     "t": 276.732,
      "from": "NORMAL",
      "to": "PALLET_CHANGE",
      "reason": "PALLET_CLOSE"
     },
     {
-     "t": 340.861,
+     "t": 336.732,
      "from": "PALLET_CHANGE",
      "to": "NORMAL",
      "reason": "new pallet in place"
     },
     {
-     "t": 540.972,
+     "t": 536.843,
      "from": "NORMAL",
      "to": "REPACKING",
      "reason": "PARTIAL_REPACK"
     },
     {
-     "t": 548.759,
+     "t": 544.63,
      "from": "REPACKING",
      "to": "NORMAL",
      "reason": "repack done"
     },
     {
-     "t": 683.857,
+     "t": 679.728,
      "from": "NORMAL",
      "to": "REPACKING",
      "reason": "PARTIAL_REPACK"
     },
     {
-     "t": 691.715,
+     "t": 687.586,
      "from": "REPACKING",
      "to": "NORMAL",
      "reason": "repack done"
     },
     {
-     "t": 716.712,
+     "t": 712.583,
      "from": "NORMAL",
      "to": "PALLET_CHANGE",
      "reason": "PALLET_CLOSE"
     },
     {
-     "t": 776.712,
+     "t": 772.583,
      "from": "PALLET_CHANGE",
      "to": "NORMAL",
      "reason": "new pallet in place"
     },
     {
-     "t": 877.822,
+     "t": 873.693,
      "from": "NORMAL",
      "to": "REPACKING",
      "reason": "PARTIAL_REPACK"
     },
     {
-     "t": 885.508,
+     "t": 881.379,
      "from": "REPACKING",
      "to": "NORMAL",
      "reason": "repack done"
     },
     {
-     "t": 893.467,
+     "t": 889.338,
      "from": "NORMAL",
      "to": "PALLET_CHANGE",
      "reason": "PALLET_CLOSE"
     },
     {
-     "t": 953.467,
+     "t": 949.338,
      "from": "PALLET_CHANGE",
      "to": "NORMAL",
      "reason": "new pallet in place"
     },
     {
-     "t": 1028.012,
+     "t": 1023.883,
      "from": "NORMAL",
      "to": "REPACKING",
      "reason": "PARTIAL_REPACK"
     },
     {
-     "t": 1036.299,
+     "t": 1032.17,
      "from": "REPACKING",
      "to": "NORMAL",
      "reason": "repack done"
     },
     {
-     "t": 1069.45,
+     "t": 1065.321,
      "from": "NORMAL",
      "to": "PALLET_CHANGE",
      "reason": "PALLET_CLOSE"
     },
     {
-     "t": 1129.45,
+     "t": 1125.321,
      "from": "PALLET_CHANGE",
      "to": "NORMAL",
      "reason": "new pallet in place"
     },
     {
-     "t": 1177.209,
+     "t": 1173.08,
      "from": "NORMAL",
      "to": "PALLET_CHANGE",
      "reason": "PALLET_CLOSE"
     },
     {
-     "t": 1237.209,
+     "t": 1233.08,
      "from": "PALLET_CHANGE",
      "to": "NORMAL",
      "reason": "new pallet in place"
     },
     {
-     "t": 1275.496,
+     "t": 1271.367,
      "event": "MISSING",
      "by_sku": {
       "K03": 1,
@@ -1543,32 +1803,62 @@
     {
      "pallet_id": "P001-01",
      "boxes": 25,
-     "fill_true": 0.15873742283950615
+     "fill_true": 0.15873742283950615,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-02",
      "boxes": 28,
-     "fill_true": 0.32297145061728394
+     "fill_true": 0.32297145061728394,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-03",
      "boxes": 9,
-     "fill_true": 0.15734876543209877
+     "fill_true": 0.15734876543209877,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-04",
      "boxes": 8,
-     "fill_true": 0.4004012345679013
+     "fill_true": 0.4004012345679013,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-05",
      "boxes": 5,
-     "fill_true": 0.33560802469135803
+     "fill_true": 0.33560802469135803,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-06",
      "boxes": 2,
-     "fill_true": 0.15407407407407406
+     "fill_true": 0.15407407407407406,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     }
    ]
   },
@@ -1600,6 +1890,7 @@
     "L0": 76,
     "BUFFER_CURRENT": 19,
     "L2": 2,
+    "stage8_reconciled": 4,
     "PALLET_CLOSE": 5,
     "RETRIEVE_BUFFER": 19
    },
@@ -1681,32 +1972,62 @@
     {
      "pallet_id": "P001-01",
      "boxes": 20,
-     "fill_true": 0.26885956790123455
+     "fill_true": 0.26885956790123455,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-02",
      "boxes": 9,
-     "fill_true": 0.3807793209876543
+     "fill_true": 0.3807793209876543,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-03",
      "boxes": 14,
-     "fill_true": 0.201153549382716
+     "fill_true": 0.201153549382716,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-04",
      "boxes": 21,
-     "fill_true": 0.31722685185185184
+     "fill_true": 0.31722685185185184,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-05",
      "boxes": 12,
-     "fill_true": 0.16718958333333334
+     "fill_true": 0.16718958333333334,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-06",
      "boxes": 2,
-     "fill_true": 0.15407407407407406
+     "fill_true": 0.15407407407407406,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     }
    ]
   },
@@ -1732,6 +2053,7 @@
     "PARTIAL_REPACK": 1,
     "repack_moves": 1,
     "L2": 3,
+    "stage8_reconciled": 4,
     "PALLET_CLOSE": 4,
     "grip_retries": 1
    },
@@ -1820,27 +2142,52 @@
     {
      "pallet_id": "P001-01",
      "boxes": 25,
-     "fill_true": 0.20074151234567902
+     "fill_true": 0.20074151234567902,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-02",
      "boxes": 19,
-     "fill_true": 0.3102399691358025
+     "fill_true": 0.3102399691358025,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-03",
      "boxes": 19,
-     "fill_true": 0.27760879629629637
+     "fill_true": 0.27760879629629637,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-04",
      "boxes": 10,
-     "fill_true": 0.3430679012345679
+     "fill_true": 0.3430679012345679,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-05",
      "boxes": 6,
-     "fill_true": 0.08539814814814815
+     "fill_true": 0.08539814814814815,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     }
    ]
   },
@@ -1893,6 +2240,7 @@
     "PARTIAL_REPACK": 1,
     "repack_moves": 1,
     "L2": 1,
+    "stage8_reconciled": 4,
     "PALLET_CLOSE": 4,
     "grip_retries": 1
    },
@@ -1984,27 +2332,52 @@
     {
      "pallet_id": "P001-01",
      "boxes": 22,
-     "fill_true": 0.21139429012345679
+     "fill_true": 0.21139429012345679,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-02",
      "boxes": 20,
-     "fill_true": 0.30821064814814814
+     "fill_true": 0.30821064814814814,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-03",
      "boxes": 16,
-     "fill_true": 0.3017013888888889
+     "fill_true": 0.3017013888888889,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-04",
      "boxes": 15,
-     "fill_true": 0.20620779320987656
+     "fill_true": 0.20620779320987656,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-05",
      "boxes": 1,
-     "fill_true": 0.07703703703703703
+     "fill_true": 0.07703703703703703,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     }
    ]
   },
@@ -2085,6 +2458,7 @@
     "L0": 65,
     "BUFFER_CURRENT": 21,
     "RETRIEVE_BUFFER": 21,
+    "stage8_reconciled": 4,
     "PALLET_CLOSE": 3,
     "L4": 1,
     "PARTIAL_REPACK": 1,
@@ -2180,22 +2554,42 @@
     {
      "pallet_id": "P001-01",
      "boxes": 27,
-     "fill_true": 0.3406969135802469
+     "fill_true": 0.3406969135802469,
+     "pallet_size": [
+      1.2,
+      1.0,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-02",
      "boxes": 25,
-     "fill_true": 0.2884253086419753
+     "fill_true": 0.2884253086419753,
+     "pallet_size": [
+      1.2,
+      1.0,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-03",
      "boxes": 13,
-     "fill_true": 0.2800864197530864
+     "fill_true": 0.2800864197530864,
+     "pallet_size": [
+      1.2,
+      1.0,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-04",
      "boxes": 1,
-     "fill_true": 0.0219679012345679
+     "fill_true": 0.0219679012345679,
+     "pallet_size": [
+      1.2,
+      1.0,
+      1.35
+     ]
     }
    ]
   },
@@ -2240,7 +2634,8 @@
     "BUFFER_CURRENT": 28,
     "RETRIEVE_BUFFER": 28,
     "PALLET_CLOSE": 3,
-    "L2": 2
+    "L2": 2,
+    "stage8_reconciled": 3
    },
    "anomalies": {
     "OK": 73,
@@ -2302,22 +2697,42 @@
     {
      "pallet_id": "P001-01",
      "boxes": 29,
-     "fill_true": 0.2555053565962656
+     "fill_true": 0.2555053565962656,
+     "pallet_size": [
+      1.1,
+      1.1,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-02",
      "boxes": 17,
-     "fill_true": 0.3561444750535659
+     "fill_true": 0.3561444750535659,
+     "pallet_size": [
+      1.1,
+      1.1,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-03",
      "boxes": 18,
-     "fill_true": 0.3104224058769513
+     "fill_true": 0.3104224058769513,
+     "pallet_size": [
+      1.1,
+      1.1,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-04",
      "boxes": 9,
-     "fill_true": 0.2539063360881542
+     "fill_true": 0.2539063360881542,
+     "pallet_size": [
+      1.1,
+      1.1,
+      1.35
+     ]
     }
    ]
   },
@@ -2330,7 +2745,7 @@
    "placed": 73,
    "pallets": 4,
    "fill_true_mean": 0.23378302469135803,
-   "time_s": 1034.0,
+   "time_s": 1050.0,
    "inspection": [
     {
      "box_id": "S0028-B002",
@@ -2364,12 +2779,13 @@
     "K08": 1
    },
    "decisions": {
-    "PLACE_CURRENT": 44,
-    "L0": 71,
-    "BUFFER_CURRENT": 29,
-    "RETRIEVE_BUFFER": 29,
+    "PLACE_CURRENT": 42,
+    "L0": 68,
+    "BUFFER_CURRENT": 31,
+    "RETRIEVE_BUFFER": 31,
+    "stage8_reconciled": 7,
     "PALLET_CLOSE": 3,
-    "L2": 2
+    "L2": 5
    },
    "anomalies": {
     "OK": 73,
@@ -2377,7 +2793,7 @@
     "RECOGNITION_FAIL": 1
    },
    "stage6": {
-    "calls": 135,
+    "calls": 140,
     "robot_rejected": 0
    },
    "supervisor_time_s": {
@@ -2397,19 +2813,19 @@
      "reason": "new pallet in place"
     },
     {
-     "t": 670.0,
+     "t": 686.0,
      "from": "NORMAL",
      "to": "PALLET_CHANGE",
      "reason": "PALLET_CLOSE"
     },
     {
-     "t": 730.0,
+     "t": 746.0,
      "from": "PALLET_CHANGE",
      "to": "NORMAL",
      "reason": "new pallet in place"
     },
     {
-     "t": 932.0,
+     "t": 948.0,
      "event": "MISSING",
      "by_sku": {
       "K10": 1,
@@ -2418,13 +2834,13 @@
      }
     },
     {
-     "t": 937.0,
+     "t": 953.0,
      "from": "NORMAL",
      "to": "PALLET_CHANGE",
      "reason": "PALLET_CLOSE"
     },
     {
-     "t": 997.0,
+     "t": 1013.0,
      "from": "PALLET_CHANGE",
      "to": "NORMAL",
      "reason": "new pallet in place"
@@ -2434,22 +2850,42 @@
     {
      "pallet_id": "P001-01",
      "boxes": 26,
-     "fill_true": 0.23358765432098763
+     "fill_true": 0.23358765432098763,
+     "pallet_size": [
+      1.2,
+      1.0,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-02",
      "boxes": 28,
-     "fill_true": 0.34865987654320996
+     "fill_true": 0.34865987654320996,
+     "pallet_size": [
+      1.2,
+      1.0,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-03",
      "boxes": 16,
-     "fill_true": 0.23100555555555558
+     "fill_true": 0.23100555555555558,
+     "pallet_size": [
+      1.2,
+      1.0,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-04",
      "boxes": 3,
-     "fill_true": 0.12187901234567901
+     "fill_true": 0.12187901234567901,
+     "pallet_size": [
+      1.2,
+      1.0,
+      1.35
+     ]
     }
    ]
   },
@@ -2479,6 +2915,7 @@
    "decisions": {
     "PLACE_CURRENT": 40,
     "L0": 75,
+    "stage8_reconciled": 4,
     "L2": 3,
     "BUFFER_CURRENT": 38,
     "RETRIEVE_BUFFER": 38,
@@ -2565,27 +3002,52 @@
     {
      "pallet_id": "P001-01",
      "boxes": 35,
-     "fill_true": 0.16267462503826147
+     "fill_true": 0.16267462503826147,
+     "pallet_size": [
+      1.1,
+      1.1,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-02",
      "boxes": 25,
-     "fill_true": 0.24145209672482387
+     "fill_true": 0.24145209672482387,
+     "pallet_size": [
+      1.1,
+      1.1,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-03",
      "boxes": 9,
-     "fill_true": 0.28745491276400364
+     "fill_true": 0.28745491276400364,
+     "pallet_size": [
+      1.1,
+      1.1,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-04",
      "boxes": 7,
-     "fill_true": 0.35837649219467393
+     "fill_true": 0.35837649219467393,
+     "pallet_size": [
+      1.1,
+      1.1,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-05",
      "boxes": 2,
-     "fill_true": 0.12224058769513312
+     "fill_true": 0.12224058769513312,
+     "pallet_size": [
+      1.1,
+      1.1,
+      1.35
+     ]
     }
    ]
   },
@@ -2659,6 +3121,7 @@
     "L0": 68,
     "BUFFER_CURRENT": 35,
     "RETRIEVE_BUFFER": 35,
+    "stage8_reconciled": 2,
     "PARTIAL_REPACK": 4,
     "repack_moves": 5,
     "PALLET_CLOSE": 5,
@@ -2798,32 +3261,62 @@
     {
      "pallet_id": "P001-01",
      "boxes": 31,
-     "fill_true": 0.195900462962963
+     "fill_true": 0.195900462962963,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-02",
      "boxes": 17,
-     "fill_true": 0.18123225308641974
+     "fill_true": 0.18123225308641974,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-03",
      "boxes": 9,
-     "fill_true": 0.2043425925925926
+     "fill_true": 0.2043425925925926,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-04",
      "boxes": 6,
-     "fill_true": 0.26671913580246914
+     "fill_true": 0.26671913580246914,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-05",
      "boxes": 5,
-     "fill_true": 0.38518518518518513
+     "fill_true": 0.38518518518518513,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-06",
      "boxes": 1,
-     "fill_true": 0.07703703703703703
+     "fill_true": 0.07703703703703703,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     }
    ]
   },
@@ -2834,9 +3327,9 @@
    "boxes_in_stream": 78,
    "expected": 80,
    "placed": 77,
-   "pallets": 8,
-   "fill_true_mean": 0.19114262152777778,
-   "time_s": 1396.0,
+   "pallets": 7,
+   "fill_true_mean": 0.2184487103174603,
+   "time_s": 1380.0,
    "inspection": [
     {
      "box_id": "S0043-B018",
@@ -2850,14 +3343,15 @@
     "K08": 1
    },
    "decisions": {
-    "PLACE_CURRENT": 40,
+    "PLACE_CURRENT": 37,
     "L0": 74,
-    "BUFFER_CURRENT": 37,
-    "RETRIEVE_BUFFER": 37,
+    "BUFFER_CURRENT": 40,
+    "RETRIEVE_BUFFER": 40,
     "L2": 3,
-    "PALLET_CLOSE": 7,
-    "PARTIAL_REPACK": 1,
-    "repack_moves": 1
+    "stage8_reconciled": 3,
+    "PALLET_CLOSE": 6,
+    "PARTIAL_REPACK": 3,
+    "repack_moves": 3
    },
    "anomalies": {
     "OK": 73,
@@ -2865,12 +3359,12 @@
     "RECOGNITION_FAIL": 1
    },
    "stage6": {
-    "calls": 178,
+    "calls": 180,
     "robot_rejected": 0
    },
    "supervisor_time_s": {
-    "PALLET_CHANGE": 420.0,
-    "REPACKING": 8.0
+    "PALLET_CHANGE": 360.0,
+    "REPACKING": 24.0
    },
    "supervisor_log": [
     {
@@ -2924,29 +3418,53 @@
     {
      "t": 944.0,
      "from": "NORMAL",
-     "to": "PALLET_CHANGE",
-     "reason": "PALLET_CLOSE"
+     "to": "REPACKING",
+     "reason": "PARTIAL_REPACK"
     },
     {
-     "t": 1004.0,
-     "from": "PALLET_CHANGE",
+     "t": 952.0,
+     "from": "REPACKING",
      "to": "NORMAL",
-     "reason": "new pallet in place"
+     "reason": "repack done"
     },
     {
-     "t": 1089.0,
+     "t": 970.0,
+     "from": "NORMAL",
+     "to": "REPACKING",
+     "reason": "PARTIAL_REPACK"
+    },
+    {
+     "t": 978.0,
+     "from": "REPACKING",
+     "to": "NORMAL",
+     "reason": "repack done"
+    },
+    {
+     "t": 994.0,
      "from": "NORMAL",
      "to": "PALLET_CHANGE",
      "reason": "PALLET_CLOSE"
     },
     {
-     "t": 1149.0,
+     "t": 1054.0,
      "from": "PALLET_CHANGE",
      "to": "NORMAL",
      "reason": "new pallet in place"
     },
     {
-     "t": 1221.0,
+     "t": 1122.0,
+     "from": "NORMAL",
+     "to": "PALLET_CHANGE",
+     "reason": "PALLET_CLOSE"
+    },
+    {
+     "t": 1182.0,
+     "from": "PALLET_CHANGE",
+     "to": "NORMAL",
+     "reason": "new pallet in place"
+    },
+    {
+     "t": 1278.0,
      "event": "MISSING",
      "by_sku": {
       "K03": 1,
@@ -2955,25 +3473,13 @@
      }
     },
     {
-     "t": 1226.0,
+     "t": 1283.0,
      "from": "NORMAL",
      "to": "PALLET_CHANGE",
      "reason": "PALLET_CLOSE"
     },
     {
-     "t": 1286.0,
-     "from": "PALLET_CHANGE",
-     "to": "NORMAL",
-     "reason": "new pallet in place"
-    },
-    {
-     "t": 1323.0,
-     "from": "NORMAL",
-     "to": "PALLET_CHANGE",
-     "reason": "PALLET_CLOSE"
-    },
-    {
-     "t": 1383.0,
+     "t": 1343.0,
      "from": "PALLET_CHANGE",
      "to": "NORMAL",
      "reason": "new pallet in place"
@@ -2983,42 +3489,72 @@
     {
      "pallet_id": "P001-01",
      "boxes": 25,
-     "fill_true": 0.15873742283950615
+     "fill_true": 0.15873742283950615,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-02",
      "boxes": 19,
-     "fill_true": 0.206633487654321
+     "fill_true": 0.206633487654321,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-03",
      "boxes": 11,
-     "fill_true": 0.15392515432098766
+     "fill_true": 0.15392515432098766,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-04",
-     "boxes": 8,
-     "fill_true": 0.23087731481481483
+     "boxes": 10,
+     "fill_true": 0.2721103395061728,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-05",
-     "boxes": 7,
-     "fill_true": 0.31847067901234566
+     "boxes": 4,
+     "fill_true": 0.22938580246913579,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-06",
-     "boxes": 3,
-     "fill_true": 0.15234876543209877
+     "boxes": 5,
+     "fill_true": 0.2772376543209876,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-07",
      "boxes": 3,
-     "fill_true": 0.2311111111111111
-    },
-    {
-     "pallet_id": "P001-08",
-     "boxes": 1,
-     "fill_true": 0.07703703703703703
+     "fill_true": 0.2311111111111111,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     }
    ]
   },
@@ -3031,7 +3567,7 @@
    "placed": 78,
    "pallets": 6,
    "fill_true_mean": 0.24821382458847738,
-   "time_s": 2555.0,
+   "time_s": 2308.5,
    "inspection": [
     {
      "box_id": "S0003-B026",
@@ -3046,17 +3582,17 @@
    ],
    "missing": {},
    "decisions": {
-    "PLACE_CURRENT": 48,
-    "L0": 54,
-    "L1": 12,
-    "BUFFER_CURRENT": 30,
-    "RETRIEVE_BUFFER": 30,
-    "L4": 11,
-    "PARTIAL_REPACK": 2,
-    "repack_moves": 2,
+    "PLACE_CURRENT": 46,
+    "L0": 49,
+    "L1": 17,
+    "stage8_reconciled": 11,
+    "BUFFER_CURRENT": 32,
+    "RETRIEVE_BUFFER": 32,
+    "L2": 3,
+    "L4": 9,
     "PALLET_CLOSE": 5,
-    "grip_retries": 1,
-    "L2": 1
+    "PARTIAL_REPACK": 2,
+    "repack_aborted_stage6": 2
    },
    "anomalies": {
     "OK": 72,
@@ -3064,265 +3600,246 @@
     "DAMAGED": 2
    },
    "stage6": {
-    "calls": 160,
-    "robot_rejected": 171,
-    "code:ROBOT_COLLISION": 171,
-    "fell_back": 55,
-    "no_executable": 9
+    "calls": 174,
+    "robot_rejected": 336,
+    "code:ROBOT_COLLISION": 336,
+    "fell_back": 62,
+    "no_executable": 7
    },
    "supervisor_time_s": {
-    "HOLD": 1320.0,
-    "REPACKING": 15.822999999999922,
+    "HOLD": 1080.0,
     "PALLET_CHANGE": 300.0
    },
    "supervisor_log": [
     {
-     "t": 138.774,
+     "t": 140.402,
      "from": "NORMAL",
      "to": "HOLD",
      "reason": "L4: PROTRUSION"
     },
     {
-     "t": 258.774,
+     "t": 260.402,
      "from": "HOLD",
      "to": "NORMAL",
      "reason": "operator released"
     },
     {
-     "t": 286.401,
-     "from": "NORMAL",
-     "to": "REPACKING",
-     "reason": "PARTIAL_REPACK"
-    },
-    {
-     "t": 293.991,
-     "from": "REPACKING",
-     "to": "NORMAL",
-     "reason": "repack done"
-    },
-    {
-     "t": 301.56,
+     "t": 260.402,
      "from": "NORMAL",
      "to": "PALLET_CHANGE",
      "reason": "PALLET_CLOSE"
     },
     {
-     "t": 361.56,
+     "t": 320.402,
      "from": "PALLET_CHANGE",
      "to": "NORMAL",
      "reason": "new pallet in place"
     },
     {
-     "t": 449.871,
+     "t": 469.801,
      "from": "NORMAL",
      "to": "HOLD",
      "reason": "L4: PROTRUSION"
     },
     {
-     "t": 569.871,
+     "t": 589.801,
      "from": "HOLD",
      "to": "NORMAL",
      "reason": "operator released"
     },
     {
-     "t": 569.871,
+     "t": 589.801,
      "from": "NORMAL",
      "to": "PALLET_CHANGE",
      "reason": "PALLET_CLOSE"
     },
     {
-     "t": 629.871,
+     "t": 649.801,
      "from": "PALLET_CHANGE",
      "to": "NORMAL",
      "reason": "new pallet in place"
     },
     {
-     "t": 699.724,
-     "from": "NORMAL",
-     "to": "HOLD",
-     "reason": "L4: PROTRUSION"
-    },
-    {
-     "t": 819.724,
-     "from": "HOLD",
-     "to": "NORMAL",
-     "reason": "operator released"
-    },
-    {
-     "t": 827.385,
-     "from": "NORMAL",
-     "to": "HOLD",
-     "reason": "L4: PROTRUSION"
-    },
-    {
-     "t": 947.385,
-     "from": "HOLD",
-     "to": "NORMAL",
-     "reason": "operator released"
-    },
-    {
-     "t": 1031.275,
-     "from": "NORMAL",
-     "to": "HOLD",
-     "reason": "L4: PROTRUSION"
-    },
-    {
-     "t": 1151.275,
-     "from": "HOLD",
-     "to": "NORMAL",
-     "reason": "operator released"
-    },
-    {
-     "t": 1151.275,
+     "t": 730.628,
      "from": "NORMAL",
      "to": "PALLET_CHANGE",
      "reason": "PALLET_CLOSE"
     },
     {
-     "t": 1211.275,
+     "t": 790.628,
      "from": "PALLET_CHANGE",
      "to": "NORMAL",
      "reason": "new pallet in place"
     },
     {
-     "t": 1231.752,
+     "t": 798.915,
      "from": "NORMAL",
      "to": "HOLD",
      "reason": "L4: PROTRUSION"
     },
     {
-     "t": 1351.752,
+     "t": 918.915,
      "from": "HOLD",
      "to": "NORMAL",
      "reason": "operator released"
     },
     {
-     "t": 1379.04,
+     "t": 990.443,
      "from": "NORMAL",
      "to": "HOLD",
      "reason": "L4: PROTRUSION"
     },
     {
-     "t": 1499.04,
+     "t": 1110.443,
      "from": "HOLD",
      "to": "NORMAL",
      "reason": "operator released"
     },
     {
-     "t": 1547.013,
+     "t": 1179.049,
      "from": "NORMAL",
      "to": "HOLD",
      "reason": "L4: PROTRUSION"
     },
     {
-     "t": 1667.013,
+     "t": 1299.049,
      "from": "HOLD",
      "to": "NORMAL",
      "reason": "operator released"
     },
     {
-     "t": 1713.996,
+     "t": 1321.905,
      "from": "NORMAL",
      "to": "HOLD",
      "reason": "L4: PROTRUSION"
     },
     {
-     "t": 1833.996,
+     "t": 1441.905,
      "from": "HOLD",
      "to": "NORMAL",
      "reason": "operator released"
     },
     {
-     "t": 1892.736,
+     "t": 1484.791,
      "from": "NORMAL",
-     "to": "REPACKING",
-     "reason": "PARTIAL_REPACK"
+     "to": "HOLD",
+     "reason": "L4: PROTRUSION"
     },
     {
-     "t": 1900.969,
-     "from": "REPACKING",
+     "t": 1604.791,
+     "from": "HOLD",
      "to": "NORMAL",
-     "reason": "repack done"
+     "reason": "operator released"
     },
     {
-     "t": 1908.319,
+     "t": 1617.489,
      "from": "NORMAL",
      "to": "PALLET_CHANGE",
      "reason": "PALLET_CLOSE"
     },
     {
-     "t": 1968.319,
+     "t": 1677.489,
      "from": "PALLET_CHANGE",
      "to": "NORMAL",
      "reason": "new pallet in place"
     },
     {
-     "t": 1999.634,
+     "t": 1828.927,
      "from": "NORMAL",
      "to": "HOLD",
      "reason": "L4: PROTRUSION"
     },
     {
-     "t": 2119.634,
+     "t": 1948.927,
      "from": "HOLD",
      "to": "NORMAL",
      "reason": "operator released"
     },
     {
-     "t": 2142.266,
-     "from": "NORMAL",
-     "to": "HOLD",
-     "reason": "L4: PROTRUSION"
-    },
-    {
-     "t": 2262.266,
-     "from": "HOLD",
-     "to": "NORMAL",
-     "reason": "operator released"
-    },
-    {
-     "t": 2457.949,
+     "t": 2032.811,
      "from": "NORMAL",
      "to": "PALLET_CHANGE",
      "reason": "PALLET_CLOSE"
     },
     {
-     "t": 2517.949,
+     "t": 2092.811,
      "from": "PALLET_CHANGE",
      "to": "NORMAL",
      "reason": "new pallet in place"
+    },
+    {
+     "t": 2162.883,
+     "from": "NORMAL",
+     "to": "HOLD",
+     "reason": "L4: PROTRUSION"
+    },
+    {
+     "t": 2282.883,
+     "from": "HOLD",
+     "to": "NORMAL",
+     "reason": "operator released"
     }
    ],
    "pallet_list": [
     {
      "pallet_id": "P001-01",
-     "boxes": 16,
-     "fill_true": 0.23927854938271606
+     "boxes": 14,
+     "fill_true": 0.2226026234567901,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-02",
-     "boxes": 9,
-     "fill_true": 0.24423842592592593
+     "boxes": 11,
+     "fill_true": 0.19765046296296299,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-03",
-     "boxes": 13,
-     "fill_true": 0.3311666666666666
+     "boxes": 7,
+     "fill_true": 0.3598996913580247,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-04",
-     "boxes": 19,
-     "fill_true": 0.2863333333333333
+     "boxes": 20,
+     "fill_true": 0.2394398148148148,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-05",
-     "boxes": 18,
-     "fill_true": 0.22406458333333334
+     "boxes": 20,
+     "fill_true": 0.2782898919753087,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-06",
-     "boxes": 3,
-     "fill_true": 0.16420138888888888
+     "boxes": 6,
+     "fill_true": 0.19140046296296293,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     }
    ]
   },
@@ -3344,6 +3861,7 @@
     "PLACE_CURRENT": 41,
     "L0": 55,
     "L1": 17,
+    "stage8_reconciled": 9,
     "BUFFER_CURRENT": 38,
     "RETRIEVE_BUFFER": 38,
     "PALLET_CLOSE": 5,
@@ -3367,140 +3885,140 @@
    },
    "supervisor_log": [
     {
-     "t": 181.787,
+     "t": 181.784,
      "from": "NORMAL",
      "to": "PALLET_CHANGE",
      "reason": "PALLET_CLOSE"
     },
     {
-     "t": 241.787,
+     "t": 241.784,
      "from": "PALLET_CHANGE",
      "to": "NORMAL",
      "reason": "new pallet in place"
     },
     {
-     "t": 269.354,
+     "t": 269.351,
      "from": "NORMAL",
      "to": "HOLD",
      "reason": "L4: PROTRUSION"
     },
     {
-     "t": 389.354,
+     "t": 389.351,
      "from": "HOLD",
      "to": "NORMAL",
      "reason": "operator released"
     },
     {
-     "t": 422.13,
+     "t": 422.127,
      "from": "NORMAL",
      "to": "HOLD",
      "reason": "L4: PROTRUSION"
     },
     {
-     "t": 542.13,
+     "t": 542.127,
      "from": "HOLD",
      "to": "NORMAL",
      "reason": "operator released"
     },
     {
-     "t": 593.764,
+     "t": 593.761,
      "from": "NORMAL",
      "to": "HOLD",
      "reason": "L4: PROTRUSION"
     },
     {
-     "t": 713.764,
+     "t": 713.761,
      "from": "HOLD",
      "to": "NORMAL",
      "reason": "operator released"
     },
     {
-     "t": 829.105,
+     "t": 829.102,
      "from": "NORMAL",
      "to": "PALLET_CHANGE",
      "reason": "PALLET_CLOSE"
     },
     {
-     "t": 889.105,
+     "t": 889.102,
      "from": "PALLET_CHANGE",
      "to": "NORMAL",
      "reason": "new pallet in place"
     },
     {
-     "t": 921.467,
+     "t": 921.464,
      "from": "NORMAL",
      "to": "HOLD",
      "reason": "L4: PROTRUSION"
     },
     {
-     "t": 1041.467,
+     "t": 1041.464,
      "from": "HOLD",
      "to": "NORMAL",
      "reason": "operator released"
     },
     {
-     "t": 1135.497,
+     "t": 1135.491,
      "from": "NORMAL",
      "to": "HOLD",
      "reason": "L4: PROTRUSION"
     },
     {
-     "t": 1255.497,
+     "t": 1255.491,
      "from": "HOLD",
      "to": "NORMAL",
      "reason": "operator released"
     },
     {
-     "t": 1312.762,
+     "t": 1312.756,
      "from": "NORMAL",
      "to": "PALLET_CHANGE",
      "reason": "PALLET_CLOSE"
     },
     {
-     "t": 1372.762,
+     "t": 1372.756,
      "from": "PALLET_CHANGE",
      "to": "NORMAL",
      "reason": "new pallet in place"
     },
     {
-     "t": 1385.095,
+     "t": 1385.089,
      "from": "NORMAL",
      "to": "HOLD",
      "reason": "L4: PROTRUSION"
     },
     {
-     "t": 1505.095,
+     "t": 1505.089,
      "from": "HOLD",
      "to": "NORMAL",
      "reason": "operator released"
     },
     {
-     "t": 1666.435,
+     "t": 1666.429,
      "from": "NORMAL",
      "to": "PALLET_CHANGE",
      "reason": "PALLET_CLOSE"
     },
     {
-     "t": 1726.435,
+     "t": 1726.429,
      "from": "PALLET_CHANGE",
      "to": "NORMAL",
      "reason": "new pallet in place"
     },
     {
-     "t": 1887.28,
+     "t": 1887.274,
      "event": "MISSING",
      "by_sku": {
       "K11": 1
      }
     },
     {
-     "t": 1887.28,
+     "t": 1887.274,
      "from": "NORMAL",
      "to": "PALLET_CHANGE",
      "reason": "PALLET_CLOSE"
     },
     {
-     "t": 1947.28,
+     "t": 1947.274,
      "from": "PALLET_CHANGE",
      "to": "NORMAL",
      "reason": "new pallet in place"
@@ -3510,32 +4028,62 @@
     {
      "pallet_id": "P001-01",
      "boxes": 14,
-     "fill_true": 0.12215509259259259
+     "fill_true": 0.12215509259259259,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-02",
      "boxes": 19,
-     "fill_true": 0.1489452160493827
+     "fill_true": 0.1489452160493827,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-03",
      "boxes": 15,
-     "fill_true": 0.2419606481481481
+     "fill_true": 0.2419606481481481,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-04",
      "boxes": 14,
-     "fill_true": 0.3401003086419753
+     "fill_true": 0.3401003086419753,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-05",
      "boxes": 12,
-     "fill_true": 0.23724228395061728
+     "fill_true": 0.23724228395061728,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-06",
      "boxes": 5,
-     "fill_true": 0.1266527777777778
+     "fill_true": 0.1266527777777778,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     }
    ]
   },
@@ -3546,9 +4094,9 @@
    "boxes_in_stream": 79,
    "expected": 80,
    "placed": 74,
-   "pallets": 5,
-   "fill_true_mean": 0.22091023148148153,
-   "time_s": 1724.1,
+   "pallets": 6,
+   "fill_true_mean": 0.18409185956790122,
+   "time_s": 2513.7,
    "inspection": [
     {
      "box_id": "S0016-B019",
@@ -3581,16 +4129,15 @@
     "K11": 1
    },
    "decisions": {
-    "PLACE_CURRENT": 44,
-    "L0": 49,
-    "L1": 19,
-    "BUFFER_CURRENT": 30,
-    "RETRIEVE_BUFFER": 30,
+    "PLACE_CURRENT": 42,
+    "L0": 48,
+    "L1": 14,
+    "stage8_reconciled": 13,
+    "BUFFER_CURRENT": 32,
+    "RETRIEVE_BUFFER": 32,
     "L2": 1,
-    "PALLET_CLOSE": 4,
-    "L4": 5,
-    "PARTIAL_REPACK": 2,
-    "repack_aborted_stage6": 2
+    "PALLET_CLOSE": 5,
+    "L4": 11
    },
    "anomalies": {
     "OK": 69,
@@ -3599,158 +4146,278 @@
     "SPEC_MISMATCH": 5
    },
    "stage6": {
-    "calls": 152,
-    "robot_rejected": 141,
-    "code:ROBOT_COLLISION": 141,
-    "fell_back": 44
+    "calls": 177,
+    "robot_rejected": 162,
+    "code:ROBOT_COLLISION": 162,
+    "fell_back": 57,
+    "no_executable": 1
    },
    "supervisor_time_s": {
-    "PALLET_CHANGE": 240.0,
-    "HOLD": 600.0
+    "PALLET_CHANGE": 300.0,
+    "HOLD": 1320.0
    },
    "supervisor_log": [
     {
-     "t": 198.266,
+     "t": 153.136,
      "from": "NORMAL",
      "to": "PALLET_CHANGE",
      "reason": "PALLET_CLOSE"
     },
     {
-     "t": 258.266,
+     "t": 213.136,
      "from": "PALLET_CHANGE",
      "to": "NORMAL",
      "reason": "new pallet in place"
     },
     {
-     "t": 339.143,
+     "t": 225.469,
      "from": "NORMAL",
      "to": "HOLD",
      "reason": "L4: PROTRUSION"
     },
     {
-     "t": 459.143,
+     "t": 345.469,
      "from": "HOLD",
      "to": "NORMAL",
      "reason": "operator released"
     },
     {
-     "t": 564.319,
+     "t": 402.149,
+     "from": "NORMAL",
+     "to": "HOLD",
+     "reason": "L4: PROTRUSION"
+    },
+    {
+     "t": 522.149,
+     "from": "HOLD",
+     "to": "NORMAL",
+     "reason": "operator released"
+    },
+    {
+     "t": 558.406,
+     "from": "NORMAL",
+     "to": "HOLD",
+     "reason": "L4: PROTRUSION"
+    },
+    {
+     "t": 678.406,
+     "from": "HOLD",
+     "to": "NORMAL",
+     "reason": "operator released"
+    },
+    {
+     "t": 696.11,
+     "from": "NORMAL",
+     "to": "HOLD",
+     "reason": "L4: PROTRUSION"
+    },
+    {
+     "t": 816.11,
+     "from": "HOLD",
+     "to": "NORMAL",
+     "reason": "operator released"
+    },
+    {
+     "t": 858.893,
      "from": "NORMAL",
      "to": "PALLET_CHANGE",
      "reason": "PALLET_CLOSE"
     },
     {
-     "t": 624.319,
+     "t": 918.893,
      "from": "PALLET_CHANGE",
      "to": "NORMAL",
      "reason": "new pallet in place"
     },
     {
-     "t": 632.798,
+     "t": 1016.962,
      "from": "NORMAL",
      "to": "HOLD",
      "reason": "L4: PROTRUSION"
     },
     {
-     "t": 752.798,
+     "t": 1136.962,
      "from": "HOLD",
      "to": "NORMAL",
      "reason": "operator released"
     },
     {
-     "t": 833.878,
+     "t": 1187.7,
      "from": "NORMAL",
      "to": "HOLD",
      "reason": "L4: PROTRUSION"
     },
     {
-     "t": 953.878,
+     "t": 1307.7,
      "from": "HOLD",
      "to": "NORMAL",
      "reason": "operator released"
     },
     {
-     "t": 962.351,
+     "t": 1323.883,
      "from": "NORMAL",
      "to": "HOLD",
      "reason": "L4: PROTRUSION"
     },
     {
-     "t": 1082.351,
+     "t": 1443.883,
      "from": "HOLD",
      "to": "NORMAL",
      "reason": "operator released"
     },
     {
-     "t": 1203.749,
+     "t": 1452.358,
      "from": "NORMAL",
      "to": "HOLD",
      "reason": "L4: PROTRUSION"
     },
     {
-     "t": 1323.749,
+     "t": 1572.358,
      "from": "HOLD",
      "to": "NORMAL",
      "reason": "operator released"
     },
     {
-     "t": 1405.451,
+     "t": 1609.533,
      "from": "NORMAL",
      "to": "PALLET_CHANGE",
      "reason": "PALLET_CLOSE"
     },
     {
-     "t": 1465.451,
+     "t": 1669.533,
      "from": "PALLET_CHANGE",
      "to": "NORMAL",
      "reason": "new pallet in place"
     },
     {
-     "t": 1587.047,
+     "t": 1704.555,
+     "from": "NORMAL",
+     "to": "HOLD",
+     "reason": "L4: PROTRUSION"
+    },
+    {
+     "t": 1824.555,
+     "from": "HOLD",
+     "to": "NORMAL",
+     "reason": "operator released"
+    },
+    {
+     "t": 1951.836,
      "from": "NORMAL",
      "to": "PALLET_CHANGE",
      "reason": "PALLET_CLOSE"
     },
     {
-     "t": 1647.047,
+     "t": 2011.836,
      "from": "PALLET_CHANGE",
      "to": "NORMAL",
      "reason": "new pallet in place"
     },
     {
-     "t": 1715.917,
+     "t": 2088.228,
+     "from": "NORMAL",
+     "to": "HOLD",
+     "reason": "L4: PROTRUSION"
+    },
+    {
+     "t": 2208.228,
+     "from": "HOLD",
+     "to": "NORMAL",
+     "reason": "operator released"
+    },
+    {
+     "t": 2276.535,
      "event": "MISSING",
      "by_sku": {
       "K06": 1,
       "K11": 1
      }
+    },
+    {
+     "t": 2284.666,
+     "from": "NORMAL",
+     "to": "PALLET_CHANGE",
+     "reason": "PALLET_CLOSE"
+    },
+    {
+     "t": 2344.666,
+     "from": "PALLET_CHANGE",
+     "to": "NORMAL",
+     "reason": "new pallet in place"
+    },
+    {
+     "t": 2356.953,
+     "from": "NORMAL",
+     "to": "HOLD",
+     "reason": "L4: PROTRUSION"
+    },
+    {
+     "t": 2476.953,
+     "from": "HOLD",
+     "to": "NORMAL",
+     "reason": "operator released"
     }
    ],
    "pallet_list": [
     {
      "pallet_id": "P001-01",
-     "boxes": 17,
-     "fill_true": 0.16771373456790123
+     "boxes": 13,
+     "fill_true": 0.13588734567901237,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-02",
-     "boxes": 15,
-     "fill_true": 0.24437500000000004
+     "boxes": 14,
+     "fill_true": 0.1851550925925926,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-03",
-     "boxes": 24,
-     "fill_true": 0.2843287037037037
+     "boxes": 18,
+     "fill_true": 0.21271527777777777,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-04",
-     "boxes": 12,
-     "fill_true": 0.32631250000000006
+     "boxes": 14,
+     "fill_true": 0.2929652777777778,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-05",
-     "boxes": 6,
-     "fill_true": 0.08182121913580247
+     "boxes": 11,
+     "fill_true": 0.13621720679012347,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
+    },
+    {
+     "pallet_id": "P001-06",
+     "boxes": 4,
+     "fill_true": 0.14161095679012345,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     }
    ]
   },
@@ -3830,6 +4497,7 @@
     "PLACE_CURRENT": 41,
     "L0": 47,
     "L1": 17,
+    "stage8_reconciled": 9,
     "BUFFER_CURRENT": 25,
     "RETRIEVE_BUFFER": 25,
     "L4": 1,
@@ -3891,19 +4559,19 @@
      "reason": "new pallet in place"
     },
     {
-     "t": 944.04,
+     "t": 944.038,
      "from": "NORMAL",
      "to": "PALLET_CHANGE",
      "reason": "PALLET_CLOSE"
     },
     {
-     "t": 1004.04,
+     "t": 1004.038,
      "from": "PALLET_CHANGE",
      "to": "NORMAL",
      "reason": "new pallet in place"
     },
     {
-     "t": 1062.594,
+     "t": 1062.592,
      "event": "MISSING",
      "by_sku": {
       "K02": 1,
@@ -3916,22 +4584,42 @@
     {
      "pallet_id": "P001-01",
      "boxes": 25,
-     "fill_true": 0.2969425925925926
+     "fill_true": 0.2969425925925926,
+     "pallet_size": [
+      1.2,
+      1.0,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-02",
      "boxes": 24,
-     "fill_true": 0.2008185185185185
+     "fill_true": 0.2008185185185185,
+     "pallet_size": [
+      1.2,
+      1.0,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-03",
      "boxes": 13,
-     "fill_true": 0.3341697530864198
+     "fill_true": 0.3341697530864198,
+     "pallet_size": [
+      1.2,
+      1.0,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-04",
      "boxes": 4,
-     "fill_true": 0.09924567901234567
+     "fill_true": 0.09924567901234567,
+     "pallet_size": [
+      1.2,
+      1.0,
+      1.35
+     ]
     }
    ]
   },
@@ -3943,8 +4631,8 @@
    "expected": 80,
    "placed": 73,
    "pallets": 4,
-   "fill_true_mean": 0.2939946434037342,
-   "time_s": 1176.1,
+   "fill_true_mean": 0.29399464340373427,
+   "time_s": 1304.5,
    "inspection": [
     {
      "box_id": "S0021-B004",
@@ -3971,31 +4659,31 @@
     "K04": 3
    },
    "decisions": {
-    "PLACE_CURRENT": 41,
-    "L0": 49,
-    "L1": 20,
-    "BUFFER_CURRENT": 32,
-    "RETRIEVE_BUFFER": 32,
+    "PLACE_CURRENT": 40,
+    "L0": 50,
+    "L1": 18,
+    "stage8_reconciled": 15,
+    "BUFFER_CURRENT": 33,
+    "RETRIEVE_BUFFER": 33,
     "PALLET_CLOSE": 3,
     "L2": 3,
-    "L4": 1
+    "L4": 2
    },
    "anomalies": {
     "OK": 73,
     "DAMAGED": 4
    },
    "stage6": {
-    "calls": 148,
-    "robot_rejected": 322,
-    "code:ROBOT_COLLISION": 321,
-    "fell_back": 70,
+    "calls": 146,
+    "robot_rejected": 275,
+    "code:ROBOT_COLLISION": 272,
+    "fell_back": 64,
     "code:APPROACH_FAIL": 1,
-    "code:IK_FAIL": 1,
-    "no_executable": 2
+    "code:IK_FAIL": 3
    },
    "supervisor_time_s": {
     "PALLET_CHANGE": 180.0,
-    "HOLD": 120.0
+    "HOLD": 240.0
    },
    "supervisor_log": [
     {
@@ -4011,43 +4699,55 @@
      "reason": "new pallet in place"
     },
     {
-     "t": 582.328,
+     "t": 589.773,
      "from": "NORMAL",
      "to": "PALLET_CHANGE",
      "reason": "PALLET_CLOSE"
     },
     {
-     "t": 642.328,
+     "t": 649.773,
      "from": "PALLET_CHANGE",
      "to": "NORMAL",
      "reason": "new pallet in place"
     },
     {
-     "t": 678.681,
+     "t": 658.062,
      "from": "NORMAL",
      "to": "HOLD",
-     "reason": "L4: LOW_SUPPORT:0.01"
+     "reason": "L4: PROTRUSION"
     },
     {
-     "t": 798.681,
+     "t": 778.062,
      "from": "HOLD",
      "to": "NORMAL",
      "reason": "operator released"
     },
     {
-     "t": 981.819,
+     "t": 796.828,
+     "from": "NORMAL",
+     "to": "HOLD",
+     "reason": "L4: LOW_SUPPORT:0.00"
+    },
+    {
+     "t": 916.828,
+     "from": "HOLD",
+     "to": "NORMAL",
+     "reason": "operator released"
+    },
+    {
+     "t": 1102.327,
      "from": "NORMAL",
      "to": "PALLET_CHANGE",
      "reason": "PALLET_CLOSE"
     },
     {
-     "t": 1041.819,
+     "t": 1162.327,
      "from": "PALLET_CHANGE",
      "to": "NORMAL",
      "reason": "new pallet in place"
     },
     {
-     "t": 1159.786,
+     "t": 1285.927,
      "event": "MISSING",
      "by_sku": {
       "K04": 3
@@ -4058,22 +4758,42 @@
     {
      "pallet_id": "P001-01",
      "boxes": 29,
-     "fill_true": 0.2555053565962656
+     "fill_true": 0.2555053565962656,
+     "pallet_size": [
+      1.1,
+      1.1,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-02",
-     "boxes": 16,
-     "fill_true": 0.3481095806550351
+     "boxes": 17,
+     "fill_true": 0.3561444750535659,
+     "pallet_size": [
+      1.1,
+      1.1,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-03",
-     "boxes": 18,
-     "fill_true": 0.30752984389348015
+     "boxes": 17,
+     "fill_true": 0.24930211202938474,
+     "pallet_size": [
+      1.1,
+      1.1,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-04",
      "boxes": 10,
-     "fill_true": 0.2648337924701561
+     "fill_true": 0.3150266299357207,
+     "pallet_size": [
+      1.1,
+      1.1,
+      1.35
+     ]
     }
    ]
   },
@@ -4084,9 +4804,9 @@
    "boxes_in_stream": 78,
    "expected": 80,
    "placed": 73,
-   "pallets": 4,
-   "fill_true_mean": 0.233783024691358,
-   "time_s": 1931.1,
+   "pallets": 5,
+   "fill_true_mean": 0.1870264197530864,
+   "time_s": 1834.3,
    "inspection": [
     {
      "box_id": "S0028-B002",
@@ -4120,13 +4840,14 @@
     "K08": 1
    },
    "decisions": {
-    "PLACE_CURRENT": 37,
+    "PLACE_CURRENT": 42,
     "L0": 48,
-    "L1": 16,
-    "BUFFER_CURRENT": 36,
-    "RETRIEVE_BUFFER": 36,
-    "L4": 7,
-    "PALLET_CLOSE": 3,
+    "L1": 17,
+    "stage8_reconciled": 5,
+    "BUFFER_CURRENT": 31,
+    "RETRIEVE_BUFFER": 31,
+    "L4": 6,
+    "PALLET_CLOSE": 4,
     "L2": 2
    },
    "anomalies": {
@@ -4135,115 +4856,114 @@
     "RECOGNITION_FAIL": 1
    },
    "stage6": {
-    "calls": 146,
-    "robot_rejected": 228,
-    "code:ROBOT_COLLISION": 228,
-    "fell_back": 58,
-    "no_executable": 1
+    "calls": 137,
+    "robot_rejected": 256,
+    "code:ROBOT_COLLISION": 256,
+    "fell_back": 65
    },
    "supervisor_time_s": {
-    "HOLD": 840.0,
-    "PALLET_CHANGE": 180.0
+    "HOLD": 720.0,
+    "PALLET_CHANGE": 240.0
    },
    "supervisor_log": [
     {
-     "t": 177.357,
+     "t": 177.361,
      "from": "NORMAL",
      "to": "HOLD",
      "reason": "L4: PROTRUSION"
     },
     {
-     "t": 297.357,
+     "t": 297.361,
      "from": "HOLD",
      "to": "NORMAL",
      "reason": "operator released"
     },
     {
-     "t": 395.455,
+     "t": 395.459,
      "from": "NORMAL",
      "to": "HOLD",
      "reason": "L4: PROTRUSION"
     },
     {
-     "t": 515.455,
+     "t": 515.459,
      "from": "HOLD",
      "to": "NORMAL",
      "reason": "operator released"
     },
     {
-     "t": 523.874,
+     "t": 523.878,
      "from": "NORMAL",
      "to": "HOLD",
      "reason": "L4: PROTRUSION"
     },
     {
-     "t": 643.874,
+     "t": 643.878,
      "from": "HOLD",
      "to": "NORMAL",
      "reason": "operator released"
     },
     {
-     "t": 651.939,
+     "t": 651.943,
      "from": "NORMAL",
      "to": "PALLET_CHANGE",
      "reason": "PALLET_CLOSE"
     },
     {
-     "t": 711.939,
+     "t": 711.943,
      "from": "PALLET_CHANGE",
      "to": "NORMAL",
      "reason": "new pallet in place"
     },
     {
-     "t": 735.91,
+     "t": 735.914,
      "from": "NORMAL",
      "to": "HOLD",
      "reason": "L4: PROTRUSION"
     },
     {
-     "t": 855.91,
+     "t": 855.914,
      "from": "HOLD",
      "to": "NORMAL",
      "reason": "operator released"
     },
     {
-     "t": 1093.757,
+     "t": 1013.451,
      "from": "NORMAL",
      "to": "HOLD",
      "reason": "L4: PROTRUSION"
     },
     {
-     "t": 1213.757,
+     "t": 1133.451,
      "from": "HOLD",
      "to": "NORMAL",
      "reason": "operator released"
     },
     {
-     "t": 1221.282,
+     "t": 1261.382,
      "from": "NORMAL",
      "to": "PALLET_CHANGE",
      "reason": "PALLET_CLOSE"
     },
     {
-     "t": 1281.282,
+     "t": 1321.382,
      "from": "PALLET_CHANGE",
      "to": "NORMAL",
      "reason": "new pallet in place"
     },
     {
-     "t": 1293.666,
+     "t": 1333.766,
      "from": "NORMAL",
      "to": "HOLD",
      "reason": "L4: PROTRUSION"
     },
     {
-     "t": 1413.666,
+     "t": 1453.766,
      "from": "HOLD",
      "to": "NORMAL",
      "reason": "operator released"
     },
     {
-     "t": 1696.011,
+     "t": 1646.872,
      "event": "MISSING",
      "by_sku": {
       "K10": 1,
@@ -4252,50 +4972,80 @@
      }
     },
     {
-     "t": 1713.695,
+     "t": 1664.352,
      "from": "NORMAL",
      "to": "PALLET_CHANGE",
      "reason": "PALLET_CLOSE"
     },
     {
-     "t": 1773.695,
+     "t": 1724.352,
      "from": "PALLET_CHANGE",
      "to": "NORMAL",
      "reason": "new pallet in place"
     },
     {
-     "t": 1786.146,
+     "t": 1760.987,
      "from": "NORMAL",
-     "to": "HOLD",
-     "reason": "L4: PROTRUSION"
+     "to": "PALLET_CHANGE",
+     "reason": "PALLET_CLOSE"
     },
     {
-     "t": 1906.146,
-     "from": "HOLD",
+     "t": 1820.987,
+     "from": "PALLET_CHANGE",
      "to": "NORMAL",
-     "reason": "operator released"
+     "reason": "new pallet in place"
     }
    ],
    "pallet_list": [
     {
      "pallet_id": "P001-01",
      "boxes": 26,
-     "fill_true": 0.23358765432098763
+     "fill_true": 0.23358765432098763,
+     "pallet_size": [
+      1.2,
+      1.0,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-02",
-     "boxes": 22,
-     "fill_true": 0.3159
+     "boxes": 25,
+     "fill_true": 0.3305851851851852,
+     "pallet_size": [
+      1.2,
+      1.0,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-03",
-     "boxes": 22,
-     "fill_true": 0.26376543209876535
+     "boxes": 18,
+     "fill_true": 0.18745061728395063,
+     "pallet_size": [
+      1.2,
+      1.0,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-04",
      "boxes": 3,
-     "fill_true": 0.12187901234567901
+     "fill_true": 0.12187901234567901,
+     "pallet_size": [
+      1.2,
+      1.0,
+      1.35
+     ]
+    },
+    {
+     "pallet_id": "P001-05",
+     "boxes": 1,
+     "fill_true": 0.061629629629629624,
+     "pallet_size": [
+      1.2,
+      1.0,
+      1.35
+     ]
     }
    ]
   },
@@ -4307,8 +5057,8 @@
    "expected": 80,
    "placed": 78,
    "pallets": 5,
-   "fill_true_mean": 0.23443974288337918,
-   "time_s": 2153.2,
+   "fill_true_mean": 0.23443974288337924,
+   "time_s": 1591.3,
    "inspection": [
     {
      "box_id": "S0034-B048",
@@ -4323,16 +5073,17 @@
    ],
    "missing": {},
    "decisions": {
-    "PLACE_CURRENT": 44,
-    "L0": 49,
-    "L1": 19,
-    "BUFFER_CURRENT": 34,
-    "RETRIEVE_BUFFER": 34,
-    "L4": 8,
-    "L2": 2,
+    "PLACE_CURRENT": 39,
+    "L0": 50,
+    "L1": 22,
+    "stage8_reconciled": 12,
+    "BUFFER_CURRENT": 39,
+    "RETRIEVE_BUFFER": 39,
+    "L2": 3,
     "PALLET_CLOSE": 4,
-    "PARTIAL_REPACK": 2,
-    "repack_moves": 2
+    "L4": 3,
+    "PARTIAL_REPACK": 1,
+    "repack_moves": 1
    },
    "anomalies": {
     "OK": 73,
@@ -4340,182 +5091,110 @@
     "DAMAGED": 2
    },
    "stage6": {
-    "calls": 168,
-    "robot_rejected": 48,
-    "code:APPROACH_FAIL": 22,
-    "fell_back": 20,
+    "calls": 177,
+    "robot_rejected": 42,
+    "code:APPROACH_FAIL": 16,
+    "fell_back": 18,
     "code:ROBOT_COLLISION": 26
    },
    "supervisor_time_s": {
-    "HOLD": 960.0,
     "PALLET_CHANGE": 240.0,
-    "REPACKING": 16.113999999999805
+    "HOLD": 360.0,
+    "REPACKING": 7.90300000000002
    },
    "supervisor_log": [
     {
-     "t": 152.709,
-     "from": "NORMAL",
-     "to": "HOLD",
-     "reason": "L4: PROTRUSION"
-    },
-    {
-     "t": 272.709,
-     "from": "HOLD",
-     "to": "NORMAL",
-     "reason": "operator released"
-    },
-    {
-     "t": 312.172,
-     "from": "NORMAL",
-     "to": "HOLD",
-     "reason": "L4: PROTRUSION"
-    },
-    {
-     "t": 432.172,
-     "from": "HOLD",
-     "to": "NORMAL",
-     "reason": "operator released"
-    },
-    {
-     "t": 487.374,
-     "from": "NORMAL",
-     "to": "HOLD",
-     "reason": "L4: LOW_SUPPORT:0.00"
-    },
-    {
-     "t": 607.374,
-     "from": "HOLD",
-     "to": "NORMAL",
-     "reason": "operator released"
-    },
-    {
-     "t": 623.678,
-     "from": "NORMAL",
-     "to": "HOLD",
-     "reason": "L4: PROTRUSION"
-    },
-    {
-     "t": 743.678,
-     "from": "HOLD",
-     "to": "NORMAL",
-     "reason": "operator released"
-    },
-    {
-     "t": 860.746,
+     "t": 430.397,
      "from": "NORMAL",
      "to": "PALLET_CHANGE",
      "reason": "PALLET_CLOSE"
     },
     {
-     "t": 920.746,
+     "t": 490.397,
      "from": "PALLET_CHANGE",
      "to": "NORMAL",
      "reason": "new pallet in place"
     },
     {
-     "t": 952.427,
+     "t": 582.825,
      "from": "NORMAL",
      "to": "HOLD",
      "reason": "L4: PROTRUSION"
     },
     {
-     "t": 1072.427,
+     "t": 702.825,
      "from": "HOLD",
      "to": "NORMAL",
      "reason": "operator released"
     },
     {
-     "t": 1201.994,
-     "from": "NORMAL",
-     "to": "HOLD",
-     "reason": "L4: PROTRUSION,LOW_SUPPORT:0.01"
-    },
-    {
-     "t": 1321.994,
-     "from": "HOLD",
-     "to": "NORMAL",
-     "reason": "operator released"
-    },
-    {
-     "t": 1451.05,
+     "t": 861.434,
      "from": "NORMAL",
      "to": "REPACKING",
      "reason": "PARTIAL_REPACK"
     },
     {
-     "t": 1458.967,
+     "t": 869.337,
      "from": "REPACKING",
      "to": "NORMAL",
      "reason": "repack done"
     },
     {
-     "t": 1466.726,
+     "t": 904.861,
      "from": "NORMAL",
      "to": "PALLET_CHANGE",
      "reason": "PALLET_CLOSE"
     },
     {
-     "t": 1526.726,
+     "t": 964.861,
      "from": "PALLET_CHANGE",
      "to": "NORMAL",
      "reason": "new pallet in place"
     },
     {
-     "t": 1558.634,
+     "t": 989.195,
      "from": "NORMAL",
      "to": "HOLD",
      "reason": "L4: PROTRUSION"
     },
     {
-     "t": 1678.634,
+     "t": 1109.195,
      "from": "HOLD",
      "to": "NORMAL",
      "reason": "operator released"
     },
     {
-     "t": 1746.359,
-     "from": "NORMAL",
-     "to": "REPACKING",
-     "reason": "PARTIAL_REPACK"
-    },
-    {
-     "t": 1754.556,
-     "from": "REPACKING",
-     "to": "NORMAL",
-     "reason": "repack done"
-    },
-    {
-     "t": 1770.393,
+     "t": 1192.721,
      "from": "NORMAL",
      "to": "PALLET_CHANGE",
      "reason": "PALLET_CLOSE"
     },
     {
-     "t": 1830.393,
+     "t": 1252.721,
      "from": "PALLET_CHANGE",
      "to": "NORMAL",
      "reason": "new pallet in place"
     },
     {
-     "t": 1838.736,
+     "t": 1261.064,
      "from": "NORMAL",
      "to": "HOLD",
      "reason": "L4: PROTRUSION"
     },
     {
-     "t": 1958.736,
+     "t": 1381.064,
      "from": "HOLD",
      "to": "NORMAL",
      "reason": "operator released"
     },
     {
-     "t": 2031.595,
+     "t": 1469.763,
      "from": "NORMAL",
      "to": "PALLET_CHANGE",
      "reason": "PALLET_CLOSE"
     },
     {
-     "t": 2091.595,
+     "t": 1529.763,
      "from": "PALLET_CHANGE",
      "to": "NORMAL",
      "reason": "new pallet in place"
@@ -4524,28 +5203,53 @@
    "pallet_list": [
     {
      "pallet_id": "P001-01",
-     "boxes": 33,
-     "fill_true": 0.15173737373737378
+     "boxes": 37,
+     "fill_true": 0.17874441383532297,
+     "pallet_size": [
+      1.1,
+      1.1,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-02",
-     "boxes": 25,
-     "fill_true": 0.21967554331190683
+     "boxes": 22,
+     "fill_true": 0.21445485154576055,
+     "pallet_size": [
+      1.1,
+      1.1,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-03",
-     "boxes": 9,
-     "fill_true": 0.24423850627486987
+     "boxes": 7,
+     "fill_true": 0.18448705234159776,
+     "pallet_size": [
+      1.1,
+      1.1,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-04",
-     "boxes": 7,
-     "fill_true": 0.3120661157024793
+     "boxes": 8,
+     "fill_true": 0.35003122130394854,
+     "pallet_size": [
+      1.1,
+      1.1,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-05",
      "boxes": 4,
-     "fill_true": 0.24448117539026623
+     "fill_true": 0.24448117539026623,
+     "pallet_size": [
+      1.1,
+      1.1,
+      1.35
+     ]
     }
    ]
   },
@@ -4624,7 +5328,8 @@
     "PARTIAL_REPACK": 2,
     "repack_moves": 2,
     "PALLET_CLOSE": 4,
-    "grip_retries": 1
+    "grip_retries": 1,
+    "stage8_reconciled": 2
    },
    "anomalies": {
     "DAMAGED": 10,
@@ -4752,55 +5457,55 @@
      "reason": "operator released"
     },
     {
-     "t": 1431.87,
+     "t": 1431.871,
      "from": "NORMAL",
      "to": "PALLET_CHANGE",
      "reason": "PALLET_CLOSE"
     },
     {
-     "t": 1491.87,
+     "t": 1491.871,
      "from": "PALLET_CHANGE",
      "to": "NORMAL",
      "reason": "new pallet in place"
     },
     {
-     "t": 1511.881,
+     "t": 1511.882,
      "from": "NORMAL",
      "to": "HOLD",
      "reason": "L4: PROTRUSION"
     },
     {
-     "t": 1631.881,
+     "t": 1631.882,
      "from": "HOLD",
      "to": "NORMAL",
      "reason": "operator released"
     },
     {
-     "t": 1677.79,
+     "t": 1677.791,
      "from": "NORMAL",
      "to": "PALLET_CHANGE",
      "reason": "PALLET_CLOSE"
     },
     {
-     "t": 1737.79,
+     "t": 1737.791,
      "from": "PALLET_CHANGE",
      "to": "NORMAL",
      "reason": "new pallet in place"
     },
     {
-     "t": 1769.58,
+     "t": 1769.581,
      "from": "NORMAL",
      "to": "HOLD",
      "reason": "L4: PROTRUSION"
     },
     {
-     "t": 1889.58,
+     "t": 1889.581,
      "from": "HOLD",
      "to": "NORMAL",
      "reason": "operator released"
     },
     {
-     "t": 1919.58,
+     "t": 1919.581,
      "event": "MISSING",
      "by_sku": {
       "K03": 1
@@ -4811,27 +5516,52 @@
     {
      "pallet_id": "P001-01",
      "boxes": 29,
-     "fill_true": 0.18201157407407412
+     "fill_true": 0.18201157407407412,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-02",
      "boxes": 20,
-     "fill_true": 0.21063040123456786
+     "fill_true": 0.21063040123456786,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-03",
      "boxes": 9,
-     "fill_true": 0.2162932098765432
+     "fill_true": 0.2162932098765432,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-04",
      "boxes": 6,
-     "fill_true": 0.3162962962962963
+     "fill_true": 0.3162962962962963,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-05",
      "boxes": 5,
-     "fill_true": 0.38518518518518513
+     "fill_true": 0.38518518518518513,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     }
    ]
   },
@@ -4859,11 +5589,12 @@
    },
    "decisions": {
     "PLACE_CURRENT": 37,
-    "L0": 57,
+    "L0": 52,
     "L1": 14,
+    "stage8_reconciled": 18,
     "BUFFER_CURRENT": 40,
     "RETRIEVE_BUFFER": 40,
-    "L2": 3,
+    "L2": 8,
     "PALLET_CLOSE": 6,
     "L4": 3,
     "PARTIAL_REPACK": 3,
@@ -4888,139 +5619,139 @@
    },
    "supervisor_log": [
     {
-     "t": 279.469,
+     "t": 279.462,
      "from": "NORMAL",
      "to": "PALLET_CHANGE",
      "reason": "PALLET_CLOSE"
     },
     {
-     "t": 339.469,
+     "t": 339.462,
      "from": "PALLET_CHANGE",
      "to": "NORMAL",
      "reason": "new pallet in place"
     },
     {
-     "t": 422.935,
+     "t": 422.928,
      "from": "NORMAL",
      "to": "HOLD",
      "reason": "L4: PROTRUSION"
     },
     {
-     "t": 542.935,
+     "t": 542.928,
      "from": "HOLD",
      "to": "NORMAL",
      "reason": "operator released"
     },
     {
-     "t": 659.581,
+     "t": 659.574,
      "from": "NORMAL",
      "to": "REPACKING",
      "reason": "PARTIAL_REPACK"
     },
     {
-     "t": 667.367,
+     "t": 667.36,
      "from": "REPACKING",
      "to": "NORMAL",
      "reason": "repack done"
     },
     {
-     "t": 794.459,
+     "t": 794.452,
      "from": "NORMAL",
      "to": "HOLD",
      "reason": "L4: PROTRUSION"
     },
     {
-     "t": 914.459,
+     "t": 914.452,
      "from": "HOLD",
      "to": "NORMAL",
      "reason": "operator released"
     },
     {
-     "t": 922.459,
+     "t": 922.452,
      "from": "NORMAL",
      "to": "REPACKING",
      "reason": "PARTIAL_REPACK"
     },
     {
-     "t": 930.317,
+     "t": 930.31,
      "from": "REPACKING",
      "to": "NORMAL",
      "reason": "repack done"
     },
     {
-     "t": 955.315,
+     "t": 955.308,
      "from": "NORMAL",
      "to": "PALLET_CHANGE",
      "reason": "PALLET_CLOSE"
     },
     {
-     "t": 1015.315,
+     "t": 1015.308,
      "from": "PALLET_CHANGE",
      "to": "NORMAL",
      "reason": "new pallet in place"
     },
     {
-     "t": 1093.393,
+     "t": 1093.386,
      "from": "NORMAL",
      "to": "HOLD",
      "reason": "L4: PROTRUSION"
     },
     {
-     "t": 1213.393,
+     "t": 1213.386,
      "from": "HOLD",
      "to": "NORMAL",
      "reason": "operator released"
     },
     {
-     "t": 1236.424,
+     "t": 1236.417,
      "from": "NORMAL",
      "to": "REPACKING",
      "reason": "PARTIAL_REPACK"
     },
     {
-     "t": 1244.108,
+     "t": 1244.101,
      "from": "REPACKING",
      "to": "NORMAL",
      "reason": "repack done"
     },
     {
-     "t": 1252.067,
+     "t": 1252.06,
      "from": "NORMAL",
      "to": "PALLET_CHANGE",
      "reason": "PALLET_CLOSE"
     },
     {
-     "t": 1312.067,
+     "t": 1312.06,
      "from": "PALLET_CHANGE",
      "to": "NORMAL",
      "reason": "new pallet in place"
     },
     {
-     "t": 1386.518,
+     "t": 1386.51,
      "from": "NORMAL",
      "to": "PALLET_CHANGE",
      "reason": "PALLET_CLOSE"
     },
     {
-     "t": 1446.518,
+     "t": 1446.51,
      "from": "PALLET_CHANGE",
      "to": "NORMAL",
      "reason": "new pallet in place"
     },
     {
-     "t": 1505.725,
+     "t": 1505.717,
      "from": "NORMAL",
      "to": "PALLET_CHANGE",
      "reason": "PALLET_CLOSE"
     },
     {
-     "t": 1565.725,
+     "t": 1565.717,
      "from": "PALLET_CHANGE",
      "to": "NORMAL",
      "reason": "new pallet in place"
     },
     {
-     "t": 1616.861,
+     "t": 1616.853,
      "event": "MISSING",
      "by_sku": {
       "K03": 1,
@@ -5029,13 +5760,13 @@
      }
     },
     {
-     "t": 1632.608,
+     "t": 1632.6,
      "from": "NORMAL",
      "to": "PALLET_CHANGE",
      "reason": "PALLET_CLOSE"
     },
     {
-     "t": 1692.608,
+     "t": 1692.6,
      "from": "PALLET_CHANGE",
      "to": "NORMAL",
      "reason": "new pallet in place"
@@ -5045,37 +5776,72 @@
     {
      "pallet_id": "P001-01",
      "boxes": 25,
-     "fill_true": 0.15873742283950615
+     "fill_true": 0.15873742283950615,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-02",
      "boxes": 28,
-     "fill_true": 0.32297145061728394
+     "fill_true": 0.32297145061728394,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-03",
      "boxes": 9,
-     "fill_true": 0.15734876543209877
+     "fill_true": 0.15734876543209877,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-04",
      "boxes": 5,
-     "fill_true": 0.2276604938271605
+     "fill_true": 0.2276604938271605,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-05",
      "boxes": 4,
-     "fill_true": 0.24977777777777777
+     "fill_true": 0.24977777777777777,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-06",
      "boxes": 3,
-     "fill_true": 0.18153395061728392
+     "fill_true": 0.18153395061728392,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-07",
      "boxes": 3,
-     "fill_true": 0.2311111111111111
+     "fill_true": 0.2311111111111111,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     }
    ]
   },
@@ -5086,9 +5852,9 @@
    "boxes_in_stream": 80,
    "expected": 80,
    "placed": 78,
-   "pallets": 6,
-   "fill_true_mean": 0.24821382458847738,
-   "time_s": 1233.9,
+   "pallets": 5,
+   "fill_true_mean": 0.29785658950617283,
+   "time_s": 1178.2,
    "inspection": [
     {
      "box_id": "S0003-B026",
@@ -5103,16 +5869,13 @@
    ],
    "missing": {},
    "decisions": {
-    "PLACE_CURRENT": 49,
-    "L0": 76,
-    "BUFFER_CURRENT": 29,
-    "L2": 2,
-    "RETRIEVE_BUFFER": 29,
-    "PARTIAL_REPACK": 4,
-    "repack_moves": 2,
-    "repack_aborted_stage6": 2,
-    "PALLET_CLOSE": 5,
-    "grip_retries": 1
+    "PLACE_CURRENT": 46,
+    "L0": 74,
+    "BUFFER_CURRENT": 32,
+    "L2": 4,
+    "stage8_reconciled": 6,
+    "RETRIEVE_BUFFER": 32,
+    "PALLET_CLOSE": 4
    },
    "anomalies": {
     "OK": 72,
@@ -5120,97 +5883,60 @@
     "DAMAGED": 2
    },
    "stage6": {
-    "calls": 182,
-    "robot_rejected": 187,
-    "code:ROBOT_COLLISION": 187,
-    "fell_back": 17,
-    "no_executable": 39
+    "calls": 174,
+    "robot_rejected": 171,
+    "code:ROBOT_COLLISION": 171,
+    "fell_back": 18,
+    "no_executable": 22
    },
    "supervisor_time_s": {
-    "REPACKING": 15.679999999999978,
-    "PALLET_CHANGE": 300.0
+    "PALLET_CHANGE": 240.0
    },
    "supervisor_log": [
     {
-     "t": 147.561,
-     "from": "NORMAL",
-     "to": "REPACKING",
-     "reason": "PARTIAL_REPACK"
-    },
-    {
-     "t": 155.226,
-     "from": "REPACKING",
-     "to": "NORMAL",
-     "reason": "repack done"
-    },
-    {
-     "t": 162.874,
+     "t": 155.919,
      "from": "NORMAL",
      "to": "PALLET_CHANGE",
      "reason": "PALLET_CLOSE"
     },
     {
-     "t": 222.874,
+     "t": 215.919,
      "from": "PALLET_CHANGE",
      "to": "NORMAL",
      "reason": "new pallet in place"
     },
     {
-     "t": 339.781,
+     "t": 320.651,
      "from": "NORMAL",
      "to": "PALLET_CHANGE",
      "reason": "PALLET_CLOSE"
     },
     {
-     "t": 399.781,
+     "t": 380.651,
      "from": "PALLET_CHANGE",
      "to": "NORMAL",
      "reason": "new pallet in place"
     },
     {
-     "t": 511.339,
+     "t": 492.167,
      "from": "NORMAL",
      "to": "PALLET_CHANGE",
      "reason": "PALLET_CLOSE"
     },
     {
-     "t": 571.339,
+     "t": 552.167,
      "from": "PALLET_CHANGE",
      "to": "NORMAL",
      "reason": "new pallet in place"
     },
     {
-     "t": 809.186,
-     "from": "NORMAL",
-     "to": "REPACKING",
-     "reason": "PARTIAL_REPACK"
-    },
-    {
-     "t": 817.201,
-     "from": "REPACKING",
-     "to": "NORMAL",
-     "reason": "repack done"
-    },
-    {
-     "t": 852.323,
+     "t": 928.754,
      "from": "NORMAL",
      "to": "PALLET_CHANGE",
      "reason": "PALLET_CLOSE"
     },
     {
-     "t": 912.323,
-     "from": "PALLET_CHANGE",
-     "to": "NORMAL",
-     "reason": "new pallet in place"
-    },
-    {
-     "t": 1136.768,
-     "from": "NORMAL",
-     "to": "PALLET_CHANGE",
-     "reason": "PALLET_CLOSE"
-    },
-    {
-     "t": 1196.768,
+     "t": 988.754,
      "from": "PALLET_CHANGE",
      "to": "NORMAL",
      "reason": "new pallet in place"
@@ -5220,32 +5946,52 @@
     {
      "pallet_id": "P001-01",
      "boxes": 16,
-     "fill_true": 0.239278549382716
+     "fill_true": 0.239278549382716,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-02",
      "boxes": 11,
-     "fill_true": 0.2636365740740741
+     "fill_true": 0.2636365740740741,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-03",
      "boxes": 9,
-     "fill_true": 0.30596296296296294
+     "fill_true": 0.30596296296296294,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-04",
-     "boxes": 22,
-     "fill_true": 0.30063425925925924
+     "boxes": 29,
+     "fill_true": 0.3744652777777777,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-05",
-     "boxes": 17,
-     "fill_true": 0.21556921296296297
-    },
-    {
-     "pallet_id": "P001-06",
-     "boxes": 3,
-     "fill_true": 0.16420138888888888
+     "boxes": 13,
+     "fill_true": 0.3059395833333333,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     }
    ]
   },
@@ -5258,19 +6004,20 @@
    "placed": 79,
    "pallets": 5,
    "fill_true_mean": 0.24341126543209873,
-   "time_s": 1173.2,
+   "time_s": 1173.5,
    "inspection": [],
    "missing": {
     "K11": 1
    },
    "decisions": {
     "PLACE_CURRENT": 50,
-    "L0": 75,
+    "L0": 72,
     "BUFFER_CURRENT": 29,
     "RETRIEVE_BUFFER": 29,
     "PARTIAL_REPACK": 3,
     "repack_moves": 3,
-    "L2": 4,
+    "L2": 7,
+    "stage8_reconciled": 6,
     "PALLET_CLOSE": 4,
     "grip_retries": 1
    },
@@ -5303,80 +6050,80 @@
      "reason": "repack done"
     },
     {
-     "t": 287.38,
+     "t": 287.695,
      "from": "NORMAL",
      "to": "PALLET_CHANGE",
      "reason": "PALLET_CLOSE"
     },
     {
-     "t": 347.38,
+     "t": 347.695,
      "from": "PALLET_CHANGE",
      "to": "NORMAL",
      "reason": "new pallet in place"
     },
     {
-     "t": 564.616,
+     "t": 564.931,
      "from": "NORMAL",
      "to": "REPACKING",
      "reason": "PARTIAL_REPACK"
     },
     {
-     "t": 572.32,
+     "t": 572.635,
      "from": "REPACKING",
      "to": "NORMAL",
      "reason": "repack done"
     },
     {
-     "t": 595.55,
+     "t": 595.865,
      "from": "NORMAL",
      "to": "REPACKING",
      "reason": "PARTIAL_REPACK"
     },
     {
-     "t": 603.415,
+     "t": 603.73,
      "from": "REPACKING",
      "to": "NORMAL",
      "reason": "repack done"
     },
     {
-     "t": 611.867,
+     "t": 612.182,
      "from": "NORMAL",
      "to": "PALLET_CHANGE",
      "reason": "PALLET_CLOSE"
     },
     {
-     "t": 671.867,
+     "t": 672.182,
      "from": "PALLET_CHANGE",
      "to": "NORMAL",
      "reason": "new pallet in place"
     },
     {
-     "t": 828.833,
+     "t": 829.148,
      "from": "NORMAL",
      "to": "PALLET_CHANGE",
      "reason": "PALLET_CLOSE"
     },
     {
-     "t": 888.833,
+     "t": 889.148,
      "from": "PALLET_CHANGE",
      "to": "NORMAL",
      "reason": "new pallet in place"
     },
     {
-     "t": 1081.378,
+     "t": 1081.693,
      "event": "MISSING",
      "by_sku": {
       "K11": 1
      }
     },
     {
-     "t": 1092.793,
+     "t": 1093.108,
      "from": "NORMAL",
      "to": "PALLET_CHANGE",
      "reason": "PALLET_CLOSE"
     },
     {
-     "t": 1152.793,
+     "t": 1153.108,
      "from": "PALLET_CHANGE",
      "to": "NORMAL",
      "reason": "new pallet in place"
@@ -5386,27 +6133,52 @@
     {
      "pallet_id": "P001-01",
      "boxes": 25,
-     "fill_true": 0.20074151234567902
+     "fill_true": 0.20074151234567902,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-02",
      "boxes": 23,
-     "fill_true": 0.3159652777777778
+     "fill_true": 0.3159652777777778,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-03",
      "boxes": 14,
-     "fill_true": 0.33645447530864203
+     "fill_true": 0.33645447530864203,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-04",
      "boxes": 15,
-     "fill_true": 0.30909876543209874
+     "fill_true": 0.30909876543209874,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-05",
      "boxes": 2,
-     "fill_true": 0.0547962962962963
+     "fill_true": 0.0547962962962963,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     }
    ]
   },
@@ -5459,6 +6231,7 @@
     "PARTIAL_REPACK": 1,
     "repack_moves": 1,
     "L2": 1,
+    "stage8_reconciled": 4,
     "PALLET_CLOSE": 4,
     "grip_retries": 1
    },
@@ -5552,27 +6325,52 @@
     {
      "pallet_id": "P001-01",
      "boxes": 22,
-     "fill_true": 0.21139429012345679
+     "fill_true": 0.21139429012345679,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-02",
      "boxes": 20,
-     "fill_true": 0.30821064814814814
+     "fill_true": 0.30821064814814814,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-03",
      "boxes": 16,
-     "fill_true": 0.3017013888888889
+     "fill_true": 0.3017013888888889,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-04",
      "boxes": 15,
-     "fill_true": 0.20620779320987656
+     "fill_true": 0.20620779320987656,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-05",
      "boxes": 1,
-     "fill_true": 0.07703703703703703
+     "fill_true": 0.07703703703703703,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     }
    ]
   },
@@ -5653,6 +6451,7 @@
     "L0": 65,
     "BUFFER_CURRENT": 21,
     "RETRIEVE_BUFFER": 21,
+    "stage8_reconciled": 5,
     "PALLET_CLOSE": 3,
     "L2": 1,
     "PARTIAL_REPACK": 1,
@@ -5737,22 +6536,42 @@
     {
      "pallet_id": "P001-01",
      "boxes": 27,
-     "fill_true": 0.3406969135802469
+     "fill_true": 0.3406969135802469,
+     "pallet_size": [
+      1.2,
+      1.0,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-02",
      "boxes": 25,
-     "fill_true": 0.2884253086419753
+     "fill_true": 0.2884253086419753,
+     "pallet_size": [
+      1.2,
+      1.0,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-03",
      "boxes": 13,
-     "fill_true": 0.2800864197530864
+     "fill_true": 0.2800864197530864,
+     "pallet_size": [
+      1.2,
+      1.0,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-04",
      "boxes": 1,
-     "fill_true": 0.0219679012345679
+     "fill_true": 0.0219679012345679,
+     "pallet_size": [
+      1.2,
+      1.0,
+      1.35
+     ]
     }
    ]
   },
@@ -5796,6 +6615,7 @@
     "L0": 71,
     "BUFFER_CURRENT": 27,
     "RETRIEVE_BUFFER": 27,
+    "stage8_reconciled": 5,
     "PALLET_CLOSE": 3,
     "L2": 2
    },
@@ -5862,22 +6682,42 @@
     {
      "pallet_id": "P001-01",
      "boxes": 29,
-     "fill_true": 0.2555053565962656
+     "fill_true": 0.2555053565962656,
+     "pallet_size": [
+      1.1,
+      1.1,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-02",
      "boxes": 17,
-     "fill_true": 0.3561444750535659
+     "fill_true": 0.3561444750535659,
+     "pallet_size": [
+      1.1,
+      1.1,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-03",
      "boxes": 19,
-     "fill_true": 0.3483875114784205
+     "fill_true": 0.3483875114784205,
+     "pallet_size": [
+      1.1,
+      1.1,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-04",
      "boxes": 8,
-     "fill_true": 0.21594123048668498
+     "fill_true": 0.21594123048668498,
+     "pallet_size": [
+      1.1,
+      1.1,
+      1.35
+     ]
     }
    ]
   },
@@ -5890,7 +6730,7 @@
    "placed": 73,
    "pallets": 4,
    "fill_true_mean": 0.23378302469135803,
-   "time_s": 1022.6,
+   "time_s": 1038.1,
    "inspection": [
     {
      "box_id": "S0028-B002",
@@ -5924,12 +6764,13 @@
     "K08": 1
    },
    "decisions": {
-    "PLACE_CURRENT": 44,
-    "L0": 71,
-    "BUFFER_CURRENT": 29,
-    "RETRIEVE_BUFFER": 29,
+    "PLACE_CURRENT": 42,
+    "L0": 68,
+    "BUFFER_CURRENT": 31,
+    "RETRIEVE_BUFFER": 31,
+    "stage8_reconciled": 7,
     "PALLET_CLOSE": 3,
-    "L2": 2
+    "L2": 5
    },
    "anomalies": {
     "OK": 73,
@@ -5937,7 +6778,7 @@
     "RECOGNITION_FAIL": 1
    },
    "stage6": {
-    "calls": 135,
+    "calls": 140,
     "robot_rejected": 0
    },
    "supervisor_time_s": {
@@ -5957,19 +6798,19 @@
      "reason": "new pallet in place"
     },
     {
-     "t": 661.193,
+     "t": 676.64,
      "from": "NORMAL",
      "to": "PALLET_CHANGE",
      "reason": "PALLET_CLOSE"
     },
     {
-     "t": 721.193,
+     "t": 736.64,
      "from": "PALLET_CHANGE",
      "to": "NORMAL",
      "reason": "new pallet in place"
     },
     {
-     "t": 920.216,
+     "t": 935.663,
      "event": "MISSING",
      "by_sku": {
       "K10": 1,
@@ -5978,13 +6819,13 @@
      }
     },
     {
-     "t": 925.216,
+     "t": 940.663,
      "from": "NORMAL",
      "to": "PALLET_CHANGE",
      "reason": "PALLET_CLOSE"
     },
     {
-     "t": 985.216,
+     "t": 1000.663,
      "from": "PALLET_CHANGE",
      "to": "NORMAL",
      "reason": "new pallet in place"
@@ -5994,22 +6835,42 @@
     {
      "pallet_id": "P001-01",
      "boxes": 26,
-     "fill_true": 0.23358765432098763
+     "fill_true": 0.23358765432098763,
+     "pallet_size": [
+      1.2,
+      1.0,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-02",
      "boxes": 28,
-     "fill_true": 0.34865987654320996
+     "fill_true": 0.34865987654320996,
+     "pallet_size": [
+      1.2,
+      1.0,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-03",
      "boxes": 16,
-     "fill_true": 0.23100555555555558
+     "fill_true": 0.23100555555555558,
+     "pallet_size": [
+      1.2,
+      1.0,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-04",
      "boxes": 3,
-     "fill_true": 0.12187901234567901
+     "fill_true": 0.12187901234567901,
+     "pallet_size": [
+      1.2,
+      1.0,
+      1.35
+     ]
     }
    ]
   },
@@ -6039,6 +6900,7 @@
    "decisions": {
     "PLACE_CURRENT": 41,
     "L0": 76,
+    "stage8_reconciled": 3,
     "L2": 2,
     "BUFFER_CURRENT": 37,
     "RETRIEVE_BUFFER": 37,
@@ -6116,22 +6978,42 @@
     {
      "pallet_id": "P001-01",
      "boxes": 35,
-     "fill_true": 0.16267462503826147
+     "fill_true": 0.16267462503826147,
+     "pallet_size": [
+      1.1,
+      1.1,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-02",
      "boxes": 28,
-     "fill_true": 0.3496526476890112
+     "fill_true": 0.3496526476890112,
+     "pallet_size": [
+      1.1,
+      1.1,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-03",
      "boxes": 11,
-     "fill_true": 0.4153902662993572
+     "fill_true": 0.4153902662993572,
+     "pallet_size": [
+      1.1,
+      1.1,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-04",
      "boxes": 4,
-     "fill_true": 0.24448117539026623
+     "fill_true": 0.24448117539026623,
+     "pallet_size": [
+      1.1,
+      1.1,
+      1.35
+     ]
     }
    ]
   },
@@ -6205,6 +7087,7 @@
     "L0": 68,
     "BUFFER_CURRENT": 35,
     "RETRIEVE_BUFFER": 35,
+    "stage8_reconciled": 2,
     "PARTIAL_REPACK": 4,
     "repack_moves": 5,
     "PALLET_CLOSE": 5,
@@ -6344,32 +7227,62 @@
     {
      "pallet_id": "P001-01",
      "boxes": 31,
-     "fill_true": 0.195900462962963
+     "fill_true": 0.195900462962963,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-02",
      "boxes": 17,
-     "fill_true": 0.18123225308641974
+     "fill_true": 0.18123225308641974,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-03",
      "boxes": 9,
-     "fill_true": 0.2043425925925926
+     "fill_true": 0.2043425925925926,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-04",
      "boxes": 6,
-     "fill_true": 0.26671913580246914
+     "fill_true": 0.26671913580246914,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-05",
      "boxes": 5,
-     "fill_true": 0.38518518518518513
+     "fill_true": 0.38518518518518513,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-06",
      "boxes": 1,
-     "fill_true": 0.07703703703703703
+     "fill_true": 0.07703703703703703,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     }
    ]
   },
@@ -6401,9 +7314,11 @@
     "BUFFER_CURRENT": 38,
     "RETRIEVE_BUFFER": 38,
     "L2": 3,
+    "stage8_reconciled": 4,
     "PALLET_CLOSE": 7,
-    "PARTIAL_REPACK": 1,
-    "repack_moves": 1
+    "PARTIAL_REPACK": 3,
+    "repack_moves": 1,
+    "repack_aborted_stage6": 2
    },
    "anomalies": {
     "OK": 73,
@@ -6411,10 +7326,10 @@
     "RECOGNITION_FAIL": 1
    },
    "stage6": {
-    "calls": 189,
-    "robot_rejected": 27,
-    "code:ROBOT_COLLISION": 27,
-    "no_executable": 9
+    "calls": 197,
+    "robot_rejected": 45,
+    "code:ROBOT_COLLISION": 45,
+    "no_executable": 15
    },
    "supervisor_time_s": {
     "PALLET_CHANGE": 420.0,
@@ -6531,42 +7446,82 @@
     {
      "pallet_id": "P001-01",
      "boxes": 25,
-     "fill_true": 0.15873742283950615
+     "fill_true": 0.15873742283950615,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-02",
      "boxes": 19,
-     "fill_true": 0.206633487654321
+     "fill_true": 0.206633487654321,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-03",
      "boxes": 11,
-     "fill_true": 0.15392515432098766
+     "fill_true": 0.15392515432098766,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-04",
      "boxes": 5,
-     "fill_true": 0.1967453703703704
+     "fill_true": 0.1967453703703704,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-05",
      "boxes": 9,
-     "fill_true": 0.30475077160493824
+     "fill_true": 0.30475077160493824,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-06",
      "boxes": 4,
-     "fill_true": 0.24977777777777777
+     "fill_true": 0.24977777777777777,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-07",
      "boxes": 2,
-     "fill_true": 0.1044969135802469
+     "fill_true": 0.1044969135802469,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     },
     {
      "pallet_id": "P001-08",
      "boxes": 2,
-     "fill_true": 0.15407407407407406
+     "fill_true": 0.15407407407407406,
+     "pallet_size": [
+      1.2,
+      0.8,
+      1.35
+     ]
     }
    ]
   }

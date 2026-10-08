@@ -60,7 +60,7 @@ PR: https://github.com/yang8988/pac-mission1-shared/pull/1 (Draft, 브랜치 `cl
 
 - [x] 6단계 `pac_robot_check` (2026-10-08): HDR50-22 해석적 IK(공식 URDF), 수직 접근·후퇴, 그리퍼·팔 충돌, 가반하중, 사이클 시간, 셀 배치 비교 → [robot_check.md](robot_check.md)
 - [x] 1~3·7~8단계 `pac_runtime` (2026-10-08): 인식(가상)·State Validator·Supervisor·사후 검증(L0~L4)·State Manager, `RuntimeCore`, 1→8 가상 루프, ROS 2 노드(JSON 토픽) → [runtime.md](runtime.md)
-- [ ] sb3 개선 학습 (진행 중): Rule 대비 보상, Rule 행동복제 규제, 시나리오 240개, 검증 세트로 최고 모델 선택
+- [x] sb3 개선 학습 v5: Rule 대비 보상, Rule 행동복제 규제, 시나리오 240개, 검증 세트로 최고 모델 선택. 컨테이너 재시작으로 10.9만/20만 단계에서 중단 → 검증 최고 모델 평가: 큰 test 108 에피소드에서 Rule 대비 −0.06 (p = 0.10), 기본값 Rule 유지
 
 ## 다음 할 일
 
@@ -96,4 +96,5 @@ PR: https://github.com/yang8988/pac-mission1-shared/pull/1 (Draft, 브랜치 `cl
 | 2026-10-08 | 4번 sb3-contrib MaskablePPO (PyTorch) 100k 단계 | test 3.94 팔레트 (Rule 3.91, NumPy 3.86) → 기본 정책 NumPy 유지 |
 | 2026-10-08 | 4번 리뷰 수정 후 재학습 (NumPy 60k, sb3 150k) | test 27 에피소드: Rule 4.09, NumPy 4.25 (p=0.19), sb3 4.23 (p=0.54) → 기본값 Rule |
 | 2026-10-08 | 6단계 HDR50-22 셀 배치 비교 (384곳) | 받침대 0.5 m·1.15 m 384/384, 바닥 배치는 맨 위층 0/96 |
-| 2026-10-08 | 1→8 런타임 루프 test 9 시나리오 × 4조건 | 6단계 켬/끔 모두 팔레트 5.22, L4 0 vs 1; 놓기 오차 3 mm면 L4 49건·시간 +55 % |
+| 2026-10-08 | 4번 큰 test 108 에피소드 (새 시드) | Rule 3.83, NumPy 3.79, sb3 3.74, sb3 v5 3.77 — 모두 유의하지 않음 |
+| 2026-10-08 | 1→8 런타임 루프 test 9 시나리오 × 4조건 (리뷰 수정 후) | 6단계 켬 5.44 / 끔 5.11 / 작은 그리퍼 5.00 팔레트, L4 0; 놓기 오차 3 mm면 L4 48건·시간 +55 %; 물리 재현 49/49 |
