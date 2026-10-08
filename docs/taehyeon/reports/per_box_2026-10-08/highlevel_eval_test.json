@@ -1,0 +1,2370 @@
+{
+ "split": "test",
+ "scenarios": [
+  "S0003",
+  "S0013",
+  "S0016",
+  "S0018",
+  "S0021",
+  "S0028",
+  "S0034",
+  "S0036",
+  "S0043"
+ ],
+ "episodes": 27,
+ "buffer_slots": 4,
+ "summary": {
+  "no_buffer": {
+   "pallet_equivalents": 5.738934418325305,
+   "pallets_used": 6.555555555555555,
+   "fill_per_pallet_used": 0.19303873627526277,
+   "closed_fill_mean": 0.1933475784220775,
+   "placed": 80.0,
+   "ng": 0.0,
+   "time_s": 1000.4444444444445,
+   "decisions": 80.0,
+   "return": -3.780717159606483,
+   "safety_issues": 0.0,
+   "counts_per_episode": {
+    "PALLET_CLOSE": 5.555555555555555,
+    "PARTIAL_REPACK": 2.185185185185185,
+    "PLACE_CURRENT": 80.0,
+    "REPACK_MOVES": 2.259259259259259
+   }
+  },
+  "greedy": {
+   "pallet_equivalents": 5.080637753210784,
+   "pallets_used": 5.925925925925926,
+   "fill_per_pallet_used": 0.20867946254498465,
+   "closed_fill_mean": 0.21970383622100328,
+   "placed": 80.0,
+   "ng": 0.0,
+   "time_s": 1040.3703703703704,
+   "decisions": 90.03703703703704,
+   "return": -3.622457531528999,
+   "safety_issues": 0.0,
+   "counts_per_episode": {
+    "BUFFER_CURRENT": 10.037037037037036,
+    "PALLET_CLOSE": 4.925925925925926,
+    "PARTIAL_REPACK": 1.0740740740740742,
+    "PLACE_CURRENT": 69.96296296296296,
+    "REPACK_MOVES": 1.1851851851851851,
+    "RETRIEVE_BUFFER": 10.037037037037036
+   }
+  },
+  "rule": {
+   "pallet_equivalents": 4.189154190223143,
+   "pallets_used": 5.0,
+   "fill_per_pallet_used": 0.24952839255944617,
+   "closed_fill_mean": 0.26621991013418467,
+   "placed": 80.0,
+   "ng": 0.0,
+   "time_s": 1163.6296296296296,
+   "decisions": 110.44444444444444,
+   "return": -2.6979369315043207,
+   "safety_issues": 0.0,
+   "counts_per_episode": {
+    "BUFFER_CURRENT": 30.444444444444443,
+    "PALLET_CLOSE": 4.0,
+    "PARTIAL_REPACK": 1.2222222222222223,
+    "PLACE_CURRENT": 49.55555555555556,
+    "REPACK_MOVES": 1.2592592592592593,
+    "RETRIEVE_BUFFER": 30.444444444444443
+   }
+  },
+  "ppo": {
+   "pallet_equivalents": 4.097950371472234,
+   "pallets_used": 4.925925925925926,
+   "fill_per_pallet_used": 0.2534746481835386,
+   "closed_fill_mean": 0.2779205996292582,
+   "placed": 80.0,
+   "ng": 0.0,
+   "time_s": 1165.851851851852,
+   "decisions": 111.66666666666667,
+   "return": -2.6226590386793385,
+   "safety_issues": 0.0,
+   "counts_per_episode": {
+    "BUFFER_CURRENT": 31.666666666666668,
+    "PALLET_CLOSE": 3.925925925925926,
+    "PARTIAL_REPACK": 0.8148148148148148,
+    "PLACE_CURRENT": 48.333333333333336,
+    "REPACK_MOVES": 0.8888888888888888,
+    "RETRIEVE_BUFFER": 31.666666666666668
+   }
+  }
+ },
+ "paired": {
+  "no_buffer_minus_rule": {
+   "pallet_eq_mean": 1.5497802281021618,
+   "better": 0,
+   "equal": 0,
+   "worse": 27
+  },
+  "greedy_minus_rule": {
+   "pallet_eq_mean": 0.8914835629876406,
+   "better": 4,
+   "equal": 1,
+   "worse": 22
+  },
+  "ppo_minus_rule": {
+   "pallet_eq_mean": -0.09120381875090845,
+   "better": 18,
+   "equal": 2,
+   "worse": 7
+  }
+ },
+ "per_episode": {
+  "no_buffer": [
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 4,
+    "pallets_closed": 3,
+    "closed_fill_mean": 0.2907954974790327,
+    "fill_per_pallet_used": 0.3175612534467401,
+    "pallet_equivalents": 3.397858521349862,
+    "time_s": 832.0,
+    "decisions": 80,
+    "counts": {
+     "PLACE_CURRENT": 80,
+     "PALLET_CLOSE": 3,
+     "PARTIAL_REPACK": 1,
+     "REPACK_MOVES": 1
+    },
+    "safety_issues": 0,
+    "return": -1.2733684937759415
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 7,
+    "pallets_closed": 6,
+    "closed_fill_mean": 0.19244664465650718,
+    "fill_per_pallet_used": 0.17343122446439593,
+    "pallet_equivalents": 6.059338703311728,
+    "time_s": 1024.0,
+    "decisions": 80,
+    "counts": {
+     "PLACE_CURRENT": 80,
+     "PALLET_CLOSE": 6,
+     "PARTIAL_REPACK": 2,
+     "REPACK_MOVES": 2
+    },
+    "safety_issues": 0,
+    "return": -4.143301560810183
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 7,
+    "pallets_closed": 6,
+    "closed_fill_mean": 0.16284922260360082,
+    "fill_per_pallet_used": 0.14842835353747796,
+    "pallet_equivalents": 6.061903139140741,
+    "time_s": 1000.0,
+    "decisions": 80,
+    "counts": {
+     "PLACE_CURRENT": 80,
+     "PALLET_CLOSE": 6
+    },
+    "safety_issues": 0,
+    "return": -4.48390618961605
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 6,
+    "pallets_closed": 5,
+    "closed_fill_mean": 0.19643616081432502,
+    "fill_per_pallet_used": 0.20441741231435562,
+    "pallet_equivalents": 5.244323669814508,
+    "time_s": 1000.0,
+    "decisions": 80,
+    "counts": {
+     "PLACE_CURRENT": 80,
+     "PALLET_CLOSE": 5,
+     "PARTIAL_REPACK": 5,
+     "REPACK_MOVES": 5
+    },
+    "safety_issues": 0,
+    "return": -3.2913147220422405
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 8,
+    "pallets_closed": 7,
+    "closed_fill_mean": 0.18299194081205908,
+    "fill_per_pallet_used": 0.18778347335850692,
+    "pallet_equivalents": 7.221324201183642,
+    "time_s": 1072.0,
+    "decisions": 80,
+    "counts": {
+     "PLACE_CURRENT": 80,
+     "PALLET_CLOSE": 7,
+     "PARTIAL_REPACK": 1,
+     "REPACK_MOVES": 1
+    },
+    "safety_issues": 0,
+    "return": -4.752788627447531
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 6,
+    "pallets_closed": 5,
+    "closed_fill_mean": 0.1835519543028395,
+    "fill_per_pallet_used": 0.17242624678106994,
+    "pallet_equivalents": 5.116797709172222,
+    "time_s": 940.0,
+    "decisions": 80,
+    "counts": {
+     "PLACE_CURRENT": 80,
+     "PALLET_CLOSE": 5
+    },
+    "safety_issues": 0,
+    "return": -3.517682747799382
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 11,
+    "pallets_closed": 10,
+    "closed_fill_mean": 0.15169303152893518,
+    "fill_per_pallet_used": 0.14492819676122332,
+    "pallet_equivalents": 10.077279849084105,
+    "time_s": 1252.0,
+    "decisions": 80,
+    "counts": {
+     "PLACE_CURRENT": 80,
+     "PALLET_CLOSE": 10,
+     "PARTIAL_REPACK": 1,
+     "REPACK_MOVES": 1
+    },
+    "safety_issues": 0,
+    "return": -7.514859520337192
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 7,
+    "pallets_closed": 6,
+    "closed_fill_mean": 0.1951928391873714,
+    "fill_per_pallet_used": 0.1775033586306217,
+    "pallet_equivalents": 6.071366475290123,
+    "time_s": 1036.0,
+    "decisions": 80,
+    "counts": {
+     "PLACE_CURRENT": 80,
+     "PARTIAL_REPACK": 3,
+     "REPACK_MOVES": 3,
+     "PALLET_CLOSE": 6
+    },
+    "safety_issues": 0,
+    "return": -4.104319454461419
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 6,
+    "pallets_closed": 5,
+    "closed_fill_mean": 0.20934317960848764,
+    "fill_per_pallet_used": 0.2514235739210391,
+    "pallet_equivalents": 5.461825545483796,
+    "time_s": 1000.0,
+    "decisions": 80,
+    "counts": {
+     "PLACE_CURRENT": 80,
+     "PARTIAL_REPACK": 5,
+     "REPACK_MOVES": 5,
+     "PALLET_CLOSE": 5
+    },
+    "safety_issues": 0,
+    "return": -2.9447426584313274
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 6,
+    "pallets_closed": 5,
+    "closed_fill_mean": 0.17093083566574835,
+    "fill_per_pallet_used": 0.16024818822252826,
+    "pallet_equivalents": 5.1068349510064275,
+    "time_s": 988.0,
+    "decisions": 80,
+    "counts": {
+     "PLACE_CURRENT": 80,
+     "PARTIAL_REPACK": 4,
+     "REPACK_MOVES": 4,
+     "PALLET_CLOSE": 5
+    },
+    "safety_issues": 0,
+    "return": -3.6778566923360896
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 6,
+    "pallets_closed": 5,
+    "closed_fill_mean": 0.16571325722975203,
+    "fill_per_pallet_used": 0.19933325687348227,
+    "pallet_equivalents": 5.367433255092133,
+    "time_s": 988.0,
+    "decisions": 80,
+    "counts": {
+     "PLACE_CURRENT": 80,
+     "PALLET_CLOSE": 5,
+     "PARTIAL_REPACK": 4,
+     "REPACK_MOVES": 4
+    },
+    "safety_issues": 0,
+    "return": -3.469434172610347
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 5,
+    "pallets_closed": 4,
+    "closed_fill_mean": 0.22047983239444446,
+    "fill_per_pallet_used": 0.2561735593981481,
+    "pallet_equivalents": 4.398948467412963,
+    "time_s": 904.0,
+    "decisions": 80,
+    "counts": {
+     "PLACE_CURRENT": 80,
+     "PALLET_CLOSE": 4,
+     "PARTIAL_REPACK": 2,
+     "REPACK_MOVES": 2
+    },
+    "safety_issues": 0,
+    "return": -2.28921287343148
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 7,
+    "pallets_closed": 6,
+    "closed_fill_mean": 0.16354257205815728,
+    "fill_per_pallet_used": 0.14096248334618916,
+    "pallet_equivalents": 6.00548195107438,
+    "time_s": 1012.0,
+    "decisions": 80,
+    "counts": {
+     "PLACE_CURRENT": 80,
+     "PARTIAL_REPACK": 1,
+     "REPACK_MOVES": 1,
+     "PALLET_CLOSE": 6
+    },
+    "safety_issues": 0,
+    "return": -4.538007184227733
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 6,
+    "pallets_closed": 5,
+    "closed_fill_mean": 0.173048200187037,
+    "fill_per_pallet_used": 0.2057317159919753,
+    "pallet_equivalents": 5.369149295016666,
+    "time_s": 964.0,
+    "decisions": 80,
+    "counts": {
+     "PLACE_CURRENT": 80,
+     "PALLET_CLOSE": 5,
+     "PARTIAL_REPACK": 2,
+     "REPACK_MOVES": 2
+    },
+    "safety_issues": 0,
+    "return": -3.382368703112964
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 5,
+    "pallets_closed": 4,
+    "closed_fill_mean": 0.2542338935821854,
+    "fill_per_pallet_used": 0.23855172846685022,
+    "pallet_equivalents": 4.17582306800551,
+    "time_s": 892.0,
+    "decisions": 80,
+    "counts": {
+     "PLACE_CURRENT": 80,
+     "PALLET_CLOSE": 4,
+     "PARTIAL_REPACK": 1,
+     "REPACK_MOVES": 1
+    },
+    "safety_issues": 0,
+    "return": -2.2363057833370057
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 7,
+    "pallets_closed": 6,
+    "closed_fill_mean": 0.2033449098251029,
+    "fill_per_pallet_used": 0.18527894883730153,
+    "pallet_equivalents": 6.0768831829104935,
+    "time_s": 1036.0,
+    "decisions": 80,
+    "counts": {
+     "PLACE_CURRENT": 80,
+     "PALLET_CLOSE": 6,
+     "PARTIAL_REPACK": 2,
+     "REPACK_MOVES": 3
+    },
+    "safety_issues": 0,
+    "return": -4.000977899188273
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 6,
+    "pallets_closed": 5,
+    "closed_fill_mean": 0.22950787173904322,
+    "fill_per_pallet_used": 0.21553901254243824,
+    "pallet_equivalents": 5.145694716559413,
+    "time_s": 1000.0,
+    "decisions": 80,
+    "counts": {
+     "PLACE_CURRENT": 80,
+     "PALLET_CLOSE": 5,
+     "PARTIAL_REPACK": 5,
+     "REPACK_MOVES": 5
+    },
+    "safety_issues": 0,
+    "return": -3.059226566050155
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 6,
+    "pallets_closed": 5,
+    "closed_fill_mean": 0.20022817935108658,
+    "fill_per_pallet_used": 0.21124792751066215,
+    "pallet_equivalents": 5.26634666830854,
+    "time_s": 1024.0,
+    "decisions": 80,
+    "counts": {
+     "PLACE_CURRENT": 80,
+     "PALLET_CLOSE": 5,
+     "PARTIAL_REPACK": 7,
+     "REPACK_MOVES": 7
+    },
+    "safety_issues": 0,
+    "return": -3.2433715381805936
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 6,
+    "pallets_closed": 5,
+    "closed_fill_mean": 0.1438743469239506,
+    "fill_per_pallet_used": 0.16179357227119343,
+    "pallet_equivalents": 5.251389699007407,
+    "time_s": 952.0,
+    "decisions": 80,
+    "counts": {
+     "PLACE_CURRENT": 80,
+     "PALLET_CLOSE": 5,
+     "PARTIAL_REPACK": 1,
+     "REPACK_MOVES": 1
+    },
+    "safety_issues": 0,
+    "return": -3.7858668317530872
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 5,
+    "pallets_closed": 4,
+    "closed_fill_mean": 0.2562195757845679,
+    "fill_per_pallet_used": 0.24045812421567897,
+    "pallet_equivalents": 4.1774123179401235,
+    "time_s": 892.0,
+    "decisions": 80,
+    "counts": {
+     "PLACE_CURRENT": 80,
+     "PALLET_CLOSE": 4,
+     "PARTIAL_REPACK": 1,
+     "REPACK_MOVES": 1
+    },
+    "safety_issues": 0,
+    "return": -2.218831075783334
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 7,
+    "pallets_closed": 6,
+    "closed_fill_mean": 0.16466404677716048,
+    "fill_per_pallet_used": 0.14193077333492063,
+    "pallet_equivalents": 6.005531132681481,
+    "time_s": 1000.0,
+    "decisions": 80,
+    "counts": {
+     "PLACE_CURRENT": 80,
+     "PALLET_CLOSE": 6
+    },
+    "safety_issues": 0,
+    "return": -4.518500305992593
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 8,
+    "pallets_closed": 7,
+    "closed_fill_mean": 0.20909476601157406,
+    "fill_per_pallet_used": 0.20005230825945217,
+    "pallet_equivalents": 7.136755103994599,
+    "time_s": 1084.0,
+    "decisions": 80,
+    "counts": {
+     "PLACE_CURRENT": 80,
+     "PALLET_CLOSE": 7,
+     "PARTIAL_REPACK": 2,
+     "REPACK_MOVES": 2
+    },
+    "safety_issues": 0,
+    "return": -4.477918171843363
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 5,
+    "pallets_closed": 4,
+    "closed_fill_mean": 0.22541901818487903,
+    "fill_per_pallet_used": 0.20505726202571162,
+    "pallet_equivalents": 4.123610237389042,
+    "time_s": 904.0,
+    "decisions": 80,
+    "counts": {
+     "PLACE_CURRENT": 80,
+     "PALLET_CLOSE": 4,
+     "PARTIAL_REPACK": 2,
+     "REPACK_MOVES": 2
+    },
+    "safety_issues": 0,
+    "return": -2.5250376171319258
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 8,
+    "pallets_closed": 7,
+    "closed_fill_mean": 0.20944336799041005,
+    "fill_per_pallet_used": 0.19289537774006557,
+    "pallet_equivalents": 7.077059445987654,
+    "time_s": 1096.0,
+    "decisions": 80,
+    "counts": {
+     "PLACE_CURRENT": 80,
+     "PALLET_CLOSE": 7,
+     "PARTIAL_REPACK": 2,
+     "REPACK_MOVES": 3
+    },
+    "safety_issues": 0,
+    "return": -4.5387334021466055
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 7,
+    "pallets_closed": 6,
+    "closed_fill_mean": 0.1393700672274691,
+    "fill_per_pallet_used": 0.17226365994647266,
+    "pallet_equivalents": 6.369625216260494,
+    "time_s": 1000.0,
+    "decisions": 80,
+    "counts": {
+     "PLACE_CURRENT": 80,
+     "PALLET_CLOSE": 6
+    },
+    "safety_issues": 0,
+    "return": -4.457933977009876
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 7,
+    "pallets_closed": 6,
+    "closed_fill_mean": 0.16115049470431583,
+    "fill_per_pallet_used": 0.14713098197533775,
+    "pallet_equivalents": 6.063013905601469,
+    "time_s": 1000.0,
+    "decisions": 80,
+    "counts": {
+     "PLACE_CURRENT": 80,
+     "PALLET_CLOSE": 6
+    },
+    "safety_issues": 0,
+    "return": -4.5031801579467405
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 8,
+    "pallets_closed": 7,
+    "closed_fill_mean": 0.16481891076604938,
+    "fill_per_pallet_used": 0.15949390525825616,
+    "pallet_equivalents": 7.122218866703704,
+    "time_s": 1120.0,
+    "decisions": 80,
+    "counts": {
+     "PLACE_CURRENT": 80,
+     "PALLET_CLOSE": 7,
+     "PARTIAL_REPACK": 5,
+     "REPACK_MOVES": 5
+    },
+    "safety_issues": 0,
+    "return": -5.130316382571605
+   }
+  ],
+  "greedy": [
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 5,
+    "pallets_closed": 4,
+    "closed_fill_mean": 0.2563438853151208,
+    "fill_per_pallet_used": 0.254049002757392,
+    "pallet_equivalents": 4.244869472526477,
+    "time_s": 964.0,
+    "decisions": 88,
+    "counts": {
+     "PLACE_CURRENT": 72,
+     "BUFFER_CURRENT": 8,
+     "PALLET_CLOSE": 4,
+     "RETRIEVE_BUFFER": 8,
+     "PARTIAL_REPACK": 1,
+     "REPACK_MOVES": 1
+    },
+    "safety_issues": 0,
+    "return": -2.636379444952557
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 7,
+    "pallets_closed": 6,
+    "closed_fill_mean": 0.18937342750707306,
+    "fill_per_pallet_used": 0.1734312244643959,
+    "pallet_equivalents": 6.077778006208334,
+    "time_s": 1124.0,
+    "decisions": 91,
+    "counts": {
+     "PLACE_CURRENT": 69,
+     "BUFFER_CURRENT": 11,
+     "PARTIAL_REPACK": 2,
+     "REPACK_MOVES": 2,
+     "RETRIEVE_BUFFER": 11,
+     "PALLET_CLOSE": 6
+    },
+    "safety_issues": 0,
+    "return": -4.771740863706789
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 6,
+    "pallets_closed": 5,
+    "closed_fill_mean": 0.1706940006048148,
+    "fill_per_pallet_used": 0.1731664124603909,
+    "pallet_equivalents": 5.185528471738271,
+    "time_s": 994.0,
+    "decisions": 86,
+    "counts": {
+     "PLACE_CURRENT": 74,
+     "BUFFER_CURRENT": 6,
+     "PALLET_CLOSE": 5,
+     "RETRIEVE_BUFFER": 6
+    },
+    "safety_issues": 0,
+    "return": -4.08853152221358
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 6,
+    "pallets_closed": 5,
+    "closed_fill_mean": 0.2102560510689929,
+    "fill_per_pallet_used": 0.20441741231435567,
+    "pallet_equivalents": 5.175224218541169,
+    "time_s": 1076.0,
+    "decisions": 94,
+    "counts": {
+     "PLACE_CURRENT": 66,
+     "BUFFER_CURRENT": 14,
+     "PALLET_CLOSE": 5,
+     "RETRIEVE_BUFFER": 14,
+     "PARTIAL_REPACK": 1,
+     "REPACK_MOVES": 1
+    },
+    "safety_issues": 0,
+    "return": -3.7222152707689022
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 7,
+    "pallets_closed": 6,
+    "closed_fill_mean": 0.20400245499074074,
+    "fill_per_pallet_used": 0.21460968383829362,
+    "pallet_equivalents": 6.278253056923611,
+    "time_s": 1076.0,
+    "decisions": 86,
+    "counts": {
+     "PLACE_CURRENT": 74,
+     "BUFFER_CURRENT": 6,
+     "PALLET_CLOSE": 6,
+     "RETRIEVE_BUFFER": 6,
+     "PARTIAL_REPACK": 2,
+     "REPACK_MOVES": 2
+    },
+    "safety_issues": 0,
+    "return": -4.3857174831875
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 6,
+    "pallets_closed": 5,
+    "closed_fill_mean": 0.1945857532439506,
+    "fill_per_pallet_used": 0.17242624678106994,
+    "pallet_equivalents": 5.061628714466667,
+    "time_s": 996.0,
+    "decisions": 86,
+    "counts": {
+     "PLACE_CURRENT": 74,
+     "BUFFER_CURRENT": 6,
+     "PALLET_CLOSE": 5,
+     "RETRIEVE_BUFFER": 6
+    },
+    "safety_issues": 0,
+    "return": -4.030513753093826
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 6,
+    "pallets_closed": 5,
+    "closed_fill_mean": 0.2516466856949074,
+    "fill_per_pallet_used": 0.2657016940622428,
+    "pallet_equivalents": 5.33597673589892,
+    "time_s": 1178.0,
+    "decisions": 101,
+    "counts": {
+     "PLACE_CURRENT": 59,
+     "BUFFER_CURRENT": 21,
+     "PALLET_CLOSE": 5,
+     "RETRIEVE_BUFFER": 21,
+     "PARTIAL_REPACK": 2,
+     "REPACK_MOVES": 4
+    },
+    "safety_issues": 0,
+    "return": -3.2105564071520045
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 7,
+    "pallets_closed": 6,
+    "closed_fill_mean": 0.19119495089879113,
+    "fill_per_pallet_used": 0.1775033586306217,
+    "pallet_equivalents": 6.095353805021605,
+    "time_s": 1108.0,
+    "decisions": 87,
+    "counts": {
+     "PLACE_CURRENT": 73,
+     "BUFFER_CURRENT": 7,
+     "PARTIAL_REPACK": 4,
+     "REPACK_MOVES": 4,
+     "PALLET_CLOSE": 6,
+     "RETRIEVE_BUFFER": 7
+    },
+    "safety_issues": 0,
+    "return": -4.716306784192901
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 7,
+    "pallets_closed": 6,
+    "closed_fill_mean": 0.23858013040020576,
+    "fill_per_pallet_used": 0.21550592050374776,
+    "pallet_equivalents": 6.077060661125,
+    "time_s": 1130.0,
+    "decisions": 93,
+    "counts": {
+     "PLACE_CURRENT": 67,
+     "BUFFER_CURRENT": 13,
+     "PARTIAL_REPACK": 1,
+     "REPACK_MOVES": 1,
+     "PALLET_CLOSE": 6,
+     "RETRIEVE_BUFFER": 13
+    },
+    "safety_issues": 0,
+    "return": -4.074977774072531
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 5,
+    "pallets_closed": 4,
+    "closed_fill_mean": 0.20478638813636357,
+    "fill_per_pallet_used": 0.1922978258670339,
+    "pallet_equivalents": 4.142343576789715,
+    "time_s": 1008.0,
+    "decisions": 93,
+    "counts": {
+     "PLACE_CURRENT": 67,
+     "BUFFER_CURRENT": 13,
+     "PARTIAL_REPACK": 1,
+     "REPACK_MOVES": 1,
+     "RETRIEVE_BUFFER": 13,
+     "PALLET_CLOSE": 4
+    },
+    "safety_issues": 0,
+    "return": -3.2213653181193758
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 6,
+    "pallets_closed": 5,
+    "closed_fill_mean": 0.22673168509543914,
+    "fill_per_pallet_used": 0.19933325687348225,
+    "pallet_equivalents": 5.062341115763697,
+    "time_s": 1074.0,
+    "decisions": 95,
+    "counts": {
+     "PLACE_CURRENT": 65,
+     "BUFFER_CURRENT": 15,
+     "PALLET_CLOSE": 5,
+     "RETRIEVE_BUFFER": 15
+    },
+    "safety_issues": 0,
+    "return": -3.62534203328191
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 6,
+    "pallets_closed": 5,
+    "closed_fill_mean": 0.20697044459407404,
+    "fill_per_pallet_used": 0.2134779661651235,
+    "pallet_equivalents": 5.246015574020371,
+    "time_s": 1014.0,
+    "decisions": 87,
+    "counts": {
+     "PLACE_CURRENT": 73,
+     "BUFFER_CURRENT": 7,
+     "PARTIAL_REPACK": 1,
+     "REPACK_MOVES": 1,
+     "PALLET_CLOSE": 5,
+     "RETRIEVE_BUFFER": 7
+    },
+    "safety_issues": 0,
+    "return": -3.6612799800388887
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 6,
+    "pallets_closed": 5,
+    "closed_fill_mean": 0.18969294547927756,
+    "fill_per_pallet_used": 0.16445623057055403,
+    "pallet_equivalents": 5.038272656026936,
+    "time_s": 1016.0,
+    "decisions": 87,
+    "counts": {
+     "PLACE_CURRENT": 73,
+     "BUFFER_CURRENT": 7,
+     "PALLET_CLOSE": 5,
+     "RETRIEVE_BUFFER": 7,
+     "PARTIAL_REPACK": 1,
+     "REPACK_MOVES": 1
+    },
+    "safety_issues": 0,
+    "return": -4.072797889180288
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 5,
+    "pallets_closed": 4,
+    "closed_fill_mean": 0.23164402921003086,
+    "fill_per_pallet_used": 0.24687805919037034,
+    "pallet_equivalents": 4.307814179111729,
+    "time_s": 1000.0,
+    "decisions": 92,
+    "counts": {
+     "PLACE_CURRENT": 68,
+     "BUFFER_CURRENT": 12,
+     "PALLET_CLOSE": 4,
+     "RETRIEVE_BUFFER": 12,
+     "PARTIAL_REPACK": 1,
+     "REPACK_MOVES": 1
+    },
+    "safety_issues": 0,
+    "return": -2.7230335872080254
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 5,
+    "pallets_closed": 4,
+    "closed_fill_mean": 0.267450689463269,
+    "fill_per_pallet_used": 0.23855172846685027,
+    "pallet_equivalents": 4.122955884481176,
+    "time_s": 944.0,
+    "decisions": 87,
+    "counts": {
+     "PLACE_CURRENT": 73,
+     "BUFFER_CURRENT": 7,
+     "PALLET_CLOSE": 4,
+     "RETRIEVE_BUFFER": 7
+    },
+    "safety_issues": 0,
+    "return": -2.669438599812672
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 7,
+    "pallets_closed": 6,
+    "closed_fill_mean": 0.20334490982510287,
+    "fill_per_pallet_used": 0.18527894883730153,
+    "pallet_equivalents": 6.0768831829104935,
+    "time_s": 1068.0,
+    "decisions": 85,
+    "counts": {
+     "PLACE_CURRENT": 75,
+     "BUFFER_CURRENT": 5,
+     "PALLET_CLOSE": 6,
+     "PARTIAL_REPACK": 1,
+     "REPACK_MOVES": 2,
+     "RETRIEVE_BUFFER": 5
+    },
+    "safety_issues": 0,
+    "return": -4.494977899188273
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 7,
+    "pallets_closed": 6,
+    "closed_fill_mean": 0.20266743920293206,
+    "fill_per_pallet_used": 0.18474772503637565,
+    "pallet_equivalents": 6.077229440037037,
+    "time_s": 1092.0,
+    "decisions": 86,
+    "counts": {
+     "PLACE_CURRENT": 74,
+     "BUFFER_CURRENT": 6,
+     "PALLET_CLOSE": 6,
+     "RETRIEVE_BUFFER": 6,
+     "PARTIAL_REPACK": 3,
+     "REPACK_MOVES": 3
+    },
+    "safety_issues": 0,
+    "return": -4.590761289527778
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 6,
+    "pallets_closed": 5,
+    "closed_fill_mean": 0.2412268626458524,
+    "fill_per_pallet_used": 0.21124792751066215,
+    "pallet_equivalents": 5.061353251834711,
+    "time_s": 1078.0,
+    "decisions": 94,
+    "counts": {
+     "PLACE_CURRENT": 66,
+     "BUFFER_CURRENT": 14,
+     "PALLET_CLOSE": 5,
+     "RETRIEVE_BUFFER": 14,
+     "PARTIAL_REPACK": 1,
+     "REPACK_MOVES": 1
+    },
+    "safety_issues": 0,
+    "return": -3.519378121706765
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 5,
+    "pallets_closed": 4,
+    "closed_fill_mean": 0.2083102793567901,
+    "fill_per_pallet_used": 0.19415228672543206,
+    "pallet_equivalents": 4.1375203162,
+    "time_s": 954.0,
+    "decisions": 88,
+    "counts": {
+     "PLACE_CURRENT": 72,
+     "BUFFER_CURRENT": 8,
+     "PALLET_CLOSE": 4,
+     "RETRIEVE_BUFFER": 8
+    },
+    "safety_issues": 0,
+    "return": -3.1729974489456785
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 5,
+    "pallets_closed": 4,
+    "closed_fill_mean": 0.2544980925395061,
+    "fill_per_pallet_used": 0.24045812421567894,
+    "pallet_equivalents": 4.184298250920371,
+    "time_s": 944.0,
+    "decisions": 87,
+    "counts": {
+     "PLACE_CURRENT": 73,
+     "BUFFER_CURRENT": 7,
+     "PALLET_CLOSE": 4,
+     "RETRIEVE_BUFFER": 7
+    },
+    "safety_issues": 0,
+    "return": -2.7117170087635802
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 5,
+    "pallets_closed": 4,
+    "closed_fill_mean": 0.20425775292345674,
+    "fill_per_pallet_used": 0.19870308266888884,
+    "pallet_equivalents": 4.176484401650617,
+    "time_s": 966.0,
+    "decisions": 88,
+    "counts": {
+     "PLACE_CURRENT": 72,
+     "BUFFER_CURRENT": 8,
+     "PARTIAL_REPACK": 1,
+     "REPACK_MOVES": 1,
+     "PALLET_CLOSE": 4,
+     "RETRIEVE_BUFFER": 8
+    },
+    "safety_issues": 0,
+    "return": -3.164453574961729
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 7,
+    "pallets_closed": 6,
+    "closed_fill_mean": 0.21547031644701642,
+    "fill_per_pallet_used": 0.22863120943937387,
+    "pallet_equivalents": 6.307596567393518,
+    "time_s": 1084.0,
+    "decisions": 88,
+    "counts": {
+     "PLACE_CURRENT": 72,
+     "BUFFER_CURRENT": 8,
+     "PARTIAL_REPACK": 1,
+     "REPACK_MOVES": 1,
+     "PALLET_CLOSE": 6,
+     "RETRIEVE_BUFFER": 8
+    },
+    "safety_issues": 0,
+    "return": -4.132759635242285
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 5,
+    "pallets_closed": 4,
+    "closed_fill_mean": 0.2410323513301193,
+    "fill_per_pallet_used": 0.20505726202571162,
+    "pallet_equivalents": 4.0611569048080804,
+    "time_s": 958.0,
+    "decisions": 86,
+    "counts": {
+     "PLACE_CURRENT": 74,
+     "BUFFER_CURRENT": 6,
+     "PARTIAL_REPACK": 2,
+     "REPACK_MOVES": 2,
+     "RETRIEVE_BUFFER": 6,
+     "PALLET_CLOSE": 4
+    },
+    "safety_issues": 0,
+    "return": -2.9095842845509647
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 7,
+    "pallets_closed": 6,
+    "closed_fill_mean": 0.2443505959888117,
+    "fill_per_pallet_used": 0.22045186027436062,
+    "pallet_equivalents": 6.077059445987654,
+    "time_s": 1174.0,
+    "decisions": 98,
+    "counts": {
+     "PLACE_CURRENT": 62,
+     "BUFFER_CURRENT": 18,
+     "PALLET_CLOSE": 6,
+     "RETRIEVE_BUFFER": 18,
+     "PARTIAL_REPACK": 1,
+     "REPACK_MOVES": 1
+    },
+    "safety_issues": 0,
+    "return": -4.013733402146604
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 5,
+    "pallets_closed": 4,
+    "closed_fill_mean": 0.2631711079054012,
+    "fill_per_pallet_used": 0.2411691239250617,
+    "pallet_equivalents": 4.153161188003704,
+    "time_s": 1040.0,
+    "decisions": 95,
+    "counts": {
+     "PLACE_CURRENT": 65,
+     "BUFFER_CURRENT": 15,
+     "RETRIEVE_BUFFER": 15,
+     "PALLET_CLOSE": 4,
+     "PARTIAL_REPACK": 2,
+     "REPACK_MOVES": 2
+    },
+    "safety_issues": 0,
+    "return": -2.719469948753086
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 5,
+    "pallets_closed": 4,
+    "closed_fill_mean": 0.20579388290312206,
+    "fill_per_pallet_used": 0.20598337476547285,
+    "pallet_equivalents": 4.206741342214876,
+    "time_s": 946.0,
+    "decisions": 87,
+    "counts": {
+     "PLACE_CURRENT": 73,
+     "BUFFER_CURRENT": 7,
+     "PALLET_CLOSE": 4,
+     "RETRIEVE_BUFFER": 7
+    },
+    "safety_issues": 0,
+    "return": -3.109907594560147
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 6,
+    "pallets_closed": 5,
+    "closed_fill_mean": 0.21392646519592592,
+    "fill_per_pallet_used": 0.2126585403443416,
+    "pallet_equivalents": 5.20631891608642,
+    "time_s": 1084.0,
+    "decisions": 96,
+    "counts": {
+     "PLACE_CURRENT": 64,
+     "BUFFER_CURRENT": 16,
+     "PALLET_CLOSE": 5,
+     "RETRIEVE_BUFFER": 16
+    },
+    "safety_issues": 0,
+    "return": -3.6564164319543204
+   }
+  ],
+  "rule": [
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 4,
+    "pallets_closed": 3,
+    "closed_fill_mean": 0.37608391320497897,
+    "fill_per_pallet_used": 0.3175612534467401,
+    "pallet_equivalents": 3.141993274172023,
+    "time_s": 1104.0,
+    "decisions": 112,
+    "counts": {
+     "PLACE_CURRENT": 48,
+     "BUFFER_CURRENT": 32,
+     "RETRIEVE_BUFFER": 32,
+     "PALLET_CLOSE": 3
+    },
+    "safety_issues": 0,
+    "return": -1.5715032465981027
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 5,
+    "pallets_closed": 4,
+    "closed_fill_mean": 0.2583330048798226,
+    "fill_per_pallet_used": 0.24280371425015435,
+    "pallet_equivalents": 4.1806865517314815,
+    "time_s": 1260.0,
+    "decisions": 117,
+    "counts": {
+     "PLACE_CURRENT": 43,
+     "BUFFER_CURRENT": 37,
+     "RETRIEVE_BUFFER": 37,
+     "PARTIAL_REPACK": 4,
+     "REPACK_MOVES": 4,
+     "PALLET_CLOSE": 4
+    },
+    "safety_issues": 0,
+    "return": -2.882649409229938
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 4,
+    "pallets_closed": 3,
+    "closed_fill_mean": 0.28509940062037037,
+    "fill_per_pallet_used": 0.2597496186905864,
+    "pallet_equivalents": 3.1837002729012345,
+    "time_s": 1110.0,
+    "decisions": 113,
+    "counts": {
+     "PLACE_CURRENT": 47,
+     "BUFFER_CURRENT": 33,
+     "RETRIEVE_BUFFER": 33,
+     "PALLET_CLOSE": 3
+    },
+    "safety_issues": 0,
+    "return": -2.054703323376543
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 6,
+    "pallets_closed": 5,
+    "closed_fill_mean": 0.232999888599449,
+    "fill_per_pallet_used": 0.20441741231435567,
+    "pallet_equivalents": 5.061505030888889,
+    "time_s": 1236.0,
+    "decisions": 108,
+    "counts": {
+     "PLACE_CURRENT": 52,
+     "BUFFER_CURRENT": 28,
+     "RETRIEVE_BUFFER": 28,
+     "PALLET_CLOSE": 5,
+     "PARTIAL_REPACK": 4,
+     "REPACK_MOVES": 4
+    },
+    "safety_issues": 0,
+    "return": -3.58049608311662
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 5,
+    "pallets_closed": 4,
+    "closed_fill_mean": 0.33203887473013116,
+    "fill_per_pallet_used": 0.30045355737361107,
+    "pallet_equivalents": 4.174112287947531,
+    "time_s": 1114.0,
+    "decisions": 105,
+    "counts": {
+     "PLACE_CURRENT": 55,
+     "BUFFER_CURRENT": 25,
+     "RETRIEVE_BUFFER": 25,
+     "PALLET_CLOSE": 4,
+     "PARTIAL_REPACK": 1,
+     "REPACK_MOVES": 1
+    },
+    "safety_issues": 0,
+    "return": -2.1525767142114205
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 4,
+    "pallets_closed": 3,
+    "closed_fill_mean": 0.28372457422386826,
+    "fill_per_pallet_used": 0.2586393701716049,
+    "pallet_equivalents": 3.183383758014815,
+    "time_s": 1078.0,
+    "decisions": 108,
+    "counts": {
+     "PLACE_CURRENT": 52,
+     "BUFFER_CURRENT": 28,
+     "RETRIEVE_BUFFER": 28,
+     "PALLET_CLOSE": 3
+    },
+    "safety_issues": 0,
+    "return": -2.119268796641975
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 7,
+    "pallets_closed": 6,
+    "closed_fill_mean": 0.21431858013567387,
+    "fill_per_pallet_used": 0.22774430919620808,
+    "pallet_equivalents": 6.308298683559413,
+    "time_s": 1326.0,
+    "decisions": 116,
+    "counts": {
+     "PLACE_CURRENT": 44,
+     "BUFFER_CURRENT": 36,
+     "RETRIEVE_BUFFER": 36,
+     "PALLET_CLOSE": 6,
+     "PARTIAL_REPACK": 1,
+     "REPACK_MOVES": 1
+    },
+    "safety_issues": 0,
+    "return": -4.160878354812498
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 6,
+    "pallets_closed": 5,
+    "closed_fill_mean": 0.24710678407731484,
+    "fill_per_pallet_used": 0.20708725173572534,
+    "pallet_equivalents": 5.006989590027778,
+    "time_s": 1180.0,
+    "decisions": 105,
+    "counts": {
+     "PLACE_CURRENT": 55,
+     "BUFFER_CURRENT": 25,
+     "RETRIEVE_BUFFER": 25,
+     "PARTIAL_REPACK": 1,
+     "REPACK_MOVES": 1,
+     "PALLET_CLOSE": 5
+    },
+    "safety_issues": 0,
+    "return": -3.5539425691990747
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 6,
+    "pallets_closed": 5,
+    "closed_fill_mean": 0.2554903479973765,
+    "fill_per_pallet_used": 0.25142357392103903,
+    "pallet_equivalents": 5.231089703539352,
+    "time_s": 1280.0,
+    "decisions": 117,
+    "counts": {
+     "PLACE_CURRENT": 43,
+     "BUFFER_CURRENT": 37,
+     "RETRIEVE_BUFFER": 37,
+     "PARTIAL_REPACK": 2,
+     "REPACK_MOVES": 2,
+     "PALLET_CLOSE": 5
+    },
+    "safety_issues": 0,
+    "return": -3.2420068164868816
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 4,
+    "pallets_closed": 3,
+    "closed_fill_mean": 0.26186265652810936,
+    "fill_per_pallet_used": 0.24037228233379246,
+    "pallet_equivalents": 3.1759011597508415,
+    "time_s": 1122.0,
+    "decisions": 113,
+    "counts": {
+     "PLACE_CURRENT": 47,
+     "BUFFER_CURRENT": 33,
+     "PARTIAL_REPACK": 1,
+     "REPACK_MOVES": 1,
+     "RETRIEVE_BUFFER": 33,
+     "PALLET_CLOSE": 3
+    },
+    "safety_issues": 0,
+    "return": -2.165922901080503
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 6,
+    "pallets_closed": 5,
+    "closed_fill_mean": 0.22673168509543914,
+    "fill_per_pallet_used": 0.19933325687348225,
+    "pallet_equivalents": 5.062341115763697,
+    "time_s": 1250.0,
+    "decisions": 116,
+    "counts": {
+     "PLACE_CURRENT": 44,
+     "BUFFER_CURRENT": 36,
+     "RETRIEVE_BUFFER": 36,
+     "PALLET_CLOSE": 5
+    },
+    "safety_issues": 0,
+    "return": -3.6193420332819106
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 4,
+    "pallets_closed": 3,
+    "closed_fill_mean": 0.3051332965701646,
+    "fill_per_pallet_used": 0.3202169492476852,
+    "pallet_equivalents": 3.365467907280247,
+    "time_s": 1016.0,
+    "decisions": 100,
+    "counts": {
+     "PLACE_CURRENT": 60,
+     "BUFFER_CURRENT": 20,
+     "RETRIEVE_BUFFER": 20,
+     "PALLET_CLOSE": 3,
+     "PARTIAL_REPACK": 2,
+     "REPACK_MOVES": 2
+    },
+    "safety_issues": 0,
+    "return": -1.6917323132987656
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 5,
+    "pallets_closed": 4,
+    "closed_fill_mean": 0.23140021706244254,
+    "fill_per_pallet_used": 0.19734747668466476,
+    "pallet_equivalents": 4.061136515173554,
+    "time_s": 1120.0,
+    "decisions": 107,
+    "counts": {
+     "PLACE_CURRENT": 53,
+     "BUFFER_CURRENT": 27,
+     "RETRIEVE_BUFFER": 27,
+     "PALLET_CLOSE": 4
+    },
+    "safety_issues": 0,
+    "return": -2.971661748326905
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 6,
+    "pallets_closed": 5,
+    "closed_fill_mean": 0.20997422890209877,
+    "fill_per_pallet_used": 0.2057317159919753,
+    "pallet_equivalents": 5.184519151441358,
+    "time_s": 1212.0,
+    "decisions": 108,
+    "counts": {
+     "PLACE_CURRENT": 52,
+     "BUFFER_CURRENT": 28,
+     "RETRIEVE_BUFFER": 28,
+     "PALLET_CLOSE": 5,
+     "PARTIAL_REPACK": 2,
+     "REPACK_MOVES": 2
+    },
+    "safety_issues": 0,
+    "return": -3.681738559537653
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 5,
+    "pallets_closed": 4,
+    "closed_fill_mean": 0.26765938658356286,
+    "fill_per_pallet_used": 0.23855172846685027,
+    "pallet_equivalents": 4.122121096,
+    "time_s": 1092.0,
+    "decisions": 104,
+    "counts": {
+     "PLACE_CURRENT": 56,
+     "BUFFER_CURRENT": 24,
+     "RETRIEVE_BUFFER": 24,
+     "PALLET_CLOSE": 4
+    },
+    "safety_issues": 0,
+    "return": -2.6886038113314963
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 5,
+    "pallets_closed": 4,
+    "closed_fill_mean": 0.30501736473765434,
+    "fill_per_pallet_used": 0.2593905283722222,
+    "pallet_equivalents": 4.0768831829104935,
+    "time_s": 1228.0,
+    "decisions": 119,
+    "counts": {
+     "PLACE_CURRENT": 41,
+     "BUFFER_CURRENT": 39,
+     "RETRIEVE_BUFFER": 39,
+     "PALLET_CLOSE": 4
+    },
+    "safety_issues": 0,
+    "return": -2.532977899188272
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 5,
+    "pallets_closed": 4,
+    "closed_fill_mean": 0.26600043872010026,
+    "fill_per_pallet_used": 0.25864681505092596,
+    "pallet_equivalents": 4.229232320374228,
+    "time_s": 1176.0,
+    "decisions": 112,
+    "counts": {
+     "PLACE_CURRENT": 48,
+     "BUFFER_CURRENT": 32,
+     "RETRIEVE_BUFFER": 32,
+     "PALLET_CLOSE": 4
+    },
+    "safety_issues": 0,
+    "return": -2.724764169864968
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 6,
+    "pallets_closed": 5,
+    "closed_fill_mean": 0.22473530445815726,
+    "fill_per_pallet_used": 0.21124792751066215,
+    "pallet_equivalents": 5.143811042773186,
+    "time_s": 1308.0,
+    "decisions": 114,
+    "counts": {
+     "PLACE_CURRENT": 46,
+     "BUFFER_CURRENT": 34,
+     "RETRIEVE_BUFFER": 34,
+     "PALLET_CLOSE": 5,
+     "PARTIAL_REPACK": 5,
+     "REPACK_MOVES": 6
+    },
+    "safety_issues": 0,
+    "return": -3.646835912645239
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 4,
+    "pallets_closed": 3,
+    "closed_fill_mean": 0.2312988058738683,
+    "fill_per_pallet_used": 0.2426903584067901,
+    "pallet_equivalents": 3.2768650160055555,
+    "time_s": 1046.0,
+    "decisions": 107,
+    "counts": {
+     "PLACE_CURRENT": 53,
+     "BUFFER_CURRENT": 27,
+     "RETRIEVE_BUFFER": 27,
+     "PALLET_CLOSE": 3
+    },
+    "safety_issues": 0,
+    "return": -2.1743421487512333
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 4,
+    "pallets_closed": 3,
+    "closed_fill_mean": 0.3524322008423868,
+    "fill_per_pallet_used": 0.3005726552695987,
+    "pallet_equivalents": 3.1449940185512344,
+    "time_s": 1148.0,
+    "decisions": 115,
+    "counts": {
+     "PLACE_CURRENT": 45,
+     "BUFFER_CURRENT": 35,
+     "RETRIEVE_BUFFER": 35,
+     "PALLET_CLOSE": 3,
+     "PARTIAL_REPACK": 1,
+     "REPACK_MOVES": 1
+    },
+    "safety_issues": 0,
+    "return": -1.6524127763944443
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 4,
+    "pallets_closed": 3,
+    "closed_fill_mean": 0.26271747357901226,
+    "fill_per_pallet_used": 0.24837885333611107,
+    "pallet_equivalents": 3.2053629926074074,
+    "time_s": 1026.0,
+    "decisions": 102,
+    "counts": {
+     "PLACE_CURRENT": 58,
+     "BUFFER_CURRENT": 22,
+     "RETRIEVE_BUFFER": 22,
+     "PARTIAL_REPACK": 1,
+     "REPACK_MOVES": 1,
+     "PALLET_CLOSE": 3
+    },
+    "safety_issues": 0,
+    "return": -2.083332165918518
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 5,
+    "pallets_closed": 4,
+    "closed_fill_mean": 0.32001974162557867,
+    "fill_per_pallet_used": 0.3200836932151234,
+    "pallet_equivalents": 4.320339499573302,
+    "time_s": 1096.0,
+    "decisions": 102,
+    "counts": {
+     "PLACE_CURRENT": 58,
+     "BUFFER_CURRENT": 22,
+     "RETRIEVE_BUFFER": 22,
+     "PARTIAL_REPACK": 2,
+     "REPACK_MOVES": 2,
+     "PALLET_CLOSE": 4
+    },
+    "safety_issues": 0,
+    "return": -2.0835025674220677
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 4,
+    "pallets_closed": 3,
+    "closed_fill_mean": 0.30088140889562276,
+    "fill_per_pallet_used": 0.25632157753213947,
+    "pallet_equivalents": 3.1226420834416895,
+    "time_s": 1094.0,
+    "decisions": 110,
+    "counts": {
+     "PLACE_CURRENT": 50,
+     "BUFFER_CURRENT": 30,
+     "RETRIEVE_BUFFER": 30,
+     "PARTIAL_REPACK": 1,
+     "REPACK_MOVES": 1,
+     "PALLET_CLOSE": 3
+    },
+    "safety_issues": 0,
+    "return": -1.9430694631845733
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 6,
+    "pallets_closed": 5,
+    "closed_fill_mean": 0.231618842129321,
+    "fill_per_pallet_used": 0.25719383698675413,
+    "pallet_equivalents": 5.38506881127392,
+    "time_s": 1214.0,
+    "decisions": 110,
+    "counts": {
+     "PLACE_CURRENT": 50,
+     "BUFFER_CURRENT": 30,
+     "RETRIEVE_BUFFER": 30,
+     "PALLET_CLOSE": 5,
+     "PARTIAL_REPACK": 1,
+     "REPACK_MOVES": 1
+    },
+    "safety_issues": 0,
+    "return": -3.2537427674328687
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 5,
+    "pallets_closed": 4,
+    "closed_fill_mean": 0.2090551008412037,
+    "fill_per_pallet_used": 0.2411691239250617,
+    "pallet_equivalents": 4.369625216260494,
+    "time_s": 1150.0,
+    "decisions": 111,
+    "counts": {
+     "PLACE_CURRENT": 49,
+     "BUFFER_CURRENT": 31,
+     "RETRIEVE_BUFFER": 31,
+     "PALLET_CLOSE": 4
+    },
+    "safety_issues": 0,
+    "return": -2.8469339770098743
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 4,
+    "pallets_closed": 3,
+    "closed_fill_mean": 0.2821225008570552,
+    "fill_per_pallet_used": 0.257479218456841,
+    "pallet_equivalents": 3.1835493712561984,
+    "time_s": 1126.0,
+    "decisions": 115,
+    "counts": {
+     "PLACE_CURRENT": 45,
+     "BUFFER_CURRENT": 35,
+     "RETRIEVE_BUFFER": 35,
+     "PALLET_CLOSE": 3
+    },
+    "safety_issues": 0,
+    "return": -2.06871562360147
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 6,
+    "pallets_closed": 5,
+    "closed_fill_mean": 0.2140815518522222,
+    "fill_per_pallet_used": 0.21265854034434153,
+    "pallet_equivalents": 5.205543482804938,
+    "time_s": 1306.0,
+    "decisions": 116,
+    "counts": {
+     "PLACE_CURRENT": 44,
+     "BUFFER_CURRENT": 36,
+     "RETRIEVE_BUFFER": 36,
+     "PALLET_CLOSE": 5,
+     "PARTIAL_REPACK": 4,
+     "REPACK_MOVES": 4
+    },
+    "safety_issues": 0,
+    "return": -3.696640998672838
+   }
+  ],
+  "ppo": [
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 4,
+    "pallets_closed": 3,
+    "closed_fill_mean": 0.36208689446403414,
+    "fill_per_pallet_used": 0.3175612534467401,
+    "pallet_equivalents": 3.183984330394858,
+    "time_s": 1060.0,
+    "decisions": 106,
+    "counts": {
+     "PLACE_CURRENT": 54,
+     "BUFFER_CURRENT": 26,
+     "RETRIEVE_BUFFER": 26,
+     "PALLET_CLOSE": 3
+    },
+    "safety_issues": 0,
+    "return": -1.5994943028209367
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 5,
+    "pallets_closed": 4,
+    "closed_fill_mean": 0.2617847606514275,
+    "fill_per_pallet_used": 0.24280371425015432,
+    "pallet_equivalents": 4.166879528645062,
+    "time_s": 1188.0,
+    "decisions": 109,
+    "counts": {
+     "PLACE_CURRENT": 51,
+     "BUFFER_CURRENT": 29,
+     "PARTIAL_REPACK": 4,
+     "REPACK_MOVES": 4,
+     "RETRIEVE_BUFFER": 29,
+     "PALLET_CLOSE": 4
+    },
+    "safety_issues": 0,
+    "return": -2.7648423861435165
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 4,
+    "pallets_closed": 3,
+    "closed_fill_mean": 0.32569844520720165,
+    "fill_per_pallet_used": 0.25974961869058644,
+    "pallet_equivalents": 3.0619031391407407,
+    "time_s": 1178.0,
+    "decisions": 122,
+    "counts": {
+     "PLACE_CURRENT": 38,
+     "BUFFER_CURRENT": 42,
+     "RETRIEVE_BUFFER": 42,
+     "PALLET_CLOSE": 3
+    },
+    "safety_issues": 0,
+    "return": -1.94890618961605
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 5,
+    "pallets_closed": 4,
+    "closed_fill_mean": 0.24168270401010095,
+    "fill_per_pallet_used": 0.24530089477722677,
+    "pallet_equivalents": 4.25977365784573,
+    "time_s": 1218.0,
+    "decisions": 115,
+    "counts": {
+     "PLACE_CURRENT": 45,
+     "BUFFER_CURRENT": 35,
+     "RETRIEVE_BUFFER": 35,
+     "PALLET_CLOSE": 4,
+     "PARTIAL_REPACK": 1,
+     "REPACK_MOVES": 2
+    },
+    "safety_issues": 0,
+    "return": -2.8337647100734626
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 5,
+    "pallets_closed": 4,
+    "closed_fill_mean": 0.33284757593152003,
+    "fill_per_pallet_used": 0.30045355737361107,
+    "pallet_equivalents": 4.170877483141975,
+    "time_s": 1168.0,
+    "decisions": 112,
+    "counts": {
+     "PLACE_CURRENT": 48,
+     "BUFFER_CURRENT": 32,
+     "RETRIEVE_BUFFER": 32,
+     "PALLET_CLOSE": 4
+    },
+    "safety_issues": 0,
+    "return": -2.214341909405864
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 4,
+    "pallets_closed": 3,
+    "closed_fill_mean": 0.3374982936065843,
+    "fill_per_pallet_used": 0.2586393701716049,
+    "pallet_equivalents": 3.0220625998666666,
+    "time_s": 1096.0,
+    "decisions": 111,
+    "counts": {
+     "PLACE_CURRENT": 49,
+     "BUFFER_CURRENT": 31,
+     "RETRIEVE_BUFFER": 31,
+     "PALLET_CLOSE": 3
+    },
+    "safety_issues": 0,
+    "return": -1.9229476384938273
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 7,
+    "pallets_closed": 6,
+    "closed_fill_mean": 0.24003942384452157,
+    "fill_per_pallet_used": 0.22774430919620814,
+    "pallet_equivalents": 6.153973621306327,
+    "time_s": 1244.0,
+    "decisions": 108,
+    "counts": {
+     "PLACE_CURRENT": 52,
+     "BUFFER_CURRENT": 28,
+     "RETRIEVE_BUFFER": 28,
+     "PALLET_CLOSE": 6
+    },
+    "safety_issues": 0,
+    "return": -4.009553292559412
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 6,
+    "pallets_closed": 5,
+    "closed_fill_mean": 0.23892720496435188,
+    "fill_per_pallet_used": 0.20708725173572531,
+    "pallet_equivalents": 5.047887485592592,
+    "time_s": 1292.0,
+    "decisions": 117,
+    "counts": {
+     "PLACE_CURRENT": 43,
+     "BUFFER_CURRENT": 37,
+     "RETRIEVE_BUFFER": 37,
+     "PARTIAL_REPACK": 3,
+     "REPACK_MOVES": 3,
+     "PALLET_CLOSE": 5
+    },
+    "safety_issues": 0,
+    "return": -3.640840464763889
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 7,
+    "pallets_closed": 6,
+    "closed_fill_mean": 0.20013401721000512,
+    "fill_per_pallet_used": 0.21550592050374778,
+    "pallet_equivalents": 6.307737340266204,
+    "time_s": 1258.0,
+    "decisions": 108,
+    "counts": {
+     "PLACE_CURRENT": 52,
+     "BUFFER_CURRENT": 28,
+     "RETRIEVE_BUFFER": 28,
+     "PARTIAL_REPACK": 1,
+     "REPACK_MOVES": 1,
+     "PALLET_CLOSE": 6
+    },
+    "safety_issues": 0,
+    "return": -4.341654453213734
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 4,
+    "pallets_closed": 3,
+    "closed_fill_mean": 0.2509882630754004,
+    "fill_per_pallet_used": 0.24037228233379243,
+    "pallet_equivalents": 3.2085243401089683,
+    "time_s": 1160.0,
+    "decisions": 116,
+    "counts": {
+     "PLACE_CURRENT": 44,
+     "BUFFER_CURRENT": 36,
+     "PARTIAL_REPACK": 1,
+     "REPACK_MOVES": 1,
+     "RETRIEVE_BUFFER": 36,
+     "PALLET_CLOSE": 3
+    },
+    "safety_issues": 0,
+    "return": -2.3095460814386293
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 6,
+    "pallets_closed": 5,
+    "closed_fill_mean": 0.21913514923379243,
+    "fill_per_pallet_used": 0.19933325687348227,
+    "pallet_equivalents": 5.100323795071931,
+    "time_s": 1244.0,
+    "decisions": 115,
+    "counts": {
+     "PLACE_CURRENT": 45,
+     "BUFFER_CURRENT": 35,
+     "RETRIEVE_BUFFER": 35,
+     "PALLET_CLOSE": 5
+    },
+    "safety_issues": 0,
+    "return": -3.7643247125901422
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 4,
+    "pallets_closed": 3,
+    "closed_fill_mean": 0.3055954064936213,
+    "fill_per_pallet_used": 0.3202169492476852,
+    "pallet_equivalents": 3.3640815775098765,
+    "time_s": 1082.0,
+    "decisions": 108,
+    "counts": {
+     "PLACE_CURRENT": 52,
+     "BUFFER_CURRENT": 28,
+     "RETRIEVE_BUFFER": 28,
+     "PARTIAL_REPACK": 2,
+     "REPACK_MOVES": 2,
+     "PALLET_CLOSE": 3
+    },
+    "safety_issues": 0,
+    "return": -1.6753459835283957
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 4,
+    "pallets_closed": 3,
+    "closed_fill_mean": 0.2706618088990918,
+    "fill_per_pallet_used": 0.24668434585583093,
+    "pallet_equivalents": 3.1747519567260483,
+    "time_s": 1126.0,
+    "decisions": 114,
+    "counts": {
+     "PLACE_CURRENT": 46,
+     "BUFFER_CURRENT": 34,
+     "RETRIEVE_BUFFER": 34,
+     "PALLET_CLOSE": 3
+    },
+    "safety_issues": 0,
+    "return": -2.0982771898794
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 5,
+    "pallets_closed": 4,
+    "closed_fill_mean": 0.24913183413780865,
+    "fill_per_pallet_used": 0.24687805919037034,
+    "pallet_equivalents": 4.237862959400617,
+    "time_s": 1164.0,
+    "decisions": 111,
+    "counts": {
+     "PLACE_CURRENT": 49,
+     "BUFFER_CURRENT": 31,
+     "RETRIEVE_BUFFER": 31,
+     "PALLET_CLOSE": 4
+    },
+    "safety_issues": 0,
+    "return": -2.7890823674969143
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 4,
+    "pallets_closed": 3,
+    "closed_fill_mean": 0.35150550980410156,
+    "fill_per_pallet_used": 0.29818966058356283,
+    "pallet_equivalents": 3.138242112921947,
+    "time_s": 1140.0,
+    "decisions": 116,
+    "counts": {
+     "PLACE_CURRENT": 44,
+     "BUFFER_CURRENT": 36,
+     "RETRIEVE_BUFFER": 36,
+     "PALLET_CLOSE": 3
+    },
+    "safety_issues": 0,
+    "return": -1.6867248282534435
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 5,
+    "pallets_closed": 4,
+    "closed_fill_mean": 0.2858860005397376,
+    "fill_per_pallet_used": 0.2593905283722222,
+    "pallet_equivalents": 4.15340863970216,
+    "time_s": 1206.0,
+    "decisions": 117,
+    "counts": {
+     "PLACE_CURRENT": 43,
+     "BUFFER_CURRENT": 37,
+     "RETRIEVE_BUFFER": 37,
+     "PALLET_CLOSE": 4
+    },
+    "safety_issues": 0,
+    "return": -2.5565033559799386
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 5,
+    "pallets_closed": 4,
+    "closed_fill_mean": 0.28222104917534724,
+    "fill_per_pallet_used": 0.2586468150509259,
+    "pallet_equivalents": 4.1643498785532405,
+    "time_s": 1108.0,
+    "decisions": 105,
+    "counts": {
+     "PLACE_CURRENT": 55,
+     "BUFFER_CURRENT": 25,
+     "RETRIEVE_BUFFER": 25,
+     "PALLET_CLOSE": 4
+    },
+    "safety_issues": 0,
+    "return": -2.589881728043981
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 6,
+    "pallets_closed": 5,
+    "closed_fill_mean": 0.22907982193963874,
+    "fill_per_pallet_used": 0.21124792751066215,
+    "pallet_equivalents": 5.122088455365779,
+    "time_s": 1258.0,
+    "decisions": 110,
+    "counts": {
+     "PLACE_CURRENT": 50,
+     "BUFFER_CURRENT": 30,
+     "RETRIEVE_BUFFER": 30,
+     "PALLET_CLOSE": 5,
+     "PARTIAL_REPACK": 4,
+     "REPACK_MOVES": 5
+    },
+    "safety_issues": 0,
+    "return": -3.6581133252378333
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 5,
+    "pallets_closed": 4,
+    "closed_fill_mean": 0.2273488559567901,
+    "fill_per_pallet_used": 0.19415228672543206,
+    "pallet_equivalents": 4.0613660098,
+    "time_s": 1128.0,
+    "decisions": 106,
+    "counts": {
+     "PLACE_CURRENT": 54,
+     "BUFFER_CURRENT": 26,
+     "RETRIEVE_BUFFER": 26,
+     "PALLET_CLOSE": 4,
+     "PARTIAL_REPACK": 1,
+     "REPACK_MOVES": 1
+    },
+    "safety_issues": 0,
+    "return": -3.0978431425456794
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 4,
+    "pallets_closed": 3,
+    "closed_fill_mean": 0.3524322008423868,
+    "fill_per_pallet_used": 0.3005726552695987,
+    "pallet_equivalents": 3.1449940185512344,
+    "time_s": 1130.0,
+    "decisions": 115,
+    "counts": {
+     "PLACE_CURRENT": 45,
+     "BUFFER_CURRENT": 35,
+     "RETRIEVE_BUFFER": 35,
+     "PALLET_CLOSE": 3
+    },
+    "safety_issues": 0,
+    "return": -1.6154127763944444
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 4,
+    "pallets_closed": 3,
+    "closed_fill_mean": 0.28328445151728393,
+    "fill_per_pallet_used": 0.24837885333611112,
+    "pallet_equivalents": 3.1436620587925925,
+    "time_s": 1134.0,
+    "decisions": 114,
+    "counts": {
+     "PLACE_CURRENT": 46,
+     "BUFFER_CURRENT": 34,
+     "RETRIEVE_BUFFER": 34,
+     "PARTIAL_REPACK": 1,
+     "REPACK_MOVES": 1,
+     "PALLET_CLOSE": 3
+    },
+    "safety_issues": 0,
+    "return": -2.081631232103703
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 5,
+    "pallets_closed": 4,
+    "closed_fill_mean": 0.3262038906626157,
+    "fill_per_pallet_used": 0.3200836932151234,
+    "pallet_equivalents": 4.295602903425154,
+    "time_s": 1072.0,
+    "decisions": 99,
+    "counts": {
+     "PLACE_CURRENT": 61,
+     "BUFFER_CURRENT": 19,
+     "RETRIEVE_BUFFER": 19,
+     "PARTIAL_REPACK": 2,
+     "REPACK_MOVES": 2,
+     "PALLET_CLOSE": 4
+    },
+    "safety_issues": 0,
+    "return": -2.0467659712739192
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 4,
+    "pallets_closed": 3,
+    "closed_fill_mean": 0.3345433214820936,
+    "fill_per_pallet_used": 0.25632157753213947,
+    "pallet_equivalents": 3.021656345682277,
+    "time_s": 1158.0,
+    "decisions": 117,
+    "counts": {
+     "PLACE_CURRENT": 43,
+     "BUFFER_CURRENT": 37,
+     "RETRIEVE_BUFFER": 37,
+     "PARTIAL_REPACK": 1,
+     "REPACK_MOVES": 1,
+     "PALLET_CLOSE": 3
+    },
+    "safety_issues": 0,
+    "return": -1.9100837254251606
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 6,
+    "pallets_closed": 5,
+    "closed_fill_mean": 0.231618842129321,
+    "fill_per_pallet_used": 0.25719383698675413,
+    "pallet_equivalents": 5.38506881127392,
+    "time_s": 1200.0,
+    "decisions": 110,
+    "counts": {
+     "PLACE_CURRENT": 50,
+     "BUFFER_CURRENT": 30,
+     "RETRIEVE_BUFFER": 30,
+     "PALLET_CLOSE": 5
+    },
+    "safety_issues": 0,
+    "return": -3.2847427674328693
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 5,
+    "pallets_closed": 4,
+    "closed_fill_mean": 0.21488358738441357,
+    "fill_per_pallet_used": 0.2411691239250617,
+    "pallet_equivalents": 4.3463112700876545,
+    "time_s": 1156.0,
+    "decisions": 110,
+    "counts": {
+     "PLACE_CURRENT": 50,
+     "BUFFER_CURRENT": 30,
+     "RETRIEVE_BUFFER": 30,
+     "PALLET_CLOSE": 4,
+     "PARTIAL_REPACK": 1,
+     "REPACK_MOVES": 1
+    },
+    "safety_issues": 0,
+    "return": -2.9026200308370376
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 4,
+    "pallets_closed": 3,
+    "closed_fill_mean": 0.32230098940863167,
+    "fill_per_pallet_used": 0.257479218456841,
+    "pallet_equivalents": 3.063013905601469,
+    "time_s": 1152.0,
+    "decisions": 119,
+    "counts": {
+     "PLACE_CURRENT": 41,
+     "BUFFER_CURRENT": 39,
+     "RETRIEVE_BUFFER": 39,
+     "PALLET_CLOSE": 3
+    },
+    "safety_issues": 0,
+    "return": -1.8971801579467409
+   },
+   {
+    "boxes": 80,
+    "placed": 80,
+    "ng": 0,
+    "pallets_used": 6,
+    "pallets_closed": 5,
+    "closed_fill_mean": 0.2263358874181481,
+    "fill_per_pallet_used": 0.21265854034434153,
+    "pallet_equivalents": 5.1442718049753084,
+    "time_s": 1158.0,
+    "decisions": 105,
+    "counts": {
+     "PLACE_CURRENT": 55,
+     "BUFFER_CURRENT": 25,
+     "RETRIEVE_BUFFER": 25,
+     "PALLET_CLOSE": 5
+    },
+    "safety_issues": 0,
+    "return": -3.5713693208432096
+   }
+  ]
+ }
+}

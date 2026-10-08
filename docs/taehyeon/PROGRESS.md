@@ -1,0 +1,93 @@
+# 태현 파트 진행 기록 (5-① 후보 생성 · 5-② Hard Mask · 가상데이터 · 4. High-level)
+
+> 작업이 중단되더라도 이어서 진행할 수 있도록 단계마다 갱신합니다.
+> "이어서 해"라고 하면 아래 **다음 할 일**부터 진행합니다.
+
+## 재개 방법
+
+```bash
+uv venv --python 3.10 .venv && . .venv/bin/activate      # 또는 python3.10 -m venv .venv
+pip install "numpy>=1.23,<3" "PyYAML>=6,<7" "pytest>=7,<9" "pybullet>=3.2.6,<4" "networkx>=2.8,<4"
+scripts/taehyeon/fetch_team_deps.sh                       # 팀원 코드(읽기 전용)를 .deps/team 에 추출
+python -m pytest -q tests/taehyeon                        # 177 passed
+pip install torch sb3-contrib gymnasium                   # 4번 PyTorch 학습 (선택, highlevel.md 3-1)
+scripts/taehyeon/run_validation.sh                        # 전체 검증 리포트 재생성
+```
+
+PR: https://github.com/yang8988/pac-mission1-shared/pull/1 (Draft, 브랜치 `claude/pensive-pasteur-dwbu3g`)
+
+## 결정 사항
+
+| 항목 | 결정 | 이유 |
+|---|---|---|
+| 사용 로봇 | HDR50-22 (문서에만 기록) | 5-①/5-②는 로봇 판정 범위 밖(6단계 담당) |
+| 코드 위치 | `ros2_ws/src/pac_candidates` (새 ROS 패키지) + `tools/virtual_data` | 동한 님 `pac_planning`과 파일 충돌 없음 |
+| pac_common | 복사하지 않음. `fetch_team_deps.sh`로 팀 브랜치에서 읽기 전용 추출 | 동한 님 확장 pac_common이 단일 원본, 중복 방지 |
+| 연결 계약 | 동한 님 `docs/integration.md`의 v0.2 콜백 그대로 | 공통 계약 변경 없음 |
+| 좌표 | target_pose = 회전 후 AABB 최소 모서리, z=0 적재면, PalletState.size.z = 최대 적재 높이 | 동한 님 계약 |
+| 최대 높이 1.5 m | 팔레트 목재(0.15 m) 포함 → 적재 1.35 m | **태현 확정 (2026-10-07)** |
+| 무거운-위-가벼운 | ~~`per_box`~~ → **`share`** (지지 박스가 실제로 받는 무게로 비교) | **태현 결정 (2026-10-08)**, VALIDATION 10장 |
+| 박스 강도 | 사양 비공개, 실측 없음 → 가상 강도 시나리오로 대응, 가정 안전계수 4 유지 | extreme 외 실제 눌림 0건 |
+| 이름 | `taehyun` → `taehyeon` (폴더·문서·코드) | 태현 님 요청 |
+| 4번 High-level | 앞 3개 행동(PLACE_CURRENT, BUFFER_CURRENT, RETRIEVE_BUFFER(i)) MaskablePPO, CLOSE·REPACK Rule | **태현 결정 (2026-10-08)** |
+| PPO 구현 | sb3-contrib MaskablePPO (PyTorch) + NumPy 판(PyTorch 없을 때) | 태현 요청으로 PyTorch 사용 (2026-10-08) |
+| 루트 공용 파일 | 만들지 않음 (`.gitignore`도 폴더별로 둠) | 재성 님 브랜치의 루트 파일과 충돌 방지 |
+
+## 진행 상태
+
+- [x] 팀 브랜치 분석 (재성: 제너레이터·물리 시뮬레이터, 동한: 5-③~⑥)
+- [x] 5-① 후보 생성 (EMS + Extreme Point, yaw, 80 mm 중복 제거, likely-valid-first 순서)
+- [x] 5-② Hard Mask 12개 검사 + ConstraintEvidence
+- [x] 동한 님 planner end-to-end 연동 + EMS 공급
+- [x] 성능 최적화 (planner 예산 모드 평균 0.6 s)
+- [x] 가상데이터 생성기 + 검증기 + 테스트 fixture
+- [x] 오라클 벤치마크 (재현율 100 %), 물리 교차 검증 (통과 후보 100 % 안정)
+- [x] 문서: README, interface, algorithms, virtual_data, VALIDATION
+- [x] Draft PR 생성
+- [x] 최대 높이 해석 확정 (팔레트 포함, 적재 1.35 m)
+- [x] 무거운-위-가벼운 `per_box` 확정
+- [x] 박스 사양 비공개 → 숨겨진 실제 강도 6개 프로필 + 가정 안전계수 sweep으로 대응 (VALIDATION 8장)
+- [ ] 박스 허용하중 실측값이 생기면 반영 (선택)
+- [x] 4번 High-level: 시뮬레이션 세계, 마스크, Rule 정책, PARTIAL_REPACK, NumPy MaskablePPO, 모방 warm start, 테스트 15개
+- [x] 4번 PPO 학습·평가 리포트(`docs/taehyeon/reports/highlevel_*.json`) 및 highlevel.md 5장 결과
+- [x] 무거운-위-가벼운 `share` 전환, 5-② 하중 증분 버그 수정, 5-① 균형 기준점, 전체 검증 재실행
+- [x] sb3-contrib(PyTorch) 정책 학습·평가 → test 3.94 (Rule 3.91, NumPy PPO 3.86) → 기본 정책은 NumPy 판 유지
+- [x] sb3 판 개선 코드: VecNormalize(관측 정규화, 통계를 정책 파일에 저장), 모방 lr 3e-4·20 epoch, BLAS 1스레드
+- [x] 코드 리뷰(2026-10-08) 수정: 5-② 하중 경로·`share` 허점, 5-① 탐색 컷오프·방향, 4번 마감 규칙·주문 목록 설정 등 → 전체 재검증 완료 (162 테스트)
+- [x] 4번 실제 상태 입구 `HighLevelDecider.decide` + 인터페이스 문서(highlevel.md 6장), 테스트 10개 (총 172)
+- [x] 리뷰 미반영 항목 전부 반영(2026-10-08): 5-① 병합 허용오차·균형 탐색 층 묶음/정렬·중복 제거 복원·불확실 거절·EMS 탐색 벡터화, 4번 파손 박스 반영·재적재 이동 규칙·동한 가치 모델 1회 로드·미사용 설정 삭제, 문서 → 전체 재검증 (177 테스트)
+- [x] 4번 재학습 (2026-10-08, 리뷰 수정 반영 세계): test 27 에피소드 Rule 4.09 / NumPy PPO 4.25 / sb3 PPO 4.23 / 버퍼 없음 5.43 팔레트 → 두 PPO 모두 Rule과 유의한 차이 없음, **기본값 Rule** 유지. `models/`의 두 정책 파일 모두 새 세계로 교체
+
+## 다음 할 일
+
+0. (진행 중) 4번 PPO 학습/평가:
+   ```bash
+   python tools/highlevel/scripts/train_highlevel_ppo.py --run-generator 10 --steps 100000 --workers 4 \
+       --imitation-episodes 120 --log tools/highlevel/output/train_log.jsonl
+   python tools/highlevel/scripts/evaluate_highlevel.py --run-generator 10 --split test \
+       --policy-file ros2_ws/src/pac_highlevel/models/highlevel_ppo.json --report docs/taehyeon/reports/highlevel_eval.json
+   ```
+
+1. ~~팀 확인 사항~~ → 모두 확정 사항으로 정리됨 ([interface.md](interface.md) 8장, 2026-10-08)
+2. 재성 님 benchmark 모드(600 시나리오) 전체로 가상데이터 생성 → 동한 님 교사 데이터 재학습에 제공
+3. 2차 확장: yaw 0/90 외 방향, 팔레트 slat 지지 모델
+
+## 검증 로그
+
+| 날짜 | 내용 | 결과 |
+|---|---|---|
+| 2026-10-07 | 랜덤 40박스 greedy 적재 smoke | 후보 10~115개/박스, 마스크 사유 정상 |
+| 2026-10-07 | 동한 planner + 태현 backend (scenario_001/002) | 7개 시나리오 완료 |
+| 2026-10-07 | 무작위 오라클 테스트에서 경계 margin 불일치 발견 → STABILITY_EPS 통일 | 통과 |
+| 2026-10-07 | planner 연동 2.4~4.4 s → 최적화 | 예산 모드 평균 594 ms |
+| 2026-10-07 | 20 mm 격자 오라클 100장면 | 재현율 100 %, 98.7 % 같거나 우수 |
+| 2026-10-07 | 5-③ 프로브 앞 16개 유효 누락 13 % → likely-valid-first | 0 % |
+| 2026-10-07 | PyBullet 교차 검증 (solid/slatted) | 통과 89/89 안정, 탈락 대조군 67 % 붕괴 |
+| 2026-10-07 | 가상데이터 30 시나리오 / 720 단계 | 검증 OK, 실제 크기 관통 0 |
+| 2026-10-07 | 박스 강도 숨겨진 6개 프로필, 80박스 팔레트, 안전계수 1~16 sweep | extreme 외 실제 눌림 0, extreme은 SF16에서 0 (적재율 −7 %p) |
+| 2026-10-07 | 컨테이너 재시작 후 시간 수치 1.8배 증가 | 예전 커밋도 동일 → 머신 차이, 코드 회귀 아님 |
+| 2026-10-08 | 팔레트 3규격(T11/T12/1.2×0.8) 기본값으로 전체 재검증 | 132 테스트, 오라클 71/71, 물리 79/79 안정(대조군 58 % 붕괴), planner 평균 556 ms·초과 0, extreme만 눌림 7(SF16에서 1) |
+| 2026-10-08 | `share` 전환 후 전체 재검증 | 150 테스트, 오라클 77/80, 물리 84/84, planner 643 ms (초과 3/24), extreme만 눌림 3 |
+| 2026-10-08 | 4번 NumPy PPO 재학습 (`share`) | test: PPO 3.86 vs Rule 3.91 vs 버퍼 없음 5.20 팔레트 |
+| 2026-10-08 | 4번 sb3-contrib MaskablePPO (PyTorch) 100k 단계 | test 3.94 팔레트 (Rule 3.91, NumPy 3.86) → 기본 정책 NumPy 유지 |
+| 2026-10-08 | 4번 리뷰 수정 후 재학습 (NumPy 60k, sb3 150k) | test 27 에피소드: Rule 4.09, NumPy 4.25 (p=0.19), sb3 4.23 (p=0.54) → 기본값 Rule |

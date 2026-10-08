@@ -1,0 +1,540 @@
+{
+ "summary": {
+  "scenes": 30,
+  "scenes_with_valid": 23,
+  "budget": "1s soft budget",
+  "time_mean_ms": 765.0953840434786,
+  "time_p95_ms": 1073.2344550000334,
+  "time_max_ms": 1299.6775679999928,
+  "budget_exceeded": 7,
+  "degraded": 11,
+  "full_7_scenarios": 13,
+  "ems_supplied_ratio": 1.0
+ },
+ "rows": [
+  {
+   "scene": "S0002-T002.json",
+   "pallet_boxes": 2,
+   "generated": 34,
+   "valid": 34,
+   "ranked": 2,
+   "time_sec": 0.7691091949999418,
+   "completed_scenarios": 7,
+   "degradation": [
+    "REDUCED_TOP_K"
+   ],
+   "budget_exceeded": false,
+   "ems_supplied": 2,
+   "evaluations": 2,
+   "top": {
+    "id": "S0002-S0002-B003-C029",
+    "score": 0.3873250177797146
+   }
+  },
+  {
+   "scene": "S0002-T006.json",
+   "pallet_boxes": 6,
+   "generated": 63,
+   "valid": 38,
+   "ranked": 2,
+   "time_sec": 1.0732344550000334,
+   "completed_scenarios": 0,
+   "degradation": [
+    "REDUCED_TOP_K",
+    "REDUCED_SCENARIOS",
+    "HORIZON_ONE"
+   ],
+   "budget_exceeded": true,
+   "ems_supplied": 2,
+   "evaluations": 2,
+   "top": {
+    "id": "S0006-S0002-B007-C005",
+    "score": 0.3834873243515181
+   }
+  },
+  {
+   "scene": "S0002-T017.json",
+   "pallet_boxes": 16,
+   "generated": 61,
+   "valid": 4,
+   "ranked": 4,
+   "time_sec": 1.0003593870000032,
+   "completed_scenarios": 4,
+   "degradation": [],
+   "budget_exceeded": true,
+   "ems_supplied": 4,
+   "evaluations": 4,
+   "top": {
+    "id": "S0017-S0002-B018-C001",
+    "score": 0.3204723193064773
+   }
+  },
+  {
+   "scene": "S0008-T010.json",
+   "pallet_boxes": 9,
+   "generated": 52,
+   "valid": 3,
+   "ranked": 3,
+   "time_sec": 0.8405018989999462,
+   "completed_scenarios": 7,
+   "degradation": [],
+   "budget_exceeded": false,
+   "ems_supplied": 3,
+   "evaluations": 3,
+   "top": {
+    "id": "S0010-S0008-B011-C000",
+    "score": 0.3778599881789677
+   }
+  },
+  {
+   "scene": "S0008-T011.json",
+   "pallet_boxes": 10,
+   "generated": 49,
+   "valid": 15,
+   "ranked": 2,
+   "time_sec": 0.9602266790000158,
+   "completed_scenarios": 3,
+   "degradation": [
+    "REDUCED_TOP_K",
+    "REDUCED_SCENARIOS"
+   ],
+   "budget_exceeded": false,
+   "ems_supplied": 2,
+   "evaluations": 2,
+   "top": {
+    "id": "S0011-S0008-B012-C001",
+    "score": 0.3832059456195277
+   }
+  },
+  {
+   "scene": "S0017-T006.json",
+   "pallet_boxes": 6,
+   "generated": 52,
+   "valid": 36,
+   "ranked": 2,
+   "time_sec": 1.2996775679999928,
+   "completed_scenarios": 0,
+   "degradation": [
+    "REDUCED_TOP_K",
+    "REDUCED_SCENARIOS",
+    "HORIZON_ONE"
+   ],
+   "budget_exceeded": true,
+   "ems_supplied": 2,
+   "evaluations": 2,
+   "top": {
+    "id": "S0006-S0017-B007-C014",
+    "score": 0.3799479827164837
+   }
+  },
+  {
+   "scene": "S0018-T006.json",
+   "pallet_boxes": 6,
+   "generated": 52,
+   "valid": 32,
+   "ranked": 2,
+   "time_sec": 0.8956558059999224,
+   "completed_scenarios": 3,
+   "degradation": [
+    "REDUCED_TOP_K",
+    "REDUCED_SCENARIOS"
+   ],
+   "budget_exceeded": false,
+   "ems_supplied": 2,
+   "evaluations": 2,
+   "top": {
+    "id": "S0006-S0018-B007-C015",
+    "score": 0.3767512280525818
+   }
+  },
+  {
+   "scene": "S0018-T020.json",
+   "pallet_boxes": 15,
+   "generated": 34,
+   "valid": 0,
+   "ranked": 0,
+   "time_sec": 0.003517433000070014,
+   "completed_scenarios": 0,
+   "degradation": [],
+   "budget_exceeded": false,
+   "ems_supplied": 0,
+   "evaluations": 0,
+   "top": null
+  },
+  {
+   "scene": "S0001-T016.json",
+   "pallet_boxes": 14,
+   "generated": 76,
+   "valid": 4,
+   "ranked": 4,
+   "time_sec": 0.9417030619999878,
+   "completed_scenarios": 7,
+   "degradation": [],
+   "budget_exceeded": false,
+   "ems_supplied": 4,
+   "evaluations": 4,
+   "top": {
+    "id": "S0016-S0001-B017-C000",
+    "score": 0.3032790182011153
+   }
+  },
+  {
+   "scene": "S0001-T019.json",
+   "pallet_boxes": 16,
+   "generated": 73,
+   "valid": 19,
+   "ranked": 2,
+   "time_sec": 1.0699634659999901,
+   "completed_scenarios": 0,
+   "degradation": [
+    "REDUCED_TOP_K",
+    "REDUCED_SCENARIOS",
+    "HORIZON_ONE"
+   ],
+   "budget_exceeded": true,
+   "ems_supplied": 2,
+   "evaluations": 2,
+   "top": {
+    "id": "S0019-S0001-B020-C015",
+    "score": 0.35697299389706544
+   }
+  },
+  {
+   "scene": "S0001-T021.json",
+   "pallet_boxes": 18,
+   "generated": 28,
+   "valid": 0,
+   "ranked": 0,
+   "time_sec": 0.0032405609999841545,
+   "completed_scenarios": 0,
+   "degradation": [],
+   "budget_exceeded": false,
+   "ems_supplied": 0,
+   "evaluations": 0,
+   "top": null
+  },
+  {
+   "scene": "S0003-T000.json",
+   "pallet_boxes": 0,
+   "generated": 10,
+   "valid": 10,
+   "ranked": 4,
+   "time_sec": 0.3735912280000093,
+   "completed_scenarios": 7,
+   "degradation": [],
+   "budget_exceeded": false,
+   "ems_supplied": 4,
+   "evaluations": 4,
+   "top": {
+    "id": "S0000-S0003-B001-C000",
+    "score": 0.40256642664448167
+   }
+  },
+  {
+   "scene": "S0003-T014.json",
+   "pallet_boxes": 14,
+   "generated": 60,
+   "valid": 0,
+   "ranked": 0,
+   "time_sec": 0.005081951000079243,
+   "completed_scenarios": 0,
+   "degradation": [],
+   "budget_exceeded": false,
+   "ems_supplied": 0,
+   "evaluations": 0,
+   "top": null
+  },
+  {
+   "scene": "S0006-T021.json",
+   "pallet_boxes": 19,
+   "generated": 79,
+   "valid": 0,
+   "ranked": 0,
+   "time_sec": 0.008966846000021178,
+   "completed_scenarios": 0,
+   "degradation": [],
+   "budget_exceeded": false,
+   "ems_supplied": 0,
+   "evaluations": 0,
+   "top": null
+  },
+  {
+   "scene": "S0013-T018.json",
+   "pallet_boxes": 16,
+   "generated": 51,
+   "valid": 0,
+   "ranked": 0,
+   "time_sec": 0.004717604999996183,
+   "completed_scenarios": 0,
+   "degradation": [],
+   "budget_exceeded": false,
+   "ems_supplied": 0,
+   "evaluations": 0,
+   "top": null
+  },
+  {
+   "scene": "S0015-T016.json",
+   "pallet_boxes": 14,
+   "generated": 79,
+   "valid": 26,
+   "ranked": 2,
+   "time_sec": 1.1339936379999926,
+   "completed_scenarios": 0,
+   "degradation": [
+    "REDUCED_TOP_K",
+    "REDUCED_SCENARIOS",
+    "HORIZON_ONE"
+   ],
+   "budget_exceeded": true,
+   "ems_supplied": 2,
+   "evaluations": 2,
+   "top": {
+    "id": "S0016-S0015-B017-C010",
+    "score": 0.3408469826941444
+   }
+  },
+  {
+   "scene": "S0020-T003.json",
+   "pallet_boxes": 3,
+   "generated": 40,
+   "valid": 36,
+   "ranked": 2,
+   "time_sec": 0.7325479869999754,
+   "completed_scenarios": 7,
+   "degradation": [
+    "REDUCED_TOP_K"
+   ],
+   "budget_exceeded": false,
+   "ems_supplied": 2,
+   "evaluations": 2,
+   "top": {
+    "id": "S0003-S0020-B004-C005",
+    "score": 0.3943623948053338
+   }
+  },
+  {
+   "scene": "S0020-T008.json",
+   "pallet_boxes": 8,
+   "generated": 50,
+   "valid": 26,
+   "ranked": 2,
+   "time_sec": 0.7438727740000104,
+   "completed_scenarios": 7,
+   "degradation": [
+    "REDUCED_TOP_K"
+   ],
+   "budget_exceeded": false,
+   "ems_supplied": 2,
+   "evaluations": 2,
+   "top": {
+    "id": "S0008-S0020-B009-C010",
+    "score": 0.3796931101764672
+   }
+  },
+  {
+   "scene": "S0021-T012.json",
+   "pallet_boxes": 12,
+   "generated": 47,
+   "valid": 4,
+   "ranked": 4,
+   "time_sec": 1.010303097000019,
+   "completed_scenarios": 6,
+   "degradation": [],
+   "budget_exceeded": true,
+   "ems_supplied": 4,
+   "evaluations": 4,
+   "top": {
+    "id": "S0012-S0021-B013-C013",
+    "score": 0.3072470078852907
+   }
+  },
+  {
+   "scene": "S0021-T015.json",
+   "pallet_boxes": 15,
+   "generated": 74,
+   "valid": 3,
+   "ranked": 3,
+   "time_sec": 0.9906665779999457,
+   "completed_scenarios": 7,
+   "degradation": [],
+   "budget_exceeded": false,
+   "ems_supplied": 3,
+   "evaluations": 3,
+   "top": {
+    "id": "S0015-S0021-B016-C000",
+    "score": 0.3094126746371702
+   }
+  },
+  {
+   "scene": "S0021-T023.json",
+   "pallet_boxes": 17,
+   "generated": 101,
+   "valid": 4,
+   "ranked": 4,
+   "time_sec": 0.03358317100003205,
+   "completed_scenarios": 7,
+   "degradation": [],
+   "budget_exceeded": false,
+   "ems_supplied": 4,
+   "evaluations": 4,
+   "top": {
+    "id": "S0023-S0021-B024-C000",
+    "score": 0.3667004241774797
+   }
+  },
+  {
+   "scene": "S0023-T000.json",
+   "pallet_boxes": 0,
+   "generated": 10,
+   "valid": 10,
+   "ranked": 4,
+   "time_sec": 0.5679911380000249,
+   "completed_scenarios": 7,
+   "degradation": [],
+   "budget_exceeded": false,
+   "ems_supplied": 4,
+   "evaluations": 4,
+   "top": {
+    "id": "S0000-S0023-B001-C000",
+    "score": 0.39369863259688465
+   }
+  },
+  {
+   "scene": "S0023-T002.json",
+   "pallet_boxes": 2,
+   "generated": 28,
+   "valid": 28,
+   "ranked": 2,
+   "time_sec": 0.7724931180000567,
+   "completed_scenarios": 3,
+   "degradation": [
+    "REDUCED_TOP_K",
+    "REDUCED_SCENARIOS"
+   ],
+   "budget_exceeded": false,
+   "ems_supplied": 2,
+   "evaluations": 2,
+   "top": {
+    "id": "S0002-S0023-B003-C004",
+    "score": 0.36738940848164997
+   }
+  },
+  {
+   "scene": "S0027-T022.json",
+   "pallet_boxes": 18,
+   "generated": 57,
+   "valid": 2,
+   "ranked": 2,
+   "time_sec": 0.06735244100002546,
+   "completed_scenarios": 7,
+   "degradation": [],
+   "budget_exceeded": false,
+   "ems_supplied": 2,
+   "evaluations": 2,
+   "top": {
+    "id": "S0022-S0027-B023-C000",
+    "score": 0.20909823877958325
+   }
+  },
+  {
+   "scene": "S0028-T000.json",
+   "pallet_boxes": 0,
+   "generated": 10,
+   "valid": 10,
+   "ranked": 4,
+   "time_sec": 0.29815178400008335,
+   "completed_scenarios": 7,
+   "degradation": [],
+   "budget_exceeded": false,
+   "ems_supplied": 4,
+   "evaluations": 4,
+   "top": {
+    "id": "S0000-S0028-B001-C000",
+    "score": 0.4232847672814348
+   }
+  },
+  {
+   "scene": "S0028-T007.json",
+   "pallet_boxes": 6,
+   "generated": 19,
+   "valid": 0,
+   "ranked": 0,
+   "time_sec": 0.005785339999988537,
+   "completed_scenarios": 0,
+   "degradation": [],
+   "budget_exceeded": false,
+   "ems_supplied": 0,
+   "evaluations": 0,
+   "top": null
+  },
+  {
+   "scene": "S0028-T010.json",
+   "pallet_boxes": 7,
+   "generated": 17,
+   "valid": 3,
+   "ranked": 3,
+   "time_sec": 0.10143822599991381,
+   "completed_scenarios": 7,
+   "degradation": [],
+   "budget_exceeded": false,
+   "ems_supplied": 3,
+   "evaluations": 3,
+   "top": {
+    "id": "S0010-S0028-B011-C002",
+    "score": 0.23625072978783027
+   }
+  },
+  {
+   "scene": "S0029-T006.json",
+   "pallet_boxes": 6,
+   "generated": 36,
+   "valid": 32,
+   "ranked": 4,
+   "time_sec": 0.9200518600000578,
+   "completed_scenarios": 7,
+   "degradation": [],
+   "budget_exceeded": false,
+   "ems_supplied": 4,
+   "evaluations": 4,
+   "top": {
+    "id": "S0006-S0029-B007-C007",
+    "score": 0.4300472533056629
+   }
+  },
+  {
+   "scene": "S0029-T019.json",
+   "pallet_boxes": 14,
+   "generated": 43,
+   "valid": 0,
+   "ranked": 0,
+   "time_sec": 0.00400837600000159,
+   "completed_scenarios": 0,
+   "degradation": [],
+   "budget_exceeded": false,
+   "ems_supplied": 0,
+   "evaluations": 0,
+   "top": null
+  },
+  {
+   "scene": "S0014-T003.json",
+   "pallet_boxes": 3,
+   "generated": 41,
+   "valid": 38,
+   "ranked": 2,
+   "time_sec": 1.0007252760000256,
+   "completed_scenarios": 1,
+   "degradation": [
+    "REDUCED_TOP_K",
+    "REDUCED_SCENARIOS",
+    "HORIZON_ONE"
+   ],
+   "budget_exceeded": true,
+   "ems_supplied": 2,
+   "evaluations": 2,
+   "top": {
+    "id": "S0003-S0014-B004-C005",
+    "score": 0.38096960217233383
+   }
+  }
+ ]
+}
