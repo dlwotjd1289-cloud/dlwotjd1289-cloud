@@ -174,9 +174,11 @@ class HeavyOnLightConfig:
     enabled: bool = True
     # per_box (mission wording): reject if new.weight > ratio * supporter.weight
     #   + tolerance_kg for any direct supporter carrying >= ``min_share``.
-    # share: compare the load actually transferred (new.weight * share)
-    #   instead, so a heavy box bridging several light boxes may be allowed.
-    mode: str = "per_box"
+    # share (default, taehyeon 2026-10-08): compare the load actually
+    #   transferred (new.weight * share) instead, so a heavy box bridging
+    #   several light boxes may be allowed. Same pallets on the virtual data
+    #   used ~20 % fewer pallets with no extra true crush (VALIDATION 10).
+    mode: str = "share"
     max_weight_ratio: float = 1.0
     tolerance_kg: float = 0.5
     min_share: float = 0.10

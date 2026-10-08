@@ -28,7 +28,7 @@ candidates:
     default_pallet_max_weight_kg: 1000.0
     heavy_on_light:
       enabled: true
-      mode: per_box                           # per_box (mission wording, confirmed) | share
+      mode: share                             # share (taehyeon 2026-10-08) | per_box (mission wording)
       max_weight_ratio: 1.0
       tolerance_kg: 0.5
       min_share: 0.10
