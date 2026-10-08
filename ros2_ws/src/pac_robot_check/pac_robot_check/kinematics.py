@@ -156,10 +156,11 @@ def ik_all(target, tcp_offset=0.0, ref=None):
             e = sign * math.acos(c)
             q2 = math.atan2(s, r) - math.atan2(_L3 * math.sin(e), _L2 + _L3 * math.cos(e))
             q3 = e - _BETA
-            q3 = math.atan2(math.sin(q3), math.cos(q3))
-            q = np.array([q1, q2, q3, 0.0, 0.0, 0.0])
-            if not (LOWER[1] <= q2 <= UPPER[1] and LOWER[2] <= q3 <= UPPER[2]):
+            q2 = _wrap_near(q2, ref[1], LOWER[1], UPPER[1])
+            q3 = _wrap_near(q3, ref[2], LOWER[2], UPPER[2])
+            if q2 is None or q3 is None:
                 continue
+            q = np.array([q1, q2, q3, 0.0, 0.0, 0.0])
             R03 = joint_frames(q)[3][:3, :3]  # after j4 at q4 = 0
             M = R03.T @ R @ _TOOL0[:3, :3].T  # = Rx(q4) Ry(-q5) Rx(q6)
             b0 = math.acos(max(-1.0, min(1.0, M[0, 0])))

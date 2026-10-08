@@ -12,7 +12,7 @@ All decisions read the State Manager snapshot; the state only changes in
 """
 
 from collections import Counter
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 
 from pac_common import PalletState, PlacementCandidate, SystemState
 from pac_candidates.geometry import rotated_dims
@@ -75,10 +75,15 @@ class RuntimeCore:
 
     # ---------------------------------------------------------------- 1, 2
     def on_observation(self, obs, base_view=None):
-        """Stage 2 on a raw observation; PLAN boxes enter the State Manager."""
+        """Stage 2 on a raw observation; PLAN boxes enter the State Manager.
+        A box id that is already tracked or placed (re-published message,
+        re-scan) is ignored and returns None."""
+        if obs.box_id in self.sm.tracked or any(p.box_id == obs.box_id for p in self.sm.placed):
+            self.counts["duplicate_observation"] += 1
+            return None
         verdict = self.validator.validate(obs, _BaseView(base_view) if base_view else None, None)
         self.anomalies[verdict.kind.value] += 1
-        sku = verdict.box.sku_id if verdict.box is not None else obs.label_sku
+        sku = verdict.sku
         if sku is not None:
             self.supervisor.on_arrival(sku)
         if verdict.route == "INSPECTION":
@@ -124,10 +129,11 @@ class RuntimeCore:
         elif a == ActionType.PARTIAL_REPACK:
             self.repacks_for_current += 1
             placed = {p.box_id: p for p in state.pallet.boxes}
+            layout = dict(placed)      # earlier moves of this repack applied
             for box_id, pose in d.repack_moves:
                 without = SystemState(state.state_version, state.stamp_sec,
                                       PalletState(state.pallet.pallet_id, state.pallet.size,
-                                                  tuple(p for p in state.pallet.boxes if p.box_id != box_id)),
+                                                  tuple(p for k, p in layout.items() if k != box_id)),
                                       state.inventory)
                 cand = PlacementCandidate(f"repack-{box_id}", box_id, pose, state.state_version)
                 v6 = self.robot.validate_robot_motion(placed[box_id], cand, without)
@@ -135,6 +141,7 @@ class RuntimeCore:
                     self.counts["repack_aborted_stage6"] += 1
                     return Command("WAIT", state.state_version, reason="REPACK_NOT_EXECUTABLE")
                 cmd.repack.append((box_id, cand, dict(v6.details)))
+                layout[box_id] = replace(placed[box_id], pose=pose)
         return cmd
 
     # ---------------------------------------------------------------- 7, 8

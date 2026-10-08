@@ -20,7 +20,7 @@ chosen, verdict, rejected = robot.first_executable(box, result.ranked, latest_st
 |---|---|---|
 | 0 | 계획 version이 최신 상태와 같은가, frame이 `pallet`인가 | `STALE_PLAN`, `INVALID_STATE` |
 | 1 | 가반하중: 박스 + 그리퍼 ≤ 정격 50 kg | `PAYLOAD_EXCEEDED` |
-| 2 | 하강 경로: 그리퍼 몸체(0.34 × 0.26 m)가 박스 윗면보다 높은 이웃 박스와 겹치지 않는가 | `ROBOT_COLLISION` |
+| 2 | 하강 경로: 든 박스의 발자국 기둥, 그리고 그리퍼 몸체(0.34 × 0.26 m)가 박스 윗면보다 높은 이웃 박스와 겹치지 않는가 | `ROBOT_COLLISION` |
 | 3 | Reach / IK: 놓는 자세(그리퍼 아래 방향, 박스 yaw 또는 +180°)에 관절 한계 안의 해가 있는가 | `IK_FAIL` |
 | 4 | 접근·후퇴: 0.30 m 위에서 수직으로 내려오는 경로 전체(5 cm 간격)에 연속된 해가 있는가 | `APPROACH_FAIL` |
 | 5 | 팔 충돌: 위팔·아래팔·손목을 캡슐로 보고 적재된 박스·팔레트 상판·바닥과의 거리 | `ROBOT_COLLISION` |
@@ -43,7 +43,7 @@ chosen, verdict, rejected = robot.first_executable(box, result.ranked, latest_st
 | 컨베이어 집는 위치 | 로봇 옆 1.3 m, 컨베이어 윗면 바닥에서 0.9 m | **가정** |
 | 속도 | URDF 관절 속도 한계의 50 %, 수직 이동 0.25 m/s, 잡기·놓기 0.5 s | **가정** |
 
-IK는 이 로봇 구조(어깨 오프셋 + 링크 2개 + 구면 손목)의 해석해입니다. 무작위 자세 300개 중 299개에서 원래 관절값을 되찾았고, 순기구학 재확인 오차는 0.01 mm 이하입니다(`test_th_robot_check.py`).
+IK는 이 로봇 구조(어깨 오프셋 + 링크 2개 + 구면 손목)의 해석해입니다. 무작위 자세 300개 모두에서 원래 관절값을 되찾았고, 순기구학 재확인 오차는 0.01 mm 이하입니다(`test_th_robot_check.py`).
 검사 1회는 약 5~45 ms입니다.
 
 ## 3. 로봇 배치 비교 (`reports/robot_reach_layouts.json`)

@@ -49,7 +49,13 @@ def command_to_dict(cmd, box=None):
                                                   "arm_clearance_m") if k in cmd.robot}
     if cmd.repack:
         out["repack"] = [{"box_id": b, "target_min_corner": [c.target_pose.x, c.target_pose.y, c.target_pose.z,
-                                                             c.target_pose.yaw]} for b, c, _ in cmd.repack]
+                                                             c.target_pose.yaw],
+                          "robot": {k: det[k] for k in ("gripper_yaw_rad", "q_place", "q_approach", "cycle_time_s")
+                                    if k in det}} for b, c, det in cmd.repack]
+        # the current box is planned again after the moves (next command)
+        out.pop("target_min_corner", None)
+        out.pop("target_center", None)
+        out.pop("candidate_id", None)
     return out
 
 
@@ -60,7 +66,7 @@ def observation_from_dict(d):
 
 
 def report_from_dict(d):
-    pose = lambda v: Pose3D("pallet", *v) if v is not None else None  # noqa: E731
+    pose = lambda v: Pose3D("pallet", v[0], v[1], v[2], yaw=v[3]) if v is not None else None  # noqa: E731
     return ExecutionReport(ok=bool(d.get("ok", True)), attempts=int(d.get("attempts", 1)),
                            other_grasp=bool(d.get("other_grasp", False)), measured_pose=pose(d.get("measured_pose")),
                            issues=tuple(d["issues"]) if d.get("issues") is not None else None,
@@ -77,6 +83,8 @@ class CoreBridge:
     def _next(self):
         if self.pending is None and self.core.has_work():
             cmd = self.core.next_command()
+            while cmd.action == "WAIT" and cmd.reason == "REPACK_NOT_EXECUTABLE":
+                cmd = self.core.next_command()  # the repack counter rises: terminates
             if cmd.action != "WAIT":
                 self.pending = cmd
                 box = self.core.sm.tracked.get(cmd.box_id)
@@ -84,7 +92,7 @@ class CoreBridge:
         return None
 
     def on_observation(self, text):
-        verdict = self.core.on_observation(observation_from_dict(json.loads(text)))
+        verdict = self.core.on_observation(observation_from_dict(json.loads(text)))  # None: duplicate
         out = self._next()
         return verdict, out
 
@@ -147,7 +155,7 @@ def main(args=None):  # pragma: no cover - needs ROS 2
 
         def _obs(self, msg):
             verdict, cmd = self.bridge.on_observation(msg.data)
-            self.get_logger().info(f"observation -> {verdict.kind.value}")
+            self.get_logger().info("observation -> " + (verdict.kind.value if verdict else "duplicate, ignored"))
             self._publish(cmd)
 
         def _result(self, msg):

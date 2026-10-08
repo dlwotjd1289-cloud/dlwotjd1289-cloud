@@ -39,6 +39,7 @@ class Verdict:
     codes: tuple = ()
     notes: list = field(default_factory=list)
     used_base_view: bool = False
+    sku: str | None = None           # resolved label (after the base view), also for INSPECTION
 
 
 class StateValidator:
@@ -64,6 +65,13 @@ class StateValidator:
 
     def validate(self, obs, perception=None, field_box=None):
         """``perception`` / ``field_box`` allow the base-view second look."""
+        verdict = self._validate(obs, perception, field_box)
+        if verdict.sku is None:
+            verdict.sku = verdict.box.sku_id if verdict.box is not None else self._last_label
+        return verdict
+
+    def _validate(self, obs, perception, field_box):
+        self._last_label = obs.label_sku
         notes = []
         used_base = False
         if obs.label_sku is None or obs.confidence < self.cfg.min_label_confidence:
@@ -71,10 +79,12 @@ class StateValidator:
                 obs = perception.base_view(field_box, obs)
                 used_base = True
                 notes.append("base view: label " + ("recovered" if obs.label_sku else "still unread"))
+                self._last_label = obs.label_sku
             if obs.label_sku is None:
                 return Verdict(Anomaly.RECOGNITION_FAIL, "INSPECTION", codes=(RejectCode.TRACKING_LOST,),
                                notes=notes, used_base_view=used_base)
         sku = obs.label_sku
+        self._last_label = sku
         if sku not in self.catalog:
             return Verdict(Anomaly.UNKNOWN_SKU, "INSPECTION", codes=(RejectCode.INVALID_STATE,), notes=notes,
                            used_base_view=used_base)

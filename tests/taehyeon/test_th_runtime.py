@@ -286,3 +286,42 @@ def test_state_manager_reconciles_measurement_noise():
     assert edge.x == pytest.approx(0.8) and edge.y == pytest.approx(0.7)
     deep, shift = sm.reconcile(Size3D(0.4, 0.3, 0.2), Pose3D("pallet", 0.79, 0.0, 0.0), 0.002)
     assert deep.x == pytest.approx(0.79) and shift == 0.0
+
+
+def test_review_fixes_bridge_yaw_duplicates_missing_and_base_view_sku():
+    import json
+
+    from pac_runtime import RawObservation, RuntimeCore
+    from pac_runtime.order import cell_from_order
+    from pac_runtime.ros_node import CoreBridge, report_from_dict
+
+    # measured yaw stays yaw (not roll)
+    r = report_from_dict({"measured_pose": [0.1, 0.2, 0.0, 1.5708]})
+    assert r.measured_pose.yaw == pytest.approx(1.5708) and r.measured_pose.roll == 0.0
+    hl = replace(HighLevelConfig(), buffer=replace(HighLevelConfig().buffer, slots=2))
+    order = {"pallet": {"size_m": [1.2, 1.0, 1.35]},
+             "skus": {"K": {"size_m": [0.4, 0.3, 0.2], "weight_kg": [2.0, 6.0], "count": 3}}}
+    core = RuntimeCore(cell_from_order(order, CandidateConfig()), CandidateConfig(), hl, RuntimeConfig(),
+                       RobotFeasibility(), load_policy("rule", config=hl))
+    bridge = CoreBridge(core)
+    obs = {"box_id": "A", "label_sku": "K", "weight_kg": 4.0, "size_m": [0.4, 0.3, 0.2]}
+    _, cmd = bridge.on_observation(json.dumps(obs))
+    bridge.on_result(json.dumps({"state_version": cmd["state_version"], "measured_pose": cmd["target_min_corner"]}))
+    # the same box observed again is ignored, the state stays consistent
+    verdict, again = bridge.on_observation(json.dumps(obs))
+    assert verdict is None and again is None
+    core.sm.snapshot()
+    # dented box whose label only the base view read: inspection, but counted as arrived (not MISSING)
+    dented = RawObservation("B", None, 4.0, Size3D(0.4, 0.3, 0.2), 1.0, True, "top", 1.0)
+    v = core.on_observation(dented, base_view=lambda prev: replace(prev, label_sku="K", view="base"))
+    assert v.route == "INSPECTION" and v.sku == "K"
+    assert core.sm.remaining == Counter({"K": 1})
+    assert core.on_conveyor_idle(60.0) == Counter({"K": 1})
+
+
+def test_missing_confirmed_when_last_box_goes_to_inspection():
+    stream = [FieldBox(truth(i)) for i in range(3)] + [FieldBox(truth(3), damaged=True)]
+    hl = replace(HighLevelConfig(), buffer=replace(HighLevelConfig().buffer, slots=2))
+    out = RuntimeLoop(_cell(stream, {"K": 6}), CandidateConfig(), hl, quiet(damage_detect_probability=1.0),
+                      RobotFeasibility(), load_policy("rule", config=hl)).run()
+    assert out["placed"] == 3 and out["missing"] == {"K": 2}

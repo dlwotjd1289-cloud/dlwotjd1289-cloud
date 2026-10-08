@@ -125,3 +125,12 @@ def test_yaml_config_round_trip():
     with pytest.raises(ValueError):
         from pac_robot_check import config_from_dict
         config_from_dict({"robot_check": {"robot_model": "ur20"}})
+
+
+def test_held_box_sweep_is_checked_outside_the_gripper_footprint():
+    robot = RobotFeasibility()
+    big = make_box("B", (0.8, 0.6, 0.2), weight=10)
+    # an overhang above the target column, outside the 0.34 x 0.26 gripper
+    over = [placed("S", 0.65, 0.0, 0.0, size=(0.4, 0.3, 0.4)), placed("O", 0.65, 0.25, 0.4, size=(0.4, 0.3, 0.2))]
+    v = robot.validate_robot_motion(big, cand(big, 0.0, 0.3, 0.0), make_state(over, version=1, pallet=PALLET))
+    assert not v.success and v.details["box_hits"] == "O"

@@ -79,6 +79,8 @@ class RuntimeLoop:
                 idx += 1
                 obs = perception.observe(fb, sm.t)
                 verdict = core.on_observation(obs, base_view=lambda prev, fb=fb: perception.base_view(fb, prev))
+                if verdict is None:
+                    continue
                 if verdict.route == "INSPECTION":
                     log("INSPECTION", box=fb.truth.box_id, reason=verdict.kind.value)
                     continue
@@ -157,6 +159,11 @@ class RuntimeLoop:
                     gripper_yaw=cmd.robot.get("gripper_yaw_rad"), cycle_s=cmd.robot["cycle_time_s"],
                     pose=[round(v, 4) for v in (ex.measured_pose.x, ex.measured_pose.y, ex.measured_pose.z,
                                                 ex.measured_pose.yaw)])
+        if not missing_done:  # the stream ended on an inspection box: still confirm MISSING
+            sm.t += cfg.supervisor.missing_timeout_s
+            out = core.on_conveyor_idle(cfg.supervisor.missing_timeout_s)
+            if out:
+                log("MISSING", by_sku=dict(out))
         finish_pallet()
         decisions = dict(core.counts)
         return {

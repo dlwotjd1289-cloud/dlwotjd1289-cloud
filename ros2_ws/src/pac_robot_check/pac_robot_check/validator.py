@@ -74,6 +74,22 @@ class RobotFeasibility:
         total = box.weight_kg + self.cfg.gripper.mass_kg
         return total, total <= self.cfg.rated_payload_kg + 1e-9
 
+    @staticmethod
+    def box_descent_clear(center_top, dims, placed):
+        """The held box itself sweeps its footprint from the approach height
+        down to its bottom: no placed box may rise above that bottom inside
+        the footprint (5-2 checks this too; repeated so stage 6 stands alone)."""
+        dx, dy, dz = dims
+        bottom = center_top[2] - dz
+        for b in placed:
+            lo, hi = _aabb(b.pose, b.size)
+            if hi[2] <= bottom + 1e-6:
+                continue
+            if lo[0] < center_top[0] + dx / 2 - 1e-6 and hi[0] > center_top[0] - dx / 2 + 1e-6 and \
+               lo[1] < center_top[1] + dy / 2 - 1e-6 and hi[1] > center_top[1] - dy / 2 + 1e-6:
+                return False, b.box_id
+        return True, None
+
     def gripper_descent_clear(self, center_top, yaw, placed):
         """Gripper body (footprint rotated by ``yaw``) above the box top must
         not overlap any placed box that rises above the box top."""
@@ -201,6 +217,10 @@ class RobotFeasibility:
         seed = self.pick_configuration(box)
 
         tried, best = [], None
+        clear, hit = self.box_descent_clear(center_top, (dx, dy, dz), placed)
+        if not clear:
+            details["box_hits"] = hit
+            return ValidationResult(False, (RejectCode.ROBOT_COLLISION,), details)
         for yaw in (pose.yaw, pose.yaw + math.pi):
             yaw = math.atan2(math.sin(yaw), math.cos(yaw))
             clear, hit = self.gripper_descent_clear(center_top, yaw, placed)
