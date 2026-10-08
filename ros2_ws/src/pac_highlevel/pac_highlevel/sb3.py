@@ -103,7 +103,7 @@ def imitate(model, data, epochs=20, batch_size=128, lr=1e-3):
             with torch.no_grad():
                 probs = dist.distribution.probs
                 accs.append(float((probs.argmax(-1) == actions[idx]).float().mean()))
-            losses.append(float(-logp.mean()))
+            losses.append(float(-logp.mean().detach()))
         hist.append({"phase": "imitation", "bc_loss": float(np.mean(losses)),
                      "bc_accuracy": float(np.mean(accs))})
     return hist
