@@ -12,7 +12,7 @@ import time
 
 import numpy as np
 
-from .actions import action_count, from_index
+from .actions import action_count, from_index, to_index
 from .features import feature_names, observe
 from .ppo import MaskablePPO, compute_gae
 
@@ -167,6 +167,45 @@ def _merge(parts, cfg):
     return batch, finished
 
 
+def _teacher_episode(job):
+    make_world, policy, i, gamma = job
+    world = make_world(i)
+    obs, masks, actions, rewards = [], [], [], []
+    while not world.done:
+        obs.append(observe(world))
+        masks.append(world.action_mask())
+        action = policy(world)
+        actions.append(to_index(action))
+        rewards.append(world.step(action))
+    returns = np.zeros(len(rewards))
+    acc = 0.0
+    for t in reversed(range(len(rewards))):
+        acc = rewards[t] + gamma * acc
+        returns[t] = acc
+    return obs, masks, actions, returns
+
+
+def imitate_teacher(agent, make_world, policy, episodes, *, workers=1, epochs=20, first_episode=10**6):
+    """Warm-start the agent from a teacher policy (episode ids are offset so
+    they do not repeat the PPO episodes)."""
+    jobs = [(make_world, policy, first_episode + i, agent.cfg.gamma) for i in range(episodes)]
+    if workers > 1:
+        with mp.get_context("fork").Pool(workers) as pool:
+            parts = pool.map(_teacher_episode, jobs, chunksize=1)
+    else:
+        parts = [_teacher_episode(j) for j in jobs]
+    raw = np.asarray([o for p in parts for o in p[0]], dtype=float)
+    masks = np.asarray([m for p in parts for m in p[1]], dtype=bool)
+    actions = np.asarray([a for p in parts for a in p[2]], dtype=int)
+    returns = np.concatenate([p[3] for p in parts])
+    agent.norm.update(raw)
+    hist = agent.imitate(agent.norm(raw), masks, actions, returns, epochs=epochs)
+    for row in hist:
+        row["phase"] = "imitation"
+    agent.history.extend(hist)
+    return hist
+
+
 def train(agent, make_world, total_steps, *, workers=1, log=print, eval_fn=None, eval_every=0):
     cfg = agent.cfg
     collector = ParallelCollector(make_world, agent, workers) if workers > 1 else _Collector(make_world, 0, 1)
@@ -207,4 +246,12 @@ def train(agent, make_world, total_steps, *, workers=1, log=print, eval_fn=None,
     return finished
 
 
-__all__ = ["ParallelCollector", "agent_chooser", "new_agent", "policy_contract", "run_policy", "train"]
+__all__ = [
+    "ParallelCollector",
+    "agent_chooser",
+    "imitate_teacher",
+    "new_agent",
+    "policy_contract",
+    "run_policy",
+    "train",
+]

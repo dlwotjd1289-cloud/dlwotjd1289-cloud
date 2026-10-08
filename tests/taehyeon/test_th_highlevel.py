@@ -21,6 +21,7 @@ from pac_highlevel import (
     agent_chooser,
     feature_names,
     from_index,
+    imitate_teacher,
     load_highlevel_config,
     new_agent,
     observe,
@@ -302,3 +303,23 @@ def test_gym_env_interface():
         mask = env.action_masks()
         obs, r, done, trunc, info = env.step(int(np.flatnonzero(mask)[0]))
     assert info["summary"]["placed"] == 4
+
+
+def test_imitation_warm_start_reproduces_the_rule_teacher():
+    weights = [5, 20, 5, 5, 20, 20, 5, 20]
+    boxes = [box(i, weight=w, sku="H" if w > 10 else "K") for i, w in enumerate(weights)]
+    cfg = HighLevelConfig()
+    cfg = replace(cfg, buffer=replace(cfg.buffer, slots=2),
+                  ppo=replace(cfg.ppo, batch_size=16, hidden=(32, 32), learning_rate=3e-3))
+    cat = catalog(("K", (0.2, 0.4, 0.1), 5.0), ("H", (0.2, 0.4, 0.1), 20.0))
+
+    def make_world(i):
+        return PalletizingWorld([Arrival(b) for b in boxes], SMALL, cat, CandidateConfig(), cfg)
+
+    agent = new_agent(cfg)
+    hist = imitate_teacher(agent, make_world, RulePolicy(cfg), 4, epochs=60)
+    assert hist[-1]["bc_accuracy"] > 0.95
+    rule = run_policy(make_world(0), RulePolicy(cfg))
+    clone = run_policy(make_world(0), agent_chooser(agent))
+    assert clone["counts"] == rule["counts"]
+    assert clone["pallet_equivalents"] == pytest.approx(rule["pallet_equivalents"])

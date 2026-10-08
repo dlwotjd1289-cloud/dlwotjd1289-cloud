@@ -11,7 +11,7 @@ from .config import HighLevelConfig, config_from_dict, load_highlevel_config
 from .features import feature_names, observe
 from .ppo import MaskablePPO
 from .rules import GreedyPolicy, RulePolicy
-from .trainer import agent_chooser, new_agent, policy_contract, run_policy, train
+from .trainer import agent_chooser, imitate_teacher, new_agent, policy_contract, run_policy, train
 from .value import make_value_provider
 from .world import Arrival, PalletizingWorld
 
@@ -29,6 +29,7 @@ __all__ = [
     "config_from_dict",
     "feature_names",
     "from_index",
+    "imitate_teacher",
     "load_highlevel_config",
     "make_value_provider",
     "new_agent",

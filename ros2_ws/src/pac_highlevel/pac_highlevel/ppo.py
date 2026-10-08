@@ -238,6 +238,39 @@ class MaskablePPO:
                 stats["clip_frac"].append(float((np.abs(ratio - 1) > cfg.clip_range).mean()))
         return {k: float(np.mean(v)) for k, v in stats.items()}
 
+    def imitate(self, obs, masks, actions, returns, epochs=20):
+        """Behaviour cloning from a teacher (the rule policy) before PPO.
+
+        ``obs`` must already be normalised. Cross-entropy on the masked
+        policy and MSE of the critic on the teacher's discounted returns.
+        """
+        cfg = self.cfg
+        n = len(actions)
+        hist = []
+        for _ in range(epochs):
+            order = self.rng.permutation(n)
+            losses, accs = [], []
+            for start in range(0, n, cfg.batch_size):
+                idx = order[start : start + cfg.batch_size]
+                x, m, a, k = obs[idx], masks[idx], actions[idx], len(idx)
+                logits, acts = self.pi.forward(x)
+                p = masked_softmax(logits, m)
+                onehot = np.zeros_like(p)
+                onehot[np.arange(k), a] = 1.0
+                g = np.where(m, (p - onehot) / k, 0.0)
+                gW, gb = self.pi.backward(acts, g)
+                grads, _ = _clip_grads(gW + gb, cfg.max_grad_norm)
+                self.pi_opt.step(self.pi.params(), grads)
+                v, vacts = self.vf.forward(x)
+                diff = v[:, 0] - returns[idx]
+                gW, gb = self.vf.backward(vacts, (2.0 * cfg.value_coef * diff / k)[:, None])
+                grads, _ = _clip_grads(gW + gb, cfg.max_grad_norm)
+                self.vf_opt.step(self.vf.params(), grads)
+                losses.append(float(-np.log(p[np.arange(k), a] + 1e-12).mean()))
+                accs.append(float((p.argmax(1) == a).mean()))
+            hist.append({"bc_loss": float(np.mean(losses)), "bc_accuracy": float(np.mean(accs))})
+        return hist
+
     # ---------------------------------------------------------------
     def save(self, path, extra=None):
         data = {

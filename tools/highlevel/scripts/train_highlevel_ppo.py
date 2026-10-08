@@ -11,7 +11,7 @@ from dataclasses import replace
 from pathlib import Path
 
 from _common import REPO, add_common_args, load_all
-from pac_highlevel import new_agent, policy_contract, train
+from pac_highlevel import RulePolicy, imitate_teacher, new_agent, policy_contract, train
 from virtual_data.highlevel import split_ids, world_factory
 
 
@@ -24,6 +24,9 @@ def main():
     parser.add_argument("--output", type=Path,
                         default=REPO / "ros2_ws/src/pac_highlevel/models/highlevel_ppo.json")
     parser.add_argument("--log", type=Path)
+    parser.add_argument("--imitation-episodes", type=int, default=0,
+                        help="warm-start from the rule policy with this many teacher episodes")
+    parser.add_argument("--imitation-epochs", type=int, default=20)
     args = parser.parse_args()
     dataset, cand, vcfg, hl = load_all(args)
     if args.seed is not None:
@@ -42,11 +45,16 @@ def main():
             log_file.write(json.dumps(row) + "\n")
             log_file.flush()
 
+    if args.imitation_episodes:
+        hist = imitate_teacher(agent, make_world, RulePolicy(hl), args.imitation_episodes,
+                               workers=args.workers, epochs=args.imitation_epochs)
+        print("imitation", json.dumps(hist[-1]), flush=True)
     train(agent, make_world, steps, workers=args.workers, log=log)
     agent.save(args.output, extra={
         "trained_on": {"dataset": str(dataset.root.relative_to(REPO)) if dataset.root.is_relative_to(REPO)
                        else str(dataset.root),
-                       "split": "train", "scenarios": [s.scenario_id for s in specs], "steps": steps},
+                       "split": "train", "scenarios": [s.scenario_id for s in specs], "steps": steps,
+                       "imitation_episodes": args.imitation_episodes},
     })
     print("saved", args.output)
 
