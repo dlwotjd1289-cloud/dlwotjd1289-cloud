@@ -131,3 +131,20 @@ python tools/virtual_data/scripts/generate_virtual_data.py --run-generator sampl
    integration.md의 "실제 검사기로 바꾼 뒤 교사 데이터를 재생성" 항목에 해당합니다.
 2. **5-② 분석**: `candidate_sets/`의 사유·evidence로 마스크 분포와 경계 사례를 분석합니다.
 3. **물리 검증**: `tools/virtual_data/scripts/physics_crosscheck.py`가 이 출력을 재성 님 시뮬레이터로 검증합니다.
+
+## 2D 시각화 (5-①/5-② 결정 화면)
+
+미션 필수 고려사항인 "알고리즘 결과를 확인할 수 있는 2D 또는 3D 시각화"에 대응합니다.
+장면 파일 하나로 5-① 후보와 5-② 판정을 위에서 내려다본 SVG를 그립니다.
+
+```bash
+python tools/virtual_data/scripts/visualize_candidates.py \
+    tools/virtual_data/output/run1/scenes/train/S0001-T010.json --output viz/
+```
+
+- 쌓인 박스: 회색(높을수록 진함), 숫자는 윗면 높이(m)
+- 후보 footprint: 유효(초록 실선) / 탈락(빨강 점선). 마우스를 올리면 후보 ID, z, 탈락 사유가 표시됩니다.
+- 선택된 후보(파랑)와 그 후보의 EMS(보라 점선)
+- 오른쪽: 박스 정보, "N generated → M masked → K valid", 탈락 사유 집계
+
+예시: [`reports/example_decision.svg`](reports/example_decision.svg)

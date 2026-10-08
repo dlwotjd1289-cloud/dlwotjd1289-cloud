@@ -56,7 +56,7 @@ print(cset.summary(), dict(cset.reason_counts))
 | `├ pallet_model.py` | 스냅샷 기하 모델: 지지 그래프, LBCP, 누적 하중, 압축 heightmap, EMS |
 | `├ loads.py` | 하중 분배(lever/area), McKee 상자 압축강도 |
 | `├ geometry.py` · `config.py` · `reports.py` | 기하 연산, 검증되는 YAML 설정, 결과 자료형 |
-| `tools/virtual_data/` | 가상데이터 생성기, 오라클·물리·planner 벤치마크 스크립트 |
+| `tools/virtual_data/` | 가상데이터 생성기, 2D 시각화, 오라클·물리·planner·박스 강도 벤치마크 스크립트 |
 | `config/taehyeon/candidates.yaml` | 5-①/5-② 설정 (모든 기본값의 근거는 [algorithms.md](algorithms.md)) |
 | `config/taehyeon/virtual_data.yaml` | 가상데이터 설정 |
 | `tests/taehyeon/` | 124개 테스트 (단위, brute-force 오라클, planner 통합, 가상데이터, 박스 강도) |
