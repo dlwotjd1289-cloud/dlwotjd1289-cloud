@@ -74,7 +74,8 @@ print(cset.summary(), dict(cset.reason_counts))
 3. [virtual_data.md](virtual_data.md): 가상데이터 생성기 사용법과 출력 스키마
 4. [VALIDATION.md](VALIDATION.md): 검증 방법과 결과 (오라클, 물리, planner 연동)
 5. [highlevel.md](highlevel.md): 4번 High-level 행동 선택 (MaskablePPO, Rule, 버퍼, 재적재)
-6. [PROGRESS.md](PROGRESS.md): 진행 기록 / 재개 방법
+6. [team_review_2026-10-08.md](team_review_2026-10-08.md): 저장소 전체 검토 (모든 브랜치, 미션 대응표, main 통합 방법)
+7. [PROGRESS.md](PROGRESS.md): 진행 기록 / 재개 방법
 
 ## 핵심 결과 (2026-10-08, 자세한 내용은 [VALIDATION.md](VALIDATION.md), [highlevel.md](highlevel.md))
 
