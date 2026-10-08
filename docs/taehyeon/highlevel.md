@@ -64,6 +64,49 @@ sb3-contrib `MaskablePPO`와 같은 알고리즘을 NumPy로 구현했습니다.
 - 4개 프로세스가 병렬로 경험을 모읍니다. 각 프로세스는 행동할 때 쓴 정규화 관측을 그대로 돌려주므로, 업데이트 시작 시 확률비가 정확히 1입니다.
 - `gym_env.HighLevelGymEnv`는 Gymnasium 인터페이스와 `action_masks()`를 제공합니다. PyTorch가 있는 PC에서는 `sb3_contrib.MaskablePPO("MlpPolicy", env)`로 바로 바꿔 학습할 수 있습니다.
 
+## 3-1. PyTorch(sb3-contrib) 사용 방법
+
+PyTorch가 있으면 sb3-contrib의 `MaskablePPO`로 학습합니다(`pac_highlevel/sb3.py`, `tools/highlevel/scripts/train_highlevel_sb3.py`).
+세계·관측·마스크·Rule 모방 warm start는 NumPy 판과 똑같고, 학습기만 다릅니다. 정책 파일은 `*.zip` + `*.contract.json`(특징 목록, Future Value 공급자 확인)입니다.
+
+### 설치 (내 PC)
+
+```bash
+# 1) 가상환경 (Python 3.10 권장, 팀 환경과 동일)
+python3.10 -m venv .venv && source .venv/bin/activate        # Windows: .venv\Scripts\activate
+
+# 2) PyTorch — 둘 중 하나
+pip install torch --index-url https://download.pytorch.org/whl/cpu   # CPU 전용, 약 200 MB (이 정책은 작아서 CPU로 충분)
+pip install torch                                                     # 기본판 (Linux는 CUDA 포함, 수 GB)
+
+# 3) 강화학습 라이브러리
+pip install sb3-contrib gymnasium "numpy>=1.23,<3" "PyYAML>=6,<7" pytest
+
+# 4) 확인
+python -c "import torch, sb3_contrib; print(torch.__version__, sb3_contrib.__version__)"
+```
+
+GPU가 있어도 이 정책(입력 77, 행동 6, 64-64 MLP)은 CPU가 더 빠릅니다. 시간은 대부분 5-①/5-② 시뮬레이션에서 씁니다.
+
+### 설치 (Claude Code 클라우드 환경)
+
+`pypi.org`는 허용되어 있어 `pip install torch sb3-contrib gymnasium`이 됩니다(CUDA 포함판이라 몇 분 걸림).
+CPU 전용판을 쓰려면 환경 설정 → Network access → Allowed domains에 `download.pytorch.org`를 추가해야 합니다.
+
+### 학습과 평가
+
+```bash
+scripts/taehyeon/fetch_team_deps.sh
+python tools/highlevel/scripts/train_highlevel_sb3.py --run-generator 10 --steps 100000 \
+    --imitation-episodes 120 --output ros2_ws/src/pac_highlevel/models/highlevel_sb3.zip
+python tools/highlevel/scripts/evaluate_highlevel.py --run-generator 10 --split test \
+    --policies no_buffer greedy rule ppo sb3 \
+    --policy-file ros2_ws/src/pac_highlevel/models/highlevel_ppo.json \
+    --sb3-file ros2_ws/src/pac_highlevel/models/highlevel_sb3.zip
+```
+
+PyTorch가 없으면 `sb3` 관련 테스트는 건너뛰고 NumPy 판(`train_highlevel_ppo.py`)이 그대로 동작합니다.
+
 ## 4. Rule 정책 (1차)
 
 - `RulePolicy`: 오래 기다린 버퍼 박스 우선 → 현재 박스가 잘 맞으면(지지율 ≥ 0.95) 적재(단, 버퍼 박스가 2 cm 이상 낮게 들어가면 그것부터) → 아니면 맞는 버퍼 박스를 꺼냄 → 빈 칸이 있으면 현재 박스 보관 → 그래도 안 되면 현재 박스 적재

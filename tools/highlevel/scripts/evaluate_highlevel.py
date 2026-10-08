@@ -47,7 +47,8 @@ def main():
     add_common_args(parser)
     parser.add_argument("--split", default="test")
     parser.add_argument("--passes", type=int, default=3, help="noise / footprint passes per scenario")
-    parser.add_argument("--policy-file", type=Path)
+    parser.add_argument("--policy-file", type=Path, help="NumPy MaskablePPO policy (ppo)")
+    parser.add_argument("--sb3-file", type=Path, help="sb3-contrib MaskablePPO policy (sb3)")
     parser.add_argument("--policies", nargs="+", default=["no_buffer", "greedy", "rule", "ppo"])
     parser.add_argument("--workers", type=int, default=4)
     parser.add_argument("--report", type=Path)
@@ -70,6 +71,14 @@ def main():
             agent = MaskablePPO.load(args.policy_file, feature_names=feature_names(hl.buffer.slots),
                                      contract=policy_contract(hl, args.candidate_config.name))
             CHOOSERS[name] = agent_chooser(agent, deterministic=True)
+        elif name == "sb3":
+            if args.sb3_file is None:
+                parser.error("--sb3-file is required for sb3")
+            from pac_highlevel import sb3
+
+            model = sb3.load(args.sb3_file, slots=hl.buffer.slots,
+                             contract=policy_contract(hl, args.candidate_config.name))
+            CHOOSERS[name] = sb3.chooser(model)
         else:
             parser.error(f"unknown policy {name}")
     jobs = [(n, i) for n in args.policies for i in range(episodes)]

@@ -39,10 +39,11 @@ if gym is not None:
 
         def reset(self, *, seed=None, options=None):
             super().reset(seed=seed)
-            self.episode += 1
-            self.world = self.make_world(self.episode)
-            if self.world.done:  # nothing to decide (e.g. every box went to NG)
-                return observe(self.world), {"summary": self.world.summary()}
+            for _ in range(100):  # skip streams with nothing to decide (all NG)
+                self.episode += 1
+                self.world = self.make_world(self.episode)
+                if not self.world.done:
+                    break
             return observe(self.world), {}
 
         def step(self, action):

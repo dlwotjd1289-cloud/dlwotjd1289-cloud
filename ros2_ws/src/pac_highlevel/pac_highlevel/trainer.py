@@ -188,11 +188,10 @@ def _teacher_episode(i):
     return obs, masks, actions, returns
 
 
-def imitate_teacher(agent, make_world, policy, episodes, *, workers=1, epochs=20, first_episode=10**6):
-    """Warm-start the agent from a teacher policy (episode ids are offset so
-    they do not repeat the PPO episodes)."""
+def collect_teacher(make_world, policy, episodes, *, gamma, workers=1, first_episode=10**6):
+    """Teacher roll-outs: raw observations, masks, actions, discounted returns."""
     global _TEACHER
-    _TEACHER = (make_world, policy, agent.cfg.gamma)
+    _TEACHER = (make_world, policy, gamma)
     ids = [first_episode + i for i in range(episodes)]
     try:
         if workers > 1:
@@ -202,12 +201,22 @@ def imitate_teacher(agent, make_world, policy, episodes, *, workers=1, epochs=20
             parts = [_teacher_episode(i) for i in ids]
     finally:
         _TEACHER = None
-    raw = np.asarray([o for p in parts for o in p[0]], dtype=float)
-    masks = np.asarray([m for p in parts for m in p[1]], dtype=bool)
-    actions = np.asarray([a for p in parts for a in p[2]], dtype=int)
-    returns = np.concatenate([p[3] for p in parts])
+    return {
+        "obs": np.asarray([o for p in parts for o in p[0]], dtype=np.float32),
+        "masks": np.asarray([m for p in parts for m in p[1]], dtype=bool),
+        "actions": np.asarray([a for p in parts for a in p[2]], dtype=int),
+        "returns": np.concatenate([p[3] for p in parts]),
+    }
+
+
+def imitate_teacher(agent, make_world, policy, episodes, *, workers=1, epochs=20, first_episode=10**6):
+    """Warm-start the agent from a teacher policy (episode ids are offset so
+    they do not repeat the PPO episodes)."""
+    data = collect_teacher(make_world, policy, episodes, gamma=agent.cfg.gamma, workers=workers,
+                           first_episode=first_episode)
+    raw = data["obs"].astype(float)
     agent.norm.update(raw)
-    hist = agent.imitate(agent.norm(raw), masks, actions, returns, epochs=epochs)
+    hist = agent.imitate(agent.norm(raw), data["masks"], data["actions"], data["returns"], epochs=epochs)
     for row in hist:
         row["phase"] = "imitation"
     agent.history.extend(hist)
@@ -257,6 +266,7 @@ def train(agent, make_world, total_steps, *, workers=1, log=print, eval_fn=None,
 __all__ = [
     "ParallelCollector",
     "agent_chooser",
+    "collect_teacher",
     "imitate_teacher",
     "new_agent",
     "policy_contract",

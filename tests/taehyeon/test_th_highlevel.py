@@ -323,3 +323,35 @@ def test_imitation_warm_start_reproduces_the_rule_teacher():
     clone = run_policy(make_world(0), agent_chooser(agent))
     assert clone["counts"] == rule["counts"]
     assert clone["pallet_equivalents"] == pytest.approx(rule["pallet_equivalents"])
+
+
+def test_sb3_backend_trains_imitates_and_respects_masks(tmp_path):
+    pytest.importorskip("torch")
+    pytest.importorskip("sb3_contrib")
+    from pac_highlevel import sb3
+    from pac_highlevel.trainer import collect_teacher
+
+    weights = [5, 20, 5, 5, 20, 20]
+    boxes = [box(i, weight=w, sku="H" if w > 10 else "K") for i, w in enumerate(weights)]
+    cfg = HighLevelConfig()
+    cfg = replace(cfg, buffer=replace(cfg.buffer, slots=2),
+                  ppo=replace(cfg.ppo, n_steps=64, batch_size=16, n_epochs=2, hidden=(16, 16)))
+    cat = catalog(("K", (0.2, 0.4, 0.1), 5.0), ("H", (0.2, 0.4, 0.1), 20.0))
+
+    def make_world(i):
+        return PalletizingWorld([Arrival(b) for b in boxes], SMALL, cat, CandidateConfig(), cfg)
+
+    env = sb3.make_vec_env(make_world, 2, n_envs=2, subprocess=False)
+    model = sb3.new_model(env, cfg.ppo)
+    data = collect_teacher(make_world, RulePolicy(cfg), 3, gamma=cfg.ppo.gamma)
+    hist = sb3.imitate(model, data, epochs=40, batch_size=16, lr=3e-3)
+    assert hist[-1]["bc_accuracy"] > 0.9
+    model.learn(total_timesteps=64)
+    path = tmp_path / "p.zip"
+    sb3.save(model, path, 2, policy_contract(cfg))
+    loaded = sb3.load(path, slots=2, contract=policy_contract(cfg))
+    out = run_policy(make_world(0), sb3.chooser(loaded))
+    assert out["placed"] == 6 and out["safety_issues"] == 0
+    other = replace(cfg, features=replace(cfg.features, value_provider="donghan"))
+    with pytest.raises(ValueError, match="value_provider"):
+        sb3.load(path, slots=2, contract=policy_contract(other))
