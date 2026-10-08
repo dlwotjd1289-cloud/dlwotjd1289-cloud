@@ -21,7 +21,7 @@ def write_json(path, value):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--team-root", type=Path, required=True)
+    parser.add_argument("--team-root", type=Path, default=Path(__file__).resolve().parents[2])
     source = parser.add_mutually_exclusive_group(required=True)
     source.add_argument("--dataset", type=Path)
     source.add_argument("--generator-root", type=Path)

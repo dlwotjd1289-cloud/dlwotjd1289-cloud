@@ -6,7 +6,7 @@ from pathlib import Path
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--team-root", type=Path, required=True,
+    parser.add_argument("--team-root", type=Path, default=Path(__file__).resolve().parents[2],
                         help="checkout containing taehyeon's ros2_ws/src/pac_candidates")
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--include-highlevel", action="store_true",

@@ -11,7 +11,8 @@ OUT="tools/virtual_data/output/validation"
 REPORTS="docs/taehyeon/reports"
 mkdir -p "$REPORTS"
 
-[ -f .deps/team/paths.env ] || scripts/taehyeon/fetch_team_deps.sh
+# Monorepo: teammates' packages are already in ros2_ws/src; fetch only for a split checkout.
+[ -d ros2_ws/src/pac_common ] || [ -f .deps/team/paths.env ] || scripts/taehyeon/fetch_team_deps.sh
 
 echo "== 1. unit / oracle / integration tests"
 python -m pytest -q tests/taehyeon | tee "$REPORTS/pytest.txt"

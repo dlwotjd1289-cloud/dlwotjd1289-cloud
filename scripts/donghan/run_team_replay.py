@@ -13,7 +13,7 @@ import sys
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--team-root", type=Path, required=True)
+    parser.add_argument("--team-root", type=Path, default=Path(__file__).resolve().parents[2])
     parser.add_argument("--dataset", type=Path, required=True)
     parser.add_argument("--scenario", default="S0001")
     parser.add_argument("--max-boxes", type=int, default=5)
