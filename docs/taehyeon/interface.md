@@ -45,6 +45,10 @@ result = planner.plan(box, state, list(report.candidates), seed=42)
   5-③의 잔여재고 프로브는 앞 16개만 검사하므로, 이 순서 덕분에 "놓을 곳이 있는데 없다고 판단"하는 경우가 13% → 0%로 줄었습니다.
   (`generation.order: priority`로 순수 (z, y, x) 순서도 선택할 수 있습니다.)
 - 부가 정보: `generate_with_report()` → `GenerationReport.infos[candidate_id]` = `CandidateInfo(source="EMS"|"EP", anchor, yaw, footprint, ems_lower_m, ems_upper_m)`
+  - `anchor`: EMS 기준점 `corner_ll|corner_lr|corner_ul|corner_ur|center`, Extreme Point `ep_*`, 그리고 무거운-위-가벼운 `share` 모드의 **균형 기준점 `balance`**(하중이 여러 가벼운 박스에 나뉘는 자리, [algorithms.md](algorithms.md) 1장 6번).
+  - `ems_lower_m` / `ems_upper_m`: 후보를 포함하는 가장 큰 EMS. Extreme Point나 균형 기준점 중 포함하는 EMS가 없으면 `None`이고, 그 후보는 `ems_upper_by_candidate`에 들어가지 않습니다(5-③은 proxy 특징 사용).
+- 박스의 허용 yaw가 π, −π/2처럼 표기돼도 같은 footprint의 후보를 만들며, 후보의 yaw는 박스 허용 목록의 값을 그대로 씁니다.
+- `uncertain_policy: reject`이면 불확실 박스에 대해 빈 목록을 돌려줍니다.
 
 ## 4. 5-② 출력
 
