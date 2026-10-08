@@ -68,7 +68,7 @@ def test_released_model_contract_and_horizon_fallback(scene, planner):
     from pathlib import Path
     from pac_planning import PlannerConfig, PlacementPlanner
 
-    path = Path(__file__).parents[1] / "models/dual_head_ranker.json"
+    path = Path(__file__).parents[2] / "models/dual_head_ranker.json"
     loaded = PlacementPlanner(
         context=scene[3],
         config=PlannerConfig(),

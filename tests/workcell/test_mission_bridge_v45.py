@@ -5,7 +5,7 @@ from pathlib import Path
 
 import numpy as np
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts"))
 import hdr50_kinematics as K
 import mission_bridge_v45 as MB
 from pick_place_plan_v45 import plan_pick_place_yaw

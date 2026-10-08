@@ -6,7 +6,7 @@ import subprocess
 
 import pytest
 
-SCRIPT = Path(__file__).resolve().parents[1] / 'scripts/fetch_hyundai_refs.sh'
+SCRIPT = Path(__file__).resolve().parents[2] / 'scripts/fetch_hyundai_refs.sh'
 REPOS = ('hdr_client_driver', 'hdr_description', 'hdr_ros2_driver', 'hdr_simulation_gz')
 
 

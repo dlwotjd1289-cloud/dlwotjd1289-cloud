@@ -1,21 +1,48 @@
+# Single dependency declaration for the whole monorepo (common standard section 2).
+# ROS 2 packages under ros2_ws/src keep their package.xml/setup.py for colcon only.
 [build-system]
 requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "pac-mission1-shared"
-version = "0.1.0"
-description = "AHEAD low-level placement planner, stages 5-3 to 5-6"
+name = "pac2026-ahead"
+version = "0.3.0"
+description = "PAC 2026 HD Hyundai Robotics Mission 1 - AHEAD mixed palletizing (team monorepo)"
 requires-python = ">=3.10"
-dependencies = ["numpy>=1.23,<3", "PyYAML>=6,<7"]
+dependencies = [
+    "numpy>=1.23,<3",
+    "PyYAML>=6,<7",
+    "Shapely>=2.0,<3",        # workcell analytic pallet physics (pac_planning.physics)
+]
 
 [project.optional-dependencies]
-dev = ["pytest>=7,<9"]
+dev = ["pytest>=7.4,<9"]
+# PyBullet live pallet simulator (pac_simulation.ahead_sim, viewer/ahead_live)
+sim = ["pybullet>=3.2.6,<4", "networkx>=2.8,<4", "aiohttp>=3.8,<4"]
+# High-level PPO training (pac_highlevel); tests skip when absent
+rl = ["gymnasium>=0.29", "torch>=2.0", "stable-baselines3>=2.0", "sb3-contrib>=2.0"]
+all = ["pac2026-ahead[dev,sim]"]
 
 [tool.setuptools.packages.find]
-where = ["ros2_ws/src/pac_common", "ros2_ws/src/pac_planning"]
-include = ["pac_common*", "pac_planning*"]
+where = [
+    "ros2_ws/src/pac_common",
+    "ros2_ws/src/pac_planning",
+    "ros2_ws/src/pac_candidates",
+    "ros2_ws/src/pac_highlevel",
+    "ros2_ws/src/pac_perception",
+    "ros2_ws/src/pac_robot",
+    "ros2_ws/src/pac_simulation",
+    "tools/virtual_data",
+    "tools/ahead_dataset_generator/src",
+]
+include = [
+    "pac_common*", "pac_planning*", "pac_candidates*", "pac_highlevel*",
+    "pac_perception*", "pac_robot*", "pac_simulation*", "virtual_data*",
+    "ahead_dataset_generator*",
+]
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
-pythonpath = ["ros2_ws/src/pac_common", "ros2_ws/src/pac_planning"]
+testpaths = ["tests", "tools/ahead_dataset_generator/tests"]
+addopts = "-ra --import-mode=importlib"
+# Package paths are added by the root conftest.py (Ubuntu 22.04 ships pytest 6.2,
+# which has no `pythonpath` option).

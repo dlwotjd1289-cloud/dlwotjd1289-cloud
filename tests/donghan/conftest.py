@@ -8,7 +8,7 @@ from pac_planning.reference_backend import ReferenceBackend
 @pytest.fixture
 def scene():
     return scene_from_file(
-        Path(__file__).parents[1] / "test_data/scenario_001_basic.json"
+        Path(__file__).parents[2] / "test_data/scenario_001_basic.json"
     )
 
 

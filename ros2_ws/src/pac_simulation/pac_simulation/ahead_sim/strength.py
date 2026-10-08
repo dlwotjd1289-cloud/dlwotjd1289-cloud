@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import math
+
 from typing import Any, Dict, Mapping, Sequence
 
 
@@ -34,8 +36,13 @@ def evaluate_box_compression(
             continue
 
         limit_n = float(limit)
-        utilization = load_n / limit_n if limit_n > 0 else float("inf")
-        status = "OVERLOAD" if utilization > 1.0 else "OK"
+        if not math.isfinite(limit_n) or limit_n < 0:
+            raise ValueError("max_top_load_n must be finite and >= 0")
+        # 0 N means non-stackable; no load is valid, positive load is not.
+        # None avoids an Infinity value in JSON and in the browser renderer.
+        utilization = load_n / limit_n if limit_n > 0 else None
+        overloaded_now = load_n > (limit_n if limit_n > 0 else 1e-6)
+        status = "OVERLOAD" if overloaded_now else "OK"
 
         if status == "OVERLOAD":
             overloaded.append(box_id)

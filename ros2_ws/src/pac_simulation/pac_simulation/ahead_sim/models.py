@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, field
 from typing import Any, Dict, Optional, Tuple
 
@@ -134,8 +135,8 @@ class BoxSpec:
             max_top_load_n = float(data["max_supported_load_kg"]) * 9.80665
         if max_top_load_n is not None:
             max_top_load_n = float(max_top_load_n)
-            if max_top_load_n <= 0:
-                raise ValueError("max_top_load_n must be > 0 when provided")
+            if not math.isfinite(max_top_load_n) or max_top_load_n < 0:
+                raise ValueError("max_top_load_n must be finite and >= 0 when provided")
 
         return BoxSpec(
             box_id=box_id,

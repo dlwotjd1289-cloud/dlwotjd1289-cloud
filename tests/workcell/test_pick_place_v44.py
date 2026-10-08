@@ -4,7 +4,7 @@ from pathlib import Path
 
 import numpy as np
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts"))
 import hdr50_kinematics as K
 from pick_place_plan_v44 import PlanConfig, plan_pick_place
 
