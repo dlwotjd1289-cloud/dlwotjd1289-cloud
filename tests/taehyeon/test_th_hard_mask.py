@@ -312,3 +312,43 @@ def test_heavy_on_light_share_mode_allows_bridging():
     share_cfg = ConstraintConfig(heavy_on_light=HeavyOnLightConfig(mode="share"))
     share = CandidateBackend(make_context(), CandidateConfig(constraints=share_cfg))
     assert check(share, bridge, state, 0.06, TOL, 0.2).success
+
+
+# --------------------------------------------------------------------------
+# Regressions found by the self-review (2026-10-08)
+# --------------------------------------------------------------------------
+
+
+def test_zero_weight_box_on_empty_pallet_does_not_crash(backend):
+    box = make_box(weight=0.0)
+    result = check(backend, box, make_state(), 0.3, 0.3, 0.0)
+    assert result.success, result.details
+
+
+def test_loaded_zero_capacity_box_keeps_evidence_finite():
+    # A dented box (capacity override 0 N) that already carries a box: every
+    # unrelated candidate must still be judged normally, with finite evidence.
+    ctx = make_context(overrides={"D": 0.0})
+    backend = CandidateBackend(ctx)
+    d = placed("D", TOL, TOL, 0.0, weight=10)
+    top = placed("T", TOL, TOL, 0.2, weight=1)
+    state = make_state([d, top])
+    elsewhere = check(backend, make_box(weight=2), state, 0.6, 0.6, 0.0)
+    assert elsewhere.success, elsewhere.details
+    assert math.isfinite(elsewhere.details["evidence"].max_load_ratio)
+    on_top = check(backend, make_box(weight=0.5), state, TOL, TOL, 0.4)
+    assert any(r == "BOX_CAPACITY:D" for r in on_top.details["reasons"])
+
+
+def test_grid_maps_nearly_coincident_edges_consistently(backend):
+    # Two edges 5e-8 apart are merged in the compressed grid; the second box
+    # must still mark exactly its own cells (no fake or hidden EMS).
+    a = placed("A", TOL, TOL, 0.0, size=(0.3, 0.3, 0.2))
+    b = placed("B", TOL + 0.3 + GAP + 5e-8, TOL, 0.0, size=(0.3, 0.3, 0.2))
+    model = backend.model_for(make_state([a, b]))
+    xs, ys, heights = model.grid()
+    centers = (xs[:-1] + xs[1:]) / 2
+    row = heights[0]
+    for cx, h in zip(centers, row):
+        inside = any(g.expanded.x0 <= cx <= g.expanded.x1 for g in model.boxes)
+        assert (h > 0) == inside

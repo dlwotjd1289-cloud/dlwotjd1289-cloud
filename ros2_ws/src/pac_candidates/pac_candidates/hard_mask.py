@@ -38,6 +38,9 @@ from .geometry import (
 from .pallet_model import G, box_tolerance, cog_delta
 
 EVIDENCE_SOURCE = "LBCP_EMS_DELTA_V1"
+# Finite stand-in for an unbounded load ratio (a 0 N capacity box carrying
+# load). ConstraintEvidence requires finite numbers.
+RATIO_CAP = 1e6
 
 
 @dataclass(frozen=True)
@@ -208,14 +211,17 @@ def evaluate(model, box, pose, *, is_uncertain=False, collect_all=True):
                 fail(R.LOAD_VIOLATION, "HEAVY_ON_LIGHT:" + sup.box_id)
     metrics.update(
         supporter_shares={c.supporter_id: c.share for c in contacts},
-        max_load_ratio=max_ratio if math.isfinite(max_ratio) else 1e6,
+        max_load_ratio=min(max_ratio, RATIO_CAP),
     )
 
     # 12. pallet CoG region --------------------------------------------------------
     p = model.pallet_size
-    cx = (model.moment[0] + box.weight_kg * center[0]) / mass_after
-    cy = (model.moment[1] + box.weight_kg * center[1]) / mass_after
-    cz = (model.moment[2] + box.weight_kg * (z + 0.5 * dz)) / mass_after
+    if mass_after > 0:
+        cx = (model.moment[0] + box.weight_kg * center[0]) / mass_after
+        cy = (model.moment[1] + box.weight_kg * center[1]) / mass_after
+        cz = (model.moment[2] + box.weight_kg * (z + 0.5 * dz)) / mass_after
+    else:  # massless box on an empty pallet: CoG undefined -> centre
+        cx, cy, cz = 0.5 * p.x, 0.5 * p.y, 0.0
     hx, hy = pallet_cog_limits(model, mass_after)
     off_x, off_y = abs(cx - 0.5 * p.x), abs(cy - 0.5 * p.y)
     pallet_cog_ratio = min(
@@ -251,7 +257,7 @@ def evaluate(model, box, pose, *, is_uncertain=False, collect_all=True):
         cog_margin_ratio=min(lbcp_ratio, pallet_cog_ratio),
         load_margin_ratio=_clip01(load_margin),
         pallet_load_margin_ratio=_clip01(1.0 - mass_after / model.max_weight_kg),
-        max_load_ratio=max(0.0, max_ratio),
+        max_load_ratio=min(max(0.0, max_ratio), RATIO_CAP),
         support_centering=centering,
         dependency_count=dependency,
         source=EVIDENCE_SOURCE,

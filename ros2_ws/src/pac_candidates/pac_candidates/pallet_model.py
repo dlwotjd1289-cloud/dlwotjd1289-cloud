@@ -178,6 +178,11 @@ class PalletModel:
         self.max_top = max((g.top for g in geoms), default=0.0)
         self._ems = None
         self._grid = None
+        self._extreme_points = None
+        # Per-snapshot result caches owned by CandidateBackend (freed together
+        # with this model when it leaves the backend's LRU).
+        self.verdict_cache = {}
+        self.generation_cache = {}
 
     # ------------------------------------------------------------------
     # Support graph and LBCP
@@ -438,10 +443,14 @@ class PalletModel:
             heights = np.zeros((len(ys) - 1, len(xs) - 1))
             for g in self.boxes:
                 e = g.expanded
-                c0 = np.searchsorted(xs, e.x0 - 1e-9, side="left")
-                c1 = np.searchsorted(xs, e.x1 - 1e-9, side="left")
-                r0 = np.searchsorted(ys, e.y0 - 1e-9, side="left")
-                r1 = np.searchsorted(ys, e.y1 - 1e-9, side="left")
+                # Edges within MERGE_TOL were merged into the next-lower
+                # kept coordinate; look up with the same tolerance so a
+                # merged edge maps onto that coordinate (not one cell off).
+                off = MERGE_TOL + 1e-12
+                c0 = np.searchsorted(xs, e.x0 - off, side="left")
+                c1 = np.searchsorted(xs, e.x1 - off, side="left")
+                r0 = np.searchsorted(ys, e.y0 - off, side="left")
+                r1 = np.searchsorted(ys, e.y1 - off, side="left")
                 c0, r0 = max(c0, 0), max(r0, 0)
                 block = heights[r0:r1, c0:c1]
                 np.maximum(block, g.top, out=block)
@@ -546,7 +555,10 @@ def _margin(poly, center, unc, dx, dy, uncertain):
     return inside_margin(poly, center, ddx, ddy)
 
 
-def _merge_close(values, tol=1e-7):
+MERGE_TOL = 1e-7
+
+
+def _merge_close(values, tol=MERGE_TOL):
     merged = []
     for v in values:
         if merged and v - merged[-1] <= tol:

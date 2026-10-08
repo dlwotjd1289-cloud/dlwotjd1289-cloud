@@ -2,7 +2,7 @@ import random
 
 import pytest
 
-from th_helpers import REPO, make_box, make_state, placed
+from th_helpers import make_state, placed
 from pac_candidates import CandidateConfig
 from virtual_data.scenario_source import load_dataset
 from virtual_data.strength import PROFILE_ORDER, STRENGTH_PROFILES, draw, true_overloads
@@ -52,3 +52,23 @@ def test_true_overloads_detects_crushed_box():
 
 def test_profiles_registered():
     assert "extreme" in STRENGTH_PROFILES and len(PROFILE_ORDER) == len(STRENGTH_PROFILES)
+
+
+def test_all_zero_profile_weights_rejected():
+    from virtual_data.config import StrengthSection
+
+    with pytest.raises(ValueError):
+        StrengthSection(profiles={"strong": 0, "weak": 0})
+
+
+def test_dblf_policy_ignores_output_order():
+    from types import SimpleNamespace
+
+    from pac_common import PlacementCandidate, Pose3D
+    from virtual_data.policies import choose
+
+    high = PlacementCandidate("C000", "N", Pose3D("pallet", 0.0, 0.0, 0.4), 0)
+    low = PlacementCandidate("C001", "N", Pose3D("pallet", 0.5, 0.5, 0.0), 0)
+    cset = SimpleNamespace(valid=(high, low))
+    chosen, decision = choose("dblf", cset, random.Random(0), None)
+    assert chosen is low and decision == "dblf"

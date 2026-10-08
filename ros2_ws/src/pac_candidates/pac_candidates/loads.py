@@ -51,11 +51,8 @@ def lever_shares(areas, centroids, point):
             total = shares.sum()
             if total <= 1e-12:
                 break
-            residual = np.abs(a @ shares[idx] - target).max()
-            if residual > 1e-6:
-                # Moment balance unattainable with this active set; the
-                # pseudo-inverse returned a least-squares compromise.
-                pass
+            # If moment balance is unattainable with this active set the
+            # pseudo-inverse returns the least-squares compromise.
             return list(shares / total)
         # Drop the most tensile contact and retry.
         worst = idx[int(np.argmin(f_active))]

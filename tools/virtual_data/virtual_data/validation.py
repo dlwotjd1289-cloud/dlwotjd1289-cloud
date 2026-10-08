@@ -115,7 +115,10 @@ def validate_output(out_dir, recheck_rows=30, seed=0):
     for path in sorted((out / "episodes").glob("*.json")):
         ep = json.loads(path.read_text(encoding="utf-8"))
         state = state_from_json(ep["final_state"])
-        issues = CandidateBackend(None, cand_cfg).model_for(state).snapshot_issues()
+        final_context = (
+            context_from_json(ep["final_context"]) if ep.get("final_context") else None
+        )
+        issues = CandidateBackend(final_context, cand_cfg).model_for(state).snapshot_issues()
         if issues:
             failures.append(f"final pallet has stability/load issues in {path.name}: {issues}")
         if ep["metrics"]["true_overlaps"]:

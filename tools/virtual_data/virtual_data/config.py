@@ -98,6 +98,8 @@ class StrengthSection:
             if name not in STRENGTH_PROFILES:
                 raise ValueError(f"Unknown strength profile {name}")
             _nonneg(weight, f"strength.profiles.{name}")
+        if sum(self.profiles.values()) <= 0:
+            raise ValueError("strength.profiles needs at least one positive weight")
         if self.assignment not in ("round_robin", "random"):
             raise ValueError("strength.assignment must be round_robin or random")
         _nonneg(self.damage_factor, "damage_factor")

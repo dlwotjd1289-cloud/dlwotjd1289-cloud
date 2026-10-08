@@ -129,6 +129,7 @@ def generate(dataset_dir, out_dir, cand_config, vcfg, scenario_ids=None, repo_ro
                     "metrics": result.metrics,
                     "unplaced_box_ids": result.unplaced,
                     "final_state": plain(result.final_state),
+                    "final_context": plain(result.final_context),
                     "true_sizes": {
                         b.box_id: plain(b.size) for b in spec.arrivals
                     },

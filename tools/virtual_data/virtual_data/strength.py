@@ -23,7 +23,8 @@ corrugated board, not measured values of the competition boxes.
 from dataclasses import dataclass
 import math
 
-G = 9.80665
+from pac_candidates.loads import mckee_capacity_n
+from pac_candidates.pallet_model import G
 
 # grade -> (ECT range N/m, board thickness m). Generic corrugated board.
 CARTON_GRADES = {
@@ -72,7 +73,9 @@ def _weighted(rng, weights):
 
 
 def bct_n(dx, dy, ect, thickness):
-    return 5.87 * ect * math.sqrt(thickness * 2.0 * (dx + dy))
+    """McKee box compression strength (N): the same formula as the planner's
+    assumed capacity, without its safety factor."""
+    return mckee_capacity_n(dx, dy, ect, thickness, 1.0)
 
 
 def draw(arrivals, profile, rng, damage_factor=0.25, detect_probability=0.8):

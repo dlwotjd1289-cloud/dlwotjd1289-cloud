@@ -41,6 +41,12 @@ from .reports import CandidateInfo, CandidateSet, GenerationReport
 INVALID_BOX_STATUSES = (BoxStatus.REJECTED, BoxStatus.FAILED, BoxStatus.PLACED)
 
 
+class _Counter:
+    def __init__(self):
+        self.hits = 0
+        self.misses = 0
+
+
 class _Lru:
     def __init__(self, size):
         self.size = size
@@ -83,9 +89,12 @@ class CandidateBackend:
     def __init__(self, context=None, config=None):
         self.context = context
         self.config = config or CandidateConfig()
+        # Only models live in the LRU. Verdicts and candidate lists are stored
+        # on their PalletModel, so evicting a model frees everything derived
+        # from that snapshot (no cache pins an evicted model).
         self._models = _Lru(self.config.cache_size)
-        self._verdicts = _Lru(self.config.cache_size * 64)
-        self._generations = _Lru(self.config.cache_size * 4)
+        self._verdicts = _Counter()
+        self._generations = _Counter()
         self._last = (None, None)
 
     # ------------------------------------------------------------------
@@ -151,10 +160,12 @@ class CandidateBackend:
     def _verdict_entry(self, box, pose, state):
         model = self.model_for(state)
         uncertain = self._uncertain(box.box_id)
-        key = (id(model), geometry_key(box, uncertain), pose_key(pose))
-        cached = self._verdicts.get(key)
-        if cached is not None and cached[0] is model:  # guard id() reuse
+        key = (geometry_key(box, uncertain), pose_key(pose))
+        cached = model.verdict_cache.get(key)
+        if cached is not None:
+            self._verdicts.hits += 1
             return cached
+        self._verdicts.misses += 1
         outcome = evaluate(
             model,
             box,
@@ -162,8 +173,8 @@ class CandidateBackend:
             is_uncertain=uncertain,
             collect_all=self.config.collect_all_reasons,
         )
-        entry = [model, outcome, None]  # ValidationResult built lazily
-        self._verdicts.put(key, entry)
+        entry = [None, outcome, None]  # [unused, outcome, lazy ValidationResult]
+        model.verdict_cache[key] = entry
         return entry
 
     @staticmethod
@@ -194,7 +205,7 @@ class CandidateBackend:
             return failure
         try:
             return self._result(self._verdict_entry(box, candidate.target_pose, state))
-        except (ValueError, KeyError) as error:
+        except (ValueError, KeyError, ArithmeticError) as error:
             return ValidationResult(
                 False,
                 (R.INVALID_STATE,),
@@ -208,10 +219,12 @@ class CandidateBackend:
     def _kept_raws(self, box, state, model):
         """Deduplicated raw candidates; cached per (snapshot, box geometry)."""
         uncertain = self._uncertain(box.box_id)
-        key = (id(model), geometry_key(box, uncertain))
-        cached = self._generations.get(key)
-        if cached is not None and cached[0] is model:
-            return cached[1], cached[2], cached[3]
+        key = geometry_key(box, uncertain)
+        cached = model.generation_cache.get(key)
+        if cached is not None:
+            self._generations.hits += 1
+            return cached
+        self._generations.misses += 1
         gen = self.config.generation
         raws = raw_candidates(model, box, self.config)
         if gen.dedup_mode == "off":
@@ -242,7 +255,7 @@ class CandidateBackend:
             resolved.append(raw)
         kept = tuple(resolved)
         n_ep = len(extreme_points(model)) if gen.use_extreme_points else 0
-        self._generations.put(key, (model, kept, len(raws), n_ep))
+        model.generation_cache[key] = (kept, len(raws), n_ep)
         return kept, len(raws), n_ep
 
     def generate_with_report(self, box, state):

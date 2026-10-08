@@ -118,7 +118,13 @@ def _project(model, x, y, z, axis):
 
 
 def extreme_points(model):
-    """Inflated-plane extreme points (anchor name, x, y)."""
+    """Inflated-plane extreme points (anchor name, x, y); cached per model."""
+    if model._extreme_points is None:
+        model._extreme_points = tuple(_compute_extreme_points(model))
+    return model._extreme_points
+
+
+def _compute_extreme_points(model):
     bound = model.expanded_bounds
     points = [("ep_origin", bound.x0, bound.y0)]
     for g in model.boxes:

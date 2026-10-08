@@ -42,6 +42,7 @@ class EpisodeResult:
     final_state: object
     metrics: dict
     strength: object = None
+    final_context: object = None
 
 
 def candidate_rows(candidate_set):
@@ -286,7 +287,15 @@ def run_episode(
         PalletState(spec.pallet_id, pallet_size, tuple(placed)),
         InventoryState(dict(tracked), {}),
     )
-    model = CandidateBackend(None, cand_config).model_for(final_state)
+    # Re-check the final pallet with the SAME context the mask used during
+    # the episode (catalog capacities, 0 N damage overrides, uncertain boxes).
+    final_context = PlanningContext(
+        catalog=catalog,
+        pallet_max_weight_kg=max_load,
+        capacity_overrides_n=dict(overrides),
+        uncertain_box_ids=tuple(uncertain),
+    )
+    model = CandidateBackend(final_context, cand_config).model_for(final_state)
     overlaps, protrusions = true_geometry_violations(placed, truths, pallet_size)
     true_volume = sum(
         truths[p.box_id].size.x * truths[p.box_id].size.y * truths[p.box_id].size.z for p in placed
@@ -337,5 +346,6 @@ def run_episode(
     if math.isnan(metrics["mean_step_sec"]):
         metrics["mean_step_sec"] = 0.0
     return EpisodeResult(
-        spec.scenario_id, spec.family, split, placed, unplaced, steps, final_state, metrics, strength
+        spec.scenario_id, spec.family, split, placed, unplaced, steps, final_state, metrics, strength,
+        final_context,
     )
