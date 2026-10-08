@@ -3,8 +3,9 @@
 
 Requires: hdr50_workcell_v4_4_pick.launch.py, hdr50_moveit_v44.launch.py,
 run_suction_gripper.sh, and a bridge for /model/v43_scale_box_5kg/pose.
-Planning: OMPL (collision-aware, with the workcell planning scene) for free moves,
-move_group Cartesian paths for vertical approach / retreat.
+Planning: OMPL (collision-aware, with the workcell planning scene) for free moves
+without payload; move_group Cartesian paths (collision-checked) for approach,
+level transfer with the box, and retreat.
 Box pose is Gazebo ground truth (commissioning), not Top-view perception.
 """
 from __future__ import annotations
@@ -42,8 +43,9 @@ HOME = {"j1": 0.0, "j2": 1.5707, "j3": 0.0, "j4": 0.0, "j5": 0.0, "j6": 0.0}
 PALLET_TOP_Z = 0.15
 PLACE_XY = (0.0, 1.20)            # pallet_main center
 APPROACH_M = 0.20                 # vertical approach / retreat
-CHECKED_GAP_M = 0.002             # collision-checked descent stops this far above contact
+CHECKED_GAP_M = 0.010             # collision-checked descent stops this far above contact
 PRESS_M = 0.006                   # final unchecked press (joint sag ~3 mm + lip)
+BREAKAWAY_M = 0.01                # unchecked move away from the stopper contact (-x)
 PLACE_GAP_M = 0.005               # box bottom above pallet when released
 VEL_SCALE = 0.2                   # joint_limits.yaml: keep <= 0.2
 PLACE_TOL_XY_M, PLACE_TOL_Z_M, PLACE_TILT_DEG = 0.03, 0.02, 5.0
@@ -199,6 +201,10 @@ class MoveItPickPlace(Node):
         oc.weight = 1.0
         c.position_constraints = [pc]
         c.orientation_constraints = [oc]
+        # Keep the wrist away from its +-2*pi limits: a goal found at j4 = -6.28 rad left
+        # no room for the following Cartesian descent (stopped at 95-98 %).
+        c.joint_constraints = [JointConstraint(joint_name=j, position=0.0, tolerance_above=math.pi,
+                                               tolerance_below=math.pi, weight=1.0) for j in ("j4", "j6")]
         self.plan_and_execute(c, what)
 
     def plan_joints(self, joints, what):
@@ -214,8 +220,10 @@ class MoveItPickPlace(Node):
         r.pipeline_id = "ompl"
         r.num_planning_attempts = 5
         r.allowed_planning_time = 10.0
-        r.max_velocity_scaling_factor = VEL_SCALE
-        r.max_acceleration_scaling_factor = VEL_SCALE
+        # Gazebo's position-controlled joints lag on long, fast OMPL moves (large j6 turns
+        # aborted with PATH_TOLERANCE_VIOLATED at 0.2): free moves run at half speed.
+        r.max_velocity_scaling_factor = VEL_SCALE * 0.5
+        r.max_acceleration_scaling_factor = VEL_SCALE * 0.5
         r.start_state.is_diff = True
         r.goal_constraints = [constraints]
         g.planning_options.plan_only = False
@@ -284,15 +292,25 @@ class MoveItPickPlace(Node):
         aco.object.operation = CollisionObject.ADD
         self.apply_scene(attached=[aco])
 
-        print(">>> [MoveIt 5/7] 박스 들어올린 뒤 팔레트 위로 경로 계획·이송 중...", flush=True)
+        print(">>> [MoveIt 5/7] 박스 들어올린 뒤 수평 유지하며 팔레트 위로 이송 중 (충돌 검사)...", flush=True)
         z_before = self.fresh_box()[0][2]
+        # The box rests against the pick stopper (contact depth ~0), so the start state is
+        # "in collision": first move it a little away from the stopper (-x) and off the
+        # rollers (unchecked, tiny), then lift with collision checking.
+        self.line((b[0] - BREAKAWAY_M, b[1], top - PRESS_M + 0.005), yaw,
+                  "break away from stopper", avoid_collisions=False)
         self.line((b[0], b[1], top + APPROACH_M), yaw, "lift box")
         rise = self.fresh_box()[0][2] - z_before
         if rise < APPROACH_M - 0.03:
             raise Failure(f"box did not follow the suction cup (rise {rise:.3f} m)")
         place_center_z = PALLET_TOP_Z + BOX_SIZE[2] / 2
         place_top = place_center_z + BOX_SIZE[2] / 2
-        self.plan_pose((PLACE_XY[0], PLACE_XY[1], place_top + APPROACH_M), yaw, "transfer to pallet")
+        # Transfer as a level, collision-checked Cartesian move at lift height (box bottom
+        # above the stopper top): an OMPL transfer once swung the wrist and tilted the 5 kg
+        # box ~15 deg, and Gazebo's position controller aborted (path tolerance 0.2 rad).
+        lift_z = top + APPROACH_M
+        self.line((PLACE_XY[0], PLACE_XY[1], lift_z), yaw, "transfer to pallet (level)")
+        self.line((PLACE_XY[0], PLACE_XY[1], place_top + APPROACH_M), yaw, "lower above pallet")
 
         print(">>> [MoveIt 6/7] 팔레트에 내려놓고 진공 OFF(해제) 중...", flush=True)
         self.line((PLACE_XY[0], PLACE_XY[1], place_top + PLACE_GAP_M), yaw, "descend to pallet (collision-checked)")
