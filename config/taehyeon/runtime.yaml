@@ -20,6 +20,7 @@ runtime:
     damage_policy: reject           # reject (flowchart) | place_no_load
   supervisor:                       # 3
     pallet_change_time_s: 60.0
+    pallet_change_manual: false     # true: a person swaps the pallet -> robot stop, HOLD
     missing_timeout_s: 30.0
     operator_time_s: 120.0
   execution:                        # 7: virtual robot

@@ -38,8 +38,9 @@ class Supervisor:
     def on_arrival(self, sku):
         self.arrived[sku] += 1
 
-    def pallet_change(self, t, manual=False):
+    def pallet_change(self, t, manual=None):
         """Returns the time the cell is blocked."""
+        manual = self.cfg.pallet_change_manual if manual is None else manual
         self._set(Mode.HOLD if manual else Mode.PALLET_CHANGE, t, "manual pallet change" if manual else "PALLET_CLOSE")
         self.conveyor_running = False
         blocked = self.cfg.pallet_change_time_s
