@@ -29,7 +29,7 @@
 python3.10 -m venv .venv && . .venv/bin/activate          # 또는 uv venv --python 3.10
 pip install "numpy>=1.23,<3" "PyYAML>=6,<7" "pytest>=7,<9"
 pip install "pybullet>=3.2.6,<4" "networkx>=2.8,<4"       # 물리 교차 검증을 돌릴 때만
-python -m pytest -q tests/taehyeon                           # 199 passed (PyTorch 없으면 sb3 테스트 skip)
+python -m pytest -q tests/taehyeon                           # 태현 테스트 (PPO 테스트는 PPO와 함께 삭제)
 scripts/taehyeon/run_validation.sh                           # 모든 검증 리포트 재생성 (약 6~11분, 머신에 따라 다름)
 ```
 
