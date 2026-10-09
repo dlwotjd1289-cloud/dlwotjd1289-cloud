@@ -171,7 +171,7 @@ _TEACHER = None  # (make_world, policy, gamma); set before forking workers
 
 
 def _teacher_episode(i):
-    make_world, policy, gamma = _TEACHER
+    make_world, policy, gamma, relative = _TEACHER
     world = make_world(i)
     obs, masks, actions, rewards = [], [], [], []
     while not world.done:
@@ -180,6 +180,8 @@ def _teacher_episode(i):
         action = policy(world)
         actions.append(to_index(action))
         rewards.append(world.step(action))
+    if relative and rewards:  # teacher measured against itself: episode return 0
+        rewards[-1] -= sum(rewards)
     returns = np.zeros(len(rewards))
     acc = 0.0
     for t in reversed(range(len(rewards))):
@@ -188,10 +190,14 @@ def _teacher_episode(i):
     return obs, masks, actions, returns
 
 
-def collect_teacher(make_world, policy, episodes, *, gamma, workers=1, first_episode=10**6):
-    """Teacher roll-outs: raw observations, masks, actions, discounted returns."""
+def collect_teacher(make_world, policy, episodes, *, gamma, workers=1, first_episode=10**6, relative=False):
+    """Teacher roll-outs: raw observations, masks, actions, discounted returns.
+
+    ``relative`` matches the rule-baseline reward of ``HighLevelGymEnv``: the
+    teacher's own episode return is subtracted at its last step.
+    """
     global _TEACHER
-    _TEACHER = (make_world, policy, gamma)
+    _TEACHER = (make_world, policy, gamma, relative)
     ids = [first_episode + i for i in range(episodes)]
     try:
         if workers > 1:

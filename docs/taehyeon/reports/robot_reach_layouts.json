@@ -1,0 +1,23 @@
+{
+ "pac2026-ahead workcell v2": {
+  "reachable": "199/384",
+  "top_layer": "0/96",
+  "codes": {
+   "APPROACH_FAIL": 93,
+   "IK_FAIL": 92
+  }
+ },
+ "floor, beside the long side": {
+  "reachable": "274/384",
+  "top_layer": "0/96",
+  "codes": {
+   "APPROACH_FAIL": 100,
+   "IK_FAIL": 10
+  }
+ },
+ "pedestal 0.5 m, 1.15 m (default)": {
+  "reachable": "384/384",
+  "top_layer": "96/96",
+  "codes": {}
+ }
+}

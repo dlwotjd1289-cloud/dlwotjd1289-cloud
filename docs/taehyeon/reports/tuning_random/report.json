@@ -1,0 +1,416 @@
+{
+ "optimizer": "random",
+ "model": null,
+ "budget": 12,
+ "evaluations_used": 12,
+ "val_split": "val",
+ "val_episodes": 36,
+ "test_split": "test",
+ "test_episodes": 108,
+ "baseline_params": {
+  "rules.good_support": 0.95,
+  "rules.retrieve_margin_m": 0.02,
+  "rules.max_buffer_age": 12,
+  "close.fill_before_buffer": 0.3,
+  "repack.enabled": true,
+  "repack.max_moves": 2,
+  "generation.dedup_distance_m": 0.08,
+  "generation.balance_anchors": true
+ },
+ "val_baseline": {
+  "episodes": 36,
+  "pallets_mean": 4.159,
+  "fill_mean": 0.2446,
+  "robot_time_s_mean": 1147.1,
+  "ng_mean": 0.0,
+  "safety_issues": 0,
+  "vs_baseline": {
+   "pallets_diff_mean": 0.0,
+   "ci95": [
+    0.0,
+    0.0
+   ],
+   "better": 0,
+   "equal": 36,
+   "worse": 0,
+   "sign_test_p": 1.0
+  }
+ },
+ "val_history": [
+  {
+   "params": {
+    "generation.dedup_distance_m": 0.054,
+    "rules.good_support": 0.805
+   },
+   "result": {
+    "episodes": 36,
+    "pallets_mean": 4.2271,
+    "fill_mean": 0.2403,
+    "robot_time_s_mean": 1084.0,
+    "ng_mean": 0.0,
+    "safety_issues": 0,
+    "vs_baseline": {
+     "pallets_diff_mean": 0.068,
+     "ci95": [
+      -0.0548,
+      0.1909
+     ],
+     "better": 10,
+     "equal": 14,
+     "worse": 12,
+     "sign_test_p": 0.8318
+    },
+    "acceptable": true,
+    "budget_left": 11
+   }
+  },
+  {
+   "params": {
+    "repack.enabled": true,
+    "close.fill_before_buffer": 0.624
+   },
+   "result": {
+    "episodes": 36,
+    "pallets_mean": 3.9716,
+    "fill_mean": 0.2548,
+    "robot_time_s_mean": 1162.8,
+    "ng_mean": 0.0,
+    "safety_issues": 0,
+    "vs_baseline": {
+     "pallets_diff_mean": -0.1875,
+     "ci95": [
+      -0.2911,
+      -0.0838
+     ],
+     "better": 20,
+     "equal": 12,
+     "worse": 4,
+     "sign_test_p": 0.0015
+    },
+    "acceptable": true,
+    "budget_left": 10
+   }
+  },
+  {
+   "params": {
+    "rules.max_buffer_age": 20
+   },
+   "result": {
+    "episodes": 36,
+    "pallets_mean": 4.2844,
+    "fill_mean": 0.2386,
+    "robot_time_s_mean": 1149.2,
+    "ng_mean": 0.0,
+    "safety_issues": 0,
+    "vs_baseline": {
+     "pallets_diff_mean": 0.1254,
+     "ci95": [
+      -0.0255,
+      0.2762
+     ],
+     "better": 9,
+     "equal": 10,
+     "worse": 17,
+     "sign_test_p": 0.1686
+    },
+    "acceptable": true,
+    "budget_left": 9
+   }
+  },
+  {
+   "params": {
+    "rules.retrieve_margin_m": 0.093
+   },
+   "result": {
+    "episodes": 36,
+    "pallets_mean": 4.0869,
+    "fill_mean": 0.2478,
+    "robot_time_s_mean": 1136.4,
+    "ng_mean": 0.0,
+    "safety_issues": 0,
+    "vs_baseline": {
+     "pallets_diff_mean": -0.0721,
+     "ci95": [
+      -0.1794,
+      0.0351
+     ],
+     "better": 10,
+     "equal": 18,
+     "worse": 8,
+     "sign_test_p": 0.8145
+    },
+    "acceptable": true,
+    "budget_left": 8
+   }
+  },
+  {
+   "params": {
+    "rules.max_buffer_age": 8,
+    "generation.balance_anchors": false
+   },
+   "result": {
+    "episodes": 36,
+    "pallets_mean": 4.2084,
+    "fill_mean": 0.2422,
+    "robot_time_s_mean": 1149.9,
+    "ng_mean": 0.0,
+    "safety_issues": 0,
+    "vs_baseline": {
+     "pallets_diff_mean": 0.0494,
+     "ci95": [
+      -0.0755,
+      0.1742
+     ],
+     "better": 9,
+     "equal": 12,
+     "worse": 15,
+     "sign_test_p": 0.3075
+    },
+    "acceptable": true,
+    "budget_left": 7
+   }
+  },
+  {
+   "params": {
+    "repack.max_moves": 1,
+    "close.fill_before_buffer": 0.248,
+    "repack.enabled": true
+   },
+   "result": {
+    "episodes": 36,
+    "pallets_mean": 4.3957,
+    "fill_mean": 0.2329,
+    "robot_time_s_mean": 1134.5,
+    "ng_mean": 0.0,
+    "safety_issues": 0,
+    "vs_baseline": {
+     "pallets_diff_mean": 0.2366,
+     "ci95": [
+      0.0987,
+      0.3745
+     ],
+     "better": 2,
+     "equal": 12,
+     "worse": 22,
+     "sign_test_p": 0.0
+    },
+    "acceptable": true,
+    "budget_left": 6
+   }
+  },
+  {
+   "params": {
+    "close.fill_before_buffer": 0.31,
+    "repack.enabled": false,
+    "generation.balance_anchors": true
+   },
+   "result": {
+    "episodes": 36,
+    "pallets_mean": 4.3527,
+    "fill_mean": 0.2355,
+    "robot_time_s_mean": 1159.8,
+    "ng_mean": 0.0,
+    "safety_issues": 0,
+    "vs_baseline": {
+     "pallets_diff_mean": 0.1936,
+     "ci95": [
+      0.0583,
+      0.3289
+     ],
+     "better": 7,
+     "equal": 16,
+     "worse": 13,
+     "sign_test_p": 0.2632
+    },
+    "acceptable": true,
+    "budget_left": 5
+   }
+  },
+  {
+   "params": {
+    "rules.good_support": 0.936,
+    "generation.balance_anchors": false,
+    "repack.max_moves": 3
+   },
+   "result": {
+    "episodes": 36,
+    "pallets_mean": 4.2467,
+    "fill_mean": 0.2391,
+    "robot_time_s_mean": 1160.8,
+    "ng_mean": 0.0,
+    "safety_issues": 0,
+    "vs_baseline": {
+     "pallets_diff_mean": 0.0876,
+     "ci95": [
+      -0.0772,
+      0.2524
+     ],
+     "better": 10,
+     "equal": 12,
+     "worse": 14,
+     "sign_test_p": 0.5413
+    },
+    "acceptable": true,
+    "budget_left": 4
+   }
+  },
+  {
+   "params": {
+    "rules.good_support": 0.931,
+    "repack.enabled": true,
+    "close.fill_before_buffer": 0.511
+   },
+   "result": {
+    "episodes": 36,
+    "pallets_mean": 4.0193,
+    "fill_mean": 0.2518,
+    "robot_time_s_mean": 1155.6,
+    "ng_mean": 0.0,
+    "safety_issues": 0,
+    "vs_baseline": {
+     "pallets_diff_mean": -0.1397,
+     "ci95": [
+      -0.2492,
+      -0.0303
+     ],
+     "better": 19,
+     "equal": 11,
+     "worse": 6,
+     "sign_test_p": 0.0146
+    },
+    "acceptable": true,
+    "budget_left": 3
+   }
+  },
+  {
+   "params": {
+    "rules.retrieve_margin_m": 0.033,
+    "generation.balance_anchors": false,
+    "repack.enabled": true
+   },
+   "result": {
+    "episodes": 36,
+    "pallets_mean": 4.2934,
+    "fill_mean": 0.2367,
+    "robot_time_s_mean": 1164.9,
+    "ng_mean": 0.0,
+    "safety_issues": 0,
+    "vs_baseline": {
+     "pallets_diff_mean": 0.1343,
+     "ci95": [
+      -0.0267,
+      0.2953
+     ],
+     "better": 7,
+     "equal": 15,
+     "worse": 14,
+     "sign_test_p": 0.1892
+    },
+    "acceptable": true,
+    "budget_left": 2
+   }
+  },
+  {
+   "params": {
+    "generation.balance_anchors": false,
+    "rules.good_support": 0.95,
+    "generation.dedup_distance_m": 0.15
+   },
+   "result": {
+    "episodes": 36,
+    "pallets_mean": 4.2639,
+    "fill_mean": 0.2379,
+    "robot_time_s_mean": 1164.2,
+    "ng_mean": 0.0,
+    "safety_issues": 0,
+    "vs_baseline": {
+     "pallets_diff_mean": 0.1049,
+     "ci95": [
+      -0.0493,
+      0.259
+     ],
+     "better": 9,
+     "equal": 13,
+     "worse": 14,
+     "sign_test_p": 0.4049
+    },
+    "acceptable": true,
+    "budget_left": 1
+   }
+  },
+  {
+   "params": {
+    "rules.retrieve_margin_m": 0.083,
+    "rules.max_buffer_age": 9
+   },
+   "result": {
+    "episodes": 36,
+    "pallets_mean": 4.163,
+    "fill_mean": 0.2448,
+    "robot_time_s_mean": 1149.6,
+    "ng_mean": 0.0,
+    "safety_issues": 0,
+    "vs_baseline": {
+     "pallets_diff_mean": 0.0039,
+     "ci95": [
+      -0.1586,
+      0.1664
+     ],
+     "better": 12,
+     "equal": 10,
+     "worse": 14,
+     "sign_test_p": 0.845
+    },
+    "acceptable": true,
+    "budget_left": 0
+   }
+  }
+ ],
+ "chosen": {
+  "params": {
+   "repack.enabled": true,
+   "close.fill_before_buffer": 0.624
+  },
+  "rationale": "random search: best acceptable evaluation",
+  "further_ideas": "",
+  "finished_by_model": false
+ },
+ "test_baseline": {
+  "episodes": 108,
+  "pallets_mean": 3.8285,
+  "fill_mean": 0.2335,
+  "robot_time_s_mean": 1117.1,
+  "ng_mean": 0.0,
+  "safety_issues": 0,
+  "vs_baseline": {
+   "pallets_diff_mean": 0.0,
+   "ci95": [
+    0.0,
+    0.0
+   ],
+   "better": 0,
+   "equal": 108,
+   "worse": 0,
+   "sign_test_p": 1.0
+  }
+ },
+ "test_chosen": {
+  "episodes": 108,
+  "pallets_mean": 3.6646,
+  "fill_mean": 0.2445,
+  "robot_time_s_mean": 1131.6,
+  "ng_mean": 0.0,
+  "safety_issues": 0,
+  "vs_baseline": {
+   "pallets_diff_mean": -0.1639,
+   "ci95": [
+    -0.2471,
+    -0.0806
+   ],
+   "better": 50,
+   "equal": 46,
+   "worse": 12,
+   "sign_test_p": 0.0
+  }
+ }
+}

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Reproduce every stage 5-1/5-2 validation report in docs/taehyeon/reports/.
+# Reproduce every validation report (5-1/5-2, runtime 1->8) in docs/taehyeon/reports/.
 #   scripts/taehyeon/run_validation.sh [SAMPLE_PER_FAMILY]
 # Needs: python3.10 venv with numpy/PyYAML/pytest (+ pybullet, networkx for
 # the physics cross-check) and scripts/taehyeon/fetch_team_deps.sh once.
@@ -48,4 +48,11 @@ python tools/virtual_data/scripts/generate_virtual_data.py \
 cp "$FULL/analysis/summary.md" "$REPORTS/full_pallet_summary.md"
 python tools/virtual_data/scripts/strength_sweep.py --dataset "$FULL/source_dataset" \
   --safety-factors 1 2 4 8 16 --report "$REPORTS/strength_sweep.json"
+
+echo "== 7. runtime 1->8 loop (stages 1-3, 6-8) on held-out scenarios, 4 variants"
+python tools/runtime/scripts/run_runtime.py --run-generator 10 --split test \
+  --report "$REPORTS/runtime_test.json" | cut -c1-200
+python tools/runtime/scripts/physics_replay.py --run-generator 10 --split test \
+  --report "$REPORTS/runtime_physics.json" | tail -4
+python tools/runtime/scripts/export_viewer.py "$REPORTS/runtime_physics.json" "$REPORTS/runtime_viewer.html"
 echo "reports -> $REPORTS"

@@ -39,18 +39,19 @@ def _require():
     torch.set_num_threads(1)
 
 
-def make_vec_env(make_world, slots, n_envs=4, subprocess=True, normalize=True):
+def make_vec_env(make_world, slots, n_envs=4, subprocess=True, normalize=True, baseline=None, teacher=None):
     """``n_envs`` environments; env k plays episodes k, k + n, k + 2n, ...
 
     With ``normalize`` the vector env is wrapped in ``VecNormalize``
     (observations only; rewards are already in pallet-volume units).
+    ``baseline`` / ``teacher`` are passed to ``HighLevelGymEnv`` (training aids).
     """
     _require()
     from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv, VecNormalize
 
     def env_fn(k):
         def make():
-            return HighLevelGymEnv(lambda i: make_world(k + i * n_envs), slots)
+            return HighLevelGymEnv(lambda i: make_world(k + i * n_envs), slots, baseline=baseline, teacher=teacher)
 
         return make
 
@@ -132,6 +133,76 @@ def imitate(model, data, epochs=20, batch_size=128, lr=1e-3):
         hist.append({"phase": "imitation", "bc_loss": float(np.mean(losses)),
                      "bc_accuracy": float(np.mean(accs))})
     return hist
+
+
+def teacher_bc_callback(coef_start=0.5, coef_end=0.1, epochs=2, batch_size=128):
+    """Keep the learner close to the teacher on the states it visits.
+
+    After every PPO update, a few behaviour-cloning steps (masked
+    cross-entropy towards ``info["teacher_action"]``) run on the previous
+    rollout, weighted by a coefficient that decays linearly from
+    ``coef_start`` to ``coef_end`` over training. PPO can still move away from
+    the teacher where that pays, but drifting to worse-than-teacher choices
+    costs it (DAPG / DAgger-style regularisation).
+    """
+    _require()
+    import torch
+    from stable_baselines3.common.callbacks import BaseCallback
+
+    class TeacherBC(BaseCallback):
+        def __init__(self):
+            super().__init__()
+            self.labels = []
+            self.pending = None
+            self.rng = np.random.default_rng(0)
+
+        def _on_rollout_start(self):
+            if self.pending is not None:
+                self._clone(*self.pending)
+                self.pending = None
+            self.labels = []
+
+        def _on_step(self):
+            self.labels.append([info.get("teacher_action", -1) for info in self.locals["infos"]])
+            return True
+
+        def _on_rollout_end(self):
+            buf = self.model.rollout_buffer
+            labels = np.asarray(self.labels, dtype=np.int64).reshape(-1)
+            obs = buf.observations.reshape(len(labels), -1)
+            masks = buf.action_masks.reshape(len(labels), -1).astype(bool)
+            keep = labels >= 0
+            self.pending = (obs[keep].copy(), masks[keep].copy(), labels[keep])
+
+        def _clone(self, obs, masks, labels):
+            total = max(1, getattr(self.model, "_total_timesteps", 1) or 1)
+            frac = min(1.0, self.num_timesteps / total)
+            coef = coef_start + (coef_end - coef_start) * frac
+            if coef <= 0 or len(labels) == 0:
+                return
+            policy = self.model.policy
+            opt = policy.optimizer
+            o = torch.as_tensor(obs, dtype=torch.float32)
+            a = torch.as_tensor(labels, dtype=torch.long)
+            losses, accs = [], []
+            for _ in range(epochs):
+                order = self.rng.permutation(len(a))
+                for start in range(0, len(a), batch_size):
+                    idx = order[start : start + batch_size]
+                    dist = policy.get_distribution(o[idx], action_masks=masks[idx])
+                    ce = -dist.log_prob(a[idx]).mean()
+                    opt.zero_grad()
+                    (coef * ce).backward()
+                    torch.nn.utils.clip_grad_norm_(policy.parameters(), self.model.max_grad_norm)
+                    opt.step()
+                    with torch.no_grad():
+                        accs.append(float((dist.distribution.probs.argmax(-1) == a[idx]).float().mean()))
+                    losses.append(float(ce.detach()))
+            self.logger.record("bc/coef", coef)
+            self.logger.record("bc/loss", float(np.mean(losses)))
+            self.logger.record("bc/agreement", float(np.mean(accs)))
+
+    return TeacherBC()
 
 
 def save(model, path, slots, contract, extra=None):
