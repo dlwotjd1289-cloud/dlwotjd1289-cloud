@@ -26,6 +26,8 @@ class RobotAwarePlacer:
         self.robot = robot
         self.max_checks = max_checks
         self.ranker = ranker            # (valid, box, state, backend) -> ordered list; None = DBLF
+        if hasattr(ranker, "bind_robot"):  # the ranker orders only what stage 6 accepts
+            ranker.bind_robot(robot)
         self.stats = Counter()
         self.last_rejected = {}
 
@@ -45,15 +47,18 @@ class RobotAwarePlacer:
         return chosen
 
 
-def donghan_ranker(model_path=None, planner_config=None, seed=7):
+def donghan_ranker(model_path=None, planner_config=None, seed=7, use_time_budget=True):
     """Rank with donghan's EMS-backed 5-3~5-6 planner.
 
-    Candidates rejected by the planner are intentionally omitted instead of
-    being appended again as DBLF fallbacks.
+    ``RobotAwarePlacer`` binds its stage-6 checker, so only executable
+    candidates are ranked. Candidates rejected by the planner are
+    intentionally omitted instead of being appended again as DBLF fallbacks.
+    ``use_time_budget``: the planner's soft budget (``timeout_sec``) with its
+    Top-K / scenario / horizon degradation; False gives reproducible offline runs.
     """
     from pac_planning import PlannerConfig, TeamRuntimeRanker
 
     return TeamRuntimeRanker(
         planner_config or PlannerConfig(), model_path=model_path,
-        seed=seed, mode="ahead", use_time_budget=False,
+        seed=seed, mode="ahead", use_time_budget=use_time_budget,
     )

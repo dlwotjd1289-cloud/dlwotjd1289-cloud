@@ -40,20 +40,13 @@ pick & place를 수행하는 시연입니다. **아직 그 단계에 도달하�
 
 ## 테스트 실행
 
-팀 runtime 체크아웃(`ros2_ws/src/pac_candidates` 등)을 경로에 추가해야 팀 연동 테스트까지 실행됩니다.
-아래는 실제로 실행해 본 방식입니다(Ubuntu 22.04, Python 3.10.12, 시스템 pytest 6.2.5).
+통합 저장소 루트에서 실행합니다. 팀 패키지 경로는 루트 `conftest.py`가 넣으므로 `PYTHONPATH`를 따로 지정하지 않습니다.
 
 ```bash
-TEAM=/path/to/pac-team/ros2_ws/src
-source /opt/ros/humble/setup.bash
-PYTHONPATH=$PYTHONPATH:ros2_ws/src/pac_common:ros2_ws/src/pac_planning:ros2_ws/src/pac_execution:\
-$TEAM/pac_candidates:$TEAM/pac_highlevel:$TEAM/pac_runtime:$TEAM/pac_robot_check \
-python3 -m pytest -p no:cacheprovider -q tests --ignore=tests/test_team_physics.py
+python3 -m pytest -p no:cacheprovider -q tests/donghan
 ```
 
-- `tests/test_team_physics.py`는 `pybullet`과 팀 물리 시뮬레이터(`pac_simulation`)가 있어야 하므로 위에서 제외했습니다.
-- 시스템 pytest 6은 `pyproject.toml`의 `pythonpath` 옵션을 무시합니다. 위처럼 `PYTHONPATH`를 직접 지정하거나, pytest 7 이상을 설치해 사용하세요.
-- 이 환경에서 ROS를 `source`한 상태로 `tests` 전체를 지정하면 pytest 6이 모듈 수준 skip 하나 때문에 수집을 중단하는 현상이 있어, 물리 테스트를 `--ignore`로 제외하는 방식을 썼습니다.
+- `tests/donghan/test_team_physics.py`는 `pybullet`이 없으면 건너뜁니다.
 
 ## ROS2 패키지 빌드 (일부만 확인)
 

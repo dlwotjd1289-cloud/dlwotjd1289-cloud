@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>박스 1개가 도착해서 팔레트에 놓이기까지 — 동한 파트</title>
+<style>
+  :root { --ink:#1f2933; --muted:#5b6673; --line:#d9dee5; --new:#c2410c; --keep:#1d4e89; --prop:#6d28d9; --bad:#b42318; }
+  * { box-sizing:border-box; }
+  body { font-family:"Pretendard","Noto Sans KR","Malgun Gothic",sans-serif; color:var(--ink); margin:0; background:#fff; line-height:1.6; font-size:14.5px; }
+  main { max-width:840px; margin:0 auto; padding:48px 36px 64px; }
+  .kicker { font-size:12px; letter-spacing:.04em; color:var(--muted); font-weight:600; }
+  h1 { font-size:30px; margin:6px 0 10px; line-height:1.3; }
+  .lead { color:var(--muted); margin:0 0 14px; }
+  .legend { display:flex; flex-wrap:wrap; gap:18px; font-size:13px; color:var(--muted); margin-bottom:34px; }
+  .tag { font-size:12px; font-weight:700; margin-left:8px; white-space:nowrap; }
+  .legend .tag { margin-left:0; margin-right:6px; }
+  .t-new { color:var(--new); } .t-keep { color:var(--keep); } .t-prop { color:var(--prop); } .t-other { color:#7b8794; }
+  .step { display:grid; grid-template-columns:56px 1fr; gap:10px; margin-bottom:26px; }
+  .num { width:38px; height:38px; border-radius:50%; border:2px solid #a0aab4; color:#52606d; display:flex; align-items:center; justify-content:center; font-family:Consolas,monospace; font-size:14px; margin-top:2px; }
+  .num.new { border-color:var(--new); color:var(--new); }
+  h2 { font-size:19px; margin:4px 0 10px; }
+  h3 { font-size:15px; margin:16px 0 6px; }
+  h3:first-child { margin-top:0; }
+  .card { border:1px solid var(--line); border-radius:10px; padding:14px 18px; margin-bottom:12px; page-break-inside:avoid; }
+  .card.new { border-color:#e7b9a3; border-left:4px solid var(--new); }
+  .card.prop { border-color:#d3c4f5; border-left:4px solid var(--prop); }
+  .card.bad { border-color:#f1b8b2; border-left:4px solid var(--bad); background:#fff6f5; }
+  .card.mine { background:#fbfaf8; }
+  .small { font-size:13px; color:var(--muted); }
+  ul, ol { margin:6px 0; padding-left:20px; }
+  li { margin:3px 0; }
+  code { font-family:Consolas,"D2Coding",monospace; font-size:12.5px; background:#f3f4f6; padding:1px 4px; border-radius:4px; }
+  pre { font-family:Consolas,"D2Coding",monospace; font-size:12.3px; background:#f7f8fa; border:1px solid #eceff3; border-radius:8px; padding:12px 14px; white-space:pre-wrap; margin:8px 0; line-height:1.55; }
+  table { border-collapse:collapse; width:100%; font-size:13px; margin:8px 0; }
+  th, td { border-bottom:1px solid var(--line); text-align:left; padding:6px 8px; vertical-align:top; }
+  th { color:var(--muted); font-weight:600; background:#fafbfc; }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .grid2 .card { margin-bottom:0; }
+  .sub { display:grid; grid-template-columns:28px 1fr; gap:8px; margin:8px 0; }
+  .sub .n { width:24px; height:24px; border-radius:50%; border:1.5px solid var(--new); color:var(--new); font-size:12px; display:flex; align-items:center; justify-content:center; margin-top:1px; }
+  .owner { font-size:12px; color:var(--muted); font-weight:600; margin-bottom:4px; }
+  .timeline { display:grid; grid-template-columns:120px 1fr; row-gap:10px; align-items:center; font-size:13px; margin:10px 0 4px; }
+  .lane { position:relative; height:30px; }
+  .bar { position:absolute; top:2px; height:26px; border-radius:6px; border:1.5px solid; padding:2px 8px; font-size:12px; white-space:nowrap; overflow:hidden; }
+  .bar.robot { border-color:#1d4e89; color:#1d4e89; }
+  .bar.calc { border-color:var(--new); color:var(--new); }
+  .bar.plan { border-color:var(--prop); color:var(--prop); }
+  .flow { margin:10px 0 6px; font-size:12.5px; }
+  .flow .inputs { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+  .flow .chain { display:flex; align-items:center; flex-wrap:wrap; gap:6px; }
+  .flow .down { text-align:center; color:var(--muted); font-size:16px; line-height:1.2; margin:3px 0; }
+  .chip { border:1px solid var(--line); border-radius:7px; padding:4px 9px; background:#fff; line-height:1.4; }
+  .chip.hot { border-color:#e7b9a3; background:#fff7f2; }
+  .flow .arrow { color:var(--muted); font-size:16px; }
+  hr { border:0; border-top:1px solid var(--line); margin:40px 0 26px; }
+  @page { size:A4; margin:14mm 12mm; }
+  @media print {
+    body { font-size:12.5px; }
+    main { max-width:none; padding:0; }
+    .card { page-break-inside:auto; }
+    .sub, pre, tr, .timeline, .grid2, .flow, li { break-inside:avoid; }
+    h2, h3, .owner { break-after:avoid; }
+  }
+</style>
+</head>
+<body>
+<main>
+
+<div class="kicker">PAC 2026 · HDR50-22 혼합 적재 · 동한 파트 2026-10-09 기준 (통합 저장소 main e7b3c06 + 이번 PR)</div>
+<h1>박스 1개가 도착해서 팔레트에 놓이기까지 — 동한 파트</h1>
+<p class="lead">흐름도 1~8단계 중 동한이 맡은 부분과 오늘 바뀐 부분을 정리했습니다. 동한 파트는 <b>1단계 탑뷰 깊이 카메라 박스 상태 인식(신규)</b>, <b>2단계 재인식 규정(제안)</b>, <b>5-③~⑥ 자리 순위·미래 평가</b>, <b>7단계 Gazebo + MoveIt 물리 실행</b>입니다. 다른 사람 파트는 동한 파트와 맞닿는 부분만 적었습니다.</p>
+<p class="lead small">태현 님 문서의 N = 5 탐색, 평평한 층 규칙, <code>config/taehyeon/environment.yaml</code>은 아직 통합 저장소에 없습니다. 그래서 그 부분은 동한 파트와의 접점만 적었습니다. 수치는 모두 이 저장소 코드(main e7b3c06과 이번 PR)로 2026-10-09에 직접 실행한 결과입니다.</p>
+<div class="legend">
+  <span><span class="tag t-new">변경 · 신규</span>오늘 바뀌거나 새로 생긴 부분</span>
+  <span><span class="tag t-prop">제안</span>코드는 있지만 런타임에 아직 연결 안 됨</span>
+  <span><span class="tag t-keep">유지</span>기존 그대로</span>
+  <span><span class="tag t-other">다른 파트</span>접점만 표시</span>
+</div>
+
+<!-- 0 -->
+<div class="step"><div class="num new">0</div><div>
+  <h2>환경 설정 <span class="tag t-new">정리 필요</span></h2>
+  <div class="card new">
+    동한 설정 파일은 모두 <code>config/donghan/</code>에 있습니다.
+    <table>
+      <tr><th>파일</th><th>내용</th></tr>
+      <tr><td><code>perception_depth.yaml</code></td><td>1단계 깊이 측정·SKU 추정: 집는 구역(ROI), 눌림 12 mm, 기울기 3°, 모서리 20 mm, 유효 깊이 85 %, 허용오차 12 mm / 4 % / 8 %</td></tr>
+      <tr><td><code>reinspection_policy.yaml</code></td><td>2단계 재인식: 재시도 상한, 박스당 시간 예산 (모두 가정치)</td></tr>
+      <tr><td><code>candidate_runtime_v2.yaml</code>, <code>model_*.yaml</code></td><td>5-③~⑥ 플래너: Top-K, 시나리오 수, 미래 단계 수(horizon), 점수 가중치</td></tr>
+    </table>
+    <p class="small" style="margin:6px 0 0">태현 님 원칙(현장 값은 <code>environment.yaml</code> 한 곳)에 맞추려면 <code>perception_depth.yaml</code>의 집는 구역과 컨베이어 좌표계를 그 파일로 옮겨야 합니다. 좌표계는 픽업 구역 중심 (-1.08, 1.20), 롤러 윗면 z 0.895 m로 둔 가정치입니다. 임계값과 가중치는 알고리즘 설정이라 동한 파일에 남깁니다.</p>
+  </div>
+</div></div>
+
+<!-- 1 -->
+<div class="step"><div class="num new">1</div><div>
+  <h2>인식 — 탑뷰 카메라 박스 상태 인식 모델 <span class="tag t-new">신규</span></h2>
+  <div class="card new">
+    <p style="margin-top:0">집는 위치(스토퍼)에 멈춘 박스를 위에서 내려다보는 RGB-D 깊이 영상으로 잽니다. 결과로 크기·자세·파손 단서를 만들고, 2단계가 그대로 받는 <code>RawObservation</code>으로 넘깁니다. <b>인식은 관측만 만들고 이상 판정은 2단계가 합니다.</b></p>
+    <div class="flow">
+      <div class="inputs">
+        <div class="chip">저울 무게 (정지 계량)</div>
+        <div class="chip">ID·라벨 판독 (못 읽으면 None)</div>
+        <div class="chip hot">탑뷰 깊이 영상 → <code>measure_box</code></div>
+        <div class="chip hot">라벨 못 읽음 → <code>resolve_sku</code> (크기 + 무게)</div>
+      </div>
+      <div class="down">↓</div>
+      <div class="chain">
+        <div class="chip hot"><code>build_raw_observation</code></div><div class="arrow">→</div>
+        <div class="chip"><code>RawObservation</code> (+ 원신호)</div><div class="arrow">→</div>
+        <div class="chip">2단계 <code>StateValidator</code></div>
+      </div>
+    </div>
+    <h3>measure_box: 깊이 영상 한 장 → 박스 상태</h3>
+    <div class="sub"><div class="n">1</div><div>깊이 영상을 컨베이어 좌표 점군으로 바꿉니다. 0.2~4 m 안의 유효 깊이만 씁니다.</div></div>
+    <div class="sub"><div class="n">2</div><div>집는 구역(ROI) 안에서 롤러보다 3 cm 이상 높은 점을 박스로 봅니다.</div></div>
+    <div class="sub"><div class="n">3</div><div><b>대기 박스 분리</b>: 컨베이어 방향으로 2 cm 이상 틈이 있으면 다른 박스로 나눕니다. 스토퍼 쪽 박스를 재고, 보이는 박스 수와 앞뒤 간격도 남깁니다. 틈 없이 붙은 두 박스는 하나로 보이며, 2단계 재인식이 잡습니다(RI-C5).</div></div>
+    <div class="sub"><div class="n">4</div><div><b>크기·자세</b>: 볼록 껍질에서 최소 면적 사각형을 찾아 긴 변·짧은 변·yaw를 구합니다. 높이는 윗면 높이의 상위 90 % 값이라 작은 눌림이나 가장자리 잡음에 흔들리지 않습니다.</div></div>
+    <div class="sub"><div class="n">5</div><div><b>파손 단서</b>: 윗면 눌림 12 mm 초과, 기울어짐 3° 초과, 모서리 찌그러짐(사각형 채움 0.92 미만 또는 모서리 빈 거리 20 mm 초과). 하나라도 있으면 <code>visual_damage = True</code>입니다. 구역 경계에 걸린 박스는 크기가 하한값이라 파손 판단을 생략합니다(<code>in_full_view = False</code>).</div></div>
+    <div class="sub"><div class="n">6</div><div><b>확신도</b>: 유효 깊이가 85 % 미만이거나 시야 경계에 걸리면 0.6(태현 님 <code>uncertain_confidence</code>와 같은 값)이 되고, 2단계에서 측정 불확실성 δ로 이어집니다.</div></div>
+    <h3>resolve_sku: 라벨을 못 읽었을 때만</h3>
+    <ul>
+      <li>크기는 축별 ±max(12 mm, 4 %), 무게는 SKU 범위 ±8 % 안이면 후보로 봅니다. 2단계 검증과 같은 기준이라 추정이 맞으면 2단계도 통과합니다.</li>
+      <li><b>후보가 정확히 1개일 때만</b> SKU를 정하고 확신도를 0.9로 둡니다. 2단계는 이 박스를 불확실(δ) 박스로 다룹니다.</li>
+      <li>후보가 여럿이거나 없으면 라벨 없음으로 넘깁니다. 이후 Base-view를 거쳐 Inspection으로 갑니다. 찍어서 틀리게 하지 않습니다.</li>
+    </ul>
+    <h3>출력</h3>
+    <table>
+      <tr><th>RawObservation (태현 님 계약 그대로)</th><th>PerceptionSignals (2단계 재인식용 원신호)</th></tr>
+      <tr><td>box_id, label_sku, weight_kg, size(긴 변·짧은 변·높이), confidence, visual_damage, view = "top", stamp</td>
+          <td>in_full_view, valid_ratio, box_count, 도착 yaw, damage_score, 프레임별 크기, 저울 안정·영점</td></tr>
+    </table>
+  </div>
+  <div class="card mine">
+    <h3>확인한 것</h3>
+    <ul>
+      <li>합성 깊이 영상 테스트와 2단계 계약 테스트: <code>tests/donghan/test_depth_measurement.py</code>, <code>test_sku_resolver.py</code>, <code>test_stage1_to_stage2_contract.py</code></li>
+      <li><b>통합 실행</b>(80박스 주문 <code>example_order.json</code>, 깊이 영상 → … → 실행 계약까지): 라벨 없는 박스 66개 중 58개를 맞게 추정했고, 8개는 '모호'로 Inspection에 갔습니다. <b>잘못된 SKU로 정한 경우는 0개</b>입니다.</li>
+      <li>모호 8개는 모두 K07(0.34×0.26×0.15 m)과 K09(0.35×0.25×0.15 m)입니다. 두 SKU는 크기 차이가 허용오차 안이고 무게 범위(0.8~10 kg)도 같아서, 크기·무게로는 원리적으로 구분할 수 없습니다. <b>이 두 SKU는 라벨 판독이 꼭 필요합니다.</b></li>
+      <li>측정 1회 약 26 ms (320×240 합성 영상, 개발 PC)</li>
+      <li>브라우저 시뮬레이터 <code>viewer/donghan/perception_sim.html</code>: 초입 카메라 유무 비교 기능이 있습니다(demo_original8 ×6, 붙어서 투입 30 %에서 판정 오류 0 vs 8, 두 박스가 함께 계량된 경우 0 vs 19).</li>
+    </ul>
+    <h3>아직 안 된 것</h3>
+    <ul>
+      <li>실제 깊이 카메라가 없습니다. Gazebo 카메라는 RGB입니다(<code>config/camera.yaml</code> <code>optional_3d_camera: false</code>).</li>
+      <li>이 모델로 <code>/pac/observation</code>을 내보내는 ROS 노드가 아직 없습니다. 지금은 계산부만 있습니다.</li>
+      <li>컨베이어 좌표계 원점과 집는 구역은 가정치입니다(재성 님 확인 필요).</li>
+    </ul>
+  </div>
+  <div class="card">
+    <div class="owner">접점 · 태현 님 1단계 "다음 5개 박스"</div>
+    태현 님 탐색은 컨베이어 위 다음 5개 박스의 크기·무게·순서를 씁니다. 이 모델은 집는 구역(길이 0.73 m) 안의 대기 박스를 나눠서 크기를 잴 수 있습니다(<code>target_x</code>). 하지만 구역에는 1~2개만 들어오고, 무게는 저울을 지나야 압니다. 5개를 보려면 초입 카메라나 더 넓은 시야가 필요하고, 그 박스들의 무게는 SKU 기준값으로 채워야 합니다. <b>어떻게 할지 결정이 필요합니다.</b>
+  </div>
+</div></div>
+
+<!-- 2 -->
+<div class="step"><div class="num new">2</div><div>
+  <h2>상태 검증 <span class="tag t-keep">유지</span> <span class="tag t-prop">+ 재인식 제안</span></h2>
+  <div class="card">
+    태현 님 <code>StateValidator</code>를 그대로 씁니다. 태현 님 문서의 측정 오차 ±1 mm / ±1 %는 인식 잡음 모델(<code>PerceptionConfig</code>)이고, 2단계 판정 허용오차는 12 mm / 4 % / 무게 8 %입니다. 1단계 SKU 추정도 같은 허용오차를 씁니다.
+  </div>
+  <div class="card prop">
+    <div class="owner">재인식 RI 코드 — <code>ros2_ws/src/pac_reinspection/</code> (동한, 제안)</div>
+    <code>ReinspectionValidator</code>가 <code>StateValidator</code>를 고치지 않고 감쌉니다. <code>validate</code> 시그니처가 같아서 그대로 바꿔 끼울 수 있습니다.
+<pre>RawObservation (+ 원신호)
+ → 사전 검사: 저울 미안정·영점 이상, 라벨 체크섬, 프레임 간 크기 분산, 시야 경계,
+              깊이 결측, 두 박스 합쳐짐, 도착 자세
+ → 필요하면 1단계에 재판독·재계량·재촬영 요청
+    (상한: 라벨 2회 · 계량 2회 · 촬영 3회, 박스당 20 s — 가정치)
+ → StateValidator.validate (그대로)
+ → 사후 처리: 미등록 SKU·무게·높이 불일치를 다시 감지해 재확인
+ → 정상                                         → PLAN
+   센서 의심 미해소                              → PLAN + δ, SENSOR_UNCERTAIN
+   두 박스 합쳐짐·자세 이상·남은 수량 0인 SKU·판정 반복 → INSPECTION</pre>
+    <ul>
+      <li>코드는 A 신원, B 센서 교차, C 인식 품질, D 외관, E 흐름, F 작업 중으로 나눴습니다. 세부는 <code>docs/donghan/reinspection_policy.md</code>에 있습니다.</li>
+      <li>기존 이상 종류 5개, 경로, <code>RejectCode</code>는 늘리지 않았습니다. 세부 사유는 <code>Verdict.notes</code>에 <code>"RI-xxx: …"</code>로 남깁니다.</li>
+      <li>교체 시험(<code>tools/donghan/reinspection_drop_in.py</code>)에서 기존 런타임 테스트 21개가 모두 통과했습니다. 오늘 80박스 통합 실행에서도 기본 검증기와 결과가 같았습니다.</li>
+      <li><b>연결 안 됨</b>: <code>pac_runtime/core.py</code>는 아직 <code>StateValidator</code>를 씁니다. 태현 님 확인 후 연결합니다.</li>
+    </ul>
+    <p class="small" style="margin-bottom:0"><b>주의</b>: 박스당 재인식 예산 20 s(가정치)는 도착 간격 6 s, 결정 시간 2 s보다 훨씬 깁니다. 재인식이 생기면 컨베이어가 기다리게 되므로, 태현 님 환경 값에 맞춰 다시 정해야 합니다.</p>
+  </div>
+</div></div>
+
+<!-- 3 -->
+<div class="step"><div class="num">3</div><div>
+  <h2>감독 <span class="tag t-other">다른 파트 · 유지</span></h2>
+  <div class="card">팔레트 교체, 컨베이어 대기, 이상 상황 처리(태현). 동한 쪽에는 "대기열에서 본 박스 수가 남은 기대 수보다 많으면 재집계" 비교 함수(<code>inventory_consistency</code>, RI-E3)만 제안으로 있습니다.</div>
+</div></div>
+
+<!-- 4 -->
+<div class="step"><div class="num">4</div><div>
+  <h2>행동 결정 <span class="tag t-other">다른 파트 · 접점</span></h2>
+  <div class="card">
+    <p style="margin-top:0">놓기 / 버퍼에 두기 / 버퍼 박스 꺼내기는 태현 님이 정합니다. 각 선택지의 자리를 물을 때 쓰는 자리 선택기(placer)에 동한 순위를 끼울 수 있습니다(<code>ranker:=donghan</code>).</p>
+    <ul>
+      <li>지금 코드에서는 선택지마다 동한 순위가 1번씩 돕니다. 순위 1회(로봇 사전 검사 포함)는 개발 PC 기준 중앙값 약 1.8~2.0 s입니다. 5단계 "남은 문제"를 참고하세요.</li>
+      <li>태현 님 N = 5 탐색은 팔레트 복사본마다 여러 박스를 쌓아 봅니다. 그래서 <b>탐색 안에서는 평평한 층 규칙을, 실제로 실행할 자리에만 동한 순위를 쓰는 구성</b>이 맞습니다(제안). 탐색 코드가 통합되면 이 경계를 같이 정해야 합니다.</li>
+    </ul>
+  </div>
+</div></div>
+
+<!-- 5 -->
+<div class="step"><div class="num new">5</div><div>
+  <h2>자리 선택 <span class="tag t-new">변경</span></h2>
+  <div class="grid2">
+    <div class="card"><div class="owner">5-① 후보 생성 · 5-② 안전 검사 (태현, 유지)</div>
+      빈 공간 모서리(EMS) + 기존 박스 꼭짓점(EP), 8 cm 이내 합침. 지지율, LBCP, 하중, 높이·겹침·경계 검사. <b>동한 파트는 이 결과(안전 후보)만 받고, 안전 검사를 바꾸거나 건너뛰지 않습니다.</b></div>
+    <div class="card"><div class="owner">기본 순서 vs 동한 순위</div>
+      기본은 태현 님 순서입니다(DBLF, 새 문서에서는 평평한 층 규칙). <code>ranker:=donghan</code>일 때 이 자리에 동한 ③~⑥이 들어갑니다. 기본값은 계속 <code>dblf</code>입니다.</div>
+  </div>
+  <div class="card new" style="margin-top:12px">
+    <div class="owner">5-③~⑥ 동한 플래너 — <code>ros2_ws/src/pac_planning/</code></div>
+    <div class="sub"><div class="n">③</div><div><b>Feature 계산</b> — 후보마다 45개를 계산합니다. OPAL 15개(위치·크기, 지지율·지지 중심, 높이, 하중비, 측면 지지, 작업량)에 다음 30개를 더합니다: 정규화 좌표·크기, 잔여재고 적합도, 버퍼 적합도·점유, 의존성(밑에 깔린 박스 수), 로봇 접근 여유, 무게중심·높이 무게중심 이동, 하중 증가, 압축도, 가장 큰 빈 면, 조각남, 높이 변화, 안전 포화, 하중 여유, 균형, 시간 비용, EMS 여부, 미리 본 비율, 남은 부피 비율, 센서 불확실(δ).</div></div>
+    <div class="sub"><div class="n">④</div><div><b>AI 평가 → Top-K</b> — NumPy MLP(<code>DualHeadRanker</code>)가 두 가지를 냅니다. 하나는 순위 헤드(LambdaRank, 한 결정 안에서만 비교)이고, 다른 하나는 미래값 헤드 4개(평균, 하위 20 % 평균 CVaR, 막힘률, 실패율)입니다. 모델이 없거나 입력이 학습 분포 밖이면 현재 점수로 정렬합니다. 정렬 순서는 안전 목표 충족 → 안전도 → 점수이고, <b>상위 4개(Top-K = 4)</b>만 다음 단계로 갑니다.</div></div>
+    <div class="sub"><div class="n">⑤</div><div><b>Top-K 미래 롤아웃</b> — 남은 주문 비율로 미래 박스를 뽑아 시나리오 7종을 만듭니다(무작위, 큰 박스 나중, 무거운 박스 나중, 작은 박스 먼저, 같은 SKU 연속, 조각남, 스트레스). horizon은 3입니다. Top-K 모두 <b>같은 시나리오</b>로 greedy 배치해 공평하게 비교합니다. 시간 예산은 1 s입니다. 남은 시간이 60 % 미만이면 Top-K를, 35 % 미만이면 시나리오 수를 절반으로 줄이고, 20 % 미만이면 horizon을 1로 줄입니다. 안전 검사는 줄이지 않습니다.</div></div>
+    <div class="sub"><div class="n">⑥</div><div><b>최종 점수 → 최종 후보</b></div></div>
+<pre>점수 = 0.15 × 안전(포화) + 0.3 × 공간 품질 + 0.4 × 미래 가치(평균)
+     − 0.1 × 위험 − 0.05 × 시간
+위험 = max(0, 평균 − CVaR) + 0.25 × 막힘률 + 0.25 × 실패율
+롤아웃을 못 한 후보의 미래 가치 = AI 예측값 (모델이 없으면 0)</pre>
+    <p class="small" style="margin-bottom:0"><b>모델 상태(유지)</b>: 학습 후보 모델 <code>candidate_runtime_v2</code>는 360 episode 비교에서 DBLF를 이기지 못했습니다(정상 조건 평균 팔레트 수 DBLF 2.389 vs 학습 2.611). 그래서 기본값은 모델 없이(휴리스틱 + 롤아웃)입니다. <code>models/dual_head_ranker.json</code>은 참조 후보기로 학습한 모델이라, 실제 EMS 후보기에서는 검증되지 않았습니다.</p>
+  </div>
+  <div class="card new">
+    <div class="owner">오늘 바뀐 것 (PR #1, main d66aa73)</div>
+    <ul>
+      <li>ROS <code>runtime_node</code>·<code>verified_runtime</code>와 launch 2개에 <code>ranker:=dblf|donghan</code>, <code>ranker_model_path</code>, <code>ranker_config</code>, <code>ranker_seed</code>를 추가했습니다. 전에는 ROS로 실행하면 ③~⑥ 없이 DBLF로만 돌았습니다.</li>
+      <li>순위 연결 코드 4곳을 <code>pac_planning.team_bridge</code> 1곳으로 합쳤습니다.</li>
+      <li>학습 모델과 플래너 설정(horizon, 시나리오 수, CVaR)이 다르면 시작할 때 오류가 납니다. 전에는 매 호출 조용히 휴리스틱으로 대체됐습니다.</li>
+      <li>재성 님 V4.4 브리지가 저장소 밖 옛 폴더 대신 통합 저장소의 플래너를 씁니다.</li>
+    </ul>
+  </div>
+  <div class="card new">
+    <div class="owner">발견하고 고친 문제 — 로봇이 갈 수 있는 후보 안에서만 순위 (이번 PR, 커밋 2743e62)</div>
+    <p style="margin-top:0">동한 순위는 6단계(로봇 실행 가능성)를 모르고 자리를 골랐습니다. 게다가 후보를 Top-K 4개만 넘겨서 "떨어지면 다음 후보로"도 4번까지만 됐습니다. 그래서 동한 순위가 고른 자리는 로봇이 못 가는 경우가 많았습니다. 이제는 <code>RobotAwarePlacer</code>가 순위에 로봇 검사기를 넘기고(<code>bind_robot</code>), 순위는 <b>로봇이 갈 수 있는 후보만</b> 받아 매깁니다. 안전 검사(5-②)와 로봇 검사(6)는 그대로입니다.</p>
+    <table>
+      <tr><th>실행 가능한 자리가 없던 선택지 / 팔레트 수</th><th>DBLF</th><th>동한 (수정 전)</th><th>동한 (수정 후)</th></tr>
+      <tr><td>시드 1</td><td>3 / 6</td><td>40 / 7</td><td><b>10 / 6</b></td></tr>
+      <tr><td>시드 2</td><td>10 / 5</td><td>62 / 6</td><td><b>4 / 5</b></td></tr>
+    </table>
+    <p class="small" style="margin-bottom:0">조건: Gazebo 로봇 설정(<code>robot_check_gazebo.yaml</code>), 80박스 주문(<code>example_order.json</code>), 가벼운 플래너 설정(시나리오 1, horizon 1), 80박스 모두 적재. 수정 후 6단계 거부는 0회입니다. 팔레트 수는 DBLF와 같고, 버퍼에 두기·꺼내기가 DBLF보다 절반 정도로 줄었습니다(시드 1: 34 → 16회). 표본은 주문 1개 × 시드 2개라 작아서, DBLF보다 낫다고 결론 내릴 수는 없습니다. (수정 전 Top-4 뒤에 DBLF 순서를 붙여 보는 시도는 시드 1에서만 도움이 됐습니다.)</p>
+  </div>
+  <div class="card bad">
+    <div class="owner" style="color:var(--bad)">남은 문제 · 결정 시간 (동한)</div>
+    런타임에서 플래너 시간 예산(1 s)을 켰고(<code>donghan_ranker(use_time_budget=True)</code>), Top-K·시나리오·horizon을 줄이는 단계도 실제로 동작합니다. 그래도 순위 1회는 중앙값 약 1.8~2.0 s(p90 3~3.9 s), 결정 1회당 약 3.6 s입니다(25박스, 개발 PC). 시간 예산이 롤아웃에만 걸리고, 특징 계산과 로봇 사전 검사(후보당 약 62 ms × 중앙값 12.5개 ≈ 0.8 s)에는 걸리지 않기 때문입니다. <b>태현 님 결정 시간 2 s 안에 들어오지 않으므로, 실제 셀은 당분간 기본값 <code>dblf</code>로 운영합니다.</b> 다음 작업은 특징 계산과 로봇 검사 결과를 같은 상태 버전 안에서 재사용(캐시)하는 것입니다.
+  </div>
+</div></div>
+
+<!-- 6 -->
+<div class="step"><div class="num">6</div><div>
+  <h2>로봇 실행 가능성 <span class="tag t-other">다른 파트 · 유지</span></h2>
+  <div class="card">HDR50-22 IK, 하강 경로·팔 충돌, 가반하중(태현). 순위 목록 앞에서부터 최대 12개를 검사합니다(<code>robot_checks_per_option = 12</code>). 동한 순위는 이 검사를 먼저 통과한 후보만 순위를 매깁니다(이번 PR). 그래서 순위 1등이 6단계에서 떨어지지 않습니다. 7단계 실행부는 6단계가 고른 흡착 방향(<code>gripper_yaw_rad</code>)을 그대로 따릅니다.</div>
+</div></div>
+
+<!-- 7 -->
+<div class="step"><div class="num new">7</div><div>
+  <h2>실행·사후 검증 — Gazebo + MoveIt 물리 실행 <span class="tag t-new">변경</span></h2>
+  <div class="card new">
+    <div class="owner"><code>ros2_ws/src/pac_execution/</code> (동한)</div>
+    <ul>
+      <li><b>verified_runtime</b>: 태현 님 런타임(<code>CoreBridge</code>)을 그대로 쓰되 결과를 엄격하게 받습니다. 명령 버전·박스·후보 ID가 일치해야 하고, 측정된 위치(Gazebo 월드 pose 또는 보정된 비전)만 커밋합니다. 외부 판정으로 런타임 검사를 덮어쓸 수 없고, 문제가 생기면 HOLD하고 <code>/pac/runtime_fault</code>로 알립니다.</li>
+      <li><b>moveit_executor</b> 순서:</li>
+    </ul>
+<pre>명령 검증 (오래된 계획, 팔레트 밖, 박스 + EOAT 15 kg ≤ 50 kg)
+ → PRE_GRASP → DESCEND_GRASP → 흡착 → LIFT
+   (박스가 실제로 따라 올라왔는지 12 mm 안으로 확인)
+ → PRE_PLACE → DESCEND_PLACE (지지면 13 mm 위에서 멈춤) → 놓기
+ → 안정된 위치 측정 → 이미 놓인 박스가 1 mm 넘게 움직였으면 중단
+ → RETREAT 후 다시 측정·검사 → /pac/execution_result 발행</pre>
+    <ul>
+      <li>그 밖에 <code>gazebo_grasp</code>(흡착 고정, C++), <code>gazebo_box_source</code>(원본 박스 투입), launch <code>original_boxes_demo.launch.py</code>가 있습니다.</li>
+      <li><b>오늘</b>: <code>verified_runtime</code>이 import 단계에서 실패하던 문제(<code>make_runtime_ranker</code> 없음)를 고쳤습니다(PR #1).</li>
+    </ul>
+    <p class="small" style="margin-bottom:0"><b>한계</b>: 놓기(<code>PLACE_CURRENT</code>)만 지원합니다. 버퍼·NG·팔레트 교체·재적재 명령은 <code>CELL_ACTUATOR_REQUIRED</code>로 멈춥니다. MoveIt/Gazebo 실행은 아직 해 보지 않았습니다(<code>gazebo_grasp</code>는 Gazebo Fortress 개발 패키지가 없어 빌드하지 못함). 태현 님 재생 도구(<code>tools/realtime/*</code>)와는 별개입니다.</p>
+  </div>
+</div></div>
+
+<!-- 8 -->
+<div class="step"><div class="num new">8</div><div>
+  <h2>상태 갱신 <span class="tag t-keep">유지</span> <span class="tag t-new">+ 메시지 순서 변경</span></h2>
+  <div class="card new">
+    실제로 놓인 위치로 상태를 보정하는 것은 태현 님 코드 그대로입니다. 동한 쪽 변경(PR #1)은 다음과 같습니다.
+    <ul>
+      <li>로봇이 박스를 놓는 동안 도착한 관측과 컨베이어 유휴 신호는 <code>CoreBridge.deferred</code>에 보관했다가, 결과를 반영한 직후 처리합니다. 전에는 그 사이 상태 버전이 바뀌어 결과가 <code>STALE_RESULT</code>로 거부되고 <code>runtime_node</code>가 종료됐습니다(재현 확인).</li>
+      <li>거부된 메시지는 로그만 남기고 노드는 계속 돕니다. 거부된 결과는 위치를 임의로 확정하지 않습니다.</li>
+    </ul>
+  </div>
+</div></div>
+
+<hr>
+
+<h2>실시간 흐름 접점 <span class="tag t-new">확인 필요</span></h2>
+<p>태현 님 새 흐름은 "지금 박스가 계획대로 놓인다"고 가정하고, 로봇이 움직이는 동안 다음 박스를 미리 계산합니다. 지금 통합 코드는 안전을 위해 <b>결과가 온 뒤</b> 다음 박스를 계획합니다(위 8단계). 두 방식을 맞춰야 합니다.</p>
+<div class="card">
+  <div class="timeline">
+    <div>로봇</div><div class="lane"><div class="bar robot" style="left:0;width:56%">박스 i 집기·놓기 (8 s)</div><div class="bar robot" style="left:58%;width:42%">박스 i+1</div></div>
+    <div>1단계 깊이 측정</div><div class="lane"><div class="bar calc" style="left:22%;width:22%">i+1 측정 ≈ 0.03 s</div></div>
+    <div>지금 (통합 코드)</div><div class="lane"><div class="bar plan" style="left:22%;width:34%">i+1 관측 보관 (deferred)</div><div class="bar calc" style="left:56.5%;width:18%">결과 후 계획</div></div>
+    <div>태현 님 새 흐름</div><div class="lane"><div class="bar calc" style="left:22%;width:20%">i+1 미리 계산</div><div class="bar plan" style="left:56.5%;width:34%">결과 확인 → 사용 / 재계산</div></div>
+  </div>
+  <p class="small" style="margin-bottom:0">맞추는 방법(제안): (1) 계획대로 놓였다고 가정한 상태로 i+1을 미리 계산합니다. (2) 결과가 계획과 같으면(L0) 그 명령을 쓰고, 다르면(L1 이상) 실제 상태로 다시 계산합니다. 동한 쪽 시간은 깊이 측정 약 0.03 s, 순위 1회 약 1.8~2.0 s(플래너 예산 1 s 포함), 재인식 최대 20 s(가정치)입니다.</p>
+</div>
+
+<h2 style="margin-top:30px">오늘 동한 파트 변경 요약</h2>
+<table>
+  <tr><th style="width:180px">무엇</th><th style="width:130px">상태</th><th>내용</th></tr>
+  <tr><td>PR #1</td><td>main d66aa73에 병합</td><td>5-③~⑥ ROS 연결(<code>ranker</code> 파라미터), 순위 연결 1곳으로, 모델·설정 계약 검사, V4.4 브리지 경로, <code>verified_runtime</code> import 수정, 놓는 중 도착 관측 보관</td></tr>
+  <tr><td>PR #2</td><td>main e7b3c06에 병합</td><td>1단계 깊이 측정·SKU 추정, 2단계 재인식 RI 코드(제안), 브라우저 시뮬레이터</td></tr>
+  <tr><td>이번 PR (<code>feature/donghan-flow-doc-ranker-fix</code>)</td><td>리뷰 대기</td><td><code>pac_perception</code> 의존성(<code>pac_runtime</code>, numpy, yaml) 선언 · 로봇이 갈 수 있는 후보만 순위 · 런타임 플래너 시간 예산 켬 · 이 문서</td></tr>
+  <tr><td>동한 순위 결정 시간</td><td>수정 필요</td><td>결정 1회 약 3.6 s &gt; 2 s. 5단계 "남은 문제" 참고</td></tr>
+</table>
+
+<h2 style="margin-top:30px">확인이 필요한 접점</h2>
+<table>
+  <tr><th style="width:72px">누구와</th><th>내용</th></tr>
+  <tr><td>태현 님</td><td>N = 5 탐색 안에서는 평평한 층 규칙, 실제 실행 자리에만 동한 순위 · 실시간 미리 계산과 <code>CoreBridge.deferred</code> 맞추기 · <code>ReinspectionValidator</code> 연결 여부와 재인식 시간 예산 · <code>environment.yaml</code>로 옮길 현장 값</td></tr>
+  <tr><td>재성 님</td><td>컨베이어 좌표계 원점·집는 구역 · Gazebo 깊이 카메라(또는 초입 카메라) · 저울 안정·영점 신호 전달 · <code>pac_perception</code> 의존성 변경</td></tr>
+  <tr><td>팀</td><td>"다음 5개 박스" 무게를 어디서 얻을지(SKU 기준값?) · K07/K09처럼 크기·무게로 구분 안 되는 SKU의 라벨 판독</td></tr>
+</table>
+<p class="small" style="margin-top:18px">※ 수치 출처: 통합 저장소 main e7b3c06 + 이번 PR 코드, 2026-10-09 개발 PC(Windows, Python 3.11) 실행. 전체 테스트 417 통과(Windows 환경 문제 2 실패·12 오류 제외). MoveIt/Gazebo 실제 실행 결과는 포함하지 않았습니다.</p>
+
+</main>
+</body>
+</html>
