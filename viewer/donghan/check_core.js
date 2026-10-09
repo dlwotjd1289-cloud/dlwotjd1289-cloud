@@ -29,7 +29,7 @@ for (const inletCamera of [true, false]) {
   }
   console.log(`\n== inlet camera ${inletCamera ? "ON" : "OFF"} · ${order} x${repeat} seed ${seed} · ${((Date.now() - t0) / 1000).toFixed(1)} s wall`);
   console.log(`done=${sim.done} t=${s.t.toFixed(0)} s, results ${sim.results.length}/${s.boxes}, placed ${s.placed}, held ${s.held}, pallets ${s.pallets} (changes ${s.palletChange}), fill ${(s.fill * 100).toFixed(0)}%`);
-  console.log(`wrong ${s.wrong}, weight error >5% ${s.weightErr}, combined weighings ${s.combinedWeigh}, gapping ${s.gapping}, inlet labels ${s.inletLabel}`);
+  console.log(`wrong ${s.wrong}, weight error >5% ${s.weightErr}, combined weighings ${s.combinedWeigh} (flagged by camera 1: ${s.sharedDetected}), gapping ${s.gapping}, inlet labels ${s.inletLabel}`);
   console.log(`buffer put/get ${s.bufferPut}/${s.bufferGet}, stop classify ${(s.stopClassify * 100).toFixed(1)}%, plan ${(s.stopPlan * 100).toFixed(1)}%, robot ${(s.robotUtil * 100).toFixed(0)}%, ${s.throughput.toFixed(2)} boxes/min`);
   for (const [f, kinds] of Object.entries(table)) console.log("  " + f.padEnd(12), JSON.stringify(kinds));
   const leftover = sim.results.filter(r => r.disposition === "판정됨" || r.disposition.startsWith("버퍼"));
