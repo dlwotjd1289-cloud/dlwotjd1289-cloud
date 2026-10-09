@@ -28,8 +28,7 @@ class PlacementPlanner:
     """Callbacks use exactly the v0.2 generator/validator signatures.
 
     No robot commands, buffer decisions, actual commits or global mutable state.
-    Use explicit ReferenceBackend for the offline demo; production callbacks are
-    supplied by the owners of stages 5-1 and 5-2.
+    Callbacks come from stages 5-1 / 5-2 (pac_candidates.CandidateBackend).
     """
 
     def __init__(

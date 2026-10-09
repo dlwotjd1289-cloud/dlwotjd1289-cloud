@@ -2,9 +2,9 @@
 from dataclasses import replace
 
 from pac_common import PlacementCandidate, Pose3D, ValidationResult, RejectCode
-from pac_planning import PlacementPlanner, PlannerConfig
+from pac_planning import PlacementPlanner
 from pac_planning.features import has_placement
-from pac_planning.reference_backend import ReferenceBackend
+from pac_candidates import CandidateBackend, CandidateConfig
 
 
 def test_probe_checks_valid_candidate_after_sixteen_invalid_ones(scene):
@@ -24,7 +24,7 @@ def test_probe_checks_valid_candidate_after_sixteen_invalid_ones(scene):
 
 def test_one_bad_ems_does_not_abort_other_valid_candidates(scene):
     _, box, state, context = scene
-    backend = ReferenceBackend(context, PlannerConfig())
+    backend = CandidateBackend(context, CandidateConfig())
     candidates = backend.generate_candidates(box, state)
     assert len(candidates) > 1
     bad = candidates[0]

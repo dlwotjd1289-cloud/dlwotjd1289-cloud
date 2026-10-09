@@ -14,7 +14,7 @@ from pac_common import (
 from pac_planning import PlacementPlanner
 from pac_planning.features import FEATURE_NAMES
 from pac_planning.geometry import simulate_placement
-from pac_planning.reference_backend import ReferenceBackend
+from pac_candidates import CandidateBackend, CandidateConfig
 
 
 def test_end_to_end_reproducible_nonmutating(scene, planner):
@@ -141,22 +141,22 @@ def test_simulated_inventory_consumed_once(scene, planner):
         simulate_placement(post2.state, future, candidate, consume_unseen=True)
 
 
-def test_reference_load_and_support(scene, planner):
+def test_team_backend_load_and_support(scene, planner):
+    """Stage 5-2 is pac_candidates (team rules): heavy-on-light was withdrawn
+    (2026-10-09), crushing (top-load capacity) and support stay checked."""
     box, state, context = scene[1:]
+    edge = 0.002  # pac_candidates keeps a 2 mm edge / size tolerance margin
     base_c = PlacementCandidate(
-        "base", box.box_id, Pose3D("pallet", 0, 0, 0), 12
+        "base", box.box_id, Pose3D("pallet", edge, edge, 0), 12
     )
     virtual = simulate_placement(state, box, base_c).state
     heavy = replace(
         box, box_id="HEAVY", weight_kg=9, status=BoxStatus.MEASURED
     )
     c = PlacementCandidate(
-        "top", heavy.box_id, Pose3D("pallet", 0, 0, 0.2), 12
+        "top", heavy.box_id, Pose3D("pallet", edge, edge, 0.2), 12
     )
-    assert (
-        R.LOAD_VIOLATION
-        in planner.validate_constraints(heavy, c, virtual).codes
-    )
+    assert planner.validate_constraints(heavy, c, virtual).success
     light = replace(heavy, weight_kg=2)
     assert planner.validate_constraints(
         light, replace(c, box_id=light.box_id), virtual
@@ -167,7 +167,7 @@ def test_reference_load_and_support(scene, planner):
         in planner.validate_constraints(light, offset, virtual).codes
     )
     damaged_context = replace(context, capacity_overrides_n={box.box_id: 0.0})
-    backend = ReferenceBackend(damaged_context, planner.config)
+    backend = CandidateBackend(damaged_context, CandidateConfig())
     assert (
         R.LOAD_VIOLATION
         in backend.validate_constraints(light, c, virtual).codes
@@ -176,7 +176,9 @@ def test_reference_load_and_support(scene, planner):
 
 def test_nonzero_uncertainty_not_silently_certified(scene, planner):
     context = replace(scene[3], uncertain_box_ids=(scene[1].box_id,))
-    backend = ReferenceBackend(context)
+    cfg = CandidateConfig()
+    strict = replace(cfg, uncertainty=replace(cfg.uncertainty, uncertain_policy="reject"))
+    backend = CandidateBackend(context, strict)
     c = planner.generate_candidates(scene[1], scene[2])[0]
     assert backend.validate_constraints(scene[1], c, scene[2]).codes == (
         R.SENSOR_UNCERTAIN,

@@ -9,29 +9,12 @@ surface. Only upright, axis-aligned yaws (multiples of pi/2) are supported.
 from dataclasses import dataclass
 import math
 
-HALF_PI = math.pi / 2.0
-YAW_TOL = 1e-6
+from pac_common.frames import HALF_PI, YAW_TOL, quarter_turns, rotated_dims  # noqa: F401 (single source)
+
 LEN_EPS = 1e-9
 # Shared numeric tolerance for stability margins (placement check and the
 # snapshot re-check must agree exactly on borderline cases).
 STABILITY_EPS = 1e-9
-
-
-def quarter_turns(yaw):
-    """Return the number of quarter turns of ``yaw`` or raise ValueError."""
-    if not math.isfinite(yaw):
-        raise ValueError("yaw must be finite")
-    quarter = round(yaw / HALF_PI)
-    if abs(yaw - quarter * HALF_PI) > YAW_TOL:
-        raise ValueError("Only axis-aligned yaws (k * pi/2) are supported")
-    return quarter
-
-
-def rotated_dims(size, yaw):
-    """(dx, dy, dz) of the AABB of an upright box rotated by ``yaw``."""
-    if quarter_turns(yaw) % 2:
-        return size.y, size.x, size.z
-    return size.x, size.y, size.z
 
 
 def same_yaw(a, b):

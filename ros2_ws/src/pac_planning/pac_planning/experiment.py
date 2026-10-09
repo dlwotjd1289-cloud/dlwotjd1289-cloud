@@ -31,7 +31,7 @@ from .features import FEATURE_NAMES
 from .geometry import simulate_placement, volume
 from .model import DualHeadRanker, OUTPUT_NAMES, train_model
 from .planner import PlacementPlanner
-from .reference_backend import ReferenceBackend
+from pac_candidates import CandidateBackend, CandidateConfig
 from .scoring import priority
 
 
@@ -107,7 +107,7 @@ def observe_next(state, context, sku, index):
 
 
 def make_planner(context, config, model=None):
-    backend = ReferenceBackend(context, config)
+    backend = CandidateBackend(context, CandidateConfig())   # team 5-1/5-2 (pac_candidates)
     return PlacementPlanner(
         context=context,
         config=config,

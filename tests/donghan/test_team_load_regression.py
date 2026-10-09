@@ -32,6 +32,8 @@ def low_share_scene(scene):
     context = replace(context, observed_preview=(), pallet_max_weight_kg=1000.,
                       capacity_overrides_n={"strong": 1e5, "light": 1e5})
     cfg = CandidateConfig()
+    cfg = replace(cfg, constraints=replace(cfg.constraints, heavy_on_light=replace(
+        cfg.constraints.heavy_on_light, enabled=True)))   # rule under test (opt-in since 2026-10-09)
     # Isolate heavy-on-light from the separate pallet-CoG requirement.
     cfg = replace(cfg, constraints=replace(cfg.constraints,
                   pallet_cog=replace(cfg.constraints.pallet_cog, enabled=False)))

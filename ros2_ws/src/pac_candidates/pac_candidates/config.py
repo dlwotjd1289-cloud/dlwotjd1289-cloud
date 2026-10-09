@@ -176,9 +176,14 @@ class PalletCogConfig:
 
 @dataclass(frozen=True)
 class HeavyOnLightConfig:
-    """Mission requirement: heavy boxes must not be stacked on light boxes."""
+    """Mission wording "no heavy box on a lighter one" (opt-in).
 
-    enabled: bool = True
+    Withdrawn 2026-10-09 (config/taehyeon/candidates.yaml, ALGORITHM_V3_DRAFT):
+    crushing is checked by the per-SKU top-load capacity (McKee x safety factor,
+    cumulative), collapse by support / LBCP / pallet CoG. Off by default.
+    """
+
+    enabled: bool = False
     # per_box (mission wording): reject if new.weight > ratio * supporter.weight
     #   + tolerance_kg for any direct supporter carrying >= ``min_share``.
     # share (default, taehyeon 2026-10-08): compare the load actually

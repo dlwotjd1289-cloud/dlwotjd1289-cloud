@@ -6,6 +6,7 @@ import pytest
 from th_helpers import (
     HALF_PI,
     candidate,
+    heavy_on_light_config,
     make_box,
     make_context,
     make_state,
@@ -128,7 +129,8 @@ def test_bridge_over_two_supporters_is_stable(backend):
     assert sum(shares.values()) == pytest.approx(1.0)
 
 
-def test_heavy_on_light(backend):
+def test_heavy_on_light():
+    backend = CandidateBackend(make_context(), heavy_on_light_config())
     state = make_state([placed("A", TOL, TOL, 0.0, weight=2.0)])
     heavy = check(backend, make_box(weight=10), state, TOL, TOL, 0.2)
     assert R.LOAD_VIOLATION in heavy.codes and "HEAVY_ON_LIGHT" in reasons(heavy)
@@ -212,7 +214,7 @@ def test_uncertain_policies():
 
 
 def test_all_reasons_reported_together():
-    backend = full_backend()
+    backend = CandidateBackend(make_context(), heavy_on_light_config(CandidateConfig(collect_all_reasons=True)))
     state = make_state([placed("A", TOL, TOL, 0.0, weight=1)])
     result = check(backend, make_box(weight=20), state, 0.3, TOL, 0.2)
     assert {"SUPPORT_RATIO", "LBCP_UNSTABLE", "HEAVY_ON_LIGHT"} <= reasons(result)
@@ -307,10 +309,10 @@ def test_heavy_on_light_share_mode_allows_bridging():
     b = placed("B", TOL + 0.3 + GAP, TOL, 0.0, size=(0.3, 0.3, 0.2), weight=4)
     state = make_state([a, b])
     bridge = make_box("N", (0.5, 0.3, 0.1), weight=7)
-    per_box = ConstraintConfig(heavy_on_light=HeavyOnLightConfig(mode="per_box"))
+    per_box = ConstraintConfig(heavy_on_light=HeavyOnLightConfig(enabled=True, mode="per_box"))
     strict = CandidateBackend(make_context(), CandidateConfig(constraints=per_box))
     assert "HEAVY_ON_LIGHT" in reasons(check(strict, bridge, state, 0.06, TOL, 0.2))
-    share_cfg = ConstraintConfig(heavy_on_light=HeavyOnLightConfig(mode="share"))
+    share_cfg = ConstraintConfig(heavy_on_light=HeavyOnLightConfig(enabled=True, mode="share"))
     share = CandidateBackend(make_context(), CandidateConfig(constraints=share_cfg))
     assert check(share, bridge, state, 0.06, TOL, 0.2).success
 
@@ -450,7 +452,7 @@ def test_share_mode_checks_supporters_below_min_share():
 
     s = placed("S", TOL, TOL, 0.0, size=(0.848, 0.3, 0.2), weight=50)
     light = placed("L", 0.858, TOL, 0.0, size=(0.2, 0.3, 0.2), weight=0.5)
-    c0 = CandidateConfig()
+    c0 = heavy_on_light_config()
     cfg = dc_replace(c0, constraints=dc_replace(c0.constraints, pallet_cog=PalletCogConfig(enabled=False)))
     backend = CandidateBackend(make_context(capacity_n=1e5), cfg)
     h = make_box("H", (0.928, 0.3, 0.2), weight=40)

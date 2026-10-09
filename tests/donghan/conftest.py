@@ -5,7 +5,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).parent))  # perception_testkit (helpers, not a test module)
 from pac_planning.demo import scene_from_file
 from pac_planning import PlannerConfig, PlacementPlanner
-from pac_planning.reference_backend import ReferenceBackend
+from pac_candidates import CandidateBackend, CandidateConfig
 
 
 @pytest.fixture
@@ -19,7 +19,7 @@ def scene():
 def planner(scene):
     context = scene[3]
     config = PlannerConfig(horizon=2, scenario_count=7)
-    backend = ReferenceBackend(context, config)
+    backend = CandidateBackend(context, CandidateConfig())
     return PlacementPlanner(
         context=context,
         config=config,

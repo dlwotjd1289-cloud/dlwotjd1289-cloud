@@ -5,7 +5,6 @@ from dataclasses import replace
 
 import numpy as np
 import pytest
-from pac_candidates import CandidateConfig
 from pac_common import PlacedBox, Pose3D, Size3D, SkuSpec
 from pac_highlevel import (
     ActionType,
@@ -23,7 +22,7 @@ from pac_highlevel import (
 )
 from pac_highlevel.config import config_from_dict
 from pac_highlevel.repack import accessible_ids, plan_repack
-from th_helpers import HALF_PI, REPO, make_box
+from th_helpers import HALF_PI, REPO, heavy_on_light_config, make_box
 
 SMALL = Size3D(0.62, 0.42, 0.25)
 
@@ -41,7 +40,7 @@ def world(boxes, pallet=SMALL, slots=2, **kw):
     cfg = replace(cfg, buffer=replace(cfg.buffer, slots=slots), **kw)
     sizes = {b.sku_id: ((b.size.x, b.size.y, b.size.z), b.weight_kg) for b in boxes}
     cat = catalog(*[(s, size, w) for s, (size, w) in sizes.items()])
-    return PalletizingWorld([Arrival(b) for b in boxes], pallet, cat, CandidateConfig(), cfg)
+    return PalletizingWorld([Arrival(b) for b in boxes], pallet, cat, heavy_on_light_config(), cfg)
 
 
 # ---------------------------------------------------------------- actions
@@ -225,7 +224,7 @@ def test_detected_damage_box_never_carries_anything():
     cfg = replace(cfg, buffer=replace(cfg.buffer, slots=0))
     cat = catalog(("K", (0.2, 0.4, 0.1), 5.0))
     arrivals = [Arrival(b, damage_detected=(b.box_id == "B000")) for b in boxes]
-    w = PalletizingWorld(arrivals, SMALL, cat, CandidateConfig(), cfg)
+    w = PalletizingWorld(arrivals, SMALL, cat, heavy_on_light_config(), cfg)
     policy = GreedyPolicy()
     saw_b000 = False
     while not w.done:

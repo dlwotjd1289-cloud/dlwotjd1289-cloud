@@ -1,7 +1,7 @@
-"""Axis-aligned geometry for features and the OFFLINE reference backend."""
+"""Axis-aligned geometry for features, rollouts and scene conversion (primitives: pac_common.frames)."""
 
 from dataclasses import replace
-import math
+from pac_common.frames import corner_to_center, rotated_dims
 from pac_common import (
     BoxStatus,
     InventoryState,
@@ -14,13 +14,7 @@ EPS = 1e-8
 G = 9.80665
 
 
-def dimensions(size, yaw):
-    quarter = round(yaw / (math.pi / 2))
-    if not math.isclose(yaw, quarter * math.pi / 2, abs_tol=1e-8):
-        raise ValueError("Reference geometry supports only axis-aligned yaws")
-    return (
-        (size.y, size.x, size.z) if quarter % 2 else (size.x, size.y, size.z)
-    )
+dimensions = rotated_dims  # pac_common.frames is the single source
 
 
 def bounds(box, pose=None):
@@ -44,9 +38,7 @@ def overlap(lo, hi, other_lo, other_hi, axes=(0, 1, 2)):
 
 def center_pose(box, candidate):
     """Explicit lower-AABB-corner -> box-center adapter for the robot team."""
-    p = candidate.target_pose
-    d = dimensions(box.size, p.yaw)
-    return replace(p, x=p.x + d[0] / 2, y=p.y + d[1] / 2, z=p.z + d[2] / 2)
+    return corner_to_center(box.size, candidate.target_pose)
 
 
 def cog(boxes, pallet_size):

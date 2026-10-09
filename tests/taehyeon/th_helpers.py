@@ -76,3 +76,17 @@ def make_context(capacity_n=1000.0, pallet_max=1000.0, overrides=None, uncertain
 
 def candidate(box, x, y, z, yaw=0.0, version=0, cid="T"):
     return PlacementCandidate(cid, box.box_id, Pose3D("pallet", x, y, z, yaw=yaw), version)
+
+
+def heavy_on_light_config(base=None, **heavy):
+    """CandidateConfig with the (withdrawn, opt-in) heavy-on-light rule switched on.
+
+    Several fixtures were built to be infeasible through that rule; they keep
+    testing the rule itself, the team default stays off (candidates.yaml)."""
+    from dataclasses import replace as _replace
+
+    from pac_candidates import CandidateConfig
+
+    cfg = base or CandidateConfig()
+    hol = _replace(cfg.constraints.heavy_on_light, enabled=True, **heavy)
+    return _replace(cfg, constraints=_replace(cfg.constraints, heavy_on_light=hol))

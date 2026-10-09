@@ -131,12 +131,12 @@ def build_planning_request(*, box_id: str, sku_id: str, size_m: Sequence[float],
 
 
 def rotated_dims(size_m: Sequence[float], yaw: float) -> tuple[float, float, float]:
-    """AABB footprint after yaw; only multiples of 90 deg (planner's allowed yaws)."""
-    quarter = round(yaw / (math.pi / 2))
-    if abs(yaw - quarter * math.pi / 2) > 1e-6:
-        raise ValueError(f"Only 90-degree yaws are supported, got {yaw}")
-    sx, sy, sz = size_m
-    return (sy, sx, sz) if quarter % 2 else (sx, sy, sz)
+    """AABB footprint after yaw; only multiples of 90 deg (pac_common.frames)."""
+    ensure_team_packages()
+    from pac_common import Size3D
+    from pac_common.frames import rotated_dims as common
+
+    return common(Size3D(*map(float, size_m)), yaw)
 
 
 def candidate_to_world(target_pose: dict, size_m: Sequence[float],

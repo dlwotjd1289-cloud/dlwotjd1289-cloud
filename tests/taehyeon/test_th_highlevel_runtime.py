@@ -4,9 +4,9 @@ from dataclasses import replace
 
 import pytest
 
-from th_helpers import PLANNING, make_box, make_context, make_state, placed
+from th_helpers import PLANNING, heavy_on_light_config, make_box, make_context, make_state, placed
 
-from pac_candidates import CandidateBackend, CandidateConfig
+from pac_candidates import CandidateBackend
 from pac_common import BoxStatus, Size3D
 
 from pac_highlevel import (
@@ -53,7 +53,7 @@ def snapshot(boxes, current=None, buffered=(), version=7):
 
 def decider(config=None, policy=None):
     config = config or cfg()
-    return HighLevelDecider(ctx(), CandidateConfig(), config, policy=policy or load_policy("rule", config=config))
+    return HighLevelDecider(ctx(), heavy_on_light_config(), config, policy=policy or load_policy("rule", config=config))
 
 
 def test_place_current_on_empty_pallet_and_inputs_untouched():
@@ -63,7 +63,7 @@ def test_place_current_on_empty_pallet_and_inputs_untouched():
     assert d.action.type == ActionType.PLACE_CURRENT and d.requires_low_level
     assert d.box.box_id == "C1" and d.state_version == 7
     assert d.candidate.base_state_version == 7  # ids follow the real snapshot
-    assert CandidateBackend(ctx(), CandidateConfig()).validate_constraints(d.box, d.candidate, state).success
+    assert CandidateBackend(ctx(), heavy_on_light_config()).validate_constraints(d.box, d.candidate, state).success
     assert repr(state) == before
     assert as_dict(d)["action"] == "PLACE_CURRENT"
 
@@ -150,7 +150,7 @@ def test_handoff_to_donghan_planner():
                      buffered=[make_box("B1", (0.2, 0.4, 0.1), weight=4)])
     d = decider(cfg(fill=0.0)).decide(state)
     assert d.requires_low_level
-    backend = CandidateBackend(ctx(), CandidateConfig())
+    backend = CandidateBackend(ctx(), heavy_on_light_config())
     planner = PlacementPlanner(context=ctx(), config=PlannerConfig(),
                                generate_candidates=backend.generate_candidates,
                                validate_constraints=backend.validate_constraints)

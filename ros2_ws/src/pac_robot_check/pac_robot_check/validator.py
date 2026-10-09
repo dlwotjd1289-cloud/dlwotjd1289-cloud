@@ -26,6 +26,7 @@ import math
 import numpy as np
 
 from pac_common import RejectCode, ValidationResult
+from pac_common.frames import rotated_dims as _rotated
 
 from .config import RobotCheckConfig
 from .kinematics import HDR50_22, LOWER, UPPER, VELOCITY, URDF_SOURCE, ik, ik_all, joint_frames, transform
@@ -37,11 +38,6 @@ DOWN = np.diag([1.0, -1.0, -1.0])  # tool z pointing down
 def _rz(yaw):
     c, s = math.cos(yaw), math.sin(yaw)
     return np.array([[c, -s, 0.0], [s, c, 0.0], [0.0, 0.0, 1.0]])
-
-
-def _rotated(size, yaw):
-    turns = int(round(yaw / (math.pi / 2))) % 2
-    return (size.y, size.x, size.z) if turns else (size.x, size.y, size.z)
 
 
 def _aabb(pose, size):

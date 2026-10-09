@@ -1,9 +1,13 @@
-"""Box reference-point conversions (common standard v0.3, section 14).
+"""Box geometry primitives shared by every module (common standard v0.3, 9.1 / 10.1).
 
 PlacementCandidate.target_pose / PlacedBox.pose (frame "pallet") give the
 lower x/y/z corner of the box AABB after yaw; z = 0 is the deck top. Robots
 and vision work with box centres, so they convert here instead of guessing.
 Only upright boxes with yaw a multiple of 90 deg are supported (section 9.1).
+
+Single source: pac_candidates.geometry, pac_planning.geometry,
+pac_robot_check and the Gazebo bridges import these instead of keeping
+their own copies.
 """
 
 from dataclasses import replace
@@ -11,15 +15,24 @@ import math
 
 from .models import Pose3D, Size3D
 
-_YAW_TOL = 1e-6
+HALF_PI = math.pi / 2.0
+YAW_TOL = 1e-6
+_YAW_TOL = YAW_TOL
+
+
+def quarter_turns(yaw: float) -> int:
+    """Number of quarter turns of ``yaw``; ValueError unless a multiple of 90 deg."""
+    if not math.isfinite(yaw):
+        raise ValueError("yaw must be finite")
+    quarter = round(yaw / HALF_PI)
+    if abs(yaw - quarter * HALF_PI) > YAW_TOL:
+        raise ValueError(f"Only axis-aligned yaws (k * pi/2) are supported, got {yaw}")
+    return quarter
 
 
 def rotated_dims(size: Size3D, yaw: float) -> tuple[float, float, float]:
-    """AABB extents of a box turned by yaw about z."""
-    quarter = round(yaw / (math.pi / 2))
-    if abs(yaw - quarter * math.pi / 2) > _YAW_TOL:
-        raise ValueError(f"Only 90-degree yaws are supported, got {yaw}")
-    return (size.y, size.x, size.z) if quarter % 2 else (size.x, size.y, size.z)
+    """AABB extents (dx, dy, dz) of an upright box turned by yaw about z."""
+    return (size.y, size.x, size.z) if quarter_turns(yaw) % 2 else (size.x, size.y, size.z)
 
 
 def _upright(pose: Pose3D):

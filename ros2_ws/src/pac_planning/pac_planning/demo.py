@@ -11,7 +11,7 @@ from pac_common.adapters import context_from_json, state_from_json
 from .config import load_config
 from .geometry import bounds, simulate_placement
 from .planner import PlacementPlanner
-from .reference_backend import ReferenceBackend
+from pac_candidates import CandidateBackend, CandidateConfig
 
 
 def scene_from_file(path):
@@ -88,7 +88,7 @@ def main():
     args = parser.parse_args()
     data, box, state, context = scene_from_file(args.scenario)
     config = load_config(args.config)
-    backend = ReferenceBackend(context, config)
+    backend = CandidateBackend(context, CandidateConfig())   # team 5-1/5-2 (pac_candidates)
     planner = PlacementPlanner(
         context=context,
         config=config,
