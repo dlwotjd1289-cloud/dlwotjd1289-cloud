@@ -91,7 +91,7 @@ Score = w_safety Safety + w_space Space + w_future mean
 2. `reports/demo_preview.svg`: 현재 팔레트와 선택된 계획.
 3. `runs/demo/result.json`: 선택 후보·점수 기여도·실제 계산시간·미래 평가.
 4. `reports/VALIDATION.md`: 기준 방법과 비교, 검증 범위.
-5. `docs/integration.md`: 팀원 코드와 연결할 함수/자료형.
+5. `docs/donghan/integration.md`: 팀원 코드와 연결할 함수/자료형.
 
 설명 예: “앞 단계에서 안전한 후보를 받아 45개 특징으로 표현합니다. AI가 순위와 미래 성과를 따로 예측해
 상위 후보를 고르고, 모두에게 같은 미래 박스 순서를 적용해 다시 비교합니다. 최종 결과는 로봇 팀에 넘기며,
