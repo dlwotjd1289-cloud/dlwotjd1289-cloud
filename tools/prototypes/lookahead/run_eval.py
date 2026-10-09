@@ -21,7 +21,8 @@ from virtual_data.scenario_source import load_dataset
 from virtual_data.highlevel import split_ids, world_factory
 
 REPO = LA.REPO
-DATA = Path.home() / "AHEAD/audit_20261009/03_planner/highlevel_work/dataset80_x10"
+import os
+DATA = Path(os.environ.get("LA_DATA", str(Path.home() / "AHEAD/audit_20261009/03_planner/highlevel_work/dataset80_x10")))
 CAND = Path.home() / "AHEAD/audit_20261009/07_ai_role/sweep/configs/perbox.yaml"
 G = {}
 
@@ -51,17 +52,43 @@ def setup(split):
              hl=load_highlevel_config(REPO / "config/taehyeon/highlevel.yaml"), specs=split_ids(ds, split),
              ranges={k: (r.weight_min_kg, r.weight_max_kg) for k, r in ds.sku_ranges.items()})
 
+def parse_variant(variant):
+    """'la_k3;a_target_g=0.2;hl.repack.min_gain=0.05' -> (base, planner overrides, highlevel overrides)."""
+    base, *kvs = variant.split(";")
+    po, ho = {}, {}
+    for kv in kvs:
+        k, v = kv.split("=")
+        try:
+            val = float(v) if ("." in v or "e" in v) else int(v)
+        except ValueError:
+            val = v
+        (ho if k.startswith("hl.") else po)[k[3:] if k.startswith("hl.") else k] = val
+    return base, po, ho
+
+
+def hl_for(ho):
+    from dataclasses import replace as dc_replace
+    hl = G["hl"]
+    for path, val in ho.items():
+        sec, field = path.split(".")
+        hl = dc_replace(hl, **{sec: dc_replace(getattr(hl, sec), **{field: val})})
+    return hl
+
+
 def make_planner(variant, i):
-    if variant == "team":
+    base, po, _ = parse_variant(variant)
+    if base == "team":
         return None, None
     p = LA.Params(seed=i)
-    if variant == "fast":
+    if base == "fast":
         p.lookahead = False
-    elif variant == "fast_v1":
-        p.lookahead = False
-    elif variant.startswith("la_k"):
-        p.preview_k = int(variant[4:])
+    elif base.startswith("la_k"):
+        p.preview_k = int(base[4:])
         p.horizon = max(4, p.preview_k + 2)
+    for k, v in po.items():
+        if k in ("cap", "cand"):
+            continue
+        setattr(p, k, v)
     pl = LA.Planner(p, G["ranges"])
     return pl, pl.policy()
 
@@ -75,12 +102,23 @@ def episode(job):
     PalletizingWorld._finish = lambda self, *a, **k: (snap(self), of(self, *a, **k))[1]
     try:
         placer, policy = make_planner(variant, i)
-        make = world_factory(G["ds"], G["specs"], G["cand"], G["vcfg"], G["hl"], shuffle_seed=12345,
+        _, po_, ho_ = parse_variant(variant)
+        hl = hl_for(ho_)
+        import virtual_data.highlevel as VH
+        from pac_candidates import load_candidate_config
+        cand_cfg = G["cand"]
+        if "cand" in po_:
+            cand_cfg = load_candidate_config(Path.home() / f"AHEAD/audit_20261009/07_ai_role/sweep/configs/{po_['cand']}.yaml")
+        if "cap" in po_:
+            sys.path.insert(0, str(Path.home() / "AHEAD/audit_20261009/10_site_params"))
+            import capacity as CAP
+            VH.build_catalog = CAP.patched_build_catalog(po_["cap"])
+        make = world_factory(G["ds"], G["specs"], cand_cfg, G["vcfg"], hl, shuffle_seed=12345,
                              vary_pallet=False, placer=placer)
         world = make(i)
         if placer is not None:
             placer.world = world
-        chooser = policy or RulePolicy(G["hl"])
+        chooser = policy or RulePolicy(hl)
         t = time.perf_counter()
         out = run_policy(world, chooser)
         wall = time.perf_counter() - t
@@ -91,6 +129,20 @@ def episode(job):
         for b, p in layout:
             if p.z < 1e-6: continue
             up += 1; bonded += len(IC.supporters(b, p, layout)) >= 2
+    # true crush check against the hidden carton strength of this scenario
+    from virtual_data.episode import select_strength
+    from virtual_data.strength import true_overloads
+    from pac_common import SystemState, PalletState, InventoryState, Size3D
+    sid = world.arrivals[0].box.box_id.split("-")[0] if world.arrivals else None
+    spec = next((sp for sp in G["ds"].scenarios if sp.scenario_id == sid), None)
+    over_n, over_max = 0, 0.0
+    if spec is not None:
+        strength = select_strength(spec, G["vcfg"], [s_.scenario_id for s_ in G["ds"].scenarios].index(sid))
+        if strength is not None:
+            for layout in finals:
+                st_ = SystemState(0, 0.0, PalletState("P", world.pallet_size, tuple(b for b, _ in layout)), InventoryState({}, {}))
+                ov, mx = true_overloads(st_, strength, cand_cfg)
+                over_n += len(ov); over_max = max(over_max, mx)
     shock, rebuild_err = [], 0
     if G.get("shock"):
         for layout in finals:
@@ -109,6 +161,7 @@ def episode(job):
             "pallet_equivalents": out["pallet_equivalents"], "placed": out["placed"], "ng": out["ng"],
             "time_s": out["time_s"], "decision_ms": 1000 * wall / max(1, out["decisions"]),
             "boxes_above_deck": up, "bonded": bonded, "lateral_moved": moved, "shock_passed_g": shock, "shock_rebuild_errors": rebuild_err,
+            "true_overloaded_boxes": over_n, "true_max_load_ratio": over_max,
             "counts": dict(out.get("counts", {}))}
 
 if __name__ == "__main__":
@@ -121,9 +174,21 @@ if __name__ == "__main__":
     a = ap.parse_args()
     setup("test")
     G["shock"] = a.shock
-    jobs = [(v, i) for v in a.variants for i in range(a.episodes)]
-    with mp.get_context("fork").Pool(a.workers) as pool:
-        rows = pool.map(episode, jobs, chunksize=1)
+    # incremental + resumable: every finished episode is appended to <out>.jsonl
+    part = a.out.with_suffix(".jsonl")
+    done_rows = []
+    if part.exists():
+        for line in part.read_text().splitlines():
+            if line.strip():
+                done_rows.append(json.loads(line))
+    done = {(r["variant"], r["episode"]) for r in done_rows}
+    jobs = [(v, i) for v in a.variants for i in range(a.episodes) if (v, i) not in done]
+    print(f"resume: {len(done)} done, {len(jobs)} to run", flush=True)
+    rows = [r for r in done_rows if r["variant"] in a.variants]
+    with mp.get_context("fork").Pool(a.workers, maxtasksperchild=1) as pool, part.open("a") as fh:
+        for r in pool.imap_unordered(episode, jobs, chunksize=1):
+            fh.write(json.dumps(r, default=float) + "\n"); fh.flush()
+            rows.append(r)
     summ = {}
     for v in a.variants:
         r = [x for x in rows if x["variant"] == v]
@@ -131,6 +196,8 @@ if __name__ == "__main__":
         summ[v] = {k: round(statistics.fmean(x[k] for x in r), 3) for k in
                    ("pallets_used", "pallet_equivalents", "placed", "ng", "time_s", "decision_ms", "lateral_moved")}
         summ[v]["interlock_ratio"] = round(sum(x["bonded"] for x in r) / max(1, up), 3)
+        summ[v]["true_overloaded_per_ep"] = round(statistics.fmean(x.get("true_overloaded_boxes", 0) for x in r), 3)
+        summ[v]["true_max_load_ratio"] = round(max(x.get("true_max_load_ratio", 0.0) for x in r), 3)
         sg = [g for x in r for g in x["shock_passed_g"]]
         if sg:
             summ[v]["shock_g_median"] = statistics.median(sg)

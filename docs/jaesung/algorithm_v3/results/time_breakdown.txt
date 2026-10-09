@@ -1,0 +1,7 @@
+decisions=75, wall=182.4s, per decision=2432 ms (cProfile overhead included)
+  후보 생성 + 하드마스크 (candidate_set)                  1917 ms/결정  (78.8% of wall)
+  후보별 제약 재검사 (validate_constraints)               984 ms/결정  (40.5% of wall)
+  점수 계산 (Scorer.cost)                             427 ms/결정  (17.5% of wall)
+  미래 시나리오 평가 (_rollout)                          2359 ms/결정  (97.0% of wall)
+  상위 세계 옵션 평가 (world.options)                      37 ms/결정  ( 1.5% of wall)
+  결정 전체 (Planner.decide)                         2372 ms/결정  (97.5% of wall)
