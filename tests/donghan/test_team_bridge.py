@@ -201,3 +201,52 @@ def test_v44_bridge_uses_this_repository_planner():
              "import pac_planning; print(pac_planning.__file__)" % (root / "scripts/ahead_planner_bridge_v44.py"))
     out = subprocess.run([sys.executable, "-I", "-c", probe], capture_output=True, text=True, check=True).stdout
     assert Path(out.strip().splitlines()[-1]).resolve().is_relative_to((root / "ros2_ws/src/pac_planning").resolve())
+
+
+class _RejectingRobot:
+    """Stage-6 stand-in that rejects a fixed set of candidate ids."""
+
+    def __init__(self, rejected):
+        self.rejected = set(rejected)
+        self.checked = []
+
+    def validate_robot_motion(self, box, candidate, state, robot_state=None):
+        from pac_common import RejectCode, ValidationResult
+
+        self.checked.append(candidate.candidate_id)
+        ok = candidate.candidate_id not in self.rejected
+        return ValidationResult(ok, () if ok else (RejectCode.IK_FAIL,), {"cycle_time_s": 8.0})
+
+    def first_executable(self, box, ranked, state, robot_state=None):
+        rejected = {}
+        for c in ranked:
+            v = self.validate_robot_motion(box, c, state)
+            if v.success:
+                return c, v, rejected
+            rejected[c.candidate_id] = v
+        return None, None, rejected
+
+
+def test_runtime_ranker_ranks_only_robot_executable_candidates(scene):
+    """The planner does not know robot reach; with a bound stage-6 checker it
+    only ranks executable candidates, so its Top-K never strands stage 6."""
+    from pac_runtime.placer import RobotAwarePlacer
+
+    _, box, state, context = scene
+    backend = CandidateBackend(context)
+    valid = [c for c in backend.generate_candidates(box, state)
+             if backend.validate_constraints(box, c, state).success]
+    unbound = TeamRuntimeRanker(FAST, use_time_budget=False)
+    top = [c.candidate_id for c in unbound(valid, box, state, backend)]
+    robot = _RejectingRobot(top)                      # everything the planner liked is unreachable
+    ranker = TeamRuntimeRanker(FAST, use_time_budget=False)
+    placer = RobotAwarePlacer(robot, ranker=ranker)
+    assert ranker.robot is robot                      # bound by the placer
+    chosen = placer(valid, box, state, backend)
+    assert chosen is not None and chosen.candidate_id not in top
+    assert placer.stats["no_executable"] == 0 and placer.stats["robot_rejected"] == 0
+    assert ranker.provenance()["robot_prefiltered"] == len(top)
+    # nothing executable: empty order, the option is infeasible for stage 4
+    none_ok = TeamRuntimeRanker(FAST, use_time_budget=False)
+    none_ok.bind_robot(_RejectingRobot(c.candidate_id for c in valid))
+    assert none_ok(valid, box, state, backend) == [] and none_ok.last_result is None

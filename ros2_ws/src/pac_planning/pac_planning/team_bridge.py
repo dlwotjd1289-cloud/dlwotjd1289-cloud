@@ -159,6 +159,11 @@ class TeamRuntimeRanker:
     Reuse :func:`plan_with_backend` so the runtime cannot silently bypass the
     real EMS mapping or a learned model's candidate-backend fingerprint.
     Candidates rejected while building typed features are not appended again.
+
+    With a stage-6 checker bound (``bind_robot``, done by ``RobotAwarePlacer``)
+    only the candidates the robot can execute are ranked. The planner knows
+    nothing about reach, and its Top-K list leaves stage 6 few fallbacks:
+    without the filter many options ended with no executable placement.
     """
 
     name = TeamPlacer.name
@@ -173,18 +178,30 @@ class TeamRuntimeRanker:
         self.seed = seed
         self.use_time_budget = use_time_budget
         self.on_plan = on_plan
+        self.robot = None
         self.last_result = None
         self.calls = 0
         self.candidate_evaluations = 0
         self.geometry_sources = Counter()
         self.model_statuses = Counter()
         self.robot_validation_required_calls = 0
+        self.robot_prefiltered = 0
         self.backend_contract_sha256 = None
+
+    def bind_robot(self, robot):
+        """Stage-6 checker (``validate_robot_motion(box, candidate, state)``)."""
+        self.robot = robot
 
     def __call__(self, valid, box, state, backend):
         self.last_result = None
         self.calls += 1
         box = state.inventory.tracked_boxes[box.box_id]
+        if self.robot is not None:
+            executable = [c for c in valid if self.robot.validate_robot_motion(box, c, state).success]
+            self.robot_prefiltered += len(valid) - len(executable)
+            if not executable:
+                return []
+            valid = executable
         self.last_result = plan_with_backend(
             box, state, backend, candidates=valid, config=self.config,
             model=self.model, mode=self.mode, seed=self.seed,
@@ -225,6 +242,7 @@ class TeamRuntimeRanker:
             ),
             "model_statuses": dict(sorted(self.model_statuses.items())),
             "robot_validation_required_calls": self.robot_validation_required_calls,
+            "robot_prefiltered": self.robot_prefiltered,
             "backend_contract_sha256": self.backend_contract_sha256,
         }
 
