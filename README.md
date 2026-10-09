@@ -108,6 +108,10 @@ python3 scripts/verify_stack_bullet_v45.py --scenario S0001 --skip-unplaceable
 
 변경 이유와 검증은 각 커밋 메시지에 있습니다 (`git log`).
 
+## 흐름별 코드 안내
+
+박스 1개가 도착해서 팔레트에 놓이기까지의 Runtime 흐름(1 인식 → 2 State Validator → 3 Supervisor → 4 High-level 행동 → 5 Low-level Placement Planner → 6 Robot 실행 가능성 → 7 실행·사후 검증 → 8 상태 갱신) 기준으로 각 단계의 코드·담당·테스트·문서 위치를 [docs/flow/](docs/flow/README.md)에 정리했습니다. 단계 사이 중복 구현과 미구현 항목은 [docs/flow/KNOWN_ISSUES.md](docs/flow/KNOWN_ISSUES.md)에 있습니다.
+
 ## 남은 일 / 팀 확인 필요
 
 1. **공통 기준 v0.3 팀 확인** (기준서 26장): 위 결정을 동한·태현님이 확인
