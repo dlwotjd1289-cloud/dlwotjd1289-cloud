@@ -8,9 +8,8 @@
               --mass 5.0 --world X Y Z YAW
           records the ACTUALLY placed box (Gazebo pose) as the next ACTUAL pallet state.
 
-Planner: Donghan PlacementPlanner (shared repo feature/donghan-placement-planner @ 7860043,
-exported read-only to ../planner_donghan_7860043) with its ReferenceBackend generator /
-validator (Taehyeon's generator branch is not available locally). Contract (docs/integration.md):
+Planner: Donghan PlacementPlanner from this repository (ros2_ws/src/pac_planning) with its
+ReferenceBackend generator / validator (switching to pac_candidates is still open). Contract (docs/integration.md):
 pallet frame origin = lower corner of the usable deck, z = 0 on the deck, target_pose = rotated
 box AABB minimum corner, upright boxes, yaw in allowed_yaws_rad (0 / 90 deg). This bridge is the
 single writer of the ACTUAL state file (state_version increments on each commit).
@@ -23,9 +22,9 @@ import math
 import sys
 from pathlib import Path
 
-PLANNER_ROOT = Path(__file__).resolve().parents[2] / "planner_donghan_7860043" / "pac-mission1-shared"
+REPO = Path(__file__).resolve().parents[1]  # the integrated monorepo's own pac_common / pac_planning
 for sub in ("ros2_ws/src/pac_common", "ros2_ws/src/pac_planning"):
-    sys.path.insert(0, str(PLANNER_ROOT / sub))
+    sys.path.insert(0, str(REPO / sub))
 
 from pac_common.adapters import context_from_json, state_from_json  # noqa: E402
 from pac_planning import PlacementPlanner, load_config  # noqa: E402

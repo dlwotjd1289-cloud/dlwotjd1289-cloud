@@ -13,7 +13,8 @@ Topics (all JSON):
 
 Parameters: ``order_file`` (see ``order.py``), ``candidates_config``,
 ``highlevel_config``, ``runtime_config``, ``robot_config``, ``policy``
-(rule | numpy | sb3) and ``policy_file``.
+(rule | numpy | sb3), ``policy_file``, ``ranker`` (dblf | donghan),
+``ranker_model_path``, ``ranker_config`` and ``ranker_seed``.
 
 Run (after ``colcon build``)::
 
@@ -73,12 +74,38 @@ def report_from_dict(d):
                            repack_poses={k: pose(v) for k, v in (d.get("repack_poses") or {}).items()})
 
 
+def make_runtime_ranker(name="dblf", model_path="", seed=7, config_path=""):
+    """Build the optional stage-5 ranker without changing the PPO contract.
+
+    ``dblf`` keeps the existing runtime behaviour.  ``donghan`` only replaces
+    the low-level ordering inside :class:`RobotAwarePlacer`; stage 4 still uses
+    its declared proxy + DBLF value-provider contract.  An empty model path is
+    intentional: no learned model is assumed compatible with the live EMS
+    backend until its saved backend fingerprint has been checked.
+    """
+    selected = str(name).strip().lower()
+    if selected in ("", "dblf"):
+        return None
+    if selected == "donghan":
+        from .placer import donghan_ranker
+        from pac_planning.config import load_config
+
+        config = load_config(config_path) if config_path else None
+        return donghan_ranker(model_path or None, planner_config=config, seed=int(seed))
+    raise ValueError(f"unknown runtime ranker: {name!r} (expected dblf or donghan)")
+
+
 class CoreBridge:
     """ROS-free message handling (unit-tested); the node only moves strings."""
 
     def __init__(self, core):
         self.core = core
         self.pending = None
+        # Observations / idle reports that arrive while a command is being
+        # executed (the next box reaches the pick point during a placement).
+        # Applying them at once would change the state under the outstanding
+        # command (STALE_RESULT); they are applied right after its result.
+        self.deferred = []
 
     def _next(self):
         if self.pending is None and self.core.has_work():
@@ -92,7 +119,13 @@ class CoreBridge:
         return None
 
     def on_observation(self, text):
-        verdict = self.core.on_observation(observation_from_dict(json.loads(text)))  # None: duplicate
+        """Returns (verdict, command); verdict None: duplicate or deferred
+        (``self.deferred`` non-empty) while a command is outstanding."""
+        obs = observation_from_dict(json.loads(text))
+        if self.pending is not None:
+            self.deferred.append(("obs", obs))
+            return None, None
+        verdict = self.core.on_observation(obs)  # None: duplicate
         out = self._next()
         return verdict, out
 
@@ -102,19 +135,43 @@ class CoreBridge:
             raise ValueError("no outstanding command")
         if int(d.get("state_version", self.pending.state_version)) != self.pending.state_version:
             raise ValueError("result for another command")
+        completed_action = self.pending.action
         level = self.core.on_result(self.pending, report_from_dict(d))
         self.pending = None
+        deferred, self.deferred = self.deferred, []
+        for kind, item in deferred:
+            if kind == "obs":
+                self.core.on_observation(item)
+            else:
+                self.core.on_conveyor_idle(item)
+        # These commands release the conveyor box.  The plant publishes the
+        # next observation immediately afterwards, so planning a buffered-box
+        # command here would use the pre-arrival state and become stale as soon
+        # as that observation lands.  Let on_observation/on_idle plan it from
+        # the authoritative new snapshot instead (unless it already arrived).
+        if not deferred and completed_action in ("PLACE_CURRENT", "BUFFER_CURRENT", "REJECT_NG"):
+            return level, None
         return level, self._next()
 
     def on_idle(self, text):
-        out = self.core.on_conveyor_idle(float(json.loads(text)["idle_s"]))
+        idle_s = float(json.loads(text)["idle_s"])
+        if self.pending is not None:
+            self.deferred.append(("idle", idle_s))
+            return {}, None
+        out = self.core.on_conveyor_idle(idle_s)
         return dict(out), self._next()
 
     def status(self):
         sm = self.core.sm
-        return {"state_version": sm.version, "pallet_id": sm.pallet_id, "placed": len(sm.placed),
-                "buffer": sm.buffer_slots(), "mode": self.core.supervisor.mode.value,
-                "inspection": len(self.core.inspection), "counts": dict(self.core.counts)}
+        ranker = self.core.placer.ranker
+        out = {"state_version": sm.version, "pallet_id": sm.pallet_id, "placed": len(sm.placed),
+               "buffer": sm.buffer_slots(), "mode": self.core.supervisor.mode.value,
+               "inspection": len(self.core.inspection), "counts": dict(self.core.counts),
+               "ranker": getattr(ranker, "name", "dblf") if ranker is not None else "dblf",
+               "deferred": len(self.deferred)}
+        if ranker is not None and hasattr(ranker, "provenance"):
+            out["ranker_provenance"] = ranker.provenance()
+        return out
 
 
 def main(args=None):  # pragma: no cover - needs ROS 2
@@ -135,12 +192,14 @@ def main(args=None):  # pragma: no cover - needs ROS 2
             super().__init__("pac_runtime")
             p = {n: self.declare_parameter(n, d).value for n, d in (
                 ("order_file", ""), ("candidates_config", ""), ("highlevel_config", ""),
-                ("runtime_config", ""), ("robot_config", ""), ("policy", "rule"), ("policy_file", ""))}
+                ("runtime_config", ""), ("robot_config", ""), ("policy", "rule"), ("policy_file", ""),
+                ("ranker", "dblf"), ("ranker_model_path", ""), ("ranker_config", ""), ("ranker_seed", 7))}
             cand = load_candidate_config(p["candidates_config"])
             hl = load_highlevel_config(p["highlevel_config"])
             policy = load_policy(p["policy"], p["policy_file"] or None, config=hl)
+            ranker = make_runtime_ranker(p["ranker"], p["ranker_model_path"], p["ranker_seed"], p["ranker_config"])
             core = RuntimeCore(load_order(p["order_file"], cand), cand, hl, load_runtime_config(p["runtime_config"]),
-                               RobotFeasibility(load_robot_check_config(p["robot_config"])), policy)
+                               RobotFeasibility(load_robot_check_config(p["robot_config"])), policy, ranker=ranker)
             self.bridge = CoreBridge(core)
             self.cmd_pub = self.create_publisher(String, "/pac/command", 10)
             self.status_pub = self.create_publisher(String, "/pac/status", 10)
@@ -154,17 +213,35 @@ def main(args=None):  # pragma: no cover - needs ROS 2
             self.status_pub.publish(String(data=json.dumps(self.bridge.status())))
 
         def _obs(self, msg):
-            verdict, cmd = self.bridge.on_observation(msg.data)
-            self.get_logger().info("observation -> " + (verdict.kind.value if verdict else "duplicate, ignored"))
+            try:
+                verdict, cmd = self.bridge.on_observation(msg.data)
+            except (ValueError, KeyError, TypeError) as error:
+                self.get_logger().error(f"observation rejected: {error}")
+                return
+            if verdict is None and self.bridge.pending is not None:
+                self.get_logger().info("observation -> deferred until the current command's result")
+            else:
+                self.get_logger().info("observation -> " + (verdict.kind.value if verdict else "duplicate, ignored"))
             self._publish(cmd)
 
         def _result(self, msg):
-            level, cmd = self.bridge.on_result(msg.data)
+            try:
+                level, cmd = self.bridge.on_result(msg.data)
+            except (ValueError, KeyError, TypeError) as error:
+                # STALE_RESULT / result for another command: the command stays
+                # outstanding; never commit a pose that the state cannot explain.
+                self.get_logger().error(f"result rejected, command still outstanding: {error}")
+                self._publish(None)
+                return
             self.get_logger().info(f"result -> {level}")
             self._publish(cmd)
 
         def _idle(self, msg):
-            missing, cmd = self.bridge.on_idle(msg.data)
+            try:
+                missing, cmd = self.bridge.on_idle(msg.data)
+            except (ValueError, KeyError, TypeError) as error:
+                self.get_logger().error(f"conveyor_idle rejected: {error}")
+                return
             if missing:
                 self.get_logger().warn(f"MISSING confirmed: {missing}")
             self._publish(cmd)

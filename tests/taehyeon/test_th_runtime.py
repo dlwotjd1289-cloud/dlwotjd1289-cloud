@@ -240,6 +240,23 @@ def test_core_event_api_like_a_real_cell():
     assert core.on_conveyor_idle(60.0) == Counter() and not core.has_work()
 
 
+def test_core_rejects_result_after_state_changed():
+    """A matching command id/version is still stale if another event changed state."""
+    from pac_runtime import ExecutionReport, RawObservation, RuntimeCore
+
+    hl = replace(HighLevelConfig(), buffer=replace(HighLevelConfig().buffer, slots=2))
+    core = RuntimeCore(_cell((), {"K": 2}), CandidateConfig(), hl, RuntimeConfig(), RobotFeasibility(),
+                       load_policy("rule", config=hl))
+    core.on_observation(RawObservation(
+        "A", "K", 4.0, Size3D(0.4, 0.3, 0.2), 1.0, False, "top", 0.0))
+    cmd = core.next_command()
+    core.on_observation(RawObservation(
+        "B", "K", 4.0, Size3D(0.4, 0.3, 0.2), 1.0, False, "top", 1.0))
+    with pytest.raises(ValueError, match="STALE_RESULT"):
+        core.on_result(cmd, ExecutionReport(measured_pose=cmd.candidate.target_pose))
+    assert not core.sm.placed and {"A", "B"} <= set(core.sm.tracked)
+
+
 def test_order_file_and_ros_bridge_messages():
     import json
 
@@ -269,6 +286,44 @@ def test_order_file_and_ros_bridge_messages():
     assert level == "L0" and nxt is None and bridge.status()["placed"] == 1
     missing, _ = bridge.on_idle(json.dumps({"idle_s": 60}))
     assert missing == {"K": 1}
+
+
+def test_runtime_ranker_selection_and_status_provenance(tmp_path):
+    """The ROS-free factory exposes Donghan's EMS ranker without changing stage 4."""
+    import json
+
+    from pac_runtime import RuntimeCore
+    from pac_runtime.order import cell_from_order
+    from pac_runtime.ros_node import CoreBridge, make_runtime_ranker
+
+    assert make_runtime_ranker("dblf") is None
+    with pytest.raises(ValueError, match="unknown runtime ranker"):
+        make_runtime_ranker("unvalidated")
+
+    ranker = make_runtime_ranker("donghan", seed=11)
+    assert ranker.name == "donghan_ems_rollout_v1" and ranker.model is None
+    order = {"pallet": {"size_m": [1.2, 1.0, 1.35]},
+             "skus": {"K": {"size_m": [0.4, 0.3, 0.2], "weight_kg": [2.0, 6.0], "count": 1}}}
+    hl = replace(HighLevelConfig(), buffer=replace(HighLevelConfig().buffer, slots=2))
+    core = RuntimeCore(cell_from_order(order, CandidateConfig()), CandidateConfig(), hl, RuntimeConfig(),
+                       RobotFeasibility(), load_policy("rule", config=hl), ranker=ranker)
+    bridge = CoreBridge(core)
+    before = bridge.status()
+    assert before["ranker"] == "donghan_ems_rollout_v1"
+    assert before["ranker_provenance"]["calls"] == 0
+
+    obs = {"box_id": "A", "label_sku": "K", "weight_kg": 4.0, "size_m": [0.4, 0.3, 0.2]}
+    _, cmd = bridge.on_observation(json.dumps(obs))
+    assert cmd["action"] == "PLACE_CURRENT"
+    after = bridge.status()["ranker_provenance"]
+    assert after["calls"] > 0 and after["candidate_evaluations"] > 0
+    assert after["ems_verified"] is True
+
+    # A trained h2/s3 model must be deployed with its matching rollout config.
+    config = tmp_path / "ranker.yaml"
+    config.write_text("schema_version: 1\nplanning:\n  horizon: 2\n  scenario_count: 3\n")
+    configured = make_runtime_ranker("donghan", config_path=str(config))
+    assert configured.config.horizon == 2 and configured.config.scenario_count == 3
 
 
 def test_state_manager_reconciles_measurement_noise():
@@ -384,3 +439,73 @@ def test_gazebo_driver_closes_the_loop_with_the_runtime_bridge():
     assert placed_total + len(core.inspection) == 11 and not core.has_work()
     assert actions["PLACE_CURRENT"] + actions["RETRIEVE_BUFFER"] == placed_total
     assert set(spawned) == {p.box_id for p in core.sm.placed}
+
+
+def _k_bridge(count):
+    from pac_runtime import RuntimeCore
+    from pac_runtime.order import cell_from_order
+    from pac_runtime.ros_node import CoreBridge
+
+    order = {"pallet": {"size_m": [1.2, 1.0, 1.35]},
+             "skus": {"K": {"size_m": [0.4, 0.3, 0.2], "weight_kg": [2.0, 6.0], "count": count}}}
+    hl = replace(HighLevelConfig(), buffer=replace(HighLevelConfig().buffer, slots=2))
+    return CoreBridge(RuntimeCore(cell_from_order(order, CandidateConfig()), CandidateConfig(), hl,
+                                  RuntimeConfig(), RobotFeasibility(), load_policy("rule", config=hl)))
+
+
+def _k_obs(box_id):
+    import json
+
+    return json.dumps({"box_id": box_id, "label_sku": "K", "weight_kg": 4.0, "size_m": [0.4, 0.3, 0.2]})
+
+
+def _placed(cmd):
+    import json
+
+    return json.dumps({"state_version": cmd["state_version"], "ok": True, "measured_pose": cmd["target_min_corner"]})
+
+
+def test_bridge_defers_an_observation_that_arrives_during_a_placement():
+    """The next box reaching the pick point while the robot places the previous
+    one must not make the outstanding result STALE (or crash the node)."""
+    bridge = _k_bridge(3)
+    _, cmd_a = bridge.on_observation(_k_obs("A"))
+    assert cmd_a["box_id"] == "A"
+    verdict, cmd = bridge.on_observation(_k_obs("B"))        # robot still busy with A
+    assert verdict is None and cmd is None and bridge.status()["deferred"] == 1
+    assert "B" not in bridge.core.sm.tracked
+    level, cmd_b = bridge.on_result(_placed(cmd_a))          # accepted, then B applied and planned
+    assert level == "L0" and cmd_b["action"] == "PLACE_CURRENT" and cmd_b["box_id"] == "B"
+    assert bridge.status()["deferred"] == 0 and bridge.core.counts["stale_result"] == 0
+    # the strict core check itself is unchanged
+    assert bridge.on_result(_placed(cmd_b))[0] == "L0"
+
+
+def test_bridge_defers_conveyor_idle_during_a_placement():
+    bridge = _k_bridge(3)
+    _, cmd = bridge.on_observation(_k_obs("A"))
+    missing, nxt = bridge.on_idle('{"idle_s": 60}')
+    assert missing == {} and nxt is None and not bridge.core.supervisor.missing
+    bridge.on_result(_placed(cmd))
+    assert dict(bridge.core.supervisor.missing) == {"K": 2}
+
+
+def test_bridge_full_order_with_every_box_arriving_mid_placement():
+    bridge = _k_bridge(10)
+    _, cmd = bridge.on_observation(_k_obs("B000"))
+    for i in range(1, 10):
+        bridge.on_observation(_k_obs(f"B{i:03d}"))           # always during the previous command
+        while cmd is not None and cmd["action"] != "PLACE_CURRENT":
+            _, cmd = bridge.on_result(json_ok(cmd))
+        _, cmd = bridge.on_result(_placed(cmd))
+    while cmd is not None:
+        _, cmd = bridge.on_result(_placed(cmd) if cmd.get("target_min_corner") else json_ok(cmd))
+    status = bridge.status()
+    assert status["counts"].get("stale_result", 0) == 0 and status["deferred"] == 0
+    assert status["placed"] + sum(len(boxes) for _, boxes in bridge.core.closed) == 10
+
+
+def json_ok(cmd):
+    import json
+
+    return json.dumps({"state_version": cmd["state_version"], "ok": True})

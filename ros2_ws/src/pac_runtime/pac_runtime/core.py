@@ -168,8 +168,8 @@ class RuntimeCore:
         sm, a = self.sm, cmd.action
         report = report or ExecutionReport()
         if cmd.state_version != sm.version and a not in ("WAIT",):
-            # something changed between decision and execution: the caller must re-plan
             self.counts["stale_result"] += 1
+            raise ValueError("STALE_RESULT: state changed after the command was planned")
         if a == "REJECT_NG":
             sm.reject(cmd.box_id)
             self.inspection.append({"box_id": cmd.box_id, "reason": cmd.reason, "stage": 4})

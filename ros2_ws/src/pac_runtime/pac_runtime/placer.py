@@ -46,24 +46,14 @@ class RobotAwarePlacer:
 
 
 def donghan_ranker(model_path=None, planner_config=None, seed=7):
-    """Ranking by donghan's 5-3~5-6 planner; candidates it does not rank keep
-    their DBLF order behind the ranked ones."""
-    from pac_planning import PlacementPlanner, PlannerConfig
+    """Rank with donghan's EMS-backed 5-3~5-6 planner.
 
-    cfg = planner_config or PlannerConfig()
-    model = None
-    if model_path is not None:
-        from pac_highlevel.value import _load_ranker
+    Candidates rejected by the planner are intentionally omitted instead of
+    being appended again as DBLF fallbacks.
+    """
+    from pac_planning import PlannerConfig, TeamRuntimeRanker
 
-        model = _load_ranker(model_path)
-
-    def rank(valid, box, state, backend):
-        planner = PlacementPlanner(context=backend.context, config=cfg,
-                                   generate_candidates=backend.generate_candidates,
-                                   validate_constraints=backend.validate_constraints, model=model)
-        box = state.inventory.tracked_boxes.get(box.box_id, box)
-        ranked = list(planner.plan(box, state, valid, seed=seed).ranked)
-        seen = {c.candidate_id for c in ranked}
-        return ranked + [c for c in dblf_order(valid) if c.candidate_id not in seen]
-
-    return rank
+    return TeamRuntimeRanker(
+        planner_config or PlannerConfig(), model_path=model_path,
+        seed=seed, mode="ahead", use_time_budget=False,
+    )

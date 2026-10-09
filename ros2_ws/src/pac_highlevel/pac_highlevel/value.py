@@ -55,39 +55,18 @@ class DonghanValue:
         return float(result.evaluations[0].future.mean)
 
 
-class DonghanPlacer:
+def DonghanPlacer(model_path=None, planner_config=None, seed=7):
     """Low-level placement by donghan's 5-3~5-6 planner (instead of DBLF).
 
     Called with the hard-mask-valid candidates of 5-1/5-2; returns the
     planner's rank-1 candidate. Slow (one ``plan`` per option and decision),
-    used for evaluation, not for PPO training. The model (optional: without
-    it the planner uses its heuristic) is loaded once.
+    used for evaluation, not for PPO training. Same adapter as the runtime
+    (``pac_planning.team_bridge``), so the EMS mapping and the model's rollout
+    contract are checked in one place.
     """
+    from pac_planning.team_bridge import TeamPlacer
 
-    wants_context = True
-
-    def __init__(self, model_path=None, planner_config=None, seed=7):
-        from pac_planning import PlacementPlanner, PlannerConfig
-
-        self._planner_cls = PlacementPlanner
-        self._config = planner_config or PlannerConfig()
-        self._model = _load_ranker(model_path) if model_path is not None else None
-        self._seed = seed
-        self.calls = 0
-
-    def __call__(self, valid, box, state, backend):
-        self.calls += 1
-        planner = self._planner_cls(
-            context=backend.context,
-            config=self._config,
-            generate_candidates=backend.generate_candidates,
-            validate_constraints=backend.validate_constraints,
-            model=self._model,
-        )
-        # the planner requires the State Manager's copy (e.g. status BUFFERED)
-        box = state.inventory.tracked_boxes.get(box.box_id, box)
-        result = planner.plan(box, state, valid, seed=self._seed)
-        return result.ranked[0] if result.ranked else None
+    return TeamPlacer(planner_config, seed=seed, model_path=model_path)
 
 
 def make_value_provider(name, **kwargs):
