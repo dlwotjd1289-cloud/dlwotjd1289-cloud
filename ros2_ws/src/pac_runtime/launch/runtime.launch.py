@@ -1,6 +1,7 @@
 """Start the AHEAD runtime node (stages 1-8 decisions) with taehyeon's configs.
 
-    ros2 launch pac_runtime runtime.launch.py repo:=/path/to/pac-mission1-shared order_file:=/path/order.json
+    ros2 launch pac_runtime runtime.launch.py repo:=/path/to/pac-mission1-shared \
+      order_file:=/path/order.json ranker:=donghan
 """
 
 from launch import LaunchDescription
@@ -17,6 +18,13 @@ def generate_launch_description():
         DeclareLaunchArgument("order_file", description="order list JSON (see pac_runtime/order.py)"),
         DeclareLaunchArgument("policy", default_value="rule"),
         DeclareLaunchArgument("policy_file", default_value=""),
+        DeclareLaunchArgument("ranker", default_value="dblf",
+                              description="low-level ordering: dblf or donghan"),
+        DeclareLaunchArgument("ranker_model_path", default_value="",
+                              description="optional validated donghan model; empty uses deterministic heuristic"),
+        DeclareLaunchArgument("ranker_config", default_value="",
+                              description="matching Donghan planner config (horizon/scenario contract)"),
+        DeclareLaunchArgument("ranker_seed", default_value="7"),
         Node(
             package="pac_runtime",
             executable="runtime_node",
@@ -29,6 +37,10 @@ def generate_launch_description():
                 "robot_config": cfg("robot_check.yaml"),
                 "policy": LaunchConfiguration("policy"),
                 "policy_file": LaunchConfiguration("policy_file"),
+                "ranker": LaunchConfiguration("ranker"),
+                "ranker_model_path": LaunchConfiguration("ranker_model_path"),
+                "ranker_config": LaunchConfiguration("ranker_config"),
+                "ranker_seed": LaunchConfiguration("ranker_seed"),
             }],
         ),
     ])

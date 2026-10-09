@@ -31,6 +31,27 @@ def backend_contract(backend):
     }
 
 
+ROLLOUT_CONTRACT = ("horizon", "scenario_count", "cvar_alpha")
+
+
+def load_checked_model(model_path, config):
+    """Load a trained model and reject a planner config it was not trained for.
+
+    ``PlacementPlanner.plan`` would otherwise fall back to the heuristic on
+    every call (``INFERENCE_FAILED``) and the runtime would look healthy.
+    """
+    if model_path is None:
+        return None
+    model = DualHeadRanker.load(model_path)
+    contract = model.payload.get("rollout_contract")
+    if contract is not None:
+        diff = {k: (contract.get(k), getattr(config, k)) for k in ROLLOUT_CONTRACT
+                if contract.get(k) != getattr(config, k)}
+        if diff:
+            raise ValueError(f"Model rollout contract differs from the planner config (model, config): {diff}")
+    return model
+
+
 def plan_with_backend(box, state, backend, *, candidates=None, config=None,
                       model_path=None, model=None, seed=7, use_time_budget=True, mode="ahead"):
     """Preserve the authoritative context and attach real EMS to each candidate.
@@ -44,7 +65,7 @@ choose and validate a model before passing model_path.
     if model is not None and model_path is not None:
         raise ValueError("Provide model or model_path, not both")
     if model_path is not None:
-        model = DualHeadRanker.load(model_path)
+        model = load_checked_model(model_path, config or PlannerConfig())
     contract = getattr(model, "payload", {}).get("backend_contract")
     if contract is not None and contract != backend_contract(backend):
         raise ValueError("MODEL_BACKEND_MISMATCH: candidate source/config changed; evaluate or retrain")
@@ -107,7 +128,7 @@ value_provider=proxy observation with a different future-value definition.
         if mode not in ("ahead", "ranking", "current", "greedy", "teacher"):
             raise ValueError("Unknown placement mode")
         self.config = config or PlannerConfig()
-        self.model = DualHeadRanker.load(model_path) if model_path is not None else None
+        self.model = load_checked_model(model_path, self.config)
         self.mode = mode
         self.seed = seed
         self.use_time_budget = use_time_budget
@@ -147,7 +168,7 @@ class TeamRuntimeRanker:
         if mode not in ("ahead", "ranking", "current", "greedy", "teacher"):
             raise ValueError("Unknown placement mode")
         self.config = config or PlannerConfig()
-        self.model = DualHeadRanker.load(model_path) if model_path is not None else None
+        self.model = load_checked_model(model_path, self.config)
         self.mode = mode
         self.seed = seed
         self.use_time_budget = use_time_budget

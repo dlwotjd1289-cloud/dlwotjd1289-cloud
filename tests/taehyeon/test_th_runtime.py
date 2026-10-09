@@ -240,6 +240,23 @@ def test_core_event_api_like_a_real_cell():
     assert core.on_conveyor_idle(60.0) == Counter() and not core.has_work()
 
 
+def test_core_rejects_result_after_state_changed():
+    """A matching command id/version is still stale if another event changed state."""
+    from pac_runtime import ExecutionReport, RawObservation, RuntimeCore
+
+    hl = replace(HighLevelConfig(), buffer=replace(HighLevelConfig().buffer, slots=2))
+    core = RuntimeCore(_cell((), {"K": 2}), CandidateConfig(), hl, RuntimeConfig(), RobotFeasibility(),
+                       load_policy("rule", config=hl))
+    core.on_observation(RawObservation(
+        "A", "K", 4.0, Size3D(0.4, 0.3, 0.2), 1.0, False, "top", 0.0))
+    cmd = core.next_command()
+    core.on_observation(RawObservation(
+        "B", "K", 4.0, Size3D(0.4, 0.3, 0.2), 1.0, False, "top", 1.0))
+    with pytest.raises(ValueError, match="STALE_RESULT"):
+        core.on_result(cmd, ExecutionReport(measured_pose=cmd.candidate.target_pose))
+    assert not core.sm.placed and {"A", "B"} <= set(core.sm.tracked)
+
+
 def test_order_file_and_ros_bridge_messages():
     import json
 
@@ -269,6 +286,44 @@ def test_order_file_and_ros_bridge_messages():
     assert level == "L0" and nxt is None and bridge.status()["placed"] == 1
     missing, _ = bridge.on_idle(json.dumps({"idle_s": 60}))
     assert missing == {"K": 1}
+
+
+def test_runtime_ranker_selection_and_status_provenance(tmp_path):
+    """The ROS-free factory exposes Donghan's EMS ranker without changing stage 4."""
+    import json
+
+    from pac_runtime import RuntimeCore
+    from pac_runtime.order import cell_from_order
+    from pac_runtime.ros_node import CoreBridge, make_runtime_ranker
+
+    assert make_runtime_ranker("dblf") is None
+    with pytest.raises(ValueError, match="unknown runtime ranker"):
+        make_runtime_ranker("unvalidated")
+
+    ranker = make_runtime_ranker("donghan", seed=11)
+    assert ranker.name == "donghan_ems_rollout_v1" and ranker.model is None
+    order = {"pallet": {"size_m": [1.2, 1.0, 1.35]},
+             "skus": {"K": {"size_m": [0.4, 0.3, 0.2], "weight_kg": [2.0, 6.0], "count": 1}}}
+    hl = replace(HighLevelConfig(), buffer=replace(HighLevelConfig().buffer, slots=2))
+    core = RuntimeCore(cell_from_order(order, CandidateConfig()), CandidateConfig(), hl, RuntimeConfig(),
+                       RobotFeasibility(), load_policy("rule", config=hl), ranker=ranker)
+    bridge = CoreBridge(core)
+    before = bridge.status()
+    assert before["ranker"] == "donghan_ems_rollout_v1"
+    assert before["ranker_provenance"]["calls"] == 0
+
+    obs = {"box_id": "A", "label_sku": "K", "weight_kg": 4.0, "size_m": [0.4, 0.3, 0.2]}
+    _, cmd = bridge.on_observation(json.dumps(obs))
+    assert cmd["action"] == "PLACE_CURRENT"
+    after = bridge.status()["ranker_provenance"]
+    assert after["calls"] > 0 and after["candidate_evaluations"] > 0
+    assert after["ems_verified"] is True
+
+    # A trained h2/s3 model must be deployed with its matching rollout config.
+    config = tmp_path / "ranker.yaml"
+    config.write_text("schema_version: 1\nplanning:\n  horizon: 2\n  scenario_count: 3\n")
+    configured = make_runtime_ranker("donghan", config_path=str(config))
+    assert configured.config.horizon == 2 and configured.config.scenario_count == 3
 
 
 def test_state_manager_reconciles_measurement_noise():

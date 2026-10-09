@@ -99,8 +99,8 @@ python3 scripts/moveit_reset_v44.py                          # only after an int
 
 Per box: ① V4.3 weighing (mass from the scale) → ② `perceive_once_v44.py` (stable CCTV detection:
 pose, yaw, footprint) → ③ `ahead_planner_bridge_v44.py plan` (SKU matched by footprint, `BoxState`
-with measured mass, Donghan `PlacementPlanner` @ shared `7860043` exported read-only to
-`../planner_donghan_7860043`, ReferenceBackend generator/validator, heuristic Top-K) → ④ MoveIt
+with measured mass, Donghan `PlacementPlanner` from this repository
+(`ros2_ws/src/pac_planning`), ReferenceBackend generator/validator, heuristic Top-K) → ④ MoveIt
 suction pick with the camera pose and place at the planned slot/yaw → ⑤ actual Gazebo pose
 `commit`ted as the next ACTUAL planner state (single writer, state_version++) → viewer sync.
 

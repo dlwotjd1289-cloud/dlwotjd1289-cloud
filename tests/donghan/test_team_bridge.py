@@ -2,6 +2,7 @@
 from dataclasses import replace
 import json
 import math
+from pathlib import Path
 
 import pytest
 
@@ -166,3 +167,37 @@ def test_pose_only_generator_matches_real_ems_report_for_post_placement(scene, u
             assert fast == full
             assert [backend.validate_constraints(probe, c, post) for c in fast] == [
                 backend.validate_constraints(probe, c, post) for c in full]
+
+
+MODEL = Path(__file__).parents[2] / "models/dual_head_ranker.json"
+
+
+def test_trained_model_rejects_a_planner_config_it_was_not_trained_for(scene):
+    """A horizon/scenario mismatch fails at load time instead of silently
+    falling back to the heuristic on every call (INFERENCE_FAILED)."""
+    from pac_highlevel.value import DonghanPlacer
+    from pac_planning.team_bridge import TeamPlacer, load_checked_model
+
+    with pytest.raises(ValueError, match="rollout contract"):
+        TeamRuntimeRanker(FAST, model_path=MODEL)
+    with pytest.raises(ValueError, match="rollout contract"):
+        DonghanPlacer(model_path=MODEL, planner_config=FAST)
+    assert load_checked_model(MODEL, PlannerConfig()) is not None
+    _, box, state, context = scene
+    with pytest.raises(ValueError, match="rollout contract"):
+        plan_with_backend(box, state, CandidateBackend(context), config=FAST, model_path=MODEL)
+    # the high-level evaluation placer is the same adapter as the runtime one
+    assert isinstance(DonghanPlacer(planner_config=FAST), TeamPlacer)
+
+
+def test_v44_bridge_uses_this_repository_planner():
+    import subprocess
+    import sys
+
+    root = Path(__file__).parents[2]
+    probe = ("import runpy, sys; sys.argv=['x','--help']\n"
+             "try: runpy.run_path(r'%s', run_name='__main__')\n"
+             "except SystemExit: pass\n"
+             "import pac_planning; print(pac_planning.__file__)" % (root / "scripts/ahead_planner_bridge_v44.py"))
+    out = subprocess.run([sys.executable, "-I", "-c", probe], capture_output=True, text=True, check=True).stdout
+    assert Path(out.strip().splitlines()[-1]).resolve().is_relative_to((root / "ros2_ws/src/pac_planning").resolve())

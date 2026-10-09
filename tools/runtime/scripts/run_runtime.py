@@ -12,6 +12,7 @@ Variants (paired, same streams and seeds):
 """
 
 import argparse
+from collections import Counter
 from dataclasses import replace
 import json
 import multiprocessing as mp
@@ -66,6 +67,8 @@ def _run(task):
         ranker = donghan_ranker()
     out = RuntimeLoop(cell, cand, hl, rt, robot, load_policy("rule", config=hl), ranker=ranker,
                       log_events=False).run()
+    if ranker is not None:
+        out["ranker_provenance"] = ranker.provenance()
     out.pop("events", None)
     for p in out["pallet_list"]:
         p.pop("layout", None)
@@ -126,11 +129,32 @@ def main():
             "inspection_reasons": {r: sum(1 for o in outs for i in o["inspection"] if i["reason"] == r)
                                    for r in sorted({i["reason"] for o in outs for i in o["inspection"]})},
         }
+        provenance = [o["ranker_provenance"] for o in outs if "ranker_provenance" in o]
+        if provenance:
+            geometry = Counter()
+            statuses = Counter()
+            for item in provenance:
+                geometry.update(item["geometry_sources"])
+                statuses.update(item["model_statuses"])
+            contracts = sorted({item["backend_contract_sha256"] for item in provenance})
+            summary[v]["ranker_provenance"] = {
+                "ranker": provenance[0]["ranker"],
+                "calls": sum(item["calls"] for item in provenance),
+                "candidate_evaluations": sum(item["candidate_evaluations"] for item in provenance),
+                "geometry_sources": dict(sorted(geometry.items())),
+                "ems_verified": all(item["ems_verified"] for item in provenance),
+                "model_statuses": dict(sorted(statuses.items())),
+                "robot_validation_required_calls": sum(
+                    item["robot_validation_required_calls"] for item in provenance
+                ),
+                "backend_contract_sha256": contracts,
+            }
     for v, s in summary.items():
         print(v, json.dumps(s))
     if args.report:
         args.report.parent.mkdir(parents=True, exist_ok=True)
-        args.report.write_text(json.dumps({"split": args.split, "variants": args.variants, "summary": summary,
+        args.report.write_text(json.dumps({"split": args.split, "variants": args.variants,
+                                           "ranker": args.ranker, "summary": summary,
                                            "spec_mismatch_probability": args.spec_mismatch,
                                            "missing_probability": args.missing,
                                            "episodes": [{"variant": v, "scenario": s, "seed": p, **o}
