@@ -4,11 +4,13 @@ import sys
 import unittest
 from pathlib import Path
 
-import cv2
 import numpy as np
+import pytest
 
+cv2 = pytest.importorskip("cv2")
+pytest.importorskip("rclpy", reason="box_perception_v44 is a ROS node: source /opt/ros/humble/setup.bash")
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts"))
-import box_perception_v44 as P
+import box_perception_v44 as P  # noqa: E402
 
 BOX_RGB = (199, 163, 114)         # measured lit box-top colour in Gazebo
 FLOOR_RGB = (90, 90, 95)
