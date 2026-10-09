@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
-"""V4.5 multi-box check: team planner -> robot IK check -> PyBullet pallet, box after box.
+"""V4.5 multi-box check: team planner -> stage-6 robot check -> PyBullet pallet, box after box.
 
 Gazebo holds a single test box, so stacking is verified in the standalone Bullet
 simulator (pac_simulation.ahead_sim) with the SAME pieces the Gazebo mission uses:
   arrivals   : Jaesung dataset generator (ground_truth arrival order, simulator-owned)
   catalog    : Taehyeon build_catalog (McKee top load) + candidates.yaml limits
   planning   : Donghan plan_request (Taehyeon candidates/hard mask inside)
-  robot check: pick_place_plan_v45 IK on the Gazebo workcell geometry (no execution)
+  robot check: pac_robot_check on the team cell (config/taehyeon/robot_check.yaml);
+               both through mission_bridge_v45.plan_ranked (no execution)
   execution  : Bullet places the box; gravity/contact decide where it ends up
   state      : pac_common.StateManager (single writer): observation -> plan
                registration -> ExecutionResult with the settled Bullet pose ->
@@ -32,15 +33,10 @@ import numpy as np
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
 sys.path.insert(0, str(HERE))
-import hdr50_kinematics as K  # noqa: E402
 import mission_bridge_v45 as MB  # noqa: E402
-from plan_placement_v45 import ensure_team_packages, team_limits  # noqa: E402
-from pick_place_plan_v45 import plan_pick_place_yaw  # noqa: E402
 
 GENERATOR_ROOT = ROOT / "tools" / "ahead_dataset_generator"
 DEFAULT_DATASET = ROOT / "runs" / "v45_dataset"   # generated on first use (sample mode)
-CONVEYOR_TOP_Z = 0.895          # Gazebo V4.2 PICK: 0.25 m box centre at z = 1.02
-PICK_XY = (-1.06, 1.20)
 SETTLE_S = 2.0
 TOL_TILT_DEG = 5.0
 STACK_DRIFT_M = 0.005          # earlier boxes may not move more than this
@@ -58,7 +54,7 @@ def main() -> int:
     ap.add_argument("--output", type=Path, default=ROOT / "logs" / f"v45_bullet_{time.strftime('%Y%m%d_%H%M%S')}")
     args = ap.parse_args()
 
-    ensure_team_packages()
+    MB.ensure_team_packages()
     for extra in (ROOT / "tools/virtual_data", ROOT / "ros2_ws/src/pac_simulation"):
         if str(extra) not in sys.path:
             sys.path.insert(0, str(extra))
@@ -66,16 +62,13 @@ def main() -> int:
     from pac_common.adapters import candidate_from_json
     from pac_common.state_manager import StateManager
     from pac_common.planning import PlanningContext
-    from pac_planning.config import load_config
-    from pac_planning.planning_service import plan_request
     from pac_simulation.ahead_sim import AheadLiveSimulator, BoxSpec
     from pac_simulation.ahead_sim.config import load_config as load_sim_config
     from virtual_data import load_virtual_config
     from virtual_data.scenario_source import build_catalog, load_dataset, run_generator, stack_height_limit
 
-    cand_cfg, _, _ = team_limits()
+    cand_cfg, planner_cfg, robot_cfg, _, _ = MB.team_configs()
     virtual = load_virtual_config(ROOT / "config/taehyeon/virtual_data.yaml")
-    planner_cfg = load_config(str(ROOT / "config/default.yaml"))
     if not (args.dataset / "manifest.json").exists():
         print(f">>> 데이터셋 생성 중 (재성 생성기, sample): {args.dataset}", flush=True)
         run_generator(GENERATOR_ROOT, ROOT / "ros2_ws/src/pac_common", args.dataset)
@@ -125,26 +118,19 @@ def main() -> int:
         version = state.state_version
         row = {"index": i, "box_id": box.box_id, "sku_id": box.sku_id, "size_m": size,
                "weight_kg": box.weight_kg, "state_version": version}
-        result = json.loads(plan_request(json.dumps(plain(state)), json.dumps(plain(context)), box.box_id, version,
-                                         cand_cfg, planner_cfg, seed=args.seed + i, use_time_budget=False))
+        result = MB.plan_ranked(json.loads(json.dumps(plain(state))), json.loads(json.dumps(plain(context))),
+                                box.box_id, candidate_config=cand_cfg, planner_config=planner_cfg,
+                                robot_config=robot_cfg, seed=args.seed + i)
         row["ranked"] = len(result["ranked"])
         row["planner_rejected"] = dict(Counter(code for v in result["rejected"].values() for code in v["codes"]))
 
-        # Robot validation on the Gazebo workcell geometry (IK only).
-        chosen, ik_rejected = None, []
-        pick = (PICK_XY[0], PICK_XY[1], CONVEYOR_TOP_Z + size[2] / 2)
-        for cand in result["ranked"]:
-            x, y, z, yaw = MB.candidate_to_world(cand["target_pose"], size, gz)
-            try:
-                plan_pick_place_yaw(K.HOME, pick, (x, y, z), size, MB.gripper_yaw_delta(yaw, 0.0))
-            except ValueError as exc:
-                ik_rejected.append({"candidate_id": cand["candidate_id"], "reason": str(exc)})
-                continue
-            chosen = cand
-            break
+        # Stage 6 (pac_robot_check) already ran on every ranked candidate.
+        chosen = result["executable"][0] if result["executable"] else None
+        ik_rejected = [{"candidate_id": c["candidate_id"], "codes": c["robot"]["codes"]}
+                       for c in result["ranked"] if not c["robot"]["success"]]
         row["ik_rejected"] = ik_rejected
         if chosen is None and args.skip_unplaceable:
-            why = (f"no candidate {row['planner_rejected']}" if not result["ranked"] else "all candidates IK_FAIL")
+            why = (f"no candidate {row['planner_rejected']}" if not result["ranked"] else "all candidates fail stage 6")
             row["result"] = "SKIPPED: " + why
             log.write(json.dumps(row, ensure_ascii=False) + "\n")
             skipped.append(box.box_id)
@@ -154,7 +140,7 @@ def main() -> int:
         if chosen is None:
             status = "STOP"
             reason = (f"planner returned no candidate {row['planner_rejected']}" if not result["ranked"]
-                      else "all candidates IK_FAIL")
+                      else "all candidates fail stage 6")
             row["result"] = reason
             log.write(json.dumps(row, ensure_ascii=False) + "\n")
             print(f"    [{i:02d}] {box.box_id}: 중단 — {reason}", flush=True)
@@ -225,7 +211,7 @@ def main() -> int:
 
     snap = sim.snapshot()
     summary = {
-        "scope": "SIMULATED_BULLET", "robot_execution": "IK_ONLY", "status": status, "reason": reason,
+        "scope": "SIMULATED_BULLET", "robot_execution": "STAGE6_CHECK_ONLY", "status": status, "reason": reason,
         "scenario_id": spec.scenario_id, "arrivals": len(arrivals), "placed": len(anchor), "skipped": skipped,
         "final_height_m": snap["metrics"]["current_height_m"],
         "volume_utilization": snap["metrics"]["allowed_volume_utilization"],

@@ -11,10 +11,24 @@ pallet deck top. The robot uses box centres in the Gazebo world frame.
 """
 from __future__ import annotations
 
+import json
 import math
 import re
+import sys
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Optional, Sequence
+
+ROOT = Path(__file__).resolve().parents[1]
+TEAM_PACKAGES = ("pac_common", "pac_candidates", "pac_planning", "pac_robot_check")
+
+
+def ensure_team_packages() -> None:
+    """Make the monorepo packages importable when not run from colcon/pytest."""
+    for name in reversed(TEAM_PACKAGES):
+        path = str(ROOT / "ros2_ws" / "src" / name)
+        if path not in sys.path:
+            sys.path.insert(0, path)
 
 SCHEMA = "pac-common-v0.2+planning-v1"
 
@@ -24,8 +38,9 @@ class GazeboPallet:
     """Pallet deck in a world frame: top centre, yaw, footprint, cargo height.
 
     Build it with gazebo_pallet(): footprint / cargo height come from the team
-    config (config/default.yaml) and the position from config/workcell.yaml
-    (pallet_main in the V4.2 world, deck top z = 0.15 m).
+    config (config/default.yaml), the position and the frame orientation
+    (``frame_yaw_rad``: origin at the deck corner farthest from the robot) from
+    config/workcell.yaml (pallet_main in the V4.2 world, deck top z = 0.15 m).
     """
 
     top_center_world: tuple
@@ -40,16 +55,23 @@ def gazebo_pallet(top_center_world=None) -> GazeboPallet:
     (e.g. (0, 0, 0) for the standalone Bullet simulator whose deck top is the origin)."""
     from pac_common.config import load_common_config
 
-    common = load_common_config()
-    spec = common.pallet
+    spec = load_common_config().pallet
+    layout = workcell_layout()
     if top_center_world is None:
-        import yaml
-
-        layout = yaml.safe_load((common.path.parent / "workcell.yaml").read_text(encoding="utf-8"))["layout"]
         cx, cy, cz = layout["pallet"]["center_world_m"]
         top_center_world = (cx, cy, cz + spec.deck_height_m / 2)
     return GazeboPallet(tuple(top_center_world), (spec.size_x_m, spec.size_y_m),
-                        spec.max_stack_height_m, pallet_id=spec.pallet_id)
+                        spec.max_stack_height_m, yaw=float(layout["pallet"].get("frame_yaw_rad", 0.0)),
+                        pallet_id=spec.pallet_id)
+
+
+def workcell_layout() -> dict:
+    """config/workcell.yaml ``layout`` (next to the team config/default.yaml)."""
+    import yaml
+    from pac_common.config import load_common_config
+
+    path = load_common_config().path.parent / "workcell.yaml"
+    return yaml.safe_load(path.read_text(encoding="utf-8"))["layout"]
 
 
 def parse_scale_pass(text: str) -> float:
@@ -175,6 +197,63 @@ def gripper_yaw_delta(target_yaw: float, box_yaw_at_pick: float) -> float:
     elif d < -math.pi / 2:
         d += math.pi
     return d
+
+
+def team_configs():
+    """(candidate config, planner config, robot-check config, pallet max load kg, top-load fn)
+    from the team files: config/taehyeon/candidates.yaml, config/default.yaml,
+    config/taehyeon/robot_check.yaml. Top load = Taehyeon's McKee model."""
+    ensure_team_packages()
+    from pac_candidates import load_candidate_config
+    from pac_candidates.loads import mckee_capacity_n
+    from pac_common.config import load_common_config
+    from pac_planning.config import load_config
+    from pac_robot_check import load_robot_check_config
+
+    cand = load_candidate_config(str(ROOT / "config/taehyeon/candidates.yaml"))
+    lm = cand.constraints.load_model
+
+    def top_load_n(size_m):
+        return round(mckee_capacity_n(size_m[0], size_m[1], lm.ect_n_per_m, lm.board_thickness_m,
+                                      lm.safety_factor), 3)
+
+    return (cand, load_config(str(ROOT / "config/default.yaml")),
+            load_robot_check_config(ROOT / "config/taehyeon/robot_check.yaml"),
+            load_common_config().pallet.max_load_kg, top_load_n)
+
+
+def plan_ranked(state: dict, context: dict, box_id: str, *, candidate_config, planner_config, robot_config,
+                seed: int = 42, model=None, use_time_budget: bool = False) -> dict:
+    """Stages 5 and 6 on one snapshot, with the team implementations only.
+
+    5: ``pac_planning.planning_service.plan_request`` (Taehyeon candidates / hard
+       mask + Donghan ranking; the function behind /pac/plan_placement).
+    6: ``pac_robot_check.RobotFeasibility`` on every ranked candidate (team cell
+       of config/taehyeon/robot_check.yaml).
+
+    Returns the plan_request result with ``ranked[i]["robot"]`` = {success, codes,
+    details} and ``executable`` = ranked candidates that passed stage 6, best first.
+    """
+    ensure_team_packages()
+    from pac_common.adapters import candidate_from_json, state_from_json
+    from pac_planning.planning_service import plan_request
+    from pac_robot_check import RobotFeasibility
+
+    result = json.loads(plan_request(json.dumps(state), json.dumps(context), box_id, state["state_version"],
+                                     candidate_config, planner_config, seed=seed, model=model,
+                                     use_time_budget=use_time_budget))
+    snapshot = state_from_json(state)
+    box = snapshot.inventory.tracked_boxes[box_id]
+    robot = RobotFeasibility(robot_config)
+    executable = []
+    for cand in result["ranked"]:
+        verdict = robot.validate_robot_motion(box, candidate_from_json(cand), snapshot)
+        cand["robot"] = {"success": verdict.success, "codes": [c.value for c in verdict.codes],
+                         "details": json.loads(json.dumps(dict(verdict.details), default=float))}
+        if verdict.success:
+            executable.append(cand)
+    result["executable"] = executable
+    return result
 
 
 def execution_result(*, success: bool, box_id: str, candidate_id: str, actual_pose: Optional[dict],

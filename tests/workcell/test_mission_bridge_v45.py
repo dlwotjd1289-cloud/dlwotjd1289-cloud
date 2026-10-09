@@ -24,18 +24,20 @@ class TestFrames(unittest.TestCase):
         self.assertEqual(P.top_center_world, (0.0, 1.20, 0.15))   # V4.2 pallet_main deck top
         self.assertEqual(P.size_xy, (1.10, 1.10))
 
-    def test_origin_corner_maps_to_pallet_corner(self):
+    def test_origin_corner_is_the_far_deck_corner(self):
+        # workcell.yaml frame_yaw_rad = pi: origin at world (0.55, 1.75), axes reversed
+        self.assertAlmostEqual(P.yaw, math.pi)
         x, y, z, yaw = MB.candidate_to_world(corner(0.0, 0.0), BOX, P)
-        self.assertAlmostEqual(x, -0.55 + 0.20)
-        self.assertAlmostEqual(y, 1.20 - 0.55 + 0.15)
+        self.assertAlmostEqual(x, 0.55 - 0.20)
+        self.assertAlmostEqual(y, 1.20 + 0.55 - 0.15)
         self.assertAlmostEqual(z, 0.15 + 0.125)
-        self.assertEqual(yaw, 0.0)
+        self.assertAlmostEqual(yaw, math.pi)
 
     def test_yaw_swaps_footprint(self):
         x, y, _, yaw = MB.candidate_to_world(corner(0.0, 0.0, yaw=math.pi / 2), BOX, P)
-        self.assertAlmostEqual(x, -0.55 + 0.15)
-        self.assertAlmostEqual(y, 1.20 - 0.55 + 0.20)
-        self.assertAlmostEqual(yaw, math.pi / 2)
+        self.assertAlmostEqual(x, 0.55 - 0.15)
+        self.assertAlmostEqual(y, 1.20 + 0.55 - 0.20)
+        self.assertAlmostEqual(yaw, math.pi + math.pi / 2)
 
     def test_round_trip(self):
         for c in (corner(0.002, 0.002), corner(0.35, 0.4, 0.25, math.pi / 2), corner(0.698, 0.0)):

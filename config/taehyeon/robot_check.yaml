@@ -12,7 +12,8 @@ robot_check:
     mass_kg: 15.0                 # ASSUMPTION (EOAT not selected; conservative)
     clearance_m: 0.01
   cell:
-    base_from_pallet_center: [0.0, -1.20, 0.25, 0.0]   # base_link (0, 0, 0.40) - deck centre (0, 1.20, 0.15)
+    # base_link world (0, 0, 0.40) - deck centre (0, 1.20, 0.15), in pallet-frame axes (frame turned 180 deg)
+    base_from_pallet_center: [0.0, 1.20, 0.25, 3.141592653589793]
     deck_height_m: 0.15
     pick_point_base_m: [-1.08, 1.20, 0.495]            # pick stop (-1.08, 1.20, 0.895) - base_link
   motion:

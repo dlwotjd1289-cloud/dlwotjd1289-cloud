@@ -26,8 +26,9 @@ class PalletFrame:
             row = yaml.safe_load(stream)["layout"]["pallet"]
         size = Size3D(*row["size_m"])
         x, y, z = row["center_world_m"]
-        # workcell.yaml's centre is the physical wood centre, not its top.
-        return cls(size, Pose3D("world", x, y, z + size.z / 2))
+        # workcell.yaml's centre is the physical wood centre, not its top;
+        # frame_yaw_rad turns the pallet frame (origin at the far deck corner).
+        return cls(size, Pose3D("world", x, y, z + size.z / 2, yaw=float(row.get("frame_yaw_rad", 0.0))))
 
     def check_size(self, pallet):
         if not (math.isclose(pallet.size.x, self.physical_size.x, abs_tol=1e-8)

@@ -25,10 +25,11 @@ class GripperConfig:
 class CellConfig:
     # Team workcell (config/workcell.yaml, Gazebo V4.2-V4.5): robot base_link
     # at world (0, 0, 0.40) on the 0.40 m pedestal, pallet deck centre at
-    # world (0, 1.20, 0.15). Robot base relative to the deck centre
-    # (x, y, z, yaw), world-aligned axes. tests/test_config_consistency.py
-    # checks these against workcell.yaml and the pedestal URDF.
-    base_from_pallet_center: tuple = (0.0, -1.20, 0.25, 0.0)
+    # world (0, 1.20, 0.15), pallet frame turned by 180 deg (origin at the far
+    # deck corner). Robot base relative to the deck centre in PALLET-frame axes
+    # (x, y, z, yaw). tests/test_config_consistency.py checks these against
+    # workcell.yaml and the pedestal URDF.
+    base_from_pallet_center: tuple = (0.0, 1.20, 0.25, 3.141592653589793)
     deck_height_m: float = 0.15
     # conveyor surface point under the picked box, relative to the robot base:
     # V4.3 pick stop (-1.08, 1.20) on the roller top 0.895 m

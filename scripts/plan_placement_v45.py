@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-"""V4.5: ask the team planner where to place the weighed box.
+"""V4.5: ask the team pipeline where to place the weighed box.
 
-Runs Taehyeon's CandidateBackend (5-1/5-2) + Donghan's PlacementPlanner (5-3..5-6)
-through Donghan's own `plan_request` entry point -- the same function behind the
-/pac/plan_placement ROS service -- and converts the PLANNED ranking to Gazebo
-world box centres for the robot node. Output is still PLANNED: the robot node
-validates IK per candidate and only an ExecutionResult reports what happened.
+Stage 5: Taehyeon's CandidateBackend (5-1/5-2) + Donghan's PlacementPlanner (5-3..5-6)
+through `plan_request` (the function behind the /pac/plan_placement ROS service).
+Stage 6: pac_robot_check on every ranked candidate (config/taehyeon/robot_check.yaml).
+Both run in mission_bridge_v45.plan_ranked. The stage-6 survivors are converted to
+Gazebo world box centres for the robot node, best first. Output is still PLANNED;
+only an ExecutionResult reports what happened.
 
 Limits: pallet footprint / cargo height / total mass from config/default.yaml,
 carton top load from Taehyeon's McKee model (config/taehyeon/candidates.yaml).
@@ -23,32 +24,13 @@ sys.path.insert(0, str(HERE))
 import mission_bridge_v45 as MB  # noqa: E402
 
 ROOT = HERE.parent
-PACKAGES = ("pac_common", "pac_planning", "pac_candidates")
-
-
-def ensure_team_packages():
-    """Make the monorepo packages importable when not run from colcon/pytest."""
-    for name in reversed(PACKAGES):
-        path = str(ROOT / "ros2_ws" / "src" / name)
-        if path not in sys.path:
-            sys.path.insert(0, path)
+ensure_team_packages = MB.ensure_team_packages
 
 
 def team_limits():
     """(candidate config, pallet max load kg, top-load function) from the team configs."""
-    ensure_team_packages()
-    from pac_candidates import load_candidate_config
-    from pac_candidates.loads import mckee_capacity_n
-    from pac_common.config import load_common_config
-
-    cfg = load_candidate_config(str(ROOT / "config/taehyeon/candidates.yaml"))
-    lm = cfg.constraints.load_model
-
-    def top_load_n(size_m):
-        return round(mckee_capacity_n(size_m[0], size_m[1], lm.ect_n_per_m, lm.board_thickness_m,
-                                      lm.safety_factor), 3)
-
-    return cfg, load_common_config().pallet.max_load_kg, top_load_n
+    cand, _, _, max_kg, top_load_n = MB.team_configs()
+    return cand, max_kg, top_load_n
 
 
 def main() -> int:
@@ -65,9 +47,7 @@ def main() -> int:
     ap.add_argument("--out", required=True, help="placement JSON for run_mission_v45.py")
     args = ap.parse_args()
 
-    cand_cfg, pallet_max_kg, top_load_n = team_limits()
-    from pac_planning.config import load_config
-    from pac_planning.planning_service import plan_request
+    cand_cfg, planner_cfg, robot_cfg, pallet_max_kg, top_load_n = MB.team_configs()
 
     print(">>> [계획 1/2] 계량 결과로 상태 snapshot 생성 중...", flush=True)
     stamp = time.time()
@@ -78,29 +58,32 @@ def main() -> int:
         pallet_max_weight_kg=pallet_max_kg,
     )
 
-    print(">>> [계획 2/2] 후보 생성(태현)·순위 평가(동한) 중...", flush=True)
-    result = json.loads(plan_request(
-        json.dumps(state), json.dumps(context), args.box_id, args.state_version,
-        cand_cfg,
-        load_config(str(ROOT / "config/default.yaml")),
-        seed=args.seed, use_time_budget=False,
-    ))
+    print(">>> [계획 2/2] 후보 생성(태현)·순위 평가(동한)·로봇 검증(6단계) 중...", flush=True)
+    result = MB.plan_ranked(state, context, args.box_id, candidate_config=cand_cfg, planner_config=planner_cfg,
+                            robot_config=robot_cfg, seed=args.seed)
     if not result["ranked"]:
         print(f"V4.5 PLAN FAIL: no valid candidate; rejected={result['rejected']}", flush=True)
         return 1
+    if not result["executable"]:
+        codes = sorted({c for cand in result["ranked"] for c in cand["robot"]["codes"]})
+        print(f"V4.5 PLAN FAIL: {len(result['ranked'])} ranked, none passed stage 6 ({codes})", flush=True)
+        return 1
 
     placements = []
-    for cand in result["ranked"]:
+    for cand in result["executable"]:
         x, y, z, yaw = MB.candidate_to_world(cand["target_pose"], args.box_size)
         placements.append({
             "candidate_id": cand["candidate_id"], "box_id": cand["box_id"],
             "base_state_version": cand["base_state_version"], "score": cand["score"],
             "target_pose_pallet": cand["target_pose"],
             "center_world": {"x": x, "y": y, "z": z, "yaw": yaw},
+            "robot": cand["robot"]["details"],
         })
+    robot_rejected = [{"candidate_id": c["candidate_id"], "codes": c["robot"]["codes"]}
+                      for c in result["ranked"] if not c["robot"]["success"]]
     out = {
         "schema": "pac-v45-placement-1", "state_mode": result["state_mode"],
-        "requires_robot_validation": True, "box_id": args.box_id, "box_size_m": list(args.box_size),
+        "robot_validated": "pac_robot_check", "robot_rejected": robot_rejected, "box_id": args.box_id, "box_size_m": list(args.box_size),
         "measured_kg": args.measured_kg, "pallet": MB.gazebo_pallet().__dict__,
         "placements": placements, "state": state, "context": context,
         "diagnostics": result["diagnostics"],
@@ -109,7 +92,7 @@ def main() -> int:
     Path(args.out).write_text(json.dumps(out, ensure_ascii=False, indent=1, default=list))
     best = placements[0]
     c = best["center_world"]
-    print(f"V4.5 PLAN OK: {len(placements)} ranked; best {best['candidate_id']} -> world centre "
+    print(f"V4.5 PLAN OK: {len(placements)} executable of {len(result['ranked'])} ranked; best {best['candidate_id']} -> world centre "
           f"({c['x']:.3f}, {c['y']:.3f}, {c['z']:.3f}) yaw {c['yaw']:.2f} rad "
           f"[{result['diagnostics']['model_status']}, {result['diagnostics']['planning_time_sec']:.2f} s]",
           flush=True)

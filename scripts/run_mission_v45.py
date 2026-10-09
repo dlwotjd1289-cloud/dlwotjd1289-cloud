@@ -4,9 +4,10 @@
 Input : placement JSON from plan_placement_v45.py (PLANNED, ranked, world centres).
 Output: plain(ExecutionResult) JSON for the State Manager (this node never commits state).
 
-Robot validation (team flow step R): candidates are tried in planner order and
-the first one with a continuous IK path is executed; IK-rejected candidates are
-recorded with code IK_FAIL. Reuses the V4.4 node for ROS I/O, trajectory
+Candidates arrive already checked by stage 6 (pac_robot_check, in
+plan_placement_v45.py), best first. They are tried in that order and the first one
+with a continuous joint path (pick_place_plan_v45) is executed; a candidate whose
+path cannot be built is recorded with code IK_FAIL. Reuses the V4.4 node for ROS I/O, trajectory
 execution and gripper handling; V4.4 files are not modified.
 """
 from __future__ import annotations
@@ -53,7 +54,7 @@ class MissionPickPlace(PickPlace):
                 self.get_logger().warning(f"{cand['candidate_id']}: IK rejected ({exc})")
                 continue
             return cand, segs
-        raise Failure("No ranked candidate passed robot IK validation (IK_FAIL for all).")
+        raise Failure("No stage-6 candidate has a continuous joint path (IK_FAIL for all).")
 
     def run(self) -> str:
         print(">>> [로봇 1/4] 관절 상태·박스 위치 확인 중...", flush=True)
@@ -70,7 +71,7 @@ class MissionPickPlace(PickPlace):
             raise Failure("Box is still moving at PICK.")
         box_yaw = MB.yaw_from_quat(quat)
 
-        print(">>> [로봇 2/4] 플래너 후보별 IK 검증·경로 계산 중...", flush=True)
+        print(">>> [로봇 2/4] 6단계 통과 후보별 경로 계산 중...", flush=True)
         self.chosen, segs = self.choose(self.q, p, box_yaw)
         c = self.chosen["center_world"]
         target = np.array([c["x"], c["y"], c["z"]])

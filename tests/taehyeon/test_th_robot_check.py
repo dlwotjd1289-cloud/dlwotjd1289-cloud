@@ -111,12 +111,13 @@ def test_arm_collides_with_a_tall_stack_on_the_robot_side():
     # a 0.6 m wall leaves room for the arm
     robot = RobotFeasibility()
     box = make_box("C", (0.4, 0.3, 0.25), weight=10)
-    target = cand(box, 0.4, 0.65, 0.0)
-    tall = make_state([placed("T", 0.0, 0.0, 0.0, size=(1.2, 0.2, 1.3))], version=1, pallet=PALLET)
+    # team cell: the pallet frame origin is the far deck corner, the robot stands beyond y = max
+    target = cand(box, 0.4, 0.05, 0.0)
+    tall = make_state([placed("T", 0.0, 0.8, 0.0, size=(1.2, 0.2, 1.3))], version=1, pallet=PALLET)
     v = robot.validate_robot_motion(box, target, tall)
     assert v.codes == (RejectCode.ROBOT_COLLISION,)
     assert all(a.get("arm_hits") == "T" for a in v.details["attempts"])
-    low = make_state([placed("T", 0.0, 0.0, 0.0, size=(1.2, 0.3, 0.6))], version=1, pallet=PALLET)
+    low = make_state([placed("T", 0.0, 0.7, 0.0, size=(1.2, 0.3, 0.6))], version=1, pallet=PALLET)
     v = robot.validate_robot_motion(box, target, low)
     assert v.success and v.details["arm_clearance_m"] > 0
 

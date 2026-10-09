@@ -15,7 +15,7 @@ frames:
 # height must equal config/default.yaml `pallet:` (tests/test_config_consistency.py).
 layout:
   world_file: ahead_workcell_v4_2_physical_scale.sdf
-  robot_base_world_m: [0.0, 0.0, 0.0]          # HDR50-22 on hdr50_pedestal
+  robot_base_world_m: [0.0, 0.0, 0.40]         # HDR50-22 base_link on the 0.40 m hdr50_pedestal (world_joint)
   conveyor:
     center_world_m: [-2.80, 1.20, 0.84]
     length_m: 4.00
@@ -28,6 +28,11 @@ layout:
   pallet:
     center_world_m: [0.0, 1.20, 0.075]         # wood centre; deck top z = 0.15
     size_m: [1.10, 1.10, 0.15]
+    # Frame "pallet" (common standard 8.1): origin = deck corner FARTHEST from the robot
+    # (world (0.55, 1.75, 0.15)), x/y axes = world axes turned by frame_yaw_rad about z.
+    # The planner fills from its origin, so far slots are filled first and the arm never
+    # reaches over placed boxes (V4.4 cycle convention, now shared by every bridge).
+    frame_yaw_rad: 3.141592653589793
   buffer_rack:
     center_world_m: [1.45, -0.55, 0.0]
   top_camera:
