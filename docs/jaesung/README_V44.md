@@ -275,3 +275,53 @@ that release failed when the run was stopped for the git integration - cause NOT
 Pallet change and picking back from the buffer have NOT been run in Gazebo yet. Before that
 (single-path changes): failure recovery verified (re-place 40 mm -> 1.4 mm, suction miss -> re-grip
 0.7 mm), off-centre arrivals S0001 1-5 PASS, unified pallet deck S0001 1-5 PASS.
+
+## 2026-10-09 (night): block pallet, V4.6 two-camera layout — partly verified
+
+Block pallet (Gazebo V4.4/V4.6 world + Bullet + browser viewer, same geometry, placeholders):
+bottom boards 3 x 22 mm, 9 blocks 145 x 145 x 71 mm, 3 cross boards 145 x 22 mm (perpendicular to
+the top boards), 5 top boards 143 mm / 96 mm gap / 35 mm; total 0.150 m. Bullet compound shapes hold
+at most 16 children (the old 17-part pallet silently lost a block and the bottom boards): the pallet
+is now 2 static bodies (`pallet_extra_ids`, all named PALLET). The viewer draws the pallet from the
+same config (`PalletConfig.as_dict` exposes all ratios; `stringer_board_*` keys, default 0 = old).
+
+V4.6 world (`scripts/make_world_v46.py` -> `ahead_workcell_v4_6_two_cam.sdf`, launch
+`hdr50_workcell_v4_6.launch.py`; V4.4 unchanged):
+- conveyor +2.185 m (64 rollers, 6.18 m); infeed + scale moved upstream: scale at the conveyor start
+  (centre x -5.985), inlet x -6.635 (`PAC_SCALE_SHIFT_M=-2.185` shifts the V4.3 positions);
+- two fixed cameras only: camera 1 `camera_scale_top` (straight down over the scale,
+  `/pac/scale_camera/image`), camera 2 = pole CCTV raised to 3.6 m, hfov 1.6, 1920x1080 (sees PICK,
+  the pallet and the buffer table); wrist camera removed (`wrist_camera:=false` xacro arg);
+- buffer table next to PICK on the robot side, parallel to the conveyor (centre (-1.05, 0.40),
+  `PAC_BUFFER_X/Y`).
+- flow (`LAYOUT=v46 bash scripts/run_review_v44.sh ...` exports PAC_LAYOUT=v46, PAC_NO_WRIST=1, ...):
+  camera-1 perception starts with the weighing (stable once the box rests on the scale); right after
+  `WEIGHED` the planner runs while the box travels to PICK; the robot picks from the pole CCTV pose,
+  checks the placed box with the pole CCTV after going back to READY, and uses the CCTV for the
+  buffer table too.
+Verified: world generation (64 rollers at 0.095 m), both camera images, xacro toggle, box_01 weighed
+at the conveyor start, camera 1 OK, plan made while travelling, pick + transfer + release. NOT yet
+verified (run interrupted by a reboot): CCTV check after release, buffer put/take, pallet change,
+and whether the arm at READY hides the buffer from the CCTV.
+How to verify: see `docs/jaesung/handoff_gpt/CONVERSATION_SUMMARY.md` ("How to verify").
+
+## 2026-10-10: V4.6 fixes, targeted scenarios, buffer/NG layout — IN PROGRESS
+- GPT session fixes (applied here): gripper target ACK before vacuum, planner config from the repo,
+  NO_SLOT exit code 20 (only that triggers buffering), wrist_camera:=false in the MoveIt launch.
+- CCTV pallet re-check: no blob selection for the known-size fit (box_07 picked a merged neighbour,
+  fit_inside 0.0); known neighbours' top faces masked (`others` in the target), supporting boxes kept;
+  edge refinement only on visible edges. Offline on the box_07 image: 2-6 mm, box_07 5.0 mm.
+- Lowering: slow from 3 cm above the tallest neighbour (box_09 caught a 0.28 m taller neighbour 7 mm
+  away); lowering keeps the yaw the arm actually reached (box_13 to the buffer: 180 deg mismatch);
+  TF retry in tcp_z / tcp_yaw. Commit tolerance 8 mm (CCTV ~5 mm).
+- Speed: V4.6 cameras 5 Hz -> RTF 0.28 -> 1.0 (1 ms step kept).
+- Buffer table 0.66 m deep toward the conveyor (bays y 0.44, boxes <= 0.37 x 0.64 m), red NG floor
+  area (x -1.45..-0.65, y -0.60..0.05; IK + CCTV view checked offline); browser viewer draws the V4.6
+  layout (scale + camera 1, CCTV at 3.6 m, buffer, NG area). The viewer is fed by HTTP from the cycle
+  (sync_pallet_viewer -> /api/robot_place) + its own PyBullet replay over /ws, not ROS topics.
+- Targeted runs: `bash scripts/run_scenario_v46.sh buffer_swap|recovery|full`
+  (restore: `scripts/restore_pallet_v46.py`, fixtures `test_data/v46_fixtures/`).
+Verified in Gazebo: boxes 7-12 resumed from a restore (box_07 CCTV check, box_09 lowering fixed).
+Not yet verified: buffer put/take and pallet change (buffer_swap stopped after the yaw fix), recovery
+in V4.6, real-height full run. Pending design (agreed): bridge gap 0.5 cm + MoveIt padding 2 cm with
+"offset descend then slide", payload-scaled speed.

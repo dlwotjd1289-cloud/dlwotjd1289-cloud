@@ -30,6 +30,7 @@ def generate_launch_description():
             "name": "hdr_robot",
             "use_sim": "true",
             "use_mock_hardware": "false",
+            "wrist_camera": "false" if os.environ.get("PAC_NO_WRIST") == "1" else "true",
             "hdr_ros2_control": os.path.join(
                 get_package_share_directory("hdr_simulation_gz"), "config", "hdr_controllers.yaml"),
             "initial_positions_file": os.path.join(

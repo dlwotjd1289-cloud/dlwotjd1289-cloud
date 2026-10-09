@@ -22,12 +22,15 @@ def main() -> int:
     ap.add_argument("--timeout", type=float, default=20.0)
     ap.add_argument("--box", default="v43_scale_box_5kg")
     ap.add_argument("--size", type=float, nargs=3, default=[0.40, 0.30, 0.25])
+    ap.add_argument("--camera", choices=("far", "scale"), default="far",
+                    help="far = pole CCTV at PICK; scale = V4.6 top view of the weighing section")
     a = ap.parse_args()
     rclpy.init()
     node = Node("pac_perceive_once_v44")
     seen = []
-    node.create_subscription(String, "/pac/perception/far/box_info", lambda m: seen.append(json.loads(m.data)), 10)
-    target = node.create_publisher(String, "/pac/perception/target", 10)
+    node.create_subscription(String, f"/pac/perception/{a.camera}/box_info", lambda m: seen.append(json.loads(m.data)), 10)
+    target = node.create_publisher(String, "/pac/perception/scale_target" if a.camera == "scale"
+                                   else "/pac/perception/target", 10)
     target_msg = String(data=json.dumps({"box": a.box, "size": a.size}))
     end = time.monotonic() + a.timeout
     prev, last_status = None, None
@@ -46,7 +49,7 @@ def main() -> int:
                 if prev and math.hypot(info["x"] - prev["x"], info["y"] - prev["y"]) < 0.005 \
                         and abs(info["yaw"] - prev["yaw"]) < math.radians(1.0):
                     open(a.out, "w").write(json.dumps(info, indent=2))
-                    print(f"PERCEPTION OK: ({info['x']:.3f}, {info['y']:.3f}) yaw {math.degrees(info['yaw']):.1f} deg, "
+                    print(f"PERCEPTION OK ({a.camera}): ({info['x']:.3f}, {info['y']:.3f}) yaw {math.degrees(info['yaw']):.1f} deg, "
                           f"footprint {info['length']:.3f} x {info['width']:.3f} m")
                     return 0
                 prev = info

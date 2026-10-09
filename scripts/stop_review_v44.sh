@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Stop what run_review_v44.sh started (own processes only, matched by their exact command lines).
-for p in $(pgrep -f '^/usr/bin/python3 /opt/ros/humble/bin/ros2 launch pac_bringup hdr50_(moveit_v44|workcell_v4_4_pick)'); do
+for p in $(pgrep -f '^/usr/bin/python3 /opt/ros/humble/bin/ros2 launch pac_bringup hdr50_(moveit_v44|workcell_v4_4_pick|workcell_v4_6)'); do
   kill -INT "$p" 2>/dev/null
 done
 for p in $(pgrep -f '^python3 [^ ]*scripts/run_ahead_simulator.py'); do kill -TERM "$p" 2>/dev/null; done

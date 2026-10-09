@@ -42,6 +42,7 @@ class SuctionGripper(Node):
         self.fault_once = bool(self.fault_boxes)
         self.pubs = {}
         self.state_pub = self.create_publisher(String, "/pac/suction/state", 10)
+        self.target_ack_pub = self.create_publisher(String, "/pac/suction/target_ack", 10)
         self.create_subscription(Bool, "/pac/suction/vacuum", self.on_vacuum, 10)
         self.create_subscription(Bool, "/pac/suction/touched", self.on_touched, 10)
         self.create_subscription(String, "/pac/suction/target", self.on_target, 10)
@@ -75,6 +76,8 @@ class SuctionGripper(Node):
         # the touch; a publisher created at touch time loses its first messages (box not attached).
         self.grip_pub(self.target, "attach")
         self.grip_pub(self.target, "detach")
+        # 요청한 박스 ID를 수신하고 제어 노드에서 반영했음을 실행기에 회신.
+        self.target_ack_pub.publish(String(data=self.target))
 
     def publish_state(self) -> None:
         self.state_pub.publish(String(data=self.state))

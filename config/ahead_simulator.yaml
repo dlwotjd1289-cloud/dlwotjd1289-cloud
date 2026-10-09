@@ -5,18 +5,24 @@ pallet:
 
   # Development collision geometry, not an official pallet specification.
   # Replace these values when the actual competition pallet geometry is known.
+  # Block pallet (T-11 style), same as the Gazebo V4.4 world (2026-10-09): bottom boards 22 mm,
+  # 9 blocks 145 x 145 x 71 mm, 3 cross boards 145 x 22 mm, 5 top boards 143 x 35 mm (96 mm gap);
+  # ratios of 1.10 m (widths) and of the 0.15 m deck height (thicknesses).
   collision_model: "slatted"
   top_board_count: 5
   top_board_width_ratio: 0.13
-  top_board_thickness_ratio: 0.22
+  top_board_thickness_ratio: 0.2333
+  stringer_board_count: 3
+  stringer_board_width_ratio: 0.1318
+  stringer_board_thickness_ratio: 0.1467
   support_block_count_x: 3
   support_block_count_y: 3
-  support_block_length_ratio: 0.14
-  support_block_width_ratio: 0.15
-  support_block_height_ratio: 0.50
+  support_block_length_ratio: 0.1318
+  support_block_width_ratio: 0.1318
+  support_block_height_ratio: 0.4733
   bottom_board_count: 3
-  bottom_board_width_ratio: 0.14
-  bottom_board_thickness_ratio: 0.16
+  bottom_board_width_ratio: 0.1318
+  bottom_board_thickness_ratio: 0.1467
 
 physics:
   gravity_m_s2: 9.80665
