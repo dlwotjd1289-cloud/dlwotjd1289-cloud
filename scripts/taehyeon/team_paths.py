@@ -19,6 +19,8 @@ _KEYS = {
     "pac_planning": ("PAC_PLANNING_SRC", "ros2_ws/src/pac_planning"),
     "pac_simulation": ("PAC_SIMULATION_SRC", "ros2_ws/src/pac_simulation"),
     "generator": ("AHEAD_GENERATOR_ROOT", "tools/ahead_dataset_generator"),
+    "pac_robot_check": ("PAC_ROBOT_CHECK_SRC", "ros2_ws/src/pac_robot_check"),
+    "pac_runtime": ("PAC_RUNTIME_SRC", "ros2_ws/src/pac_runtime"),
 }
 
 

@@ -193,7 +193,8 @@ class HighLevelDecider:
             if world._close_before_buffer(mask):
                 return HighLevelDecision(HighLevelAction(ActionType.PALLET_CLOSE), version,
                                          mask=tuple(bool(m) for m in mask), decided_by="rule:close",
-                                         reason="FILL_BEFORE_BUFFER", diagnostics=diag)
+                                         reason=("DEAD_PALLET" if world.config.close.mode == "dead"
+                                                 else "FILL_BEFORE_BUFFER"), diagnostics=diag)
             action = self.policy.choose(world)
             probs = None
             if self.policy.probs is not None:
