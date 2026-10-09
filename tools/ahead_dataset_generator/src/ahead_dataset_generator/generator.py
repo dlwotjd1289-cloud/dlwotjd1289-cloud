@@ -24,8 +24,9 @@ from pac_common import (
 from .config import SCENARIO_FAMILIES, SkuSpec, load_sku_catalog, resolve_pallet, validate_config
 from .serialization import to_primitive, write_json, write_jsonl
 
-GENERATOR_VERSION = "1.3.0"
+GENERATOR_VERSION = "1.4.0"
 HALF_PI = 1.5707963267948966
+MAX_DEDUP_ATTEMPTS = 50
 
 WEIGHT_BANDS_KG = (
     (0.0, 3.0, "W_00_03"),
@@ -130,6 +131,21 @@ def _sample_weight(
     )
 
 
+def _scenario_seed(base_seed: int, index: int, attempt: int) -> int:
+    """Independent per-scenario seed derived by hashing.
+
+    The old linear rule (base + index * 1009) made two runs whose base seeds
+    differ by a multiple of 1009 emit the same scenarios at shifted indices.
+    """
+    key = f"ahead-scenario:{base_seed}:{index}:{attempt}".encode("utf-8")
+    return int.from_bytes(hashlib.sha256(key).digest()[:8], "big")
+
+
+def _inventory_key(boxes: list["GeneratedBox"]) -> tuple[str, ...]:
+    """SKU multiset of a scenario; same key = same boxes in another order."""
+    return tuple(sorted(box.truth.sku_id for box in boxes))
+
+
 def _sku_by_volume(catalog: list[SkuSpec]) -> list[SkuSpec]:
     return sorted(catalog, key=lambda item: item.volume_m3)
 
@@ -156,11 +172,18 @@ def _select_skus(
     if family == "repeated_sku":
         distinct = min(4, len(catalog))
         block_skus = rng.sample(catalog, distinct)
+        # At least two blocks, and never the same SKU in back-to-back blocks;
+        # otherwise short scenarios collapse into one SKU and repeat a lot.
+        max_block = max(1, min(7, count // 2))
+        min_block = min(3, max_block)
         selected = []
+        previous = None
         while len(selected) < count:
-            sku = rng.choice(block_skus)
-            block_size = rng.randint(3, 7)
+            choices = [sku for sku in block_skus if sku is not previous]
+            sku = rng.choice(choices or block_skus)
+            block_size = rng.randint(min_block, max_block)
             selected.extend([sku] * block_size)
+            previous = sku
         return selected[:count]
 
     return [
@@ -228,7 +251,7 @@ def _generate_boxes(
     selected = _select_skus(rng, catalog, family, count)
     stress_range = _stress_range(cfg, catalog)
 
-    boxes = []
+    draws = []
     for index, sku in enumerate(selected):
         if family == "weight_mixed":
             profile = "light_biased" if index % 2 == 0 else "heavy_biased"
@@ -243,56 +266,18 @@ def _generate_boxes(
             cfg,
             stress_range,
         )
-        boxes.append(_make_box(scenario_id, index, sku, weight, component))
+        draws.append((sku, weight, component))
 
+    # Stress families: larger / heavier boxes arrive at the end of the stream.
     if family == "late_large":
-        boxes = sorted(boxes, key=lambda item: item.volume_m3)
+        draws.sort(key=lambda item: item[0].volume_m3)
     elif family == "late_heavy":
-        boxes = sorted(boxes, key=lambda item: item.truth.weight_kg)
+        draws.sort(key=lambda item: item[1])
 
-    if family in ("late_large", "late_heavy"):
-        boxes = [
-            GeneratedBox(
-                truth=BoxState(
-                    box_id=f"{scenario_id}-B{index + 1:03d}",
-                    sku_id=item.truth.sku_id,
-                    size=item.truth.size,
-                    weight_kg=item.truth.weight_kg,
-                    pose=Pose3D(
-                        frame_id="conveyor",
-                        x=0.0,
-                        y=0.0,
-                        z=item.truth.size.z / 2.0,
-                    ),
-                    allowed_yaws_rad=item.truth.allowed_yaws_rad,
-                    status=BoxStatus.READY_FOR_PICK,
-                    confidence=1.0,
-                    stamp_sec=float(index),
-                    source="simulation_ground_truth",
-                ),
-                observation=BoxState(
-                    box_id=f"{scenario_id}-B{index + 1:03d}",
-                    sku_id=item.observation.sku_id,
-                    size=item.observation.size,
-                    weight_kg=item.observation.weight_kg,
-                    pose=Pose3D(
-                        frame_id="conveyor",
-                        x=0.0,
-                        y=0.0,
-                        z=item.observation.size.z / 2.0,
-                    ),
-                    allowed_yaws_rad=item.observation.allowed_yaws_rad,
-                    status=BoxStatus.DETECTED,
-                    confidence=1.0,
-                    stamp_sec=float(index),
-                    source="simulation_identity_observation",
-                ),
-                arrival_index=index,
-                weight_profile_component=item.weight_profile_component,
-            )
-            for index, item in enumerate(boxes)
-        ]
-    return boxes
+    return [
+        _make_box(scenario_id, index, sku, weight, component)
+        for index, (sku, weight, component) in enumerate(draws)
+    ]
 
 
 def _entropy(values: list[str]) -> float:
@@ -392,10 +377,9 @@ def _scenario_metadata(
 
 
 def _initial_state(
-    cfg: dict[str, Any],
+    pallet_cfg: dict[str, Any],
     boxes: list[GeneratedBox],
 ) -> SystemState:
-    pallet_cfg = resolve_pallet(cfg)
     pallet = PalletState(
         pallet_id=str(pallet_cfg["pallet_id"]),
         size=Size3D(
@@ -426,6 +410,7 @@ def _scenario_definition(
     seed: int,
     boxes: list[GeneratedBox],
 ) -> dict[str, Any]:
+    pallet_cfg = resolve_pallet(cfg)
     return {
         "schema_version": int(cfg["schema_version"]),
         "generator_version": GENERATOR_VERSION,
@@ -433,13 +418,13 @@ def _scenario_definition(
         "scenario_family": family,
         "state_kind": "SIMULATED",
         "seed": seed,
-        "initial_system_state": _initial_state(cfg, boxes),
+        "initial_system_state": _initial_state(pallet_cfg, boxes),
         "constraints": {
             # Explicit references so consumers never guess what 1.5 m means.
-            "max_stack_height_m": float(resolve_pallet(cfg)["max_stack_height_m"]),
+            "max_stack_height_m": float(pallet_cfg["max_stack_height_m"]),
             "height_reference": "above_deck",
-            "deck_height_m": float(resolve_pallet(cfg)["deck_height_m"]),
-            "max_load_kg": float(resolve_pallet(cfg)["max_load_kg"]),
+            "deck_height_m": float(pallet_cfg["deck_height_m"]),
+            "max_load_kg": float(pallet_cfg["max_load_kg"]),
         },
         "planner_contract_note": (
             "This file intentionally contains no exact future arrival order. "
@@ -529,6 +514,7 @@ def _coverage_report(
     cfg: dict[str, Any],
     all_boxes: list[GeneratedBox],
     metadata_rows: list[dict[str, Any]],
+    duplicate_inventories: int,
 ) -> dict[str, Any]:
     domain = cfg["parcel_domain"]
     violations = 0
@@ -558,6 +544,7 @@ def _coverage_report(
         "sku_counts": dict(sorted(sku_counts.items())),
         "weight_band_counts": dict(sorted(weight_bands.items())),
         "parcel_domain_violations": violations,
+        "duplicate_inventory_scenarios": duplicate_inventories,
         "units": {
             "length": "m",
             "mass": "kg",
@@ -575,6 +562,8 @@ def _write_report_markdown(path: Path, report: dict[str, Any]) -> None:
         f"- Boxes: {report['box_count']}",
         f"- SKU types used: {report['sku_count']}",
         f"- Parcel-domain violations: {report['parcel_domain_violations']}",
+        "- Duplicate-inventory scenarios: "
+        f"{report['duplicate_inventory_scenarios']}",
         "- Internal units: m, kg, s, rad",
         "",
         "## Scenario families",
@@ -615,16 +604,29 @@ def generate_dataset(
     generation_logs = []
     scenario_index_rows = []
 
+    seen_inventories = set()
+    duplicate_inventories = 0
+
     for index, (scenario_id, family) in enumerate(zip(scenario_ids, plan)):
-        scenario_seed = base_seed + index * 1009
-        boxes = _generate_boxes(
-            scenario_id,
-            family,
-            boxes_per_scenario,
-            scenario_seed,
-            catalog,
-            cfg,
-        )
+        # Resample until the SKU multiset is new to this dataset, so no two
+        # scenarios differ only in arrival order (train/test leakage). Small
+        # box counts can exhaust the space; those are counted, not hidden.
+        for attempt in range(MAX_DEDUP_ATTEMPTS):
+            scenario_seed = _scenario_seed(base_seed, index, attempt)
+            boxes = _generate_boxes(
+                scenario_id,
+                family,
+                boxes_per_scenario,
+                scenario_seed,
+                catalog,
+                cfg,
+            )
+            inventory = _inventory_key(boxes)
+            if inventory not in seen_inventories:
+                break
+        else:
+            duplicate_inventories += 1
+        seen_inventories.add(inventory)
         all_boxes.extend(boxes)
         metadata = _scenario_metadata(
             scenario_id,
@@ -699,7 +701,7 @@ def generate_dataset(
         )
     _write_csv(output_dir / "analysis" / "catalog.csv", catalog_rows)
 
-    report = _coverage_report(cfg, all_boxes, metadata_rows)
+    report = _coverage_report(cfg, all_boxes, metadata_rows, duplicate_inventories)
     write_json(output_dir / "analysis" / "coverage_report.json", report)
     _write_report_markdown(
         output_dir / "analysis" / "coverage_report.md",

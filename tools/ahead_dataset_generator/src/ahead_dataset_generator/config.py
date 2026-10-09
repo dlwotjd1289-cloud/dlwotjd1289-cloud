@@ -126,6 +126,9 @@ def validate_config(cfg: dict[str, Any]) -> None:
             "reserved for the observation generator"
         )
 
+    if int(cfg["generation"]["benchmark"]["boxes_per_scenario"]) < 1:
+        raise ValueError("boxes_per_scenario must be at least 1")
+
     family_counts = cfg["generation"]["benchmark"]["family_counts"]
     for family, count in family_counts.items():
         if family not in SCENARIO_FAMILIES:
