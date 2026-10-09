@@ -16,7 +16,7 @@ from pathlib import Path
 import numpy as np
 import pybullet as p
 
-sys.path.insert(0, str(Path.home() / "AHEAD/audit_20261009/08_prototype"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "wave"))
 import physics_check as pc  # noqa: E402  (team simulator imports)
 from pac_candidates.geometry import rotated_dims  # noqa: E402
 

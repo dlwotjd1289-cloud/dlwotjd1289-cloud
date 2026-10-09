@@ -8,7 +8,7 @@ VARIANT: team | fast | la_k{K}  (look-ahead with K weighed boxes known, m=2 upst
 import argparse, json, multiprocessing as mp, statistics, sys, time
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
-sys.path.insert(0, str(Path.home() / "AHEAD/audit_20261009/08_prototype"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "wave"))
 import lookahead as LA
 import tune_phys
 import shock_test
@@ -22,8 +22,8 @@ from virtual_data.highlevel import split_ids, world_factory
 
 REPO = LA.REPO
 import os
-DATA = Path(os.environ.get("LA_DATA", str(Path.home() / "AHEAD/audit_20261009/03_planner/highlevel_work/dataset80_x10")))
-CAND = Path.home() / "AHEAD/audit_20261009/07_ai_role/sweep/configs/perbox.yaml"
+DATA = Path(os.environ.get("LA_DATA", str(Path(__file__).resolve().parent / "data/dataset80_x10")))
+CAND = Path(__file__).resolve().parent / "configs/perbox.yaml"
 G = {}
 
 
@@ -108,9 +108,9 @@ def episode(job):
         from pac_candidates import load_candidate_config
         cand_cfg = G["cand"]
         if "cand" in po_:
-            cand_cfg = load_candidate_config(Path.home() / f"AHEAD/audit_20261009/07_ai_role/sweep/configs/{po_['cand']}.yaml")
+            cand_cfg = load_candidate_config(Path(__file__).resolve().parent / "configs" / f"{po_['cand']}.yaml")
         if "cap" in po_:
-            sys.path.insert(0, str(Path.home() / "AHEAD/audit_20261009/10_site_params"))
+            sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "site_params"))
             import capacity as CAP
             VH.build_catalog = CAP.patched_build_catalog(po_["cap"])
         make = world_factory(G["ds"], G["specs"], cand_cfg, G["vcfg"], hl, shuffle_seed=12345,

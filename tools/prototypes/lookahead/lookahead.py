@@ -37,7 +37,7 @@ from pathlib import Path
 for _v in ("OPENBLAS_NUM_THREADS", "OMP_NUM_THREADS", "MKL_NUM_THREADS"):
     os.environ.setdefault(_v, "1")
 
-REPO = Path.home() / "AHEAD/pac2026_integrated"
+REPO = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(REPO / "tools/highlevel/scripts"))
 import _common  # noqa: E402,F401  (team path bootstrap)
 

@@ -80,10 +80,10 @@ def patched_build_catalog(site):
 if __name__ == "__main__":
     import sys
     from pathlib import Path
-    sys.path.insert(0, str(Path.home() / "AHEAD/pac2026_integrated/tools/highlevel/scripts"))
+    sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "tools/highlevel/scripts"))
     import _common  # noqa: F401
     from virtual_data.scenario_source import load_sku_ranges
-    ranges = load_sku_ranges(Path.home() / "AHEAD/audit_20261009/03_planner/highlevel_work/dataset80_x10")
+    ranges = load_sku_ranges(Path(__file__).resolve().parents[1] / "lookahead/data/dataset80_x10")
     print("현재(균일 판지 ECT 5000, t 3 mm, SF 4) vs 제안(무게 등급별 판지 × 현장 계수 ÷ 1.5)")
     for site in SITES:
         print(f"  site {site}: factor {site_factor(site):.3f} (= BCT ÷ {1/site_factor(site):.2f})  {SITES[site]['label']}")

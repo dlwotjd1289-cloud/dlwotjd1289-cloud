@@ -1,0 +1,2489 @@
+{
+  "schema_version": 1,
+  "scenario_id": "S0023",
+  "scenario_family": "late_heavy",
+  "state_kind": "SIMULATED",
+  "seed": 3531240364392607922,
+  "arrival_events": [
+    {
+      "arrival_index": 0,
+      "weight_profile_component": "normal",
+      "box_state": {
+        "box_id": "S0023-B001",
+        "sku_id": "K05",
+        "size": {
+          "x": 0.3,
+          "y": 0.2,
+          "z": 0.15
+        },
+        "weight_kg": 0.581383,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.075,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 0.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 1,
+      "weight_profile_component": "normal",
+      "box_state": {
+        "box_id": "S0023-B002",
+        "sku_id": "K06",
+        "size": {
+          "x": 0.31,
+          "y": 0.22,
+          "z": 0.13
+        },
+        "weight_kg": 0.643293,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.065,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 1.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 2,
+      "weight_profile_component": "light_biased",
+      "box_state": {
+        "box_id": "S0023-B003",
+        "sku_id": "K01",
+        "size": {
+          "x": 0.22,
+          "y": 0.19,
+          "z": 0.09
+        },
+        "weight_kg": 0.886804,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.045,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 2.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 3,
+      "weight_profile_component": "normal",
+      "box_state": {
+        "box_id": "S0023-B004",
+        "sku_id": "K01",
+        "size": {
+          "x": 0.22,
+          "y": 0.19,
+          "z": 0.09
+        },
+        "weight_kg": 0.933923,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.045,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 3.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 4,
+      "weight_profile_component": "heavy_biased",
+      "box_state": {
+        "box_id": "S0023-B005",
+        "sku_id": "K01",
+        "size": {
+          "x": 0.22,
+          "y": 0.19,
+          "z": 0.09
+        },
+        "weight_kg": 1.018483,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.045,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 4.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 5,
+      "weight_profile_component": "heavy_biased",
+      "box_state": {
+        "box_id": "S0023-B006",
+        "sku_id": "K04",
+        "size": {
+          "x": 0.27,
+          "y": 0.2,
+          "z": 0.13
+        },
+        "weight_kg": 1.309823,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.065,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 5.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 6,
+      "weight_profile_component": "normal",
+      "box_state": {
+        "box_id": "S0023-B007",
+        "sku_id": "K05",
+        "size": {
+          "x": 0.3,
+          "y": 0.2,
+          "z": 0.15
+        },
+        "weight_kg": 1.380665,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.075,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 6.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 7,
+      "weight_profile_component": "light_biased",
+      "box_state": {
+        "box_id": "S0023-B008",
+        "sku_id": "K01",
+        "size": {
+          "x": 0.22,
+          "y": 0.19,
+          "z": 0.09
+        },
+        "weight_kg": 1.404347,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.045,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 7.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 8,
+      "weight_profile_component": "normal",
+      "box_state": {
+        "box_id": "S0023-B009",
+        "sku_id": "K03",
+        "size": {
+          "x": 0.27,
+          "y": 0.18,
+          "z": 0.15
+        },
+        "weight_kg": 1.431164,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.075,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 8.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 9,
+      "weight_profile_component": "light_biased",
+      "box_state": {
+        "box_id": "S0023-B010",
+        "sku_id": "K03",
+        "size": {
+          "x": 0.27,
+          "y": 0.18,
+          "z": 0.15
+        },
+        "weight_kg": 1.622836,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.075,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 9.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 10,
+      "weight_profile_component": "stress",
+      "box_state": {
+        "box_id": "S0023-B011",
+        "sku_id": "K05",
+        "size": {
+          "x": 0.3,
+          "y": 0.2,
+          "z": 0.15
+        },
+        "weight_kg": 1.687684,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.075,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 10.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 11,
+      "weight_profile_component": "normal",
+      "box_state": {
+        "box_id": "S0023-B012",
+        "sku_id": "K03",
+        "size": {
+          "x": 0.27,
+          "y": 0.18,
+          "z": 0.15
+        },
+        "weight_kg": 1.833517,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.075,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 11.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 12,
+      "weight_profile_component": "heavy_biased",
+      "box_state": {
+        "box_id": "S0023-B013",
+        "sku_id": "K01",
+        "size": {
+          "x": 0.22,
+          "y": 0.19,
+          "z": 0.09
+        },
+        "weight_kg": 1.904151,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.045,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 12.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 13,
+      "weight_profile_component": "heavy_biased",
+      "box_state": {
+        "box_id": "S0023-B014",
+        "sku_id": "K01",
+        "size": {
+          "x": 0.22,
+          "y": 0.19,
+          "z": 0.09
+        },
+        "weight_kg": 2.030412,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.045,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 13.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 14,
+      "weight_profile_component": "heavy_biased",
+      "box_state": {
+        "box_id": "S0023-B015",
+        "sku_id": "K02",
+        "size": {
+          "x": 0.25,
+          "y": 0.2,
+          "z": 0.15
+        },
+        "weight_kg": 2.147031,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.075,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 14.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 15,
+      "weight_profile_component": "heavy_biased",
+      "box_state": {
+        "box_id": "S0023-B016",
+        "sku_id": "K02",
+        "size": {
+          "x": 0.25,
+          "y": 0.2,
+          "z": 0.15
+        },
+        "weight_kg": 2.307706,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.075,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 15.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 16,
+      "weight_profile_component": "light_biased",
+      "box_state": {
+        "box_id": "S0023-B017",
+        "sku_id": "K08",
+        "size": {
+          "x": 0.34,
+          "y": 0.25,
+          "z": 0.21
+        },
+        "weight_kg": 2.351279,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.105,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 16.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 17,
+      "weight_profile_component": "heavy_biased",
+      "box_state": {
+        "box_id": "S0023-B018",
+        "sku_id": "K02",
+        "size": {
+          "x": 0.25,
+          "y": 0.2,
+          "z": 0.15
+        },
+        "weight_kg": 2.508601,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.075,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 17.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 18,
+      "weight_profile_component": "normal",
+      "box_state": {
+        "box_id": "S0023-B019",
+        "sku_id": "K01",
+        "size": {
+          "x": 0.22,
+          "y": 0.19,
+          "z": 0.09
+        },
+        "weight_kg": 2.542875,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.045,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 18.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 19,
+      "weight_profile_component": "normal",
+      "box_state": {
+        "box_id": "S0023-B020",
+        "sku_id": "K01",
+        "size": {
+          "x": 0.22,
+          "y": 0.19,
+          "z": 0.09
+        },
+        "weight_kg": 2.632002,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.045,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 19.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 20,
+      "weight_profile_component": "heavy_biased",
+      "box_state": {
+        "box_id": "S0023-B021",
+        "sku_id": "K03",
+        "size": {
+          "x": 0.27,
+          "y": 0.18,
+          "z": 0.15
+        },
+        "weight_kg": 2.66443,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.075,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 20.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 21,
+      "weight_profile_component": "normal",
+      "box_state": {
+        "box_id": "S0023-B022",
+        "sku_id": "K08",
+        "size": {
+          "x": 0.34,
+          "y": 0.25,
+          "z": 0.21
+        },
+        "weight_kg": 2.703038,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.105,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 21.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 22,
+      "weight_profile_component": "heavy_biased",
+      "box_state": {
+        "box_id": "S0023-B023",
+        "sku_id": "K09",
+        "size": {
+          "x": 0.35,
+          "y": 0.25,
+          "z": 0.15
+        },
+        "weight_kg": 2.741701,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.075,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 22.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 23,
+      "weight_profile_component": "normal",
+      "box_state": {
+        "box_id": "S0023-B024",
+        "sku_id": "K03",
+        "size": {
+          "x": 0.27,
+          "y": 0.18,
+          "z": 0.15
+        },
+        "weight_kg": 2.96661,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.075,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 23.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 24,
+      "weight_profile_component": "normal",
+      "box_state": {
+        "box_id": "S0023-B025",
+        "sku_id": "K07",
+        "size": {
+          "x": 0.34,
+          "y": 0.26,
+          "z": 0.15
+        },
+        "weight_kg": 2.99242,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.075,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 24.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 25,
+      "weight_profile_component": "normal",
+      "box_state": {
+        "box_id": "S0023-B026",
+        "sku_id": "K06",
+        "size": {
+          "x": 0.31,
+          "y": 0.22,
+          "z": 0.13
+        },
+        "weight_kg": 3.03934,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.065,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 25.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 26,
+      "weight_profile_component": "light_biased",
+      "box_state": {
+        "box_id": "S0023-B027",
+        "sku_id": "K06",
+        "size": {
+          "x": 0.31,
+          "y": 0.22,
+          "z": 0.13
+        },
+        "weight_kg": 3.09442,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.065,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 26.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 27,
+      "weight_profile_component": "normal",
+      "box_state": {
+        "box_id": "S0023-B028",
+        "sku_id": "K05",
+        "size": {
+          "x": 0.3,
+          "y": 0.2,
+          "z": 0.15
+        },
+        "weight_kg": 3.143812,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.075,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 27.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 28,
+      "weight_profile_component": "light_biased",
+      "box_state": {
+        "box_id": "S0023-B029",
+        "sku_id": "K08",
+        "size": {
+          "x": 0.34,
+          "y": 0.25,
+          "z": 0.21
+        },
+        "weight_kg": 3.147131,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.105,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 28.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 29,
+      "weight_profile_component": "light_biased",
+      "box_state": {
+        "box_id": "S0023-B030",
+        "sku_id": "K09",
+        "size": {
+          "x": 0.35,
+          "y": 0.25,
+          "z": 0.15
+        },
+        "weight_kg": 3.240978,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.075,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 29.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 30,
+      "weight_profile_component": "heavy_biased",
+      "box_state": {
+        "box_id": "S0023-B031",
+        "sku_id": "K05",
+        "size": {
+          "x": 0.3,
+          "y": 0.2,
+          "z": 0.15
+        },
+        "weight_kg": 3.351958,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.075,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 30.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 31,
+      "weight_profile_component": "normal",
+      "box_state": {
+        "box_id": "S0023-B032",
+        "sku_id": "K04",
+        "size": {
+          "x": 0.27,
+          "y": 0.2,
+          "z": 0.13
+        },
+        "weight_kg": 3.405911,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.065,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 31.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 32,
+      "weight_profile_component": "normal",
+      "box_state": {
+        "box_id": "S0023-B033",
+        "sku_id": "K07",
+        "size": {
+          "x": 0.34,
+          "y": 0.26,
+          "z": 0.15
+        },
+        "weight_kg": 3.6404,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.075,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 32.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 33,
+      "weight_profile_component": "light_biased",
+      "box_state": {
+        "box_id": "S0023-B034",
+        "sku_id": "K07",
+        "size": {
+          "x": 0.34,
+          "y": 0.26,
+          "z": 0.15
+        },
+        "weight_kg": 3.700442,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.075,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 33.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 34,
+      "weight_profile_component": "normal",
+      "box_state": {
+        "box_id": "S0023-B035",
+        "sku_id": "K09",
+        "size": {
+          "x": 0.35,
+          "y": 0.25,
+          "z": 0.15
+        },
+        "weight_kg": 3.797561,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.075,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 34.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 35,
+      "weight_profile_component": "normal",
+      "box_state": {
+        "box_id": "S0023-B036",
+        "sku_id": "K03",
+        "size": {
+          "x": 0.27,
+          "y": 0.18,
+          "z": 0.15
+        },
+        "weight_kg": 3.877843,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.075,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 35.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 36,
+      "weight_profile_component": "heavy_biased",
+      "box_state": {
+        "box_id": "S0023-B037",
+        "sku_id": "K03",
+        "size": {
+          "x": 0.27,
+          "y": 0.18,
+          "z": 0.15
+        },
+        "weight_kg": 4.002507,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.075,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 36.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 37,
+      "weight_profile_component": "heavy_biased",
+      "box_state": {
+        "box_id": "S0023-B038",
+        "sku_id": "K05",
+        "size": {
+          "x": 0.3,
+          "y": 0.2,
+          "z": 0.15
+        },
+        "weight_kg": 4.07158,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.075,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 37.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 38,
+      "weight_profile_component": "normal",
+      "box_state": {
+        "box_id": "S0023-B039",
+        "sku_id": "K04",
+        "size": {
+          "x": 0.27,
+          "y": 0.2,
+          "z": 0.13
+        },
+        "weight_kg": 4.192027,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.065,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 38.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 39,
+      "weight_profile_component": "normal",
+      "box_state": {
+        "box_id": "S0023-B040",
+        "sku_id": "K06",
+        "size": {
+          "x": 0.31,
+          "y": 0.22,
+          "z": 0.13
+        },
+        "weight_kg": 4.261182,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.065,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 39.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 40,
+      "weight_profile_component": "normal",
+      "box_state": {
+        "box_id": "S0023-B041",
+        "sku_id": "K10",
+        "size": {
+          "x": 0.4,
+          "y": 0.3,
+          "z": 0.13
+        },
+        "weight_kg": 4.299769,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.065,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 40.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 41,
+      "weight_profile_component": "normal",
+      "box_state": {
+        "box_id": "S0023-B042",
+        "sku_id": "K03",
+        "size": {
+          "x": 0.27,
+          "y": 0.18,
+          "z": 0.15
+        },
+        "weight_kg": 4.62577,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.075,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 41.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 42,
+      "weight_profile_component": "normal",
+      "box_state": {
+        "box_id": "S0023-B043",
+        "sku_id": "K11",
+        "size": {
+          "x": 0.41,
+          "y": 0.31,
+          "z": 0.28
+        },
+        "weight_kg": 4.859341,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.14,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 42.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 43,
+      "weight_profile_component": "normal",
+      "box_state": {
+        "box_id": "S0023-B044",
+        "sku_id": "K04",
+        "size": {
+          "x": 0.27,
+          "y": 0.2,
+          "z": 0.13
+        },
+        "weight_kg": 4.890333,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.065,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 43.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 44,
+      "weight_profile_component": "normal",
+      "box_state": {
+        "box_id": "S0023-B045",
+        "sku_id": "K07",
+        "size": {
+          "x": 0.34,
+          "y": 0.26,
+          "z": 0.15
+        },
+        "weight_kg": 5.375026,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.075,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 44.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 45,
+      "weight_profile_component": "heavy_biased",
+      "box_state": {
+        "box_id": "S0023-B046",
+        "sku_id": "K06",
+        "size": {
+          "x": 0.31,
+          "y": 0.22,
+          "z": 0.13
+        },
+        "weight_kg": 5.629664,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.065,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 45.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 46,
+      "weight_profile_component": "light_biased",
+      "box_state": {
+        "box_id": "S0023-B047",
+        "sku_id": "K09",
+        "size": {
+          "x": 0.35,
+          "y": 0.25,
+          "z": 0.15
+        },
+        "weight_kg": 5.73923,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.075,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 46.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 47,
+      "weight_profile_component": "normal",
+      "box_state": {
+        "box_id": "S0023-B048",
+        "sku_id": "K08",
+        "size": {
+          "x": 0.34,
+          "y": 0.25,
+          "z": 0.21
+        },
+        "weight_kg": 5.851933,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.105,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 47.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 48,
+      "weight_profile_component": "light_biased",
+      "box_state": {
+        "box_id": "S0023-B049",
+        "sku_id": "K09",
+        "size": {
+          "x": 0.35,
+          "y": 0.25,
+          "z": 0.15
+        },
+        "weight_kg": 6.331481,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.075,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 48.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 49,
+      "weight_profile_component": "normal",
+      "box_state": {
+        "box_id": "S0023-B050",
+        "sku_id": "K05",
+        "size": {
+          "x": 0.3,
+          "y": 0.2,
+          "z": 0.15
+        },
+        "weight_kg": 6.637666,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.075,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 49.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 50,
+      "weight_profile_component": "normal",
+      "box_state": {
+        "box_id": "S0023-B051",
+        "sku_id": "K06",
+        "size": {
+          "x": 0.31,
+          "y": 0.22,
+          "z": 0.13
+        },
+        "weight_kg": 6.671287,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.065,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 50.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 51,
+      "weight_profile_component": "stress",
+      "box_state": {
+        "box_id": "S0023-B052",
+        "sku_id": "K10",
+        "size": {
+          "x": 0.4,
+          "y": 0.3,
+          "z": 0.13
+        },
+        "weight_kg": 6.870208,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.065,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 51.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 52,
+      "weight_profile_component": "normal",
+      "box_state": {
+        "box_id": "S0023-B053",
+        "sku_id": "K09",
+        "size": {
+          "x": 0.35,
+          "y": 0.25,
+          "z": 0.15
+        },
+        "weight_kg": 6.963864,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.075,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 52.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 53,
+      "weight_profile_component": "normal",
+      "box_state": {
+        "box_id": "S0023-B054",
+        "sku_id": "K11",
+        "size": {
+          "x": 0.41,
+          "y": 0.31,
+          "z": 0.28
+        },
+        "weight_kg": 7.268925,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.14,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 53.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 54,
+      "weight_profile_component": "normal",
+      "box_state": {
+        "box_id": "S0023-B055",
+        "sku_id": "K07",
+        "size": {
+          "x": 0.34,
+          "y": 0.26,
+          "z": 0.15
+        },
+        "weight_kg": 7.37144,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.075,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 54.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 55,
+      "weight_profile_component": "normal",
+      "box_state": {
+        "box_id": "S0023-B056",
+        "sku_id": "K11",
+        "size": {
+          "x": 0.41,
+          "y": 0.31,
+          "z": 0.28
+        },
+        "weight_kg": 8.419391,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.14,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 55.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 56,
+      "weight_profile_component": "normal",
+      "box_state": {
+        "box_id": "S0023-B057",
+        "sku_id": "K11",
+        "size": {
+          "x": 0.41,
+          "y": 0.31,
+          "z": 0.28
+        },
+        "weight_kg": 8.678429,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.14,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 56.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 57,
+      "weight_profile_component": "stress",
+      "box_state": {
+        "box_id": "S0023-B058",
+        "sku_id": "K09",
+        "size": {
+          "x": 0.35,
+          "y": 0.25,
+          "z": 0.15
+        },
+        "weight_kg": 9.26648,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.075,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 57.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 58,
+      "weight_profile_component": "normal",
+      "box_state": {
+        "box_id": "S0023-B059",
+        "sku_id": "K07",
+        "size": {
+          "x": 0.34,
+          "y": 0.26,
+          "z": 0.15
+        },
+        "weight_kg": 9.437176,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.075,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 58.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 59,
+      "weight_profile_component": "light_biased",
+      "box_state": {
+        "box_id": "S0023-B060",
+        "sku_id": "K13",
+        "size": {
+          "x": 0.52,
+          "y": 0.48,
+          "z": 0.4
+        },
+        "weight_kg": 10.59518,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.2,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 59.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 60,
+      "weight_profile_component": "heavy_biased",
+      "box_state": {
+        "box_id": "S0023-B061",
+        "sku_id": "K10",
+        "size": {
+          "x": 0.4,
+          "y": 0.3,
+          "z": 0.13
+        },
+        "weight_kg": 10.762739,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.065,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 60.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 61,
+      "weight_profile_component": "light_biased",
+      "box_state": {
+        "box_id": "S0023-B062",
+        "sku_id": "K11",
+        "size": {
+          "x": 0.41,
+          "y": 0.31,
+          "z": 0.28
+        },
+        "weight_kg": 10.778391,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.14,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 61.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 62,
+      "weight_profile_component": "light_biased",
+      "box_state": {
+        "box_id": "S0023-B063",
+        "sku_id": "K08",
+        "size": {
+          "x": 0.34,
+          "y": 0.25,
+          "z": 0.21
+        },
+        "weight_kg": 11.004925,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.105,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 62.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 63,
+      "weight_profile_component": "light_biased",
+      "box_state": {
+        "box_id": "S0023-B064",
+        "sku_id": "K13",
+        "size": {
+          "x": 0.52,
+          "y": 0.48,
+          "z": 0.4
+        },
+        "weight_kg": 12.101098,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.2,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 63.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 64,
+      "weight_profile_component": "light_biased",
+      "box_state": {
+        "box_id": "S0023-B065",
+        "sku_id": "K12",
+        "size": {
+          "x": 0.48,
+          "y": 0.38,
+          "z": 0.34
+        },
+        "weight_kg": 12.946841,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.17,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 64.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 65,
+      "weight_profile_component": "light_biased",
+      "box_state": {
+        "box_id": "S0023-B066",
+        "sku_id": "K13",
+        "size": {
+          "x": 0.52,
+          "y": 0.48,
+          "z": 0.4
+        },
+        "weight_kg": 15.376709,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.2,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 65.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 66,
+      "weight_profile_component": "heavy_biased",
+      "box_state": {
+        "box_id": "S0023-B067",
+        "sku_id": "K11",
+        "size": {
+          "x": 0.41,
+          "y": 0.31,
+          "z": 0.28
+        },
+        "weight_kg": 16.015115,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.14,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 66.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 67,
+      "weight_profile_component": "normal",
+      "box_state": {
+        "box_id": "S0023-B068",
+        "sku_id": "K12",
+        "size": {
+          "x": 0.48,
+          "y": 0.38,
+          "z": 0.34
+        },
+        "weight_kg": 16.233555,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.17,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 67.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 68,
+      "weight_profile_component": "light_biased",
+      "box_state": {
+        "box_id": "S0023-B069",
+        "sku_id": "K11",
+        "size": {
+          "x": 0.41,
+          "y": 0.31,
+          "z": 0.28
+        },
+        "weight_kg": 17.800158,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.14,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 68.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 69,
+      "weight_profile_component": "light_biased",
+      "box_state": {
+        "box_id": "S0023-B070",
+        "sku_id": "K13",
+        "size": {
+          "x": 0.52,
+          "y": 0.48,
+          "z": 0.4
+        },
+        "weight_kg": 18.175184,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.2,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 69.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 70,
+      "weight_profile_component": "normal",
+      "box_state": {
+        "box_id": "S0023-B071",
+        "sku_id": "K11",
+        "size": {
+          "x": 0.41,
+          "y": 0.31,
+          "z": 0.28
+        },
+        "weight_kg": 18.975833,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.14,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 70.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 71,
+      "weight_profile_component": "normal",
+      "box_state": {
+        "box_id": "S0023-B072",
+        "sku_id": "K13",
+        "size": {
+          "x": 0.52,
+          "y": 0.48,
+          "z": 0.4
+        },
+        "weight_kg": 19.772368,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.2,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 71.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 72,
+      "weight_profile_component": "heavy_biased",
+      "box_state": {
+        "box_id": "S0023-B073",
+        "sku_id": "K12",
+        "size": {
+          "x": 0.48,
+          "y": 0.38,
+          "z": 0.34
+        },
+        "weight_kg": 20.969931,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.17,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 72.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 73,
+      "weight_profile_component": "normal",
+      "box_state": {
+        "box_id": "S0023-B074",
+        "sku_id": "K13",
+        "size": {
+          "x": 0.52,
+          "y": 0.48,
+          "z": 0.4
+        },
+        "weight_kg": 21.601219,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.2,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 73.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 74,
+      "weight_profile_component": "stress",
+      "box_state": {
+        "box_id": "S0023-B075",
+        "sku_id": "K02",
+        "size": {
+          "x": 0.25,
+          "y": 0.2,
+          "z": 0.15
+        },
+        "weight_kg": 22.82423,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.075,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 74.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 75,
+      "weight_profile_component": "stress",
+      "box_state": {
+        "box_id": "S0023-B076",
+        "sku_id": "K11",
+        "size": {
+          "x": 0.41,
+          "y": 0.31,
+          "z": 0.28
+        },
+        "weight_kg": 23.185143,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.14,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 75.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 76,
+      "weight_profile_component": "normal",
+      "box_state": {
+        "box_id": "S0023-B077",
+        "sku_id": "K13",
+        "size": {
+          "x": 0.52,
+          "y": 0.48,
+          "z": 0.4
+        },
+        "weight_kg": 23.835992,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.2,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 76.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 77,
+      "weight_profile_component": "normal",
+      "box_state": {
+        "box_id": "S0023-B078",
+        "sku_id": "K12",
+        "size": {
+          "x": 0.48,
+          "y": 0.38,
+          "z": 0.34
+        },
+        "weight_kg": 24.289448,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.17,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 77.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 78,
+      "weight_profile_component": "normal",
+      "box_state": {
+        "box_id": "S0023-B079",
+        "sku_id": "K13",
+        "size": {
+          "x": 0.52,
+          "y": 0.48,
+          "z": 0.4
+        },
+        "weight_kg": 24.802336,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.2,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 78.0,
+        "source": "simulation_ground_truth"
+      }
+    },
+    {
+      "arrival_index": 79,
+      "weight_profile_component": "heavy_biased",
+      "box_state": {
+        "box_id": "S0023-B080",
+        "sku_id": "K13",
+        "size": {
+          "x": 0.52,
+          "y": 0.48,
+          "z": 0.4
+        },
+        "weight_kg": 25.637193,
+        "pose": {
+          "frame_id": "conveyor",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.2,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "allowed_yaws_rad": [
+          0.0,
+          1.5707963267948966
+        ],
+        "status": "READY_FOR_PICK",
+        "confidence": 1.0,
+        "stamp_sec": 79.0,
+        "source": "simulation_ground_truth"
+      }
+    }
+  ]
+}

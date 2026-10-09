@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "generator_version": "1.4.0",
+  "scenario_id": "S0021",
+  "scenario_family": "late_heavy",
+  "state_kind": "SIMULATED",
+  "seed": 7015071392761120074,
+  "initial_system_state": {
+    "state_version": 0,
+    "stamp_sec": 0.0,
+    "pallet": {
+      "pallet_id": "P001",
+      "size": {
+        "x": 1.1,
+        "y": 1.1,
+        "z": 1.5
+      },
+      "boxes": []
+    },
+    "inventory": {
+      "tracked_boxes": {},
+      "remaining_by_sku": {
+        "K01": 12,
+        "K02": 2,
+        "K03": 5,
+        "K04": 5,
+        "K05": 3,
+        "K06": 7,
+        "K07": 7,
+        "K08": 9,
+        "K09": 8,
+        "K10": 3,
+        "K11": 6,
+        "K12": 4,
+        "K13": 9
+      }
+    }
+  },
+  "constraints": {
+    "max_stack_height_m": 1.5,
+    "height_reference": "above_deck",
+    "deck_height_m": 0.15,
+    "max_load_kg": 1000.0
+  },
+  "planner_contract_note": "This file intentionally contains no exact future arrival order. The simulator owns ground-truth arrival events."
+}

@@ -14,6 +14,7 @@
 | [PRESENTATION_PARAMS.md](PRESENTATION_PARAMS.md) | **발표용**: 항목별 계산식, 파라미터 값, 근거 종류(실험·측정·문헌·가정·팀) |
 | [PRESENTATION_QA.md](PRESENTATION_QA.md) | 발표 예상 질문과 답변 |
 | [STABILITY_0_3G_BASIS.md](STABILITY_0_3G_BASIS.md) | 안정성 기준 0.3 g(랩 없음)의 근거: 지게차 서행·랩핑기 하중 계산, 표준, 출처 |
+| [COMPARE_TAEHYEON_N5.md](COMPARE_TAEHYEON_N5.md) | 태현 N=5 탐색(PR #4)과 같은 점·다른 점, 합치는 방법 제안 |
 | [results/](results/) | 실험 결과 요약. `raw/`는 에피소드별 원자료(jsonl) |
 
 ## 주요 결과
@@ -37,7 +38,12 @@
 | `lookahead/sweep/` | 파라미터 실험 분석 스크립트, 변형 목록 |
 | `site_params/` | `site_cost.py` 현장 비용 계산기, `site_oat.py` 하나씩 바꾼 민감도, `capacity.py` 박스별 허용 하중, `conveyor_from_logs.py` 컨베이어 측정 |
 
-- 평가기는 jaesung 로컬 감사 폴더(`~/AHEAD/audit_20261009/`)의 데이터셋, 설정, `08_prototype` 모듈을 참조합니다. 그대로 재실행하려면 경로 조정이 필요합니다.
+- **레포만으로 실행 가능**: 데이터셋(`lookahead/data/`, 생성기 1.4.0, seed 20261007 / 777), 후보 설정(`lookahead/configs/`), 보조 모듈(`wave/`)이 모두 레포 안에 있습니다.
+  ```bash
+  tools/prototypes/lookahead/run.sh team la_k3 "la_k3;stack_g=0.3;cand=hol_off;cap=general" --episodes 2 --workers 4 --shock --out /tmp/la.json
+  LA_DATA=tools/prototypes/lookahead/data/holdout_seed777 tools/prototypes/lookahead/run.sh ...   # 처음 보는 데이터
+  ```
+- `results/`는 main 2bb4bac(마감 30% 문턱) 기준입니다. 지금 main은 막힌 팔레트 마감이 기본이라 다시 돌리면 수치가 달라질 수 있습니다.
 
 ## 남은 일 (우선순위)
 1. **안정성 기준 확정**

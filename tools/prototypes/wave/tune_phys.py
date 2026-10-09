@@ -67,7 +67,7 @@ def main():
     ap.add_argument("--eval", action="store_true", help="evaluate --init mean on --split, no tuning")
     ap.add_argument("--out", type=Path, required=True)
     a = ap.parse_args()
-    C = Path.home() / "AHEAD/audit_20261009/07_ai_role/sweep/configs"
+    C = Path(__file__).resolve().parents[1] / "lookahead/configs"
     import os
     tune.setup(Path(os.environ.get("WAVE_CAND", str(C / "perbox.yaml"))), a.split)
     nf = len(wave.FEATURES)

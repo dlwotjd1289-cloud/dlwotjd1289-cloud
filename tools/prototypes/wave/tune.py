@@ -17,7 +17,7 @@ from virtual_data.highlevel import split_ids, world_factory
 
 REPO = wave.REPO
 import os
-DATA = Path(os.environ.get("WAVE_DATA", str(Path.home() / "AHEAD/audit_20261009/03_planner/highlevel_work/dataset80_x10")))
+DATA = Path(os.environ.get("WAVE_DATA", str(Path(__file__).resolve().parents[1] / "lookahead/data/dataset80_x10")))
 G = {}
 
 def setup(cand_path, split, hl_path=None):

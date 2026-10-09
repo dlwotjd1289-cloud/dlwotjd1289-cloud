@@ -3,7 +3,8 @@ Per run: inlet->scale travel, scale settle (stop -> measure), scale->pick travel
 overshoot of the stop position past the commanded stop line."""
 import re, glob, statistics, json
 from pathlib import Path
-L = Path.home() / "AHEAD/pac2026_hdr50_proxy_scaffold/logs"
+import os
+L = Path(os.environ.get("SCAFFOLD_LOGS", str(Path.home() / "AHEAD/pac2026_hdr50_proxy_scaffold/logs")))  
 files = sorted(glob.glob(str(L / "v43_e2e/final*.log"))) + sorted(glob.glob(str(L / "v44_generator_cycle/*/box_*_v43.log")))
 ts = lambda line: float(re.search(r"\[(\d+\.\d+)\]", line).group(1))
 rows = []
