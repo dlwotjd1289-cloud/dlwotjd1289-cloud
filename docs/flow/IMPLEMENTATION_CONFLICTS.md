@@ -1,4 +1,4 @@
-# 구현 간 충돌 검토 (2026-10-09, 정리 브랜치 기준)
+# 구현 간 충돌 검토 (2026-10-09, 정리 브랜치 기준, 3차: 미병합 브랜치 포함)
 
 같은 일을 하는 코드가 서로 다른 규칙·값을 쓰는 곳을 모았습니다. 주로 재성 님 Gazebo / PyBullet / v3 프로토타입 코드와
 팀 런타임(태현 `pac_runtime`·`pac_highlevel`·`pac_robot_check`, 동한 `pac_planning`, 공통 `pac_common`)의 비교입니다.
@@ -36,6 +36,15 @@
 | C24 | 공통 값 중복 | 지지율 0.70, 1000 kg, 데크 0.15 m가 여러 파일에 같은 값으로, 일치 검사 일부만 | 낮음 |
 | C25 | 안정성 가속도 | 재성 v3 안정성 점수는 0.2 g, 하드 검사는 0.3 g | 낮음 (설계) |
 | C26 | 이름·미사용 값 | `SkuSpec` 두 의미, 팔레트 ID 세 가지, `PlannerConfig.min_cog_margin` 미사용 | 낮음 |
+| C27 | 5·6단계 순서 | 동한 ranker-fix: 6단계 통과 후보만 순위 / `mission_bridge_v45.plan_ranked`: 순위 후 6단계로 거름 | 중간 |
+| C28 | 5단계 시간 예산 | 런타임 순위기 `use_time_budget` 기본 켬(ranker-fix) vs Gazebo 브리지·오프라인 평가 끔 | 낮음 |
+| C29 | 셀 배치 원본 | V4.6이 계량대·버퍼 위치를 환경변수(`PAC_LAYOUT`, `PAC_SCALE_SHIFT_M`, `PAC_BUFFER_X/Y`)로 바꿈, `workcell.yaml`은 V4.2 그대로 | 중간 |
+| C30 | 4단계 최종안 미연결 | 런타임 `load_policy`에 Look-ahead 없음, `HighLevelDecider`가 미리보기 박스 0개로 월드를 만듦 | 높음 |
+| C31 | 7단계 측정 yaw·z | 측정 yaw가 0.5° 틀어지면 `ValueError`(ROS 노드 정지), 데크 위 z +2 mm면 L4 | 높음 |
+| C32 | 3단계 Supervisor | 모드가 같은 호출 안에서 NORMAL로 돌아옴, `PALLET_CLOSE`가 교체 모드·시간을 거치지 않음 | 중간 |
+| C33 | 계량 하한 | 저울 0.5 kg 미만 측정 안 함 vs 생성기 최소 0.2 kg | 중간 |
+| C34 | PyBullet 로봇 모델 | `models/pybullet/hdr50_22_suction.urdf` 메시 경로가 `/home/jaesung/...` 절대 경로 | 중간 |
+| C35 | 현장값 원본 두 개 | `config/taehyeon/environment.yaml`(팔레트 3종, 교체 60 s)과 `default.yaml`이 서로 읽지 않음 | 중간 |
 
 ---
 
@@ -204,9 +213,104 @@ V4.3 (`scale_cycle_core_v43.py` 45·73행)은 생성기의 정답 무게와 비�
 
 ---
 
+# 3차 검토 (미병합 브랜치 포함, 2026-10-09)
+
+1·2차는 main `85b13a6` 기준이었습니다. 3차는 아래를 이 브랜치에 합쳐 놓고 다시 확인했습니다(충돌 없이 병합됨).
+
+| 대상 | 내용 |
+|---|---|
+| main `4fee388` | 동한 님 `overlap_review_20261009.md` (이 브랜치에 병합) |
+| `feature/donghan-flow-doc-ranker-fix` | 6단계 통과 후보만 순위, 런타임 시간 예산 켬, `pac_perception` 의존성 |
+| `jaesung/workcell-v46` | V4.6 카메라 2대 월드, 블록 팔레트, 복구·버퍼·팔레트 교체 |
+
+두 브랜치는 검토용으로만 합쳐 봤고 이 브랜치에는 넣지 않았습니다. 합친 상태에서 테스트 447 passed(ROS 없음), ROS 컨테이너 colcon 27개 패키지 빌드 성공, `hdr50_workcell_v4_6.launch.py` 인자 확인.
+
+## C1~C26 재확인
+
+| # | 3차 상태 | 비고 |
+|---|---|---|
+| C1 | 그대로 | V4.6 사이클도 셸 스크립트가 버퍼·교체·보류를 직접 결정 |
+| C2 | 그대로 | 버퍼 박스를 미입고 재고로 세는 부분 변경 없음 |
+| C3 | 그대로 | 브리지 commit은 `StateManager.place`(공차 규칙)를 쓰지만, 공차 안이면 여전히 20 mm 확대 크기를 저장 |
+| C4 | 강화 | V4.6 실행부가 그리퍼 정격 30 kg을 직접 검사. `pad_fork` 60 kg은 HDR50-22 가반하중 50 kg 초과 |
+| C5 | 악화 | 버퍼 위치가 V4.4 (1.45, −0.55) / V4.6 (−1.05, 0.40) 두 가지, 둘 다 `workcell.yaml`에 없음 (C29) |
+| C6 | 확대 | 인식 경로 4갈래(계량 카메라 추가). 여전히 `StateValidator` 미경유 |
+| C7~C15 | 그대로 | |
+| C16 | 그대로 | V4.6도 numpy 경로는 플랜지 + 5 mm 목표 |
+| C17~C26 | 그대로 | C19는 동한 님 문서에서도 실측(`MODEL_BACKEND_MISMATCH`). C21에 Gazebo 0.6(동한 셀) 값 추가 |
+
+## C27. 5·6단계 순서 (중간)
+- ranker-fix: `TeamRuntimeRanker.bind_robot` → 6단계 통과 후보만 5-③~⑥ 순위에 넣음.
+- 이 브랜치 `mission_bridge_v45.plan_ranked`: `plan_request`로 순위를 낸 뒤 위에서부터 6단계 검사.
+- 같은 입력에서 고르는 자리가 다를 수 있음(순위 상위 K개가 모두 6단계 탈락하면 브리지는 "자리 없음").
+- 결정: ranker-fix 방식으로 통일하면 브리지도 `bind_robot`을 쓰도록 바꾸면 됨. 비용은 후보마다 6단계 호출(약 130~150 ms, 동한 문서 5장).
+
+## C28. 5단계 시간 예산 (낮음)
+ranker-fix가 런타임 순위기의 `use_time_budget` 기본을 켬(`timeout_sec` 1.0 s, Top-K·시나리오 축소). Gazebo 브리지와 오프라인 평가는 끔 → 같은 박스에 다른 결과가 나올 수 있음. 재현성이 필요한 평가만 끄도록 명시.
+
+## C29. 셀 배치 원본 (중간)
+V4.6은 `PAC_LAYOUT=v46`, `PAC_SCALE_SHIFT_M=-2.185`, `PAC_BUFFER_X/Y`로 계량대·버퍼를 옮김(`scale_cycle_core_v43.py`, `run_generator_cycle_v44.sh`, `moveit_pick_place_v44.py`). `config/workcell.yaml`은 V4.2 배치이고 `test_config_consistency`는 V4.6을 보지 않음. 팔레트·로봇 위치는 같아 6단계 판정은 영향 없음. V4.6을 표준 셀로 정하면 `workcell.yaml`에 V4.6 배치를 추가하고 스크립트가 그 값을 읽게 해야 함.
+
+## C30. 4단계 최종안 미연결 (높음)
+`pac_highlevel.runtime.load_policy`는 `rule`/`greedy`만 지원(Look-ahead 없음). `HighLevelDecider`가 `PalletizingWorld([], ...)`로 월드를 만들어 런타임에서는 미리보기 박스가 0개. ROS·Gazebo 경로의 4단계는 최종안(N=5 탐색)이 아니라 Rule입니다. (동한 문서 태현 5번과 같음)
+
+## C31. 7단계 측정 yaw·z (높음)
+- `ExecutorSim.check`가 측정 pose로 `rotated_dims`를 부름 → yaw가 90° 배수에서 1e-6 rad 넘게 벗어나면 `ValueError`. ROS `runtime_node`는 명령을 대기 상태로 둔 채 멈춤.
+- `pose.z > 1e-6`이면 데크를 지지면으로 보지 않음 → 데크 위 박스 z가 +2 mm만 측정돼도 L4(HOLD).
+- 이 브랜치의 `StateManager.place`는 공차(xy 5 / z 3 mm / 1°) 안이면 계획 pose를 저장하므로 저장값 문제는 해소, 위 두 판정 문제는 남음. 측정 yaw를 가장 가까운 90° 배수로 스냅하고 데크 판정에 z 공차를 쓰면 됨.
+
+## C32. 3단계 Supervisor (중간)
+`Supervisor.pallet_change`·`hold`·`repacking`이 모드를 바꾼 직후 같은 호출에서 NORMAL로 되돌림(시간만 더함). `RuntimeCore`의 `PALLET_CLOSE` 처리는 `supervisor.pallet_change`를 부르지 않아 ROS 경로에서는 교체 시간이 빠짐.
+
+## C33. 계량 하한 (중간)
+`scale_cycle_core_v43.py`는 0.5 kg 미만이면 측정값 0 → Gazebo 사이클 중단. 생성기 최소 무게 0.2 kg(동한 문서: 박스의 1.6 %).
+
+## C34. PyBullet 로봇 모델 경로 (중간)
+`models/pybullet/hdr50_22_suction.urdf` 메시 경로가 `/home/jaesung/AHEAD/...` 절대 경로 → 다른 PC·Docker에서 로봇 셀 로드 실패. 저장소 상대 경로로 바꿔야 함.
+
+## C35. 현장값 원본 두 개 (중간)
+`config/taehyeon/environment.yaml`(팔레트 3종 순환, 교체 60 s)은 `apply_environment`로 가상 셀에만 적용되고 `default.yaml`(1.1 × 1.1)과 서로 읽지 않음. C17·DECISION_REVIEW Q4와 같은 뿌리. 평가용 강건성 설정이라면 파일 머리말에 "운영 값 아님"을 명시하고, 운영 값은 `default.yaml`만.
+
+## 동한 님 `overlap_review_20261009.md` 대조
+
+| 동한 님 문서 항목 | 이 브랜치 상태 | 판단 |
+|---|---|---|
+| 8단계 기준 = `pac_runtime.StateManager`, `pac_common` 쪽은 폐기 | 둘을 `pac_common.StateManager` 하나로 합침(버퍼·MISSING·교체 + 공차 규칙). `pac_runtime`이 이것을 씀 | **결과는 같음, 위치만 다름**. 확정 규칙 통일(동한 7장 7번)은 반영됨 |
+| 8단계 편차 표(측정 pose 저장, z −2 mm 그대로 저장) | 공차 안이면 계획 pose 저장 | 해소. yaw 0.5° 정지·데크 z 판정은 C31로 남음 |
+| 6단계 = `pac_robot_check`, 설정을 실제 셀에 맞춤 | `robot_check.yaml`을 V4.2 셀(base 0.40 m, 팔레트 (0, 1.20), 흡착컵 TCP 0.06 m)로 다시 씀, 일치 테스트 추가 | **동의, 반영됨**. 동한 문서 6단계 값 표(0.50 m, ±1.15, 0.22 m)는 정리 전 값 |
+| 7단계: 태현 `gazebo_driver`는 빠른 재생·시각화용으로 유지 | 삭제(이전 1.2 × 1.0 월드 전용, DECISION_REVIEW C4) | **상충**. 유지하려면 V4.2 셀로 다시 써야 함 |
+| 7단계: 동한 executor 계약 검사 흡수(합격 기준 수정 후) | `pac_execution` 삭제(7단계 중복, 1.2 × 1.0 강제) | **상충**. 계약 검사(box·후보·측정 출처)만 `pac_runtime`에 옮길지 결정 필요. git 기록에서 복원 가능 |
+| 5-①②: `ReferenceBackend`는 오프라인 참조용 | 삭제 | **상충(경미)**. 필요하면 복원 |
+| 5-③~⑥ 6단계 사전 검사(PR #3) | 이 브랜치는 순위 후 검사 | C27 |
+| 버그: `PLANNER_ROOT` NameError | 브리지 재작성, `plan` 실행 테스트 추가 | 해소 |
+| 버그: `HeavyOnLightConfig` 기본 켬 | 기본 끔 | 해소 |
+| 버그: `pac_execution` audit 1 mm HOLD, launch 1.2 × 1.0 | 패키지 삭제 | 해소(위 상충 참고) |
+| 버그: 동한 모델 계약 불일치 | 그대로 | C19 |
+| 버그: `ExecutorSim` 데크 z, yaw 0.5° | 그대로 | C31 |
+| 버그: Supervisor 모드 | 그대로 | C32 |
+| 버그: 4·5단계 최종안 런타임 미연결 | 그대로 | C30 |
+| 버그: 저울 0.5 kg | 그대로 | C33 |
+| 버그: URDF 절대 경로 | 그대로 | C34 |
+| 버그: numpy 경로 flange + 5 mm | 그대로 | C16과 같음 |
+| 버그: `pad_fork` 60 kg > 50 kg | 그대로 | C4 |
+| 버그: `/pac/cctv_pick/image` 월드에 없음 | V4.6 월드에도 없음(`/pac/scale_camera/image`만 추가) | 남음. `run_ahead_cycle_v44.sh`, `run_moveit_pick_place_v44.sh`가 요구 |
+| 버그: 정답 무게·크기·SKU를 인식에 넘김 | 그대로 | C6 |
+| 현장값: `environment.yaml` vs `default.yaml` | 그대로 | C35 |
+| 교체 시간 60 s 세 곳 | `runtime.yaml`에서 제거, `highlevel.yaml` `timing` + `environment.yaml` 두 곳 | 일부 해소 |
+| 확정 허용 z 3 mm(공통) vs 5 mm(`runtime.yaml`) | `runtime.yaml` L0 값 삭제, 공통 공차만 | 해소 |
+| 옆 간격 문서 "4 mm" vs 실제 이웃 8 mm, 브리지 20 mm | 브리지 20 mm 유지 | DECISION_REVIEW Q3, 문서 정정 필요 |
+| 마찰 Gazebo 0.6 / 0.9 | 그대로 | C21 |
+| 재성 프로토타입: 흔들기 시험 팔레트 크기, la_k3 미입고 샘플 0개, c_p 2000/1973/2368, 문서-코드 불일치 9건 | 이번 정리 범위 밖(`tools/prototypes`) | 동한 문서대로 재성 님 확인 필요 |
+| 4·5단계 비교 결과(2장), 팀 결정 11개(7장) | 해당 없음 | 동한 7장 1·2·6번 결정이 C8·C9·C17·C29·C35를 함께 정함 |
+
+---
+
 ## 처리 순서 제안
 1. **C1·C2·C5** (함께): Gazebo 사이클을 `HighLevelDecider` + `StateManager`로 구동하고, 버퍼 칸 수·위치·크기 제한을 셀 설정 하나로.
 2. **C3·C4·C7**: 상태에는 실제 크기, 간격은 후보기 설정으로 / 그리퍼별 가반하중을 6단계 설정으로 / 안정 판정 기준값 하나로.
 3. **C6**: Gazebo 관측도 `StateValidator`를 거치게 연결, SKU 추정 방법 하나로.
 4. **C8~C11**: 하중 모델·정보 가정·마감/재적재 방식을 팀 회의에서 결정한 뒤 실험 설정을 맞춰 다시 비교.
 5. **C12~C15**: 위 작업과 함께 정리.
+6. **C30·C31·C32** (3차): 런타임 버그. 셀 결정과 무관하게 바로 고칠 수 있음.
+7. **C27·C29·C35** (3차): 동한 7장 6번(Gazebo 셀 하나) 결정 뒤 `workcell.yaml`·브리지에 반영.
+8. **C33·C34** (3차): 재성 님 쪽 단독 수정.
