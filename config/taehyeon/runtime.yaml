@@ -37,5 +37,11 @@ runtime:
     max_protrusion_m: 0.002
     min_support_ratio: 0.6
     heightmap_cell_m: 0.01
+  planning:                         # 4/5: look-ahead search time per decision
+    ahead_ratio: 0.75               # planned during the robot action: 75 % of its expected duration
+    max_budget_s: 10.0              #   (stage-6 cycle time / buffer travel / pallet change), capped
+    min_budget_s: 0.3
+    wait_budget_s: 1.5              # planned while the robot waits (first box, forecast missed)
+    duration_smoothing: 0.3         # running correction measured / expected duration per action type
   robot_checks_per_option: 12       # 6: first N ranked candidates
   seed: 0

@@ -29,10 +29,15 @@ result arrives (or after a new observation when the cell was idle). While
 the robot executes a command, the next one is planned in a background
 thread on the expected outcome (``RuntimeCore.forecast``); when the result
 matches, it is published at once instead of planning while the robot waits.
+The search time follows the action being executed (``runtime.planning``:
+a share of its expected duration, corrected by the measured durations of
+that action type); a command planned while the robot waits gets
+``wait_budget_s``.
 """
 
 import json
 import threading
+import time
 
 from pac_common import Pose3D
 
@@ -116,9 +121,12 @@ def make_runtime_ranker(name="layer", model_path="", seed=7, config_path=""):
 class CoreBridge:
     """ROS-free message handling (unit-tested); the node only moves strings."""
 
-    def __init__(self, core, plan_ahead=True):
+    def __init__(self, core, plan_ahead=True, clock=time.monotonic):
         self.core = core
         self.plan_ahead = plan_ahead
+        self.clock = clock
+        self.sent_at = None     # clock when the outstanding command was published
+        self.budgets = []       # (action executed meanwhile or "WAIT", search budget s) per planned command
         self._ahead = None      # (thread, [core copy, planned command]) for the outstanding command
         self.pending = None
         # Observations / idle reports that arrive while a command is being
@@ -134,10 +142,12 @@ class CoreBridge:
         if twin is None or not twin.has_work():
             return
         out = [twin, None]
+        budget = self.core.ahead_budget(cmd)
+        self.budgets.append((cmd.action, budget))
 
         def plan():
             try:
-                out[1] = twin.next_command()
+                out[1] = twin.next_command(budget_s=budget)
             except Exception:  # the real core plans again; never break the cell over a forecast
                 out[1] = None
 
@@ -155,11 +165,17 @@ class CoreBridge:
 
     def _next(self):
         if self.pending is None and self.core.has_work():
-            cmd = self.core.next_command(forecast=self._take_ahead())
+            wait = self.core.cfg.planning.wait_budget_s  # planned here = the robot waits
+            ahead = self._take_ahead()
+            used = self.core.counts.get("ahead_used", 0)
+            cmd = self.core.next_command(forecast=ahead, budget_s=wait)
+            if self.core.counts.get("ahead_used", 0) == used:
+                self.budgets.append(("WAIT", wait))
             while cmd.action == "WAIT" and cmd.reason == "REPACK_NOT_EXECUTABLE":
-                cmd = self.core.next_command()  # the repack counter rises: terminates
+                cmd = self.core.next_command(budget_s=wait)  # the repack counter rises: terminates
             if cmd.action != "WAIT":
                 self.pending = cmd
+                self.sent_at = self.clock()
                 box = self.core.sm.tracked.get(cmd.box_id)
                 out = command_to_dict(cmd, box)
                 self._start_ahead(cmd)
@@ -191,7 +207,10 @@ class CoreBridge:
             raise ValueError("result for another command")
         completed_action = self.pending.action
         level = self.core.on_result(self.pending, report_from_dict(d))
+        if self.sent_at is not None:
+            self.core.observe_duration(self.pending, self.clock() - self.sent_at)
         self.pending = None
+        self.sent_at = None
         deferred, self.deferred = self.deferred, []
         for kind, item in deferred:
             if kind == "obs":
@@ -222,6 +241,8 @@ class CoreBridge:
                "buffer": sm.buffer_slots(), "mode": self.core.supervisor.mode.value,
                "inspection": len(self.core.inspection), "counts": dict(self.core.counts),
                "planned_ahead": self.core.counts.get("ahead_used", 0),
+               "last_budget_s": round(self.budgets[-1][1], 2) if self.budgets else None,
+               "duration_scale": {k: round(v, 3) for k, v in self.core.duration_scale.items()},
                "replanned": self.core.counts.get("ahead_replanned", 0),
                "policy": "lookahead", "visible_boxes": len(self.core.preview),
                "ranker": getattr(ranker, "name", "custom"),

@@ -180,7 +180,9 @@ class HighLevelDecider:
         return world
 
     def decide(self, state, current_box_id=None, buffer_slots=None, buffer_age=None, repack_attempts=0,
-               visible_boxes=()):
+               visible_boxes=(), budget_s=None):
+        """``budget_s``: search time for this decision (look-ahead policy;
+        ``None`` = its configured budget)."""
         world = self.snapshot_world(state, current_box_id, buffer_slots, buffer_age, visible_boxes)
         version = state.state_version
         n_actions = action_count(world.slots)
@@ -207,7 +209,8 @@ class HighLevelDecider:
                                          mask=tuple(bool(m) for m in mask), decided_by="rule:close",
                                          reason=("DEAD_PALLET" if world.config.close.mode == "dead"
                                                  else "FILL_BEFORE_BUFFER"), diagnostics=diag)
-            action = self.policy.choose(world)
+            searches = budget_s is not None and self.policy.name == "lookahead"
+            action = self.policy.choose(world, budget_s=budget_s) if searches else self.policy.choose(world)
             probs = None
             if self.policy.probs is not None:
                 probs = tuple(float(v) for v in self.policy.probs(world))

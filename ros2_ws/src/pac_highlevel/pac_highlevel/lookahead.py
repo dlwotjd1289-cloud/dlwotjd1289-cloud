@@ -366,13 +366,17 @@ class LookaheadPolicy:
         actions = [int(i) for i in np.flatnonzero(world.action_mask())]
         return sorted(actions, key=lambda k: k != first)
 
-    def scores(self, world, first=None, window_end=None):
-        """Score per feasible first action (index -> score)."""
+    def scores(self, world, first=None, window_end=None, budget_s=None):
+        """Score per feasible first action (index -> score). ``budget_s``
+        overrides the configured budget for this decision (the runtime sets
+        it from the duration of the robot action it plans during)."""
         cfg = self.cfg
         start = time.perf_counter()
         budget = cfg.time_budget_s
         if cfg.time_budget_ratio > 0:
             budget = cfg.time_budget_ratio * self.hl.timing.place_time_s
+        if budget_s is not None:
+            budget = max(1e-6, float(budget_s))
         deadline = hard = None
         if budget > 0:
             hard = start + budget - min(0.4, 0.15 * budget)  # reserve: the last uncut 5-1 call
@@ -396,7 +400,7 @@ class LookaheadPolicy:
                 break
         return out
 
-    def __call__(self, world, window_end=None):
+    def __call__(self, world, window_end=None, budget_s=None):
         start = time.perf_counter()
         rule_action = self.rule(world)
         self.stats.decisions += 1
@@ -411,7 +415,7 @@ class LookaheadPolicy:
             self.stats.seconds.append(time.perf_counter() - start)
             return rule_action
         self.stats.searched += 1
-        scores = self.scores(world, first=to_index(rule_action), window_end=window_end)
+        scores = self.scores(world, first=to_index(rule_action), window_end=window_end, budget_s=budget_s)
         rule_index = to_index(rule_action)
         if rule_index not in scores:  # not even the rule's branch finished in time
             self.stats.seconds.append(time.perf_counter() - start)

@@ -83,6 +83,7 @@ class RuntimeCore:
         self.repacks_for_current = 0
         self.closed = []
         self.last_check = {}
+        self.duration_scale = {}  # action -> running measured / expected duration (CoreBridge)
         self.preview = ()       # look-ahead window: boxes seen on the conveyor after the current one
         self._preview_obs = ()
 
@@ -129,17 +130,51 @@ class RuntimeCore:
         return self.sm.current_id() is not None or bool(self.sm.buffer_slots())
 
     # ---------------------------------------------------------------- 4, 5, 6
+    def expected_duration(self, cmd):
+        """Expected seconds the robot / cell needs for ``cmd`` (before the
+        measured correction): stage-6 cycle time, buffer travel, pallet change."""
+        a = cmd.action
+        travel = self.hl.buffer.travel_times()
+        if a == "PLACE_CURRENT":
+            return float(cmd.robot.get("cycle_time_s", self.hl.timing.place_time_s))
+        if a == "RETRIEVE_BUFFER":
+            return float(cmd.robot.get("cycle_time_s", self.hl.timing.place_time_s)) + travel[cmd.slot]
+        if a == "BUFFER_CURRENT":
+            return travel[cmd.slot]
+        if a == "PALLET_CLOSE":
+            return self.cfg.supervisor.pallet_change_time_s
+        if a == "PARTIAL_REPACK":
+            return sum(float(d.get("cycle_time_s", self.hl.timing.repack_move_time_s)) for _, _, d in cmd.repack)
+        return 0.0
+
+    def ahead_budget(self, cmd):
+        """Search time for the decision planned while ``cmd`` executes."""
+        pl = self.cfg.planning
+        seconds = self.expected_duration(cmd) * self.duration_scale.get(cmd.action, 1.0)
+        return min(pl.max_budget_s, max(pl.min_budget_s, pl.ahead_ratio * seconds))
+
+    def observe_duration(self, cmd, seconds):
+        """Measured duration of ``cmd`` (command sent -> result) updates the
+        correction of its action type."""
+        expected = self.expected_duration(cmd)
+        if expected <= 0.0 or seconds <= 0.0:
+            return
+        k = self.cfg.planning.duration_smoothing
+        old = self.duration_scale.get(cmd.action, 1.0)
+        self.duration_scale[cmd.action] = (1.0 - k) * old + k * (seconds / expected)
+
     def forecast(self, cmd):
         """Copy of the core after ``cmd`` went as planned (``None``: nothing
         worth planning ahead). Shares the robot model, policy and placer
         (stateless apart from statistics); the real core is untouched."""
-        if cmd.action not in ("PLACE_CURRENT", "RETRIEVE_BUFFER", "BUFFER_CURRENT", "REJECT_NG"):
+        if cmd.action not in ("PLACE_CURRENT", "RETRIEVE_BUFFER", "BUFFER_CURRENT", "REJECT_NG", "PALLET_CLOSE"):
             return None
         twin = copy.deepcopy(self, {id(self.robot): self.robot, id(self.placer): self.placer,
                                     id(self.decider.policy): self.decider.policy})
         report = ExecutionReport(measured_pose=cmd.candidate.target_pose) if cmd.candidate is not None else None
         twin.on_result(cmd, report)
-        if cmd.action != "RETRIEVE_BUFFER" and twin._preview_obs:  # the conveyor box left: the next one arrives
+        if cmd.action in ("PLACE_CURRENT", "BUFFER_CURRENT", "REJECT_NG") and twin._preview_obs:
+            # the conveyor box left: the next one arrives
             nxt, rest = twin._preview_obs[0], twin._preview_obs[1:]
             twin.on_observation(nxt)
             twin.on_preview(rest)
@@ -191,8 +226,10 @@ class RuntimeCore:
             return None  # repack / wait: plan again on the real state
         return cmd
 
-    def next_command(self, forecast=None):
-        """``forecast``: (core copy from ``forecast``, the command planned on it)."""
+    def next_command(self, forecast=None, budget_s=None):
+        """``forecast``: (core copy from ``forecast``, the command planned on it).
+        ``budget_s``: search time if the command is planned here (``None`` =
+        the look-ahead configuration's budget)."""
         sm = self.sm
         if not self.supervisor.can_pick() or not self.has_work():
             return Command("WAIT", sm.version, reason=self.supervisor.mode.value if self.has_work() else "NO_BOX")
@@ -210,7 +247,7 @@ class RuntimeCore:
                 return cmd
         d = self.decider.decide(state, current_box_id=sm.current_id(), buffer_slots=sm.buffer_slots(),
                                 buffer_age=sm.buffer_age(), repack_attempts=self.repacks_for_current,
-                                visible_boxes=self.preview)
+                                visible_boxes=self.preview, budget_s=budget_s)
         sm.decisions += 1
         if d.action is None:
             return Command("WAIT", state.state_version, reason=d.reason)

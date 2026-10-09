@@ -554,7 +554,7 @@ def json_ok(cmd):
     return json.dumps({"state_version": cmd["state_version"], "ok": True})
 
 
-def _gazebo_run(plan_ahead, noise=0.0):
+def _gazebo_run(plan_ahead, noise=0.0, rt=None, clock=None):
     import json
 
     from pac_robot_check import load_robot_check_config
@@ -568,9 +568,14 @@ def _gazebo_run(plan_ahead, noise=0.0):
                       "S": {"size_m": [0.25, 0.2, 0.15], "weight_kg": [2.0, 4.0], "count": 6}}}
     hl = replace(HighLevelConfig(), buffer=replace(HighLevelConfig().buffer, slots=2))
     robot = RobotFeasibility(load_robot_check_config(REPO / "config/taehyeon/robot_check_gazebo.yaml"))
+    if rt is None:  # budgets large enough that the search never stops early: deterministic commands
+        from pac_runtime.config import PlanningConfig
+
+        rt = RuntimeConfig(planning=PlanningConfig(ahead_ratio=1.0, max_budget_s=600.0, wait_budget_s=600.0))
+    now = [0.0]
     bridge = CoreBridge(RuntimeCore(cell_from_order(order, CandidateConfig()), CandidateConfig(), hl,
-                                    RuntimeConfig(), robot, load_policy("lookahead", config=hl)),
-                        plan_ahead=plan_ahead)
+                                    rt, robot, load_policy("lookahead", config=hl)),
+                        plan_ahead=plan_ahead, clock=(lambda: now[0]) if clock else __import__("time").monotonic)
     driver = GazeboDriverCore(boxes_from_order(order, seed=2), robot, GazeboCell(), visible_boxes=3,
                               place_noise_m=noise, seed=5)
     queue = [("preview", driver.preview()), ("obs", driver.first_observation())]
@@ -586,6 +591,7 @@ def _gazebo_run(plan_ahead, noise=0.0):
             continue
         commands.append((cmd["action"], cmd["box_id"], cmd.get("target_min_corner")))
         acts = driver.on_command(cmd)
+        now[0] += acts.duration_s * (clock or 1.0)  # the robot motion (simulated clock)
         queue.append(("res", acts.result))
         if acts.preview is not None:
             queue.append(("preview", acts.preview))
@@ -617,3 +623,28 @@ def test_planning_ahead_falls_back_when_the_result_differs():
     assert len(core.sm.placed) + sum(len(b) for _, b in core.closed) + len(core.inspection) == 12
     for action, box_id, corner in ahead:
         assert action != "WAIT"
+
+
+def test_search_time_follows_the_robot_action_and_its_measured_duration():
+    """Planned during a placement: 75 % of its duration; during a buffer move:
+    75 % of the travel; while the robot waits: wait_budget_s. Measured
+    durations (here twice the driver's motion) correct the next budgets."""
+    from pac_runtime.config import PlanningConfig
+
+    rt = RuntimeConfig(planning=PlanningConfig(max_budget_s=600.0))  # no cap: see the correction
+    _, bridge = _gazebo_run(plan_ahead=True, rt=rt, clock=2.0)
+    core, pl = bridge.core, rt.planning
+    by_action = {}
+    for action, budget in bridge.budgets:
+        by_action.setdefault(action, []).append(budget)
+    assert by_action["WAIT"][0] == pl.wait_budget_s          # the first box: nothing to plan during
+    place = by_action["PLACE_CURRENT"]
+    assert all(pl.min_budget_s <= b <= pl.max_budget_s for b in place)
+    first_place = next(b for a, b in bridge.budgets if a == "PLACE_CURRENT")
+    assert place[-1] > first_place                           # learned: the robot is slower than expected
+    scale = core.duration_scale["PLACE_CURRENT"]
+    assert scale > 1.2
+    if "BUFFER_CURRENT" in by_action:
+        assert max(by_action["BUFFER_CURRENT"]) < max(place)  # a buffer move leaves less time
+    status = bridge.status()
+    assert status["last_budget_s"] is not None and "PLACE_CURRENT" in status["duration_scale"]
