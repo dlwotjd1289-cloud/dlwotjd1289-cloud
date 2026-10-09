@@ -1,6 +1,6 @@
 # 알려진 문제 (2026-10-09 정리 후)
 
-흐름도 기준으로 코드를 대조하면서 찾은 것입니다. 최종 결정사항과의 충돌 검토는 [DECISION_REVIEW](DECISION_REVIEW.md)에 있습니다.
+흐름도 기준으로 코드를 대조하면서 찾은 것입니다. 최종 결정사항과의 충돌은 [DECISION_REVIEW](DECISION_REVIEW.md), 구현끼리의 충돌(재성 Gazebo·v3 ↔ 팀 런타임)은 [IMPLEMENTATION_CONFLICTS](IMPLEMENTATION_CONFLICTS.md)에 있습니다.
 
 ## 1. 해결됨 (2026-10-09 정리)
 | 문제 | 처리 |
@@ -19,7 +19,7 @@
 ## 2. 단계별 단일 구현
 | 단계 | 남긴 구현 | 삭제한 중복 |
 |---|---|---|
-| 4 | `pac_highlevel` Rule / Look-ahead | MaskablePPO(NumPy·sb3), gym 환경, 학습기 |
+| 4 | `pac_highlevel` Rule / Look-ahead | MaskablePPO(NumPy·sb3), gym 환경, 학습기. **남은 중복**: Gazebo 사이클 스크립트의 자체 규칙 (IMPLEMENTATION_CONFLICTS C1) |
 | 5 ①② | `pac_candidates` | `pac_planning/reference_backend.py`, V4.4 브리지의 오프라인 후보기 |
 | 5 ③~⑥ | `pac_planning` (`team_bridge.plan_with_backend`, `planning_service.plan_request`) | — |
 | 6 | `pac_robot_check` | `pac_robot` 어댑터, `robot_check_gazebo.yaml`, V4.x 자체 IK 판정·도달 높이 판정 |
@@ -31,7 +31,7 @@
 - **1 인식**: 실제 ID·라벨 판독, 깊이(RGB-D) 처리의 Gazebo 연결, 실제 Base-view 카메라
 - **2 검증**: 실제 파손 검출기. Gazebo 브리지는 검증기를 거치지 않음
 - **3·곁가지**: 컨베이어 정지/재개 구동, 물리 NG 구역, 버퍼 선반, Gazebo 팔레트 교체 마무리(시험 중)
-- **4 → 7 Gazebo**: ROS `runtime_node`의 `/pac/command`를 Gazebo 실행기가 받지 않음. Gazebo 스크립트는 같은 팀 함수를 직접 호출하며 PLACE_CURRENT만 실행
+- **4 → 7 Gazebo**: ROS `runtime_node`의 `/pac/command`를 Gazebo 실행기가 받지 않음. Gazebo 사이클은 5·6·8단계 팀 함수를 직접 호출하고, 4단계는 스크립트 자체 규칙(버퍼 2칸·팔레트 교체·보류)으로 결정 → [IMPLEMENTATION_CONFLICTS](IMPLEMENTATION_CONFLICTS.md)
 - **6**: 컨베이어 → 팔레트 운반 경로 검사 (V4.4 브리지가 운반 높이만 확인)
 - **7**: Heightmap 전후 비교
 - **곁가지**: 재적재가 흐름도의 MCTS + A*가 아니라 소규모 BFS, 사이클 전체 시간 예산 관리 없음

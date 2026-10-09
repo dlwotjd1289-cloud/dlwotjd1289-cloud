@@ -13,5 +13,5 @@
 - **삭제한 중복**: `pac_execution`·`pac_gazebo_grasp`(1.2 × 1.0 m 팔레트를 강제하던 원박스 데모), `pac_runtime/gazebo_driver.py`(순간이동형), `tools/realtime/gazebo_replay.py`, 이전 월드·launch V2~V4.1.
 - **미구현·주의**:
   - 흐름도의 Heightmap 전후 비교는 아직 없습니다. 위치·외곽 기하로 비교합니다(`VerifyConfig.heightmap_cell_m` 미사용).
-  - Gazebo 경로는 ROS `runtime_node`(`/pac/command`)로 구동하지 않고, 스크립트가 같은 팀 함수(5·6·8단계)를 직접 부릅니다. 4단계 버퍼·재적재 동작은 Gazebo에 없습니다(PLACE_CURRENT만).
+  - Gazebo 경로는 ROS `runtime_node`(`/pac/command`)로 구동하지 않고, 스크립트가 5·6·8단계 팀 함수를 직접 부릅니다. 4단계(버퍼·팔레트 교체·보류)는 `run_generator_cycle_v44.sh`가 자체 규칙으로 결정합니다([IMPLEMENTATION_CONFLICTS](IMPLEMENTATION_CONFLICTS.md) C1).
 - **편차·실패 시**: 단계적 대응 L0~L4, 영향 부분만 재계획, 집기 실패는 재시도 → 다른 집기 → 확인 영역([곁가지](09_side_flows.md))
