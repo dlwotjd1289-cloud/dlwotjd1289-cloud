@@ -10,6 +10,7 @@ ROOT = Path(__file__).resolve().parent
 PATHS = [
     *(p for p in sorted((ROOT / "ros2_ws" / "src").glob("pac_*")) if (p / p.name).is_dir()),
     ROOT / "tools" / "virtual_data",
+    ROOT / "tools" / "stability",
     ROOT / "tools" / "ahead_dataset_generator" / "src",
     ROOT / "scripts",
 ]

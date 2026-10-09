@@ -204,6 +204,22 @@ class HeavyOnLightConfig:
 
 
 @dataclass(frozen=True)
+class LateralStabilityConfig:
+    """Stack-level lateral check (team decision 2026-10-09: 0.3 g).
+
+    For the new box and every box on its load path, the composite CoG of that
+    box and everything it carries must stay inside its support polygon when
+    shifted by ``accel_g`` x height along +-x / +-y (``pac_candidates.stability``).
+    """
+
+    enabled: bool = False
+    accel_g: float = 0.3
+
+    def __post_init__(self):
+        _number(self.accel_g, "accel_g", 0.0, strict_min=True)
+
+
+@dataclass(frozen=True)
 class ConstraintConfig:
     """5-2 hard mask thresholds (never skipped by a time budget)."""
 
@@ -218,6 +234,9 @@ class ConstraintConfig:
     )
     load_model: LoadModelConfig = field(default_factory=LoadModelConfig)
     pallet_cog: PalletCogConfig = field(default_factory=PalletCogConfig)
+    lateral_stability: LateralStabilityConfig = field(
+        default_factory=LateralStabilityConfig
+    )
     # Used only when PlanningContext is absent (standalone use).
     default_pallet_max_weight_kg: float = 1000.0
 
@@ -262,6 +281,7 @@ _NESTED = {
         "heavy_on_light": HeavyOnLightConfig,
         "load_model": LoadModelConfig,
         "pallet_cog": PalletCogConfig,
+        "lateral_stability": LateralStabilityConfig,
     },
 }
 

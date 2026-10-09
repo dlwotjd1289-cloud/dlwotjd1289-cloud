@@ -14,6 +14,7 @@ Checks (team ``RejectCode`` in brackets, detailed reason strings in details):
 10. heavy-on-light (mission requirement)                 [LOAD_VIOLATION]
 11. pallet max load                                      [LOAD_VIOLATION]
 12. pallet CoG allowed region                            [COG_VIOLATION]
+13. stack lateral stability at ``accel_g`` (opt-in)      [COG_VIOLATION]
 
 Checks run from cheap to expensive. Runtime (``collect_all=False``) stops at
 the first failing group -- the verdict (valid / codes) is identical, only the
@@ -37,6 +38,7 @@ from .geometry import (
 )
 from .loads import load_ratio, overloaded
 from .pallet_model import G, box_tolerance, cog_delta
+from .stability import StackBox, lateral_check
 
 EVIDENCE_SOURCE = "LBCP_EMS_DELTA_V1"
 # Finite stand-in for an unbounded load ratio (a 0 N capacity box carrying
@@ -184,6 +186,19 @@ def evaluate(model, box, pose, *, is_uncertain=False, collect_all=True):
         fail(R.COG_VIOLATION, "LBCP_UNSTABLE")
         if not collect_all:
             return rejected()
+
+    # 13. stack lateral stability (opt-in, team 0.3 g decision) ------------------
+    lat = cons.lateral_stability
+    if lat.enabled:
+        stack = [StackBox(g.box_id, g.lo[0], g.lo[1], g.lo[2], g.hi[0] - g.lo[0], g.hi[1] - g.lo[1],
+                          g.hi[2] - g.lo[2], g.weight_kg) for g in model.boxes]
+        stack.append(StackBox(box.box_id, rect.x0, rect.y0, z, dx, dy, dz, box.weight_kg))
+        result = lateral_check(stack, lat.accel_g, only=len(stack) - 1)
+        metrics["lateral_margin_m"] = result.margin_m
+        if not result.ok:
+            fail(R.COG_VIOLATION, "LATERAL_STABILITY:" + result.worst_box)
+            if not collect_all:
+                return rejected()
 
     # 9./10. loads --------------------------------------------------------------
     weight_n = box.weight_kg * G

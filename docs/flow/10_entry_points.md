@@ -20,9 +20,10 @@
   - `run_ahead_cycle_v44.sh`, `run_full_cycle_v44.sh`, `run_review_v44.sh`, `run_pick_place_v44.sh`, `run_moveit_pick_place_v44.sh`, `run_auto_scale_v43.sh`
   - 준비: `preflight.sh`, `verify_hdr50_proxy.sh`
 - **PyBullet 폐루프**: `scripts/verify_stack_bullet_v45.py`, `tools/runtime/scripts/physics_replay.py`
+- **0.3 g 안정성 검사 검증**: `tools/stability/run_stability_validation.py` (설정 `config/stability_validation.yaml`, 설명 [STABILITY_VALIDATION](STABILITY_VALIDATION.md))
 - **태현 (오프라인)**: `tools/runtime/scripts/run_runtime.py` (가상 셀 1~8 루프), `scripts/taehyeon/run_validation.sh`, `tools/highlevel/scripts/*`, `tools/tuning/scripts/llm_tune.py`
 - **동한 (학습·평가)**: `scripts/donghan/model_pipeline.py`, `train_team_model.py`, `run_team_replay.py`, `benchmark_teacher.py`
 - **데이터 생성**: `tools/ahead_dataset_generator/run_sample.sh`, `run_benchmark.sh`
 
 ## 테스트
-- **전체**: `python3 -m pytest -q` (저장소 루트). ROS를 source한 Docker 환경에서 460 passed (2026-10-09); ROS 없이 실행하면 ROS·PyBullet 의존 테스트는 skip
+- **전체**: `python3 -m pytest -q` (저장소 루트). ROS를 source한 Docker 환경에서 483 passed (2026-10-09); ROS 없이 실행하면 ROS·PyBullet 의존 테스트는 skip

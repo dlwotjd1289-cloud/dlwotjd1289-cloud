@@ -47,3 +47,8 @@ candidates:
       final_half_extent_ratio: 0.5
       ramp_mass_kg: 150.0
       allow_improving: true
+    # Stack lateral check (team decision 2026-10-09: 0.3 g). Off until the
+    # validation in config/stability_validation.yaml is done (docs/flow/STABILITY_VALIDATION.md).
+    lateral_stability:
+      enabled: false
+      accel_g: 0.3

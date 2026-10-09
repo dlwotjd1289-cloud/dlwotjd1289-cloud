@@ -1,0 +1,107 @@
+schema_version: 1
+# Validation of the 0.3 g stack check (team decision 2026-10-09) against other
+# stability checks. Every test is switched with ``enabled``.
+#
+# Only values confirmed in two primary sources are used:
+#   [M] Mazur, Gamer, Ramos & Schoder, "Standing on a common ground: a comparison
+#       of static stability approaches for pallet loading", ITOR 34(1):501-527,
+#       doi:10.1111/itor.70059
+#   [J] Jagelcak & Kubanova, "Risks of Goods Transport Focused on the Assessment
+#       of Semi-Trailer Dynamics on Highways for Cargo Securing", Appl. Sci.
+#       14(9):3846 (2024), doi:10.3390/app14093846
+#   impl = implementation parameter that neither source gives.
+stability_validation:
+  analytic:
+    lateral:                    # the check under validation (pac_candidates.stability)
+      enabled: true
+      accel_g: 0.3
+    sme:                        # [M] static mechanical equilibrium, most robust in Table 8
+      enabled: true
+    pbs:                        # [M] partial base support
+      enabled: true
+      alpha: 0.70               # value of the hard mask; [M] Table 8 tests 0.50-0.90
+
+  # Wrapping (stretch film) is always applied after the pallet is built (2026-10-09).
+  # Neither source models a wrap, so it is taken as ideal: boxes and pallet act as
+  # one rigid unit during transport. Then
+  #   * before wrapping (robot stacking, no lateral support, [M]): analytic checks
+  #     + the PyBullet loading test;
+  #   * after wrapping (transport, [J]): every enabled profile below is checked as
+  #     tipping of the whole unit about its pallet edge (unit_tipping_check);
+  #     sliding of the unit on the vehicle floor is vehicle securing, not checked.
+  # assumed: false runs the profiles in PyBullet on the unwrapped boxes instead.
+  wrapping:
+    assumed: true
+    deck_height_m: 0.15         # config/default.yaml pallet.deck_height_m
+
+  simulation:                   # PyBullet (pac_simulation.stability_tests)
+    enabled: true
+    friction: [0.5, 0.375]      # [M] Table 7: mu_s 0.5, mu_d = 0.75 mu_s = 0.375; a layout passes only at every value
+    physics_hz: 240             # impl (pac_simulation default)
+    solver_iterations: 100      # impl (pac_simulation default)
+    loading_step_s: 0.3         # [M] Table 7: 0.3 s simulated per loading step
+    max_translation_m: 0.10     # [M] T = 10 cm (use-case dependent, eq. 7)
+    max_rotation_deg: 10.0      # [M] R = 10 deg
+    sensitivity:                # [M] Fig. 6: thresholds T = R = 5, 10, 15
+      enabled: true
+      thresholds: [[0.05, 5.0], [0.10, 10.0], [0.15, 15.0]]
+    ramp_s: 0.5                 # impl: rise time to each level (not given by [J] or [M])
+    directions: ["+x", "-x", "+y", "-y"]   # pallet orientation on a vehicle is not fixed
+    tests:
+      # tilt: angle = atan(accel_g) ([J]: prEN 17321 minimum 0.18 g = 10 deg tilt)
+      # hold 27.18 s = longest lateral event above 0.2 g ([J] Table 10)
+      tilt_10deg_prEN17321:
+        enabled: true
+        mode: tilt
+        accel_g: 0.1763
+        hold_s: 27.18
+      tilt_0_3g:
+        enabled: true
+        mode: tilt
+        accel_g: 0.3
+        hold_s: 27.18
+      # sustained acceleration, measured on 10,827 km of semi-trailer transport ([J])
+      lateral_max_1000ms:       # Table 5: max ay1000 0.330 g; Table 10: max duration 27.18 s
+        enabled: true
+        mode: acceleration
+        accel_g: 0.330
+        hold_s: 27.18
+      lateral_max_80ms:         # Table 5: max ay80 0.370 g
+        enabled: true
+        mode: acceleration
+        accel_g: 0.370
+        hold_s: 0.08
+      # Braking is above the friction of [M] (0.492 g > mu_d 0.375): unwrapped, every box
+      # slides whatever the stacking (turn these off with wrapping.assumed: false).
+      braking_max_1000ms:       # Table 3: min ax1000 -0.492 g; Table 10: longest longitudinal event > 0.2 g 11.65 s
+        enabled: true
+        mode: acceleration
+        accel_g: 0.492
+        hold_s: 11.65
+      braking_max_80ms:         # Table 3: min ax80 -0.660 g
+        enabled: true
+        mode: acceleration
+        accel_g: 0.660
+        hold_s: 0.08
+      # EN 12195-1 design values as cited by [J] (1000 ms evaluation time, EN 12642):
+      # what a unit must withstand on a road vehicle with no further securing. Off by default.
+      en12195_lateral:
+        enabled: false
+        mode: acceleration
+        accel_g: 0.5
+        hold_s: 1.0
+      en12195_lateral_unstable_goods:
+        enabled: false
+        mode: acceleration
+        accel_g: 0.6
+        hold_s: 1.0
+      en12195_rearward:
+        enabled: false
+        mode: acceleration
+        accel_g: 0.5
+        hold_s: 1.0
+      en12195_forward:
+        enabled: false
+        mode: acceleration
+        accel_g: 0.8
+        hold_s: 1.0
