@@ -180,6 +180,8 @@ def _pallet_heights(pallet, constraints):
 
 
 def stack_height_limit(spec, config):
+    if config.pallet.max_stack_height_m > 0:  # environment override
+        return config.pallet.max_stack_height_m
     if config.pallet.height_limit_includes_pallet:
         return spec.max_height_m - spec.pallet_deck_m
     return spec.max_height_m
@@ -193,13 +195,19 @@ def build_catalog(sku_ranges, config, load_model):
             weight = r.weight_max_kg
         else:
             weight = 0.5 * (r.weight_min_kg + r.weight_max_kg)
-        capacity = mckee_capacity_n(
-            r.size.x,
-            r.size.y,
-            load_model.ect_n_per_m,
-            load_model.board_thickness_m,
-            load_model.safety_factor,
-        )
+        kind = config.catalog.packaging_of(sku_id)
+        if kind == "no_stack":
+            capacity = 0.0
+        elif kind == "rigid_crate":
+            capacity = config.catalog.rated_top_load_n.get(sku_id, config.catalog.default_rated_top_load_n)
+        else:
+            capacity = mckee_capacity_n(
+                r.size.x,
+                r.size.y,
+                load_model.ect_n_per_m,
+                load_model.board_thickness_m,
+                load_model.safety_factor,
+            )
         catalog[sku_id] = SkuSpec(
             sku_id, r.size, round(weight, 6), r.allowed_yaws_rad, round(capacity, 3)
         )

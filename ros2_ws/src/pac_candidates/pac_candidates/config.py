@@ -68,8 +68,7 @@ class GenerationConfig:
     def __post_init__(self):
         object.__setattr__(self, "yaw_set_rad", tuple(self.yaw_set_rad))
         object.__setattr__(self, "ems_anchors", tuple(self.ems_anchors))
-        if not self.yaw_set_rad:
-            raise ValueError("yaw_set_rad must not be empty")
+        # empty yaw_set_rad = use each SKU's own allowed orientations
         for yaw in self.yaw_set_rad:
             _number(yaw, "yaw_set_rad")
         if not (self.use_ems or self.use_extreme_points):

@@ -28,7 +28,7 @@ def cfg(slots=2, fill=0.30, repack=False):
     return replace(
         c,
         buffer=replace(c.buffer, slots=slots),
-        close=replace(c.close, fill_before_buffer=fill),
+        close=replace(c.close, mode="fill", fill_before_buffer=fill),  # fill-threshold rule under test
         repack=replace(c.repack, enabled=repack),
     )
 
