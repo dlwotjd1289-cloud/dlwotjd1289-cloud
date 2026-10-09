@@ -29,8 +29,7 @@ runtime:
     max_grip_retries: 1
     retry_time_s: 4.0
   verify:                           # 7: post check
-    l0_xy_m: 0.005
-    l0_z_m: 0.005
+    # L0 = the team commit rule (pac_common.CommitTolerance: xy 5 mm, z 3 mm, yaw 1 deg)
     l1_xy_m: 0.02
     l1_z_m: 0.01
     max_overlap_m: 0.002

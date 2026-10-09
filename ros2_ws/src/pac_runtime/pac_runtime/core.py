@@ -14,13 +14,13 @@ All decisions read the State Manager snapshot; the state only changes in
 from collections import Counter
 from dataclasses import dataclass, field, replace
 
-from pac_common import PalletState, PlacementCandidate, SystemState
+from pac_common import BoxStatus, PalletState, PlacementCandidate, StateManager, SystemState
+from pac_common.state_manager import within_tolerance
 from pac_candidates.geometry import rotated_dims
 from pac_highlevel import ActionType, HighLevelDecider
 
 from .executor import ExecutorSim, TrueBox
 from .placer import RobotAwarePlacer
-from .state_manager import StateManager
 from .state_validator import StateValidator
 from .supervisor import Supervisor
 
@@ -59,7 +59,7 @@ class RuntimeCore:
         self.robot = robot
         self.validator = StateValidator(cell.catalog, rt_config.validator, cell.weight_ranges)
         self.supervisor = Supervisor(rt_config.supervisor, cell.expected_by_sku)
-        self.sm = StateManager(cell.pallet_size, cell.catalog, cell.expected_by_sku,
+        self.sm = StateManager.for_order(cell.pallet_size, cell.catalog, cell.expected_by_sku,
                                pallet_max_weight_kg=cell.pallet_max_weight_kg, pallet_prefix=cell.pallet_prefix,
                                buffer_slots=hl_config.buffer.slots)
         self.placer = RobotAwarePlacer(robot, rt_config.robot_checks_per_option, ranker)
@@ -131,10 +131,17 @@ class RuntimeCore:
             placed = {p.box_id: p for p in state.pallet.boxes}
             layout = dict(placed)      # earlier moves of this repack applied
             for box_id, pose in d.repack_moves:
+                # the moved box is in the gripper; earlier moves of this repack are applied
+                tracked = dict(state.inventory.tracked_boxes)
+                for k, p in layout.items():
+                    if k in tracked:
+                        tracked[k] = replace(tracked[k], pose=p.pose)
+                if box_id in tracked:
+                    tracked[box_id] = replace(tracked[box_id], status=BoxStatus.IN_TRANSIT)
                 without = SystemState(state.state_version, state.stamp_sec,
                                       PalletState(state.pallet.pallet_id, state.pallet.size,
                                                   tuple(p for k, p in layout.items() if k != box_id)),
-                                      state.inventory)
+                                      replace(state.inventory, tracked_boxes=tracked))
                 cand = PlacementCandidate(f"repack-{box_id}", box_id, pose, state.state_version)
                 v6 = self.robot.validate_robot_motion(placed[box_id], cand, without)
                 if not v6.success:
@@ -157,7 +164,7 @@ class RuntimeCore:
         issues = self._checker.check(box.size, measured_pose, stack, self.sm.pallet_size)
         if issues:
             return "L4", dxy, dz, issues
-        if dxy <= v.l0_xy_m and dz <= v.l0_z_m:
+        if within_tolerance(measured_pose, planned):
             return "L0", dxy, dz, ()
         if dxy <= v.l1_xy_m and dz <= v.l1_z_m:
             return "L1", dxy, dz, ()
@@ -210,7 +217,7 @@ class RuntimeCore:
             measured, shift = sm.reconcile(box.size, measured, tol)
             if shift > 1e-9:
                 self.counts["stage8_reconciled"] += 1
-            sm.place(cmd.box_id, measured)
+            sm.place(cmd.box_id, measured, planned_pose=cmd.candidate.target_pose)
             return level
         return None
 

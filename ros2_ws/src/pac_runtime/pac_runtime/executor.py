@@ -20,6 +20,7 @@ from dataclasses import dataclass
 import math
 
 from pac_common import Pose3D
+from pac_common.state_manager import within_tolerance
 from pac_candidates.geometry import rotated_dims
 
 
@@ -124,7 +125,7 @@ class ExecutorSim:
         v = self.vc
         if issues:
             level = "L4"
-        elif dxy <= v.l0_xy_m and dz <= v.l0_z_m:
+        elif within_tolerance(measured, planned):
             level = "L0"
         elif dxy <= v.l1_xy_m and dz <= v.l1_z_m:
             level = "L1"

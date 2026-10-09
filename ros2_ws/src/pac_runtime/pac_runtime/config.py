@@ -52,8 +52,7 @@ class ExecutionConfig:           # stage 7 (virtual robot)
 
 @dataclass(frozen=True)
 class VerifyConfig:              # stage 7 post check (top view heightmap)
-    l0_xy_m: float = 0.005
-    l0_z_m: float = 0.005
+    # L0 = within pac_common CommitTolerance (xy 5 mm, z 3 mm, yaw 1 deg; team commit rule)
     l1_xy_m: float = 0.02
     l1_z_m: float = 0.01
     max_overlap_m: float = 0.002              # true penetration allowed

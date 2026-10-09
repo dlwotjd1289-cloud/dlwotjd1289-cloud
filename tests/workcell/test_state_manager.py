@@ -18,7 +18,7 @@ def observed(box_id='B001'):
 
 
 def planned(m, box_id='B001', pose=PLAN):
-    c = PlacementCandidate(f'S{m.snapshot.state_version:04d}-{box_id}-C000', box_id, pose, m.snapshot.state_version)
+    c = PlacementCandidate(f'S{m.snapshot().state_version:04d}-{box_id}-C000', box_id, pose, m.snapshot().state_version)
     m.register_plan(c)
     return c
 
@@ -75,3 +75,23 @@ def test_pallet_change_between_plan_and_execution_is_stale():
     m.commit_execution(ExecutionResult(True, 'B001', c1.candidate_id, PLAN, (), 2.0))
     out = m.commit_execution(ExecutionResult(True, 'B002', c2.candidate_id, c2.target_pose, (), 3.0))
     assert not out.placed and out.codes == (RejectCode.STALE_PLAN,)
+
+
+def test_runtime_place_applies_the_commit_rule_and_close_releases_boxes():
+    sm = StateManager.for_order(Size3D(1.1, 1.1, 1.5), {}, {'SKU_A': 2}, pallet_max_weight_kg=1000.0,
+                                buffer_slots=1)
+    sm.arrive(observed('B001'))
+    sm.arrive(observed('B002'))
+    sm.to_buffer('B002', 0)
+    near = Pose3D('pallet', .2 + .004, .2, 0.002, yaw=0.0)
+    sm.place('B001', near, planned_pose=PLAN)
+    assert sm.snapshot().pallet.boxes[0].pose == PLAN
+    assert sm.snapshot().inventory.tracked_boxes['B001'].status is BoxStatus.PLACED
+    far = Pose3D('pallet', .7, .2, 0.0, yaw=0.0)
+    sm.place('B002', far, planned_pose=Pose3D('pallet', .65, .2, 0.0, yaw=0.0))
+    assert sm.snapshot().pallet.boxes[1].pose == far and sm.buffer_slots() == {}
+    assert sm.context().uncertain_box_ids == ()
+    sm.close_pallet()
+    snap = sm.snapshot()
+    assert snap.pallet.pallet_id == 'PALLET-02' and snap.pallet.boxes == ()
+    assert snap.inventory.tracked_boxes == {} and len(sm.closed[0][1]) == 2

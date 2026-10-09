@@ -119,7 +119,7 @@ def main() -> int:
 
     for i, arrival in enumerate(arrivals, 1):
         size = (arrival.size.x, arrival.size.y, arrival.size.z)
-        stamp = float(sm.snapshot.state_version + 1)
+        stamp = float(sm.snapshot().state_version + 1)
         box = replace(arrival, status=BoxStatus.READY_FOR_PICK, stamp_sec=stamp)
         state = sm.commit_observation(box, stamp)      # leaves anonymous stock here
         version = state.state_version

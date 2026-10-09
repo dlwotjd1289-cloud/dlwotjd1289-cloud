@@ -123,7 +123,7 @@ def test_supervisor_modes_and_missing():
 
 
 def test_state_manager_versions_inventory_and_snapshot():
-    sm = StateManager(PALLET, CAT, {"K": 2, "H": 1}, pallet_max_weight_kg=500, buffer_slots=2)
+    sm = StateManager.for_order(PALLET, CAT, {"K": 2, "H": 1}, pallet_max_weight_kg=500, buffer_slots=2)
     b = replace(truth(1), status=BoxStatus.MEASURED)
     sm.arrive(b, uncertain=True)
     s = sm.snapshot()
@@ -225,7 +225,8 @@ def test_core_event_api_like_a_real_cell():
     assert cmd.robot["cycle_time_s"] > 0 and len(cmd.robot["q_place"]) == 6
     p = cmd.candidate.target_pose
     level = core.on_result(cmd, ExecutionReport(measured_pose=Pose3D("pallet", p.x + 0.003, p.y, p.z, yaw=p.yaw)))
-    assert level == "L0" and core.sm.snapshot().pallet.boxes[0].pose.x == pytest.approx(p.x + 0.003)
+    # team commit rule: within xy 5 mm / z 3 mm / yaw 1 deg the PLANNED pose is committed
+    assert level == "L0" and core.sm.snapshot().pallet.boxes[0].pose == p
     # second box: the top view reports a protrusion -> L4, HOLD, box recorded at the planned pose
     core.on_observation(RawObservation("B", "K", 4.0, Size3D(0.4, 0.3, 0.2), 1.0, False, "top", 1.0))
     cmd = core.next_command()
@@ -327,7 +328,7 @@ def test_runtime_ranker_selection_and_status_provenance(tmp_path):
 
 
 def test_state_manager_reconciles_measurement_noise():
-    sm = StateManager(PALLET, CAT, {"K": 3}, pallet_max_weight_kg=500, buffer_slots=2)
+    sm = StateManager.for_order(PALLET, CAT, {"K": 3}, pallet_max_weight_kg=500, buffer_slots=2)
     for i, pose in enumerate([Pose3D("pallet", 0.0, 0.0, 0.0), Pose3D("pallet", 0.4, 0.0, 0.0)]):
         sm.arrive(replace(truth(i), status=BoxStatus.MEASURED))
         sm.place(f"B{i:03d}", pose)
