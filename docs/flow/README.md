@@ -21,7 +21,7 @@
 | 실행 진입점 | ROS 노드, launch, 실행 스크립트 | — | [10](10_entry_points.md) |
 | **알려진 문제** | 남은 미구현, 정리 내역 | — | [KNOWN_ISSUES](KNOWN_ISSUES.md) |
 | **결정사항 충돌 검토** | 최종 결정 대비 충돌과 처리, 팀 확인 필요 항목 | — | [DECISION_REVIEW](DECISION_REVIEW.md) |
-| **구현 간 충돌 검토** | 같은 일을 다른 규칙·값으로 하는 코드 (재성 Gazebo·v3 ↔ 팀 런타임) | — | [IMPLEMENTATION_CONFLICTS](IMPLEMENTATION_CONFLICTS.md) |
+| **구현 간 충돌 검토** | 같은 일을 다른 규칙·값으로 하는 코드 (재성 Gazebo·v3 ↔ 팀 런타임). C1~C35, 3차는 미병합 브랜치(V4.6, ranker-fix) 포함·동한 overlap review 대조 | — | [IMPLEMENTATION_CONFLICTS](IMPLEMENTATION_CONFLICTS.md) |
 
 ## 전체 구조: 판단 코어 1개 + 실행 환경
 

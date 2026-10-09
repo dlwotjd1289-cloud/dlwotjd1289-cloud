@@ -19,13 +19,15 @@
 ## 2. 단계별 단일 구현
 | 단계 | 남긴 구현 | 삭제한 중복 |
 |---|---|---|
-| 4 | `pac_highlevel` Rule / Look-ahead | MaskablePPO(NumPy·sb3), gym 환경, 학습기. **남은 중복**: Gazebo 사이클 스크립트의 자체 규칙 (IMPLEMENTATION_CONFLICTS C1) |
+| 4 | `pac_highlevel` Rule / Look-ahead | MaskablePPO(NumPy·sb3), gym 환경, 학습기. **남은 중복**: Gazebo 사이클 스크립트의 자체 규칙 (IMPLEMENTATION_CONFLICTS C1). 런타임은 Rule만 연결 (C30) |
 | 5 ①② | `pac_candidates` | `pac_planning/reference_backend.py`, V4.4 브리지의 오프라인 후보기 |
 | 5 ③~⑥ | `pac_planning` (`team_bridge.plan_with_backend`, `planning_service.plan_request`) | — |
 | 6 | `pac_robot_check` | `pac_robot` 어댑터, `robot_check_gazebo.yaml`, V4.x 자체 IK 판정·도달 높이 판정 |
 | 7 (Gazebo) | V4.4/V4.5 흡착 실행 (`run_mission_v45.py`, `moveit_pick_place_v44.py`) | `pac_execution`, `pac_gazebo_grasp`, `pac_runtime/gazebo_driver.py`, `tools/realtime/gazebo_replay.py` |
 | 8 | `pac_common.StateManager` | `pac_runtime/state_manager.py`, V4.4 브리지 JSON 직접 기록 |
-| 작업셀 | V4.2 배치 + V4.4 흡착 월드 (`config/workcell.yaml`) | V2(HDP160)~V4.1 월드·launch, `pac_eoat` |
+| 작업셀 | V4.2 배치 + V4.4 흡착 월드 (`config/workcell.yaml`) | V2(HDP160)~V4.1 월드·launch, `pac_eoat`. V4.6(`jaesung/workcell-v46`, 미병합)은 배치를 환경변수로 바꿈 (C29) |
+
+동한 님 `overlap_review_20261009.md`는 `gazebo_driver`(재생용), `pac_execution` 계약 검사, `ReferenceBackend`(오프라인 참조)를 남기자고 제안합니다. 이번 정리에서 삭제했으므로 유지 여부는 팀이 정해야 합니다(git 기록에서 복원 가능) → [IMPLEMENTATION_CONFLICTS 3차 대조표](IMPLEMENTATION_CONFLICTS.md#동한-님-overlap_review_20261009md-대조).
 
 ## 3. 흐름도에는 있지만 아직 없는 것
 - **1 인식**: 실제 ID·라벨 판독, 깊이(RGB-D) 처리의 Gazebo 연결, 실제 Base-view 카메라
@@ -37,5 +39,17 @@
 - **곁가지**: 재적재가 흐름도의 MCTS + A*가 아니라 소규모 BFS, 사이클 전체 시간 예산 관리 없음
 - **ALGORITHM_V3 결정 중 미구현**: [DECISION_REVIEW 4장](DECISION_REVIEW.md#4-결정됐지만-아직-구현되지-않은-것-algorithm_v3_draft-0장)
 
-## 4. 명령줄로만 쓰는 설정
+## 4. 확인된 버그 (3차 검토, 미수정)
+자세한 내용은 [IMPLEMENTATION_CONFLICTS](IMPLEMENTATION_CONFLICTS.md) 해당 항목.
+
+| # | 위치 | 문제 |
+|---|---|---|
+| C30 | `pac_highlevel.runtime` | `load_policy`에 Look-ahead 없음, `HighLevelDecider`의 미리보기 박스 0개 |
+| C31 | `pac_runtime/executor.py` | 측정 yaw가 90° 배수에서 벗어나면 `ValueError`(ROS 노드 정지), 데크 위 z +2 mm면 L4 |
+| C32 | `pac_runtime/supervisor.py`, `core.py` | 모드가 즉시 NORMAL로 복귀, `PALLET_CLOSE`가 교체 시간을 거치지 않음 |
+| C33 | `scripts/scale_cycle_core_v43.py` | 0.5 kg 미만 박스에서 Gazebo 사이클 중단 |
+| C34 | `models/pybullet/hdr50_22_suction.urdf` | 메시 경로가 `/home/jaesung/...` 절대 경로 |
+| — | `run_ahead_cycle_v44.sh`, `run_moveit_pick_place_v44.sh` | 요구하는 `/pac/cctv_pick/image`가 V4.4·V4.6 월드에 없음 |
+
+## 5. 명령줄로만 쓰는 설정
 `config/donghan/model_*.yaml`, `candidate_runtime_v2.yaml`, `team_fd683e56_smoke.yaml`은 `scripts/donghan/model_pipeline.py --config`로 넘기는 실행 설정입니다(코드가 자동으로 읽지 않음).
