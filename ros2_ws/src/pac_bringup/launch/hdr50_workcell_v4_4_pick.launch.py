@@ -75,7 +75,8 @@ def generate_launch_description():
             )
         ),
         launch_arguments={
-            "gz_args": f"-r -v 4 {world}"
+            # GZ_GUI=0: server only (physics + camera sensors, no Gazebo window; saves ~2 CPU cores).
+            "gz_args": f"{'-s ' if os.environ.get('GZ_GUI', '1') == '0' else ''}-r -v 4 {world}"
         }.items(),
     )
 

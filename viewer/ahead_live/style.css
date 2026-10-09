@@ -227,3 +227,10 @@ button.secondary { background: #202932; border-color: rgba(255,255,255,.15); }
 #boxList {
   height: 182px;
 }
+
+/* V4.4 robot cell panel */
+.robot-info { font-size: 12px; line-height: 1.5; color: #d6e4f0; }
+.robot-info .state { font-weight: 700; color: #7fd1ff; }
+.robot-info .log { margin-top: 6px; color: #9fb3c4; max-height: 120px; overflow-y: auto; }
+.robot-info table { width: 100%; border-collapse: collapse; margin-top: 4px; }
+.robot-info td { padding: 1px 4px; border-bottom: 1px solid rgba(255,255,255,0.06); }

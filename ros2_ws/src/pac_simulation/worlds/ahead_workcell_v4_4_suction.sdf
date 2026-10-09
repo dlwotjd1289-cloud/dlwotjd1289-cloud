@@ -315,6 +315,67 @@
         <topic>/pac/conveyor/roller_cmd_vel</topic>
         <initial_velocity>0.0</initial_velocity>
       </plugin>
+      <!-- V4.4: intermediate roller (pitch 0.19 -> 0.095 m) so generator SKUs down to 0.22 m stay on >= 2 rollers -->
+      <link name="roller_00m_link">
+        <pose>-4.605000 1.200000 0.860000 0 0 0</pose>
+        <inertial>
+          <mass>1.0</mass>
+          <inertia>
+            <ixx>0.03883958</ixx>
+            <iyy>0.00061250</iyy>
+            <izz>0.03883958</izz>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyz>0</iyz>
+          </inertia>
+        </inertial>
+        <visual name="roller_00m">
+          <pose>0 0 0 1.570796326790 0.000000000000 0.000000000000</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.035</radius>
+              <length>0.68</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>0.28 0.29 0.31 1</ambient>
+            <diffuse>0.47 0.48 0.50 1</diffuse>
+          </material>
+        </visual>
+        <collision name="roller_00m_collision">
+          <pose>0 0 0 1.570796326790 0.000000000000 0.000000000000</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.035</radius>
+              <length>0.68</length>
+            </cylinder>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>1.20</mu>
+                <mu2>1.20</mu2>
+              </ode>
+            </friction>
+          </surface>
+        </collision>
+      </link>
+      <joint name="roller_00m_joint" type="revolute">
+        <parent>conveyor_link</parent>
+        <child>roller_00m_link</child>
+        <axis>
+          <xyz>0 1 0</xyz>
+          <dynamics>
+            <damping>0.01</damping>
+            <friction>0.0</friction>
+          </dynamics>
+        </axis>
+      </joint>
+      <plugin filename="libignition-gazebo-joint-controller-system.so" name="gz::sim::systems::JointController">
+        <joint_name>roller_00m_joint</joint_name>
+        <topic>/pac/conveyor/roller_cmd_vel</topic>
+        <initial_velocity>0.0</initial_velocity>
+      </plugin>
       <link name="roller_01_link">
         <pose>-4.510000 1.200000 0.860000 0 0 0</pose>
         <inertial>
@@ -372,6 +433,67 @@
       </joint>
       <plugin filename="libignition-gazebo-joint-controller-system.so" name="gz::sim::systems::JointController">
         <joint_name>roller_01_joint</joint_name>
+        <topic>/pac/conveyor/roller_cmd_vel</topic>
+        <initial_velocity>0.0</initial_velocity>
+      </plugin>
+      <!-- V4.4: intermediate roller (pitch 0.19 -> 0.095 m) so generator SKUs down to 0.22 m stay on >= 2 rollers -->
+      <link name="roller_01m_link">
+        <pose>-4.415000 1.200000 0.860000 0 0 0</pose>
+        <inertial>
+          <mass>1.0</mass>
+          <inertia>
+            <ixx>0.03883958</ixx>
+            <iyy>0.00061250</iyy>
+            <izz>0.03883958</izz>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyz>0</iyz>
+          </inertia>
+        </inertial>
+        <visual name="roller_01m">
+          <pose>0 0 0 1.570796326790 0.000000000000 0.000000000000</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.035</radius>
+              <length>0.68</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>0.28 0.29 0.31 1</ambient>
+            <diffuse>0.47 0.48 0.50 1</diffuse>
+          </material>
+        </visual>
+        <collision name="roller_01m_collision">
+          <pose>0 0 0 1.570796326790 0.000000000000 0.000000000000</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.035</radius>
+              <length>0.68</length>
+            </cylinder>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>1.20</mu>
+                <mu2>1.20</mu2>
+              </ode>
+            </friction>
+          </surface>
+        </collision>
+      </link>
+      <joint name="roller_01m_joint" type="revolute">
+        <parent>conveyor_link</parent>
+        <child>roller_01m_link</child>
+        <axis>
+          <xyz>0 1 0</xyz>
+          <dynamics>
+            <damping>0.01</damping>
+            <friction>0.0</friction>
+          </dynamics>
+        </axis>
+      </joint>
+      <plugin filename="libignition-gazebo-joint-controller-system.so" name="gz::sim::systems::JointController">
+        <joint_name>roller_01m_joint</joint_name>
         <topic>/pac/conveyor/roller_cmd_vel</topic>
         <initial_velocity>0.0</initial_velocity>
       </plugin>
@@ -435,6 +557,67 @@
         <topic>/pac/conveyor/roller_cmd_vel</topic>
         <initial_velocity>0.0</initial_velocity>
       </plugin>
+      <!-- V4.4: intermediate roller (pitch 0.19 -> 0.095 m) so generator SKUs down to 0.22 m stay on >= 2 rollers -->
+      <link name="roller_02m_link">
+        <pose>-4.225000 1.200000 0.860000 0 0 0</pose>
+        <inertial>
+          <mass>1.0</mass>
+          <inertia>
+            <ixx>0.03883958</ixx>
+            <iyy>0.00061250</iyy>
+            <izz>0.03883958</izz>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyz>0</iyz>
+          </inertia>
+        </inertial>
+        <visual name="roller_02m">
+          <pose>0 0 0 1.570796326790 0.000000000000 0.000000000000</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.035</radius>
+              <length>0.68</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>0.28 0.29 0.31 1</ambient>
+            <diffuse>0.47 0.48 0.50 1</diffuse>
+          </material>
+        </visual>
+        <collision name="roller_02m_collision">
+          <pose>0 0 0 1.570796326790 0.000000000000 0.000000000000</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.035</radius>
+              <length>0.68</length>
+            </cylinder>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>1.20</mu>
+                <mu2>1.20</mu2>
+              </ode>
+            </friction>
+          </surface>
+        </collision>
+      </link>
+      <joint name="roller_02m_joint" type="revolute">
+        <parent>conveyor_link</parent>
+        <child>roller_02m_link</child>
+        <axis>
+          <xyz>0 1 0</xyz>
+          <dynamics>
+            <damping>0.01</damping>
+            <friction>0.0</friction>
+          </dynamics>
+        </axis>
+      </joint>
+      <plugin filename="libignition-gazebo-joint-controller-system.so" name="gz::sim::systems::JointController">
+        <joint_name>roller_02m_joint</joint_name>
+        <topic>/pac/conveyor/roller_cmd_vel</topic>
+        <initial_velocity>0.0</initial_velocity>
+      </plugin>
       <link name="roller_03_link">
         <pose>-4.130000 1.200000 0.860000 0 0 0</pose>
         <inertial>
@@ -492,6 +675,67 @@
       </joint>
       <plugin filename="libignition-gazebo-joint-controller-system.so" name="gz::sim::systems::JointController">
         <joint_name>roller_03_joint</joint_name>
+        <topic>/pac/conveyor/roller_cmd_vel</topic>
+        <initial_velocity>0.0</initial_velocity>
+      </plugin>
+      <!-- V4.4: intermediate roller (pitch 0.19 -> 0.095 m) so generator SKUs down to 0.22 m stay on >= 2 rollers -->
+      <link name="roller_03m_link">
+        <pose>-4.035000 1.200000 0.860000 0 0 0</pose>
+        <inertial>
+          <mass>1.0</mass>
+          <inertia>
+            <ixx>0.03883958</ixx>
+            <iyy>0.00061250</iyy>
+            <izz>0.03883958</izz>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyz>0</iyz>
+          </inertia>
+        </inertial>
+        <visual name="roller_03m">
+          <pose>0 0 0 1.570796326790 0.000000000000 0.000000000000</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.035</radius>
+              <length>0.68</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>0.42 0.44 0.46 1</ambient>
+            <diffuse>0.67 0.69 0.72 1</diffuse>
+          </material>
+        </visual>
+        <collision name="roller_03m_collision">
+          <pose>0 0 0 1.570796326790 0.000000000000 0.000000000000</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.035</radius>
+              <length>0.68</length>
+            </cylinder>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>1.20</mu>
+                <mu2>1.20</mu2>
+              </ode>
+            </friction>
+          </surface>
+        </collision>
+      </link>
+      <joint name="roller_03m_joint" type="revolute">
+        <parent>weigh_platform_link</parent>
+        <child>roller_03m_link</child>
+        <axis>
+          <xyz>0 1 0</xyz>
+          <dynamics>
+            <damping>0.01</damping>
+            <friction>0.0</friction>
+          </dynamics>
+        </axis>
+      </joint>
+      <plugin filename="libignition-gazebo-joint-controller-system.so" name="gz::sim::systems::JointController">
+        <joint_name>roller_03m_joint</joint_name>
         <topic>/pac/conveyor/roller_cmd_vel</topic>
         <initial_velocity>0.0</initial_velocity>
       </plugin>
@@ -555,6 +799,67 @@
         <topic>/pac/conveyor/roller_cmd_vel</topic>
         <initial_velocity>0.0</initial_velocity>
       </plugin>
+      <!-- V4.4: intermediate roller (pitch 0.19 -> 0.095 m) so generator SKUs down to 0.22 m stay on >= 2 rollers -->
+      <link name="roller_04m_link">
+        <pose>-3.845000 1.200000 0.860000 0 0 0</pose>
+        <inertial>
+          <mass>1.0</mass>
+          <inertia>
+            <ixx>0.03883958</ixx>
+            <iyy>0.00061250</iyy>
+            <izz>0.03883958</izz>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyz>0</iyz>
+          </inertia>
+        </inertial>
+        <visual name="roller_04m">
+          <pose>0 0 0 1.570796326790 0.000000000000 0.000000000000</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.035</radius>
+              <length>0.68</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>0.42 0.44 0.46 1</ambient>
+            <diffuse>0.67 0.69 0.72 1</diffuse>
+          </material>
+        </visual>
+        <collision name="roller_04m_collision">
+          <pose>0 0 0 1.570796326790 0.000000000000 0.000000000000</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.035</radius>
+              <length>0.68</length>
+            </cylinder>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>1.20</mu>
+                <mu2>1.20</mu2>
+              </ode>
+            </friction>
+          </surface>
+        </collision>
+      </link>
+      <joint name="roller_04m_joint" type="revolute">
+        <parent>weigh_platform_link</parent>
+        <child>roller_04m_link</child>
+        <axis>
+          <xyz>0 1 0</xyz>
+          <dynamics>
+            <damping>0.01</damping>
+            <friction>0.0</friction>
+          </dynamics>
+        </axis>
+      </joint>
+      <plugin filename="libignition-gazebo-joint-controller-system.so" name="gz::sim::systems::JointController">
+        <joint_name>roller_04m_joint</joint_name>
+        <topic>/pac/conveyor/roller_cmd_vel</topic>
+        <initial_velocity>0.0</initial_velocity>
+      </plugin>
       <link name="roller_05_link">
         <pose>-3.750000 1.200000 0.860000 0 0 0</pose>
         <inertial>
@@ -612,6 +917,67 @@
       </joint>
       <plugin filename="libignition-gazebo-joint-controller-system.so" name="gz::sim::systems::JointController">
         <joint_name>roller_05_joint</joint_name>
+        <topic>/pac/conveyor/roller_cmd_vel</topic>
+        <initial_velocity>0.0</initial_velocity>
+      </plugin>
+      <!-- V4.4: intermediate roller (pitch 0.19 -> 0.095 m) so generator SKUs down to 0.22 m stay on >= 2 rollers -->
+      <link name="roller_05m_link">
+        <pose>-3.655000 1.200000 0.860000 0 0 0</pose>
+        <inertial>
+          <mass>1.0</mass>
+          <inertia>
+            <ixx>0.03883958</ixx>
+            <iyy>0.00061250</iyy>
+            <izz>0.03883958</izz>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyz>0</iyz>
+          </inertia>
+        </inertial>
+        <visual name="roller_05m">
+          <pose>0 0 0 1.570796326790 0.000000000000 0.000000000000</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.035</radius>
+              <length>0.68</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>0.42 0.44 0.46 1</ambient>
+            <diffuse>0.67 0.69 0.72 1</diffuse>
+          </material>
+        </visual>
+        <collision name="roller_05m_collision">
+          <pose>0 0 0 1.570796326790 0.000000000000 0.000000000000</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.035</radius>
+              <length>0.68</length>
+            </cylinder>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>1.20</mu>
+                <mu2>1.20</mu2>
+              </ode>
+            </friction>
+          </surface>
+        </collision>
+      </link>
+      <joint name="roller_05m_joint" type="revolute">
+        <parent>weigh_platform_link</parent>
+        <child>roller_05m_link</child>
+        <axis>
+          <xyz>0 1 0</xyz>
+          <dynamics>
+            <damping>0.01</damping>
+            <friction>0.0</friction>
+          </dynamics>
+        </axis>
+      </joint>
+      <plugin filename="libignition-gazebo-joint-controller-system.so" name="gz::sim::systems::JointController">
+        <joint_name>roller_05m_joint</joint_name>
         <topic>/pac/conveyor/roller_cmd_vel</topic>
         <initial_velocity>0.0</initial_velocity>
       </plugin>
@@ -675,6 +1041,67 @@
         <topic>/pac/conveyor/roller_cmd_vel</topic>
         <initial_velocity>0.0</initial_velocity>
       </plugin>
+      <!-- V4.4: intermediate roller (pitch 0.19 -> 0.095 m) so generator SKUs down to 0.22 m stay on >= 2 rollers -->
+      <link name="roller_06m_link">
+        <pose>-3.465000 1.200000 0.860000 0 0 0</pose>
+        <inertial>
+          <mass>1.0</mass>
+          <inertia>
+            <ixx>0.03883958</ixx>
+            <iyy>0.00061250</iyy>
+            <izz>0.03883958</izz>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyz>0</iyz>
+          </inertia>
+        </inertial>
+        <visual name="roller_06m">
+          <pose>0 0 0 1.570796326790 0.000000000000 0.000000000000</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.035</radius>
+              <length>0.68</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>0.42 0.44 0.46 1</ambient>
+            <diffuse>0.67 0.69 0.72 1</diffuse>
+          </material>
+        </visual>
+        <collision name="roller_06m_collision">
+          <pose>0 0 0 1.570796326790 0.000000000000 0.000000000000</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.035</radius>
+              <length>0.68</length>
+            </cylinder>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>1.20</mu>
+                <mu2>1.20</mu2>
+              </ode>
+            </friction>
+          </surface>
+        </collision>
+      </link>
+      <joint name="roller_06m_joint" type="revolute">
+        <parent>conveyor_link</parent>
+        <child>roller_06m_link</child>
+        <axis>
+          <xyz>0 1 0</xyz>
+          <dynamics>
+            <damping>0.01</damping>
+            <friction>0.0</friction>
+          </dynamics>
+        </axis>
+      </joint>
+      <plugin filename="libignition-gazebo-joint-controller-system.so" name="gz::sim::systems::JointController">
+        <joint_name>roller_06m_joint</joint_name>
+        <topic>/pac/conveyor/roller_cmd_vel</topic>
+        <initial_velocity>0.0</initial_velocity>
+      </plugin>
       <link name="roller_07_link">
         <pose>-3.370000 1.200000 0.860000 0 0 0</pose>
         <inertial>
@@ -732,6 +1159,67 @@
       </joint>
       <plugin filename="libignition-gazebo-joint-controller-system.so" name="gz::sim::systems::JointController">
         <joint_name>roller_07_joint</joint_name>
+        <topic>/pac/conveyor/roller_cmd_vel</topic>
+        <initial_velocity>0.0</initial_velocity>
+      </plugin>
+      <!-- V4.4: intermediate roller (pitch 0.19 -> 0.095 m) so generator SKUs down to 0.22 m stay on >= 2 rollers -->
+      <link name="roller_07m_link">
+        <pose>-3.275000 1.200000 0.860000 0 0 0</pose>
+        <inertial>
+          <mass>1.0</mass>
+          <inertia>
+            <ixx>0.03883958</ixx>
+            <iyy>0.00061250</iyy>
+            <izz>0.03883958</izz>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyz>0</iyz>
+          </inertia>
+        </inertial>
+        <visual name="roller_07m">
+          <pose>0 0 0 1.570796326790 0.000000000000 0.000000000000</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.035</radius>
+              <length>0.68</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>0.28 0.29 0.31 1</ambient>
+            <diffuse>0.47 0.48 0.50 1</diffuse>
+          </material>
+        </visual>
+        <collision name="roller_07m_collision">
+          <pose>0 0 0 1.570796326790 0.000000000000 0.000000000000</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.035</radius>
+              <length>0.68</length>
+            </cylinder>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>1.20</mu>
+                <mu2>1.20</mu2>
+              </ode>
+            </friction>
+          </surface>
+        </collision>
+      </link>
+      <joint name="roller_07m_joint" type="revolute">
+        <parent>conveyor_link</parent>
+        <child>roller_07m_link</child>
+        <axis>
+          <xyz>0 1 0</xyz>
+          <dynamics>
+            <damping>0.01</damping>
+            <friction>0.0</friction>
+          </dynamics>
+        </axis>
+      </joint>
+      <plugin filename="libignition-gazebo-joint-controller-system.so" name="gz::sim::systems::JointController">
+        <joint_name>roller_07m_joint</joint_name>
         <topic>/pac/conveyor/roller_cmd_vel</topic>
         <initial_velocity>0.0</initial_velocity>
       </plugin>
@@ -795,6 +1283,67 @@
         <topic>/pac/conveyor/roller_cmd_vel</topic>
         <initial_velocity>0.0</initial_velocity>
       </plugin>
+      <!-- V4.4: intermediate roller (pitch 0.19 -> 0.095 m) so generator SKUs down to 0.22 m stay on >= 2 rollers -->
+      <link name="roller_08m_link">
+        <pose>-3.085000 1.200000 0.860000 0 0 0</pose>
+        <inertial>
+          <mass>1.0</mass>
+          <inertia>
+            <ixx>0.03883958</ixx>
+            <iyy>0.00061250</iyy>
+            <izz>0.03883958</izz>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyz>0</iyz>
+          </inertia>
+        </inertial>
+        <visual name="roller_08m">
+          <pose>0 0 0 1.570796326790 0.000000000000 0.000000000000</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.035</radius>
+              <length>0.68</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>0.28 0.29 0.31 1</ambient>
+            <diffuse>0.47 0.48 0.50 1</diffuse>
+          </material>
+        </visual>
+        <collision name="roller_08m_collision">
+          <pose>0 0 0 1.570796326790 0.000000000000 0.000000000000</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.035</radius>
+              <length>0.68</length>
+            </cylinder>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>1.20</mu>
+                <mu2>1.20</mu2>
+              </ode>
+            </friction>
+          </surface>
+        </collision>
+      </link>
+      <joint name="roller_08m_joint" type="revolute">
+        <parent>conveyor_link</parent>
+        <child>roller_08m_link</child>
+        <axis>
+          <xyz>0 1 0</xyz>
+          <dynamics>
+            <damping>0.01</damping>
+            <friction>0.0</friction>
+          </dynamics>
+        </axis>
+      </joint>
+      <plugin filename="libignition-gazebo-joint-controller-system.so" name="gz::sim::systems::JointController">
+        <joint_name>roller_08m_joint</joint_name>
+        <topic>/pac/conveyor/roller_cmd_vel</topic>
+        <initial_velocity>0.0</initial_velocity>
+      </plugin>
       <link name="roller_09_link">
         <pose>-2.990000 1.200000 0.860000 0 0 0</pose>
         <inertial>
@@ -852,6 +1401,67 @@
       </joint>
       <plugin filename="libignition-gazebo-joint-controller-system.so" name="gz::sim::systems::JointController">
         <joint_name>roller_09_joint</joint_name>
+        <topic>/pac/conveyor/roller_cmd_vel</topic>
+        <initial_velocity>0.0</initial_velocity>
+      </plugin>
+      <!-- V4.4: intermediate roller (pitch 0.19 -> 0.095 m) so generator SKUs down to 0.22 m stay on >= 2 rollers -->
+      <link name="roller_09m_link">
+        <pose>-2.895000 1.200000 0.860000 0 0 0</pose>
+        <inertial>
+          <mass>1.0</mass>
+          <inertia>
+            <ixx>0.03883958</ixx>
+            <iyy>0.00061250</iyy>
+            <izz>0.03883958</izz>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyz>0</iyz>
+          </inertia>
+        </inertial>
+        <visual name="roller_09m">
+          <pose>0 0 0 1.570796326790 0.000000000000 0.000000000000</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.035</radius>
+              <length>0.68</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>0.28 0.29 0.31 1</ambient>
+            <diffuse>0.47 0.48 0.50 1</diffuse>
+          </material>
+        </visual>
+        <collision name="roller_09m_collision">
+          <pose>0 0 0 1.570796326790 0.000000000000 0.000000000000</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.035</radius>
+              <length>0.68</length>
+            </cylinder>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>1.20</mu>
+                <mu2>1.20</mu2>
+              </ode>
+            </friction>
+          </surface>
+        </collision>
+      </link>
+      <joint name="roller_09m_joint" type="revolute">
+        <parent>conveyor_link</parent>
+        <child>roller_09m_link</child>
+        <axis>
+          <xyz>0 1 0</xyz>
+          <dynamics>
+            <damping>0.01</damping>
+            <friction>0.0</friction>
+          </dynamics>
+        </axis>
+      </joint>
+      <plugin filename="libignition-gazebo-joint-controller-system.so" name="gz::sim::systems::JointController">
+        <joint_name>roller_09m_joint</joint_name>
         <topic>/pac/conveyor/roller_cmd_vel</topic>
         <initial_velocity>0.0</initial_velocity>
       </plugin>
@@ -915,6 +1525,67 @@
         <topic>/pac/conveyor/roller_cmd_vel</topic>
         <initial_velocity>0.0</initial_velocity>
       </plugin>
+      <!-- V4.4: intermediate roller (pitch 0.19 -> 0.095 m) so generator SKUs down to 0.22 m stay on >= 2 rollers -->
+      <link name="roller_10m_link">
+        <pose>-2.705000 1.200000 0.860000 0 0 0</pose>
+        <inertial>
+          <mass>1.0</mass>
+          <inertia>
+            <ixx>0.03883958</ixx>
+            <iyy>0.00061250</iyy>
+            <izz>0.03883958</izz>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyz>0</iyz>
+          </inertia>
+        </inertial>
+        <visual name="roller_10m">
+          <pose>0 0 0 1.570796326790 0.000000000000 0.000000000000</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.035</radius>
+              <length>0.68</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>0.28 0.29 0.31 1</ambient>
+            <diffuse>0.47 0.48 0.50 1</diffuse>
+          </material>
+        </visual>
+        <collision name="roller_10m_collision">
+          <pose>0 0 0 1.570796326790 0.000000000000 0.000000000000</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.035</radius>
+              <length>0.68</length>
+            </cylinder>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>1.20</mu>
+                <mu2>1.20</mu2>
+              </ode>
+            </friction>
+          </surface>
+        </collision>
+      </link>
+      <joint name="roller_10m_joint" type="revolute">
+        <parent>conveyor_link</parent>
+        <child>roller_10m_link</child>
+        <axis>
+          <xyz>0 1 0</xyz>
+          <dynamics>
+            <damping>0.01</damping>
+            <friction>0.0</friction>
+          </dynamics>
+        </axis>
+      </joint>
+      <plugin filename="libignition-gazebo-joint-controller-system.so" name="gz::sim::systems::JointController">
+        <joint_name>roller_10m_joint</joint_name>
+        <topic>/pac/conveyor/roller_cmd_vel</topic>
+        <initial_velocity>0.0</initial_velocity>
+      </plugin>
       <link name="roller_11_link">
         <pose>-2.610000 1.200000 0.860000 0 0 0</pose>
         <inertial>
@@ -972,6 +1643,67 @@
       </joint>
       <plugin filename="libignition-gazebo-joint-controller-system.so" name="gz::sim::systems::JointController">
         <joint_name>roller_11_joint</joint_name>
+        <topic>/pac/conveyor/roller_cmd_vel</topic>
+        <initial_velocity>0.0</initial_velocity>
+      </plugin>
+      <!-- V4.4: intermediate roller (pitch 0.19 -> 0.095 m) so generator SKUs down to 0.22 m stay on >= 2 rollers -->
+      <link name="roller_11m_link">
+        <pose>-2.515000 1.200000 0.860000 0 0 0</pose>
+        <inertial>
+          <mass>1.0</mass>
+          <inertia>
+            <ixx>0.03883958</ixx>
+            <iyy>0.00061250</iyy>
+            <izz>0.03883958</izz>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyz>0</iyz>
+          </inertia>
+        </inertial>
+        <visual name="roller_11m">
+          <pose>0 0 0 1.570796326790 0.000000000000 0.000000000000</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.035</radius>
+              <length>0.68</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>0.28 0.29 0.31 1</ambient>
+            <diffuse>0.47 0.48 0.50 1</diffuse>
+          </material>
+        </visual>
+        <collision name="roller_11m_collision">
+          <pose>0 0 0 1.570796326790 0.000000000000 0.000000000000</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.035</radius>
+              <length>0.68</length>
+            </cylinder>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>1.20</mu>
+                <mu2>1.20</mu2>
+              </ode>
+            </friction>
+          </surface>
+        </collision>
+      </link>
+      <joint name="roller_11m_joint" type="revolute">
+        <parent>conveyor_link</parent>
+        <child>roller_11m_link</child>
+        <axis>
+          <xyz>0 1 0</xyz>
+          <dynamics>
+            <damping>0.01</damping>
+            <friction>0.0</friction>
+          </dynamics>
+        </axis>
+      </joint>
+      <plugin filename="libignition-gazebo-joint-controller-system.so" name="gz::sim::systems::JointController">
+        <joint_name>roller_11m_joint</joint_name>
         <topic>/pac/conveyor/roller_cmd_vel</topic>
         <initial_velocity>0.0</initial_velocity>
       </plugin>
@@ -1035,6 +1767,67 @@
         <topic>/pac/conveyor/roller_cmd_vel</topic>
         <initial_velocity>0.0</initial_velocity>
       </plugin>
+      <!-- V4.4: intermediate roller (pitch 0.19 -> 0.095 m) so generator SKUs down to 0.22 m stay on >= 2 rollers -->
+      <link name="roller_12m_link">
+        <pose>-2.325000 1.200000 0.860000 0 0 0</pose>
+        <inertial>
+          <mass>1.0</mass>
+          <inertia>
+            <ixx>0.03883958</ixx>
+            <iyy>0.00061250</iyy>
+            <izz>0.03883958</izz>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyz>0</iyz>
+          </inertia>
+        </inertial>
+        <visual name="roller_12m">
+          <pose>0 0 0 1.570796326790 0.000000000000 0.000000000000</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.035</radius>
+              <length>0.68</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>0.28 0.29 0.31 1</ambient>
+            <diffuse>0.47 0.48 0.50 1</diffuse>
+          </material>
+        </visual>
+        <collision name="roller_12m_collision">
+          <pose>0 0 0 1.570796326790 0.000000000000 0.000000000000</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.035</radius>
+              <length>0.68</length>
+            </cylinder>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>1.20</mu>
+                <mu2>1.20</mu2>
+              </ode>
+            </friction>
+          </surface>
+        </collision>
+      </link>
+      <joint name="roller_12m_joint" type="revolute">
+        <parent>conveyor_link</parent>
+        <child>roller_12m_link</child>
+        <axis>
+          <xyz>0 1 0</xyz>
+          <dynamics>
+            <damping>0.01</damping>
+            <friction>0.0</friction>
+          </dynamics>
+        </axis>
+      </joint>
+      <plugin filename="libignition-gazebo-joint-controller-system.so" name="gz::sim::systems::JointController">
+        <joint_name>roller_12m_joint</joint_name>
+        <topic>/pac/conveyor/roller_cmd_vel</topic>
+        <initial_velocity>0.0</initial_velocity>
+      </plugin>
       <link name="roller_13_link">
         <pose>-2.230000 1.200000 0.860000 0 0 0</pose>
         <inertial>
@@ -1092,6 +1885,67 @@
       </joint>
       <plugin filename="libignition-gazebo-joint-controller-system.so" name="gz::sim::systems::JointController">
         <joint_name>roller_13_joint</joint_name>
+        <topic>/pac/conveyor/roller_cmd_vel</topic>
+        <initial_velocity>0.0</initial_velocity>
+      </plugin>
+      <!-- V4.4: intermediate roller (pitch 0.19 -> 0.095 m) so generator SKUs down to 0.22 m stay on >= 2 rollers -->
+      <link name="roller_13m_link">
+        <pose>-2.135000 1.200000 0.860000 0 0 0</pose>
+        <inertial>
+          <mass>1.0</mass>
+          <inertia>
+            <ixx>0.03883958</ixx>
+            <iyy>0.00061250</iyy>
+            <izz>0.03883958</izz>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyz>0</iyz>
+          </inertia>
+        </inertial>
+        <visual name="roller_13m">
+          <pose>0 0 0 1.570796326790 0.000000000000 0.000000000000</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.035</radius>
+              <length>0.68</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>0.28 0.29 0.31 1</ambient>
+            <diffuse>0.47 0.48 0.50 1</diffuse>
+          </material>
+        </visual>
+        <collision name="roller_13m_collision">
+          <pose>0 0 0 1.570796326790 0.000000000000 0.000000000000</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.035</radius>
+              <length>0.68</length>
+            </cylinder>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>1.20</mu>
+                <mu2>1.20</mu2>
+              </ode>
+            </friction>
+          </surface>
+        </collision>
+      </link>
+      <joint name="roller_13m_joint" type="revolute">
+        <parent>conveyor_link</parent>
+        <child>roller_13m_link</child>
+        <axis>
+          <xyz>0 1 0</xyz>
+          <dynamics>
+            <damping>0.01</damping>
+            <friction>0.0</friction>
+          </dynamics>
+        </axis>
+      </joint>
+      <plugin filename="libignition-gazebo-joint-controller-system.so" name="gz::sim::systems::JointController">
+        <joint_name>roller_13m_joint</joint_name>
         <topic>/pac/conveyor/roller_cmd_vel</topic>
         <initial_velocity>0.0</initial_velocity>
       </plugin>
@@ -1155,6 +2009,67 @@
         <topic>/pac/conveyor/roller_cmd_vel</topic>
         <initial_velocity>0.0</initial_velocity>
       </plugin>
+      <!-- V4.4: intermediate roller (pitch 0.19 -> 0.095 m) so generator SKUs down to 0.22 m stay on >= 2 rollers -->
+      <link name="roller_14m_link">
+        <pose>-1.945000 1.200000 0.860000 0 0 0</pose>
+        <inertial>
+          <mass>1.0</mass>
+          <inertia>
+            <ixx>0.03883958</ixx>
+            <iyy>0.00061250</iyy>
+            <izz>0.03883958</izz>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyz>0</iyz>
+          </inertia>
+        </inertial>
+        <visual name="roller_14m">
+          <pose>0 0 0 1.570796326790 0.000000000000 0.000000000000</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.035</radius>
+              <length>0.68</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>0.28 0.29 0.31 1</ambient>
+            <diffuse>0.47 0.48 0.50 1</diffuse>
+          </material>
+        </visual>
+        <collision name="roller_14m_collision">
+          <pose>0 0 0 1.570796326790 0.000000000000 0.000000000000</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.035</radius>
+              <length>0.68</length>
+            </cylinder>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>1.20</mu>
+                <mu2>1.20</mu2>
+              </ode>
+            </friction>
+          </surface>
+        </collision>
+      </link>
+      <joint name="roller_14m_joint" type="revolute">
+        <parent>conveyor_link</parent>
+        <child>roller_14m_link</child>
+        <axis>
+          <xyz>0 1 0</xyz>
+          <dynamics>
+            <damping>0.01</damping>
+            <friction>0.0</friction>
+          </dynamics>
+        </axis>
+      </joint>
+      <plugin filename="libignition-gazebo-joint-controller-system.so" name="gz::sim::systems::JointController">
+        <joint_name>roller_14m_joint</joint_name>
+        <topic>/pac/conveyor/roller_cmd_vel</topic>
+        <initial_velocity>0.0</initial_velocity>
+      </plugin>
       <link name="roller_15_link">
         <pose>-1.850000 1.200000 0.860000 0 0 0</pose>
         <inertial>
@@ -1212,6 +2127,67 @@
       </joint>
       <plugin filename="libignition-gazebo-joint-controller-system.so" name="gz::sim::systems::JointController">
         <joint_name>roller_15_joint</joint_name>
+        <topic>/pac/conveyor/roller_cmd_vel</topic>
+        <initial_velocity>0.0</initial_velocity>
+      </plugin>
+      <!-- V4.4: intermediate roller (pitch 0.19 -> 0.095 m) so generator SKUs down to 0.22 m stay on >= 2 rollers -->
+      <link name="roller_15m_link">
+        <pose>-1.755000 1.200000 0.860000 0 0 0</pose>
+        <inertial>
+          <mass>1.0</mass>
+          <inertia>
+            <ixx>0.03883958</ixx>
+            <iyy>0.00061250</iyy>
+            <izz>0.03883958</izz>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyz>0</iyz>
+          </inertia>
+        </inertial>
+        <visual name="roller_15m">
+          <pose>0 0 0 1.570796326790 0.000000000000 0.000000000000</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.035</radius>
+              <length>0.68</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>0.28 0.29 0.31 1</ambient>
+            <diffuse>0.47 0.48 0.50 1</diffuse>
+          </material>
+        </visual>
+        <collision name="roller_15m_collision">
+          <pose>0 0 0 1.570796326790 0.000000000000 0.000000000000</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.035</radius>
+              <length>0.68</length>
+            </cylinder>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>1.20</mu>
+                <mu2>1.20</mu2>
+              </ode>
+            </friction>
+          </surface>
+        </collision>
+      </link>
+      <joint name="roller_15m_joint" type="revolute">
+        <parent>conveyor_link</parent>
+        <child>roller_15m_link</child>
+        <axis>
+          <xyz>0 1 0</xyz>
+          <dynamics>
+            <damping>0.01</damping>
+            <friction>0.0</friction>
+          </dynamics>
+        </axis>
+      </joint>
+      <plugin filename="libignition-gazebo-joint-controller-system.so" name="gz::sim::systems::JointController">
+        <joint_name>roller_15m_joint</joint_name>
         <topic>/pac/conveyor/roller_cmd_vel</topic>
         <initial_velocity>0.0</initial_velocity>
       </plugin>
@@ -1275,6 +2251,67 @@
         <topic>/pac/conveyor/roller_cmd_vel</topic>
         <initial_velocity>0.0</initial_velocity>
       </plugin>
+      <!-- V4.4: intermediate roller (pitch 0.19 -> 0.095 m) so generator SKUs down to 0.22 m stay on >= 2 rollers -->
+      <link name="roller_16m_link">
+        <pose>-1.565000 1.200000 0.860000 0 0 0</pose>
+        <inertial>
+          <mass>1.0</mass>
+          <inertia>
+            <ixx>0.03883958</ixx>
+            <iyy>0.00061250</iyy>
+            <izz>0.03883958</izz>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyz>0</iyz>
+          </inertia>
+        </inertial>
+        <visual name="roller_16m">
+          <pose>0 0 0 1.570796326790 0.000000000000 0.000000000000</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.035</radius>
+              <length>0.68</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>0.28 0.29 0.31 1</ambient>
+            <diffuse>0.47 0.48 0.50 1</diffuse>
+          </material>
+        </visual>
+        <collision name="roller_16m_collision">
+          <pose>0 0 0 1.570796326790 0.000000000000 0.000000000000</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.035</radius>
+              <length>0.68</length>
+            </cylinder>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>1.20</mu>
+                <mu2>1.20</mu2>
+              </ode>
+            </friction>
+          </surface>
+        </collision>
+      </link>
+      <joint name="roller_16m_joint" type="revolute">
+        <parent>conveyor_link</parent>
+        <child>roller_16m_link</child>
+        <axis>
+          <xyz>0 1 0</xyz>
+          <dynamics>
+            <damping>0.01</damping>
+            <friction>0.0</friction>
+          </dynamics>
+        </axis>
+      </joint>
+      <plugin filename="libignition-gazebo-joint-controller-system.so" name="gz::sim::systems::JointController">
+        <joint_name>roller_16m_joint</joint_name>
+        <topic>/pac/conveyor/roller_cmd_vel</topic>
+        <initial_velocity>0.0</initial_velocity>
+      </plugin>
       <link name="roller_17_link">
         <pose>-1.470000 1.200000 0.860000 0 0 0</pose>
         <inertial>
@@ -1332,6 +2369,67 @@
       </joint>
       <plugin filename="libignition-gazebo-joint-controller-system.so" name="gz::sim::systems::JointController">
         <joint_name>roller_17_joint</joint_name>
+        <topic>/pac/conveyor/roller_cmd_vel</topic>
+        <initial_velocity>0.0</initial_velocity>
+      </plugin>
+      <!-- V4.4: intermediate roller (pitch 0.19 -> 0.095 m) so generator SKUs down to 0.22 m stay on >= 2 rollers -->
+      <link name="roller_17m_link">
+        <pose>-1.375000 1.200000 0.860000 0 0 0</pose>
+        <inertial>
+          <mass>1.0</mass>
+          <inertia>
+            <ixx>0.03883958</ixx>
+            <iyy>0.00061250</iyy>
+            <izz>0.03883958</izz>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyz>0</iyz>
+          </inertia>
+        </inertial>
+        <visual name="roller_17m">
+          <pose>0 0 0 1.570796326790 0.000000000000 0.000000000000</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.035</radius>
+              <length>0.68</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>0.28 0.29 0.31 1</ambient>
+            <diffuse>0.47 0.48 0.50 1</diffuse>
+          </material>
+        </visual>
+        <collision name="roller_17m_collision">
+          <pose>0 0 0 1.570796326790 0.000000000000 0.000000000000</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.035</radius>
+              <length>0.68</length>
+            </cylinder>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>1.20</mu>
+                <mu2>1.20</mu2>
+              </ode>
+            </friction>
+          </surface>
+        </collision>
+      </link>
+      <joint name="roller_17m_joint" type="revolute">
+        <parent>conveyor_link</parent>
+        <child>roller_17m_link</child>
+        <axis>
+          <xyz>0 1 0</xyz>
+          <dynamics>
+            <damping>0.01</damping>
+            <friction>0.0</friction>
+          </dynamics>
+        </axis>
+      </joint>
+      <plugin filename="libignition-gazebo-joint-controller-system.so" name="gz::sim::systems::JointController">
+        <joint_name>roller_17m_joint</joint_name>
         <topic>/pac/conveyor/roller_cmd_vel</topic>
         <initial_velocity>0.0</initial_velocity>
       </plugin>
@@ -1395,6 +2493,67 @@
         <topic>/pac/conveyor/roller_cmd_vel</topic>
         <initial_velocity>0.0</initial_velocity>
       </plugin>
+      <!-- V4.4: intermediate roller (pitch 0.19 -> 0.095 m) so generator SKUs down to 0.22 m stay on >= 2 rollers -->
+      <link name="roller_18m_link">
+        <pose>-1.185000 1.200000 0.860000 0 0 0</pose>
+        <inertial>
+          <mass>1.0</mass>
+          <inertia>
+            <ixx>0.03883958</ixx>
+            <iyy>0.00061250</iyy>
+            <izz>0.03883958</izz>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyz>0</iyz>
+          </inertia>
+        </inertial>
+        <visual name="roller_18m">
+          <pose>0 0 0 1.570796326790 0.000000000000 0.000000000000</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.035</radius>
+              <length>0.68</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>0.28 0.29 0.31 1</ambient>
+            <diffuse>0.47 0.48 0.50 1</diffuse>
+          </material>
+        </visual>
+        <collision name="roller_18m_collision">
+          <pose>0 0 0 1.570796326790 0.000000000000 0.000000000000</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.035</radius>
+              <length>0.68</length>
+            </cylinder>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>1.20</mu>
+                <mu2>1.20</mu2>
+              </ode>
+            </friction>
+          </surface>
+        </collision>
+      </link>
+      <joint name="roller_18m_joint" type="revolute">
+        <parent>conveyor_link</parent>
+        <child>roller_18m_link</child>
+        <axis>
+          <xyz>0 1 0</xyz>
+          <dynamics>
+            <damping>0.01</damping>
+            <friction>0.0</friction>
+          </dynamics>
+        </axis>
+      </joint>
+      <plugin filename="libignition-gazebo-joint-controller-system.so" name="gz::sim::systems::JointController">
+        <joint_name>roller_18m_joint</joint_name>
+        <topic>/pac/conveyor/roller_cmd_vel</topic>
+        <initial_velocity>0.0</initial_velocity>
+      </plugin>
       <link name="roller_19_link">
         <pose>-1.090000 1.200000 0.860000 0 0 0</pose>
         <inertial>
@@ -1452,6 +2611,67 @@
       </joint>
       <plugin filename="libignition-gazebo-joint-controller-system.so" name="gz::sim::systems::JointController">
         <joint_name>roller_19_joint</joint_name>
+        <topic>/pac/conveyor/roller_cmd_vel</topic>
+        <initial_velocity>0.0</initial_velocity>
+      </plugin>
+      <!-- V4.4: intermediate roller (pitch 0.19 -> 0.095 m) so generator SKUs down to 0.22 m stay on >= 2 rollers -->
+      <link name="roller_19m_link">
+        <pose>-0.995000 1.200000 0.860000 0 0 0</pose>
+        <inertial>
+          <mass>1.0</mass>
+          <inertia>
+            <ixx>0.03883958</ixx>
+            <iyy>0.00061250</iyy>
+            <izz>0.03883958</izz>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyz>0</iyz>
+          </inertia>
+        </inertial>
+        <visual name="roller_19m">
+          <pose>0 0 0 1.570796326790 0.000000000000 0.000000000000</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.035</radius>
+              <length>0.68</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>0.28 0.29 0.31 1</ambient>
+            <diffuse>0.47 0.48 0.50 1</diffuse>
+          </material>
+        </visual>
+        <collision name="roller_19m_collision">
+          <pose>0 0 0 1.570796326790 0.000000000000 0.000000000000</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.035</radius>
+              <length>0.68</length>
+            </cylinder>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>1.20</mu>
+                <mu2>1.20</mu2>
+              </ode>
+            </friction>
+          </surface>
+        </collision>
+      </link>
+      <joint name="roller_19m_joint" type="revolute">
+        <parent>conveyor_link</parent>
+        <child>roller_19m_link</child>
+        <axis>
+          <xyz>0 1 0</xyz>
+          <dynamics>
+            <damping>0.01</damping>
+            <friction>0.0</friction>
+          </dynamics>
+        </axis>
+      </joint>
+      <plugin filename="libignition-gazebo-joint-controller-system.so" name="gz::sim::systems::JointController">
+        <joint_name>roller_19m_joint</joint_name>
         <topic>/pac/conveyor/roller_cmd_vel</topic>
         <initial_velocity>0.0</initial_velocity>
       </plugin>
@@ -1885,19 +3105,21 @@
             <diffuse>0.55 0.32 0.12 1</diffuse>
           </material>
         </visual>
+        <!-- Top boards as config/ahead_simulator.yaml (browser 3D model): 5 x 143 mm, pitch 239.25 mm
+             (96 mm gap); 35 mm thick to rest on the blocks; development placeholders, not an official pallet spec. -->
         <collision name="top_board_0_collision">
-          <pose>0 -0.484 0.1325 0 0 0</pose>
+          <pose>0 -0.47850 0.1325 0 0 0</pose>
           <geometry>
             <box>
-              <size>1.1 0.13 0.035</size>
+              <size>1.1 0.143 0.035</size>
             </box>
           </geometry>
         </collision>
         <visual name="top_board_0_visual">
-          <pose>0 -0.484 0.1325 0 0 0</pose>
+          <pose>0 -0.47850 0.1325 0 0 0</pose>
           <geometry>
             <box>
-              <size>1.1 0.13 0.035</size>
+              <size>1.1 0.143 0.035</size>
             </box>
           </geometry>
           <material>
@@ -1906,18 +3128,18 @@
           </material>
         </visual>
         <collision name="top_board_1_collision">
-          <pose>0 -0.242 0.1325 0 0 0</pose>
+          <pose>0 -0.23925 0.1325 0 0 0</pose>
           <geometry>
             <box>
-              <size>1.1 0.13 0.035</size>
+              <size>1.1 0.143 0.035</size>
             </box>
           </geometry>
         </collision>
         <visual name="top_board_1_visual">
-          <pose>0 -0.242 0.1325 0 0 0</pose>
+          <pose>0 -0.23925 0.1325 0 0 0</pose>
           <geometry>
             <box>
-              <size>1.1 0.13 0.035</size>
+              <size>1.1 0.143 0.035</size>
             </box>
           </geometry>
           <material>
@@ -1926,18 +3148,18 @@
           </material>
         </visual>
         <collision name="top_board_2_collision">
-          <pose>0 0.0 0.1325 0 0 0</pose>
+          <pose>0 0.00000 0.1325 0 0 0</pose>
           <geometry>
             <box>
-              <size>1.1 0.13 0.035</size>
+              <size>1.1 0.143 0.035</size>
             </box>
           </geometry>
         </collision>
         <visual name="top_board_2_visual">
-          <pose>0 0.0 0.1325 0 0 0</pose>
+          <pose>0 0.00000 0.1325 0 0 0</pose>
           <geometry>
             <box>
-              <size>1.1 0.13 0.035</size>
+              <size>1.1 0.143 0.035</size>
             </box>
           </geometry>
           <material>
@@ -1946,18 +3168,18 @@
           </material>
         </visual>
         <collision name="top_board_3_collision">
-          <pose>0 0.242 0.1325 0 0 0</pose>
+          <pose>0 0.23925 0.1325 0 0 0</pose>
           <geometry>
             <box>
-              <size>1.1 0.13 0.035</size>
+              <size>1.1 0.143 0.035</size>
             </box>
           </geometry>
         </collision>
         <visual name="top_board_3_visual">
-          <pose>0 0.242 0.1325 0 0 0</pose>
+          <pose>0 0.23925 0.1325 0 0 0</pose>
           <geometry>
             <box>
-              <size>1.1 0.13 0.035</size>
+              <size>1.1 0.143 0.035</size>
             </box>
           </geometry>
           <material>
@@ -1966,18 +3188,18 @@
           </material>
         </visual>
         <collision name="top_board_4_collision">
-          <pose>0 0.484 0.1325 0 0 0</pose>
+          <pose>0 0.47850 0.1325 0 0 0</pose>
           <geometry>
             <box>
-              <size>1.1 0.13 0.035</size>
+              <size>1.1 0.143 0.035</size>
             </box>
           </geometry>
         </collision>
         <visual name="top_board_4_visual">
-          <pose>0 0.484 0.1325 0 0 0</pose>
+          <pose>0 0.47850 0.1325 0 0 0</pose>
           <geometry>
             <box>
-              <size>1.1 0.13 0.035</size>
+              <size>1.1 0.143 0.035</size>
             </box>
           </geometry>
           <material>
@@ -1988,22 +3210,24 @@
       </link>
     </model>
     <model name="buffer_rack">
+      <!-- V4.4 (2026-10-09): 2-bay buffer table for top-down suction - top shelf (1.5 m) removed,
+           posts cut to 0.97 m (2.75 cm edge stops above the 0.92 m shelf); bays at x -0.215 / +0.215. -->
       <static>true</static>
       <pose>1.45 -0.55 0 0 0 0</pose>
       <link name="rack_link">
         <collision name="post_fl_collision">
-          <pose>-0.43 -0.26 0.95 0 0 0</pose>
+          <pose>-0.43 -0.26 0.485 0 0 0</pose>
           <geometry>
             <box>
-              <size>0.055 0.055 1.90</size>
+              <size>0.055 0.055 0.97</size>
             </box>
           </geometry>
         </collision>
         <visual name="post_fl_visual">
-          <pose>-0.43 -0.26 0.95 0 0 0</pose>
+          <pose>-0.43 -0.26 0.485 0 0 0</pose>
           <geometry>
             <box>
-              <size>0.055 0.055 1.90</size>
+              <size>0.055 0.055 0.97</size>
             </box>
           </geometry>
           <material>
@@ -2012,18 +3236,18 @@
           </material>
         </visual>
         <collision name="post_fr_collision">
-          <pose>0.43 -0.26 0.95 0 0 0</pose>
+          <pose>0.43 -0.26 0.485 0 0 0</pose>
           <geometry>
             <box>
-              <size>0.055 0.055 1.90</size>
+              <size>0.055 0.055 0.97</size>
             </box>
           </geometry>
         </collision>
         <visual name="post_fr_visual">
-          <pose>0.43 -0.26 0.95 0 0 0</pose>
+          <pose>0.43 -0.26 0.485 0 0 0</pose>
           <geometry>
             <box>
-              <size>0.055 0.055 1.90</size>
+              <size>0.055 0.055 0.97</size>
             </box>
           </geometry>
           <material>
@@ -2032,18 +3256,18 @@
           </material>
         </visual>
         <collision name="post_bl_collision">
-          <pose>-0.43 0.26 0.95 0 0 0</pose>
+          <pose>-0.43 0.26 0.485 0 0 0</pose>
           <geometry>
             <box>
-              <size>0.055 0.055 1.90</size>
+              <size>0.055 0.055 0.97</size>
             </box>
           </geometry>
         </collision>
         <visual name="post_bl_visual">
-          <pose>-0.43 0.26 0.95 0 0 0</pose>
+          <pose>-0.43 0.26 0.485 0 0 0</pose>
           <geometry>
             <box>
-              <size>0.055 0.055 1.90</size>
+              <size>0.055 0.055 0.97</size>
             </box>
           </geometry>
           <material>
@@ -2052,18 +3276,18 @@
           </material>
         </visual>
         <collision name="post_br_collision">
-          <pose>0.43 0.26 0.95 0 0 0</pose>
+          <pose>0.43 0.26 0.485 0 0 0</pose>
           <geometry>
             <box>
-              <size>0.055 0.055 1.90</size>
+              <size>0.055 0.055 0.97</size>
             </box>
           </geometry>
         </collision>
         <visual name="post_br_visual">
-          <pose>0.43 0.26 0.95 0 0 0</pose>
+          <pose>0.43 0.26 0.485 0 0 0</pose>
           <geometry>
             <box>
-              <size>0.055 0.055 1.90</size>
+              <size>0.055 0.055 0.97</size>
             </box>
           </geometry>
           <material>
@@ -2072,18 +3296,18 @@
           </material>
         </visual>
         <collision name="divider_front_collision">
-          <pose>0 -0.26 0.95 0 0 0</pose>
+          <pose>0 -0.26 0.485 0 0 0</pose>
           <geometry>
             <box>
-              <size>0.04 0.04 1.90</size>
+              <size>0.04 0.04 0.97</size>
             </box>
           </geometry>
         </collision>
         <visual name="divider_front_visual">
-          <pose>0 -0.26 0.95 0 0 0</pose>
+          <pose>0 -0.26 0.485 0 0 0</pose>
           <geometry>
             <box>
-              <size>0.04 0.04 1.90</size>
+              <size>0.04 0.04 0.97</size>
             </box>
           </geometry>
           <material>
@@ -2092,18 +3316,18 @@
           </material>
         </visual>
         <collision name="divider_back_collision">
-          <pose>0 0.26 0.95 0 0 0</pose>
+          <pose>0 0.26 0.485 0 0 0</pose>
           <geometry>
             <box>
-              <size>0.04 0.04 1.90</size>
+              <size>0.04 0.04 0.97</size>
             </box>
           </geometry>
         </collision>
         <visual name="divider_back_visual">
-          <pose>0 0.26 0.95 0 0 0</pose>
+          <pose>0 0.26 0.485 0 0 0</pose>
           <geometry>
             <box>
-              <size>0.04 0.04 1.90</size>
+              <size>0.04 0.04 0.97</size>
             </box>
           </geometry>
           <material>
@@ -2141,26 +3365,6 @@
         </collision>
         <visual name="shelf_1_visual">
           <pose>0 0 0.92 0 0 0</pose>
-          <geometry>
-            <box>
-              <size>0.90 0.58 0.045</size>
-            </box>
-          </geometry>
-          <material>
-            <ambient>0.15 0.17 0.19 1</ambient>
-            <diffuse>0.30 0.33 0.36 1</diffuse>
-          </material>
-        </visual>
-        <collision name="shelf_2_collision">
-          <pose>0 0 1.5 0 0 0</pose>
-          <geometry>
-            <box>
-              <size>0.90 0.58 0.045</size>
-            </box>
-          </geometry>
-        </collision>
-        <visual name="shelf_2_visual">
-          <pose>0 0 1.5 0 0 0</pose>
           <geometry>
             <box>
               <size>0.90 0.58 0.045</size>
@@ -2260,5 +3464,6 @@
         </sensor>
       </link>
     </model>
+
   </world>
 </sdf>

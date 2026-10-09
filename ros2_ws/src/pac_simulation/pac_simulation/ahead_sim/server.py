@@ -35,6 +35,11 @@ class AheadWebServer:
         app.router.add_post("/api/demo/next", self.api_demo_next)
         app.router.add_post("/api/demo/auto", self.api_demo_auto)
         app.router.add_post("/api/place", self.api_place)
+        # V4.4 robot cell
+        app.router.add_post("/api/robot_place", self.api_robot_place)
+        app.router.add_get("/api/robot_scene", self.api_robot_scene)
+        app.router.add_get("/mesh/{name}", self.mesh)
+        app.router.add_get("/api/render.png", self.render_png)
         app.on_startup.append(self.on_startup)
         app.on_cleanup.append(self.on_cleanup)
         return app
@@ -91,6 +96,51 @@ class AheadWebServer:
 
         await self.broadcast(self.simulator.snapshot())
         return web.json_response({"ok": True, "placed": spec.as_dict()})
+
+    async def api_robot_place(self, request: web.Request) -> web.Response:
+        """Queue one placement for the HDR50-22 robot (same JSON as /api/place). The box is
+        delivered to PICK, picked by suction, carried and released at target_position_m."""
+        try:
+            payload = await request.json()
+            out = self.simulator.robot_place(payload)
+        except Exception as exc:
+            return web.json_response({"ok": False, "error": str(exc)}, status=400)
+        return web.json_response({"ok": True, **out})
+
+    async def api_robot_scene(self, request: web.Request) -> web.Response:
+        robot = self.simulator.robot
+        if robot is None:
+            return web.json_response({"ok": False, "error": "robot cell not available"}, status=404)
+        return web.json_response({"ok": True, **robot.static_scene()})
+
+    async def render_png(self, request: web.Request) -> web.Response:
+        """Software render (PyBullet TinyRenderer) of the physics world, no GPU/browser needed.
+        Query: w, h, view = iso | top | side."""
+        import io
+
+        import pybullet as pb
+        from PIL import Image
+        w = min(1600, int(request.query.get("w", 1200)))
+        h = min(1200, int(request.query.get("h", 760)))
+        views = {"iso": ([2.4, -3.2, 2.6], [-0.35, -0.45, 0.45]), "top": ([-0.3, -0.3, 4.2], [-0.3, -0.29, 0.0]),
+                 "side": ([0.0, -4.2, 0.9], [-0.35, -0.3, 0.5])}
+        eye, target = views.get(request.query.get("view", "iso"), views["iso"])
+        cid = self.simulator.world.client_id
+        vm = pb.computeViewMatrix(eye, target, [0, 0, 1])
+        pm = pb.computeProjectionMatrixFOV(45, w / h, 0.05, 20)
+        _, _, rgba, _, _ = pb.getCameraImage(w, h, vm, pm, renderer=pb.ER_TINY_RENDERER,
+                                             lightDirection=[2, -1.5, 3], shadow=1, physicsClientId=cid)
+        img = Image.frombytes("RGBA", (w, h), bytes(bytearray([int(v) for v in (rgba.flatten() if hasattr(rgba, "flatten") else rgba)])))
+        buf = io.BytesIO()
+        img.convert("RGB").save(buf, "PNG")
+        return web.Response(body=buf.getvalue(), content_type="image/png")
+
+    async def mesh(self, request: web.Request) -> web.StreamResponse:
+        robot = self.simulator.robot
+        path = robot.mesh_path(request.match_info["name"]) if robot is not None else None
+        if path is None:   # only meshes referenced by the robot URDF are served
+            raise web.HTTPNotFound()
+        return web.FileResponse(path)
 
     async def ws_handler(self, request: web.Request) -> web.WebSocketResponse:
         ws = web.WebSocketResponse(heartbeat=20.0)

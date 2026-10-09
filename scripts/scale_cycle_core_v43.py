@@ -49,6 +49,32 @@ class Config:
     spawn_wait_timeout_s: float = 30.0
 
 
+# Workcell geometry behind the length-dependent thresholds (V4.2 world).
+SCALE_CENTER_X_M = -3.80          # weigh platform 0.70 x 0.70 m
+SCALE_HALF_LEN_M = 0.35
+PICK_STOPPER_FACE_X_M = -0.845    # upstream face of the pick stopper
+
+
+def config_for_box(length_m: float, expected_mass_kg: Optional[float], tare_kg: float = 7.0) -> "Config":
+    """Thresholds for a box of `length_m` along the conveyor (generator SKUs vary in size).
+    For the original 0.40 m test box this reproduces the hand-tuned defaults. `tare_kg`: empty
+    platform + its rollers (7 kg in the V4.2 world, 10 kg with the V4.4 intermediate rollers)."""
+    if not 0.10 <= length_m <= 0.66:
+        raise ValueError(f"box length {length_m:.3f} m does not fit the 0.70 m scale platform")
+    return Config(
+        # box must rest fully on the platform (default 0.16 m for 0.40 m boxes)
+        scale_center_tolerance_m=min(0.16, max(0.02, SCALE_HALF_LEN_M - length_m / 2 + 0.01)),
+        # whole box past the platform's downstream edge (+0.07 m margin, as tuned)
+        unload_x_m=SCALE_CENTER_X_M + SCALE_HALF_LEN_M + length_m / 2 + 0.07,
+        # centre when the box touches the pick stopper, minus 0.035 m (as tuned)
+        pick_x_m=PICK_STOPPER_FACE_X_M - length_m / 2 - 0.035,
+        expected_mass_kg=expected_mass_kg,
+        # +-7 % (at least the original 0.35 kg) of the expected fixture mass
+        expected_mass_tolerance_kg=max(0.35, 0.07 * (expected_mass_kg or 0.0)),
+        expected_tare_n=tare_kg * G,
+    )
+
+
 class AutoScaleCycle:
     """One automatic cycle; call update_wrench, update_pose, then tick."""
 

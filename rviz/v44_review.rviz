@@ -1,0 +1,72 @@
+# V4.4 review layout: robot + MoveIt planning scene (workcell obstacles, carried/placed boxes),
+# planned paths, and the two cameras: fixed pole CCTV and gripper (wrist) camera, each with the
+# box-perception overlay (/pac/perception/<cam>/debug_image, published by box_perception_v44.py).
+Panels:
+  - Class: rviz_common/Displays
+    Name: Displays
+  - Class: rviz_common/Views
+    Name: Views
+Visualization Manager:
+  Class: ""
+  Displays:
+    - Class: rviz_default_plugins/Grid
+      Name: Grid
+      Enabled: true
+      Plane Cell Count: 14
+      Cell Size: 0.5
+    - Class: moveit_rviz_plugin/MotionPlanning
+      Name: MotionPlanning
+      Enabled: true
+      Robot Description: robot_description
+      Planning Scene Topic: monitored_planning_scene
+      Move Group Namespace: ""
+      Planning Request:
+        Planning Group: hdr_manipulator
+        Interactive Marker Size: 0
+        Query Goal State: false
+        Query Start State: false
+      Planned Path:
+        Trajectory Topic: display_planned_path
+        Loop Animation: false
+        Show Trail: false
+        State Display Time: 0.05 s
+      Scene Geometry:
+        Scene Alpha: 0.6
+        Show Scene Geometry: true
+      Scene Robot:
+        Show Robot Visual: true
+        Robot Alpha: 1
+    - Class: rviz_default_plugins/Image
+      Name: Pole CCTV (fixed) perception
+      Enabled: true
+      Topic:
+        Value: /pac/perception/far/debug_image
+        Reliability Policy: Best Effort
+    - Class: rviz_default_plugins/Image
+      Name: Gripper camera perception
+      Enabled: true
+      Topic:
+        Value: /pac/perception/wrist/debug_image
+        Reliability Policy: Best Effort
+  Global Options:
+    Fixed Frame: world
+    Background Color: 48; 48; 48
+  Tools:
+    - Class: rviz_default_plugins/Interact
+    - Class: rviz_default_plugins/MoveCamera
+    - Class: rviz_default_plugins/Select
+  Value: true
+  Views:
+    Current:
+      Class: rviz_default_plugins/Orbit
+      Name: Current View
+      Distance: 6.5
+      Focal Point:
+        X: -1.2
+        Y: 1.0
+        Z: 0.8
+      Pitch: 0.55
+      Yaw: 4.2
+Window Geometry:
+  Height: 1000
+  Width: 1600

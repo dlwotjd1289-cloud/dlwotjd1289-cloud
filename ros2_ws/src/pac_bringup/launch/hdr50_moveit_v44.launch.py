@@ -70,9 +70,14 @@ def generate_launch_description():
 
     return LaunchDescription([
         DeclareLaunchArgument("rviz", default_value="true", description="Start RViz with MoveIt plugin"),
+        # Review layout (robot, planning scene, CCTV images) lives in <project>/rviz; this launch
+        # file is installed with --symlink-install, so resolve the project from its real path.
+        DeclareLaunchArgument("rviz_config", default_value=os.path.join(
+            os.path.dirname(os.path.realpath(__file__)), "..", "..", "..", "..", "rviz", "v44_review.rviz"),
+            description="RViz config"),
         Node(package="moveit_ros_move_group", executable="move_group", output="screen", parameters=params),
         Node(package="rviz2", executable="rviz2", name="rviz2_moveit", output="log",
-             arguments=["-d", os.path.join(get_package_share_directory(moveit_pkg), "config", "moveit.rviz")],
+             arguments=["-d", LaunchConfiguration("rviz_config")],
              parameters=params[:2] + [{"use_sim_time": True}],
              condition=IfCondition(LaunchConfiguration("rviz"))),
     ])
