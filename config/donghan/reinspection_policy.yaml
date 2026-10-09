@@ -1,0 +1,53 @@
+schema_version: 1
+# Reinspection (RI) policy for pac_reinspection.ReinspectionValidator.
+# ALL NUMBERS ARE TEST ASSUMPTIONS (not measured on the cell). Replace them with
+# values measured in Gazebo / on hardware before relying on them.
+# Codes: docs/donghan/reinspection_policy.md. RejectCode (pac_common) is not extended.
+assumed: true
+
+budget:
+  total_time_s: 20.0          # re-sensing per box, separate from SupervisorConfig.operator_time_s (120 s HOLD)
+  max_verdict_changes: 3      # RI-F6: verdict kind flips before INSPECTION is forced
+
+retries:                      # re-sensing attempts per box and family
+  label: 2                    # A3, A4, A6, A7, B3 (re-read)
+  weigh: 2                    # B2, B6, B7 (re-weigh / re-zero)
+  frames: 3                   # B4, C2, C3, C5, C7, C8, D2 (re-capture / extra frames / second view)
+
+costs_s:                      # assumed time of one re-sensing, counted against total_time_s
+  relabel: 2.0
+  reweigh: 2.5                # AutoScaleCycle settle 0.65 s + 0.5 s window + transfer back and forth
+  rezero: 4.0
+  recapture: 0.5
+  frames: 0.5
+  separate: 3.0               # hold the rear box until a gap opens, then re-capture
+  second_view: 1.5
+
+reasons:
+  # existing behaviour, tagged only
+  RI-A1: {enabled: true}
+  RI-A2: {enabled: true}
+  RI-A4: {enabled: true}      # + one re-read (new)
+  RI-B1: {enabled: true}
+  RI-B2: {enabled: true}      # + re-weigh (new)
+  RI-B5: {enabled: true}
+  RI-C1: {enabled: true}
+  RI-D1: {enabled: true}
+  RI-D3: {enabled: true}      # note only; DAMAGED reclassification is a team decision
+  # new, simulation
+  RI-A3: {enabled: true}
+  RI-A6: {enabled: true}
+  RI-A7: {enabled: true}
+  RI-B3: {enabled: true}
+  RI-B4: {enabled: true}
+  RI-B6: {enabled: true, max_stdev_kg: 0.12}             # = AutoScaleCycle mass_stdev_tolerance_kg
+  RI-B7: {enabled: true}
+  RI-C2: {enabled: true, max_size_spread_m: 0.008}
+  RI-C3: {enabled: true}
+  RI-C5: {enabled: true, pair_tolerance_m: 0.02}
+  RI-C7: {enabled: true, min_valid_ratio: 0.85}          # = DepthConfig.min_valid_ratio
+  RI-C8: {enabled: true, max_yaw_deviation_rad: 0.26}    # 15 deg off the conveyor axis (V4.4 jitter is +-10 deg)
+  RI-D2: {enabled: true, ambiguous_band: [0.7, 1.3]}     # damage_score (1.0 = DepthConfig threshold)
+  RI-E3: {enabled: true}
+  RI-F6: {enabled: true}
+  # not implemented here (hardware / supervisor): RI-A5, C4, C6, D4, D5, E1, E2, E4, E5, F1-F5
