@@ -25,6 +25,17 @@
 | C13 | 적재 높이 표시 | 사이클 스크립트가 "허용 1.6 m"를 출력, 실제 계획은 1.5 m | 낮음 |
 | C14 | 시간 값 | 같은 가정값(8 / 4 / 12 / 60 s)이 두 설정 파일에, 6단계 `cycle_time` 추정과 별도 | 낮음 |
 | C15 | 좌표 변환 | 팔레트 → 시뮬레이터 중심 좌표 변환 함수가 여러 벌 | 낮음 |
+| C16 | Gazebo 경로 생성 | V4.4/V4.5 단일 박스 경로가 6 cm 흡착컵을 빼고 플랜지 기준으로 계산 | 높음 (확인 필요) |
+| C17 | 팔레트 규격 원본 | ROS 런타임이 팔레트를 `default.yaml`이 아닌 주문 파일에서 읽고, 예시 주문이 이전 규격(1.2 × 1.0 m, 1.35 m) | 높음 |
+| C18 | SKU 대표 무게 | ROS 런타임은 무게 범위 최대값, 가상 데이터·Gazebo 브리지는 중간값 | 높음 |
+| C19 | 학습 모델 | 저장소 모델 3개 모두 현재 팀 후보기와 계약이 맞지 않음, 데모는 검사 없이 사용 | 중간 |
+| C20 | 5-② 검사기 3번째 | `pac_planning.physics` (지지율 0.80) 가 테스트에서만 쓰임 | 중간 |
+| C21 | 마찰 가정 | Gazebo 0.9 / PyBullet 0.64·0.72 / 재성 v3 계산 0.4 | 중간 |
+| C22 | 컨베이어 모델 | 축적 6개(태현 실시간) vs 축적 없음·정지(재성 v3) vs 한 박스씩(Gazebo), 도착 6 s < 로봇 8 s | 중간 |
+| C23 | 계량 검증 | V4.3은 생성기 정답 무게 ± max(0.35 kg, 7 %), 2단계는 SKU 범위 ± 8 % | 낮음 |
+| C24 | 공통 값 중복 | 지지율 0.70, 1000 kg, 데크 0.15 m가 여러 파일에 같은 값으로, 일치 검사 일부만 | 낮음 |
+| C25 | 안정성 가속도 | 재성 v3 안정성 점수는 0.2 g, 하드 검사는 0.3 g | 낮음 (설계) |
+| C26 | 이름·미사용 값 | `SkuSpec` 두 의미, 팔레트 ID 세 가지, `PlannerConfig.min_cog_margin` 미사용 | 낮음 |
 
 ---
 
@@ -121,6 +132,75 @@ Gazebo 경로는 계량값과 카메라 결과를 검증 없이 그대로 씁니
 
 ## C15. 좌표 변환 중복 (낮음)
 팔레트 frame(모서리 원점) → PyBullet 시뮬레이터(팔레트 중심 원점, 박스 중심) 변환이 `tools/runtime/scripts/physics_replay.py` `centre`, `tools/realtime/live_sim_bridge.py` `sim_center`, `scripts/mission_bridge_v45.py`(`gazebo_pallet(top_center_world=(0,0,0))`)에 따로 있습니다. 앞의 두 개는 가상 셀 결과용이라 `workcell.yaml` `frame_yaw_rad`를 쓰지 않습니다. Gazebo 결과를 이 함수들로 뷰어에 보내면 팔레트가 180° 돌아 보입니다.
+
+---
+
+# 2차 검토 (전체 코드 대조)
+
+## C16. Gazebo 경로가 흡착컵 길이를 빼고 계산 (높음, 확인 필요)
+- `scripts/pick_place_plan_v44.py` 21·69행, `pick_place_plan_v45.py` 26행: 집기·놓기 목표를 **플랜지**(`flange_link`)가 박스 윗면 5 mm 위에 오도록 잡습니다(`grip_gap_m`).
+- V4.5 미션(`run_mission_v45.sh`)과 `run_pick_place_v44.sh`가 띄우는 V4.4 로봇(`hdr50_pedestal_gripper.urdf.xacro`)에는 플랜지 끝에 **0.06 m 흡착컵**이 있습니다.
+- 같은 셀을 다루는 MoveIt 실행(`moveit_pick_place_v44.py`, `TCP = "suction_tcp"`)과 6단계(`robot_check.yaml` `tcp_offset_m: 0.06`)는 컵을 반영합니다.
+- 계산대로라면 컵이 박스 안으로 약 55 mm 들어갑니다. V4.2(컵 없음) 시절 경로를 V4.4 월드에서 그대로 쓰는 것으로 보이며, Gazebo에서 실제 거동 확인이 필요합니다.
+
+## C17. 팔레트 규격 단일 원본 위반 (높음)
+- `pac_runtime/order.py` `cell_from_order`는 팔레트 크기·높이·하중을 **주문 JSON**에서 읽습니다. ROS `runtime_node`와 `runtime.launch.py`가 이 경로입니다.
+- 예시 `config/taehyeon/example_order.json`과 `order.py` 설명 주석은 `size_m: [1.2, 1.0, 1.35]` (이전 규격). 테스트도 이 파일을 씁니다.
+- 기준서 19장은 팔레트 값을 `config/default.yaml` 한 곳에서만 쓰라고 정했고, `tests/test_config_consistency.py`는 이 파일을 검사하지 않습니다.
+
+## C18. SKU 대표 무게 (높음)
+- `pac_runtime/order.py` `cell_from_order(..., nominal_weight="max")`: 아직 안 본 박스의 무게를 **범위 최대값**으로 둡니다(ROS 런타임).
+- `tools/virtual_data` `catalog.nominal_weight: midpoint`(가상 데이터 평가, 4단계 성능 수치), `ahead_planner_bridge_v44.py` 62행(Gazebo 사이클)은 **중간값**.
+- 미래 시나리오의 하중·무게중심·팔레트 총중량 판단이 런타임과 평가에서 다르게 나옵니다. 평가 수치를 런타임 성능으로 옮겨 말할 수 없습니다.
+
+## C19. 학습 모델과 후보기 계약 (중간)
+| 모델 | 학습 기준 | 지금 상태 |
+|---|---|---|
+| `models/dual_head_ranker.json` | 삭제된 오프라인 후보기 (`REFERENCE_FULL_SINGLE_SUPPORT`), horizon 3 · 시나리오 7 | README 데모(`pac_planning.demo --model ...`)가 계약 검사 없이 사용 |
+| `models/candidate_runtime_v2.json` | `pac_candidates` 소스 해시 고정, horizon 2 · 시나리오 3 | 지금 `pac_candidates`와 해시·설정 불일치 → `plan_with_backend`가 `MODEL_BACKEND_MISMATCH`로 거부. **정리 전(d995caa)에도 이미 불일치** |
+| `models/team_fd683e56_smoke.json` | 위와 같음 (스모크용) | 같음 |
+
+`config/default.yaml` 플래너 설정(horizon 3, 시나리오 7)과 v2 모델(2, 3)도 다릅니다. 지금 팀 후보기로 쓸 수 있는 학습 모델은 없고, 런타임은 휴리스틱(`NO_MODEL_HEURISTIC`)으로 동작합니다.
+
+## C20. 세 번째 5-② 검사기 (중간)
+`ros2_ws/src/pac_planning/pac_planning/physics/` (`PalletPhysicsEngine`, `min_support_ratio 0.80`)는 V1 작업셀용 분석 물리로, `tests/workcell/test_pallet_physics_v1.py`에서만 쓰입니다. 팀 기준(0.70, `pac_candidates`)과 값이 다른 같은 역할의 코드라 삭제 또는 `pac_candidates`로 흡수 대상입니다.
+
+## C21. 마찰 계수 가정 (중간)
+| 위치 | 값 |
+|---|---|
+| Gazebo 박스 (`make_box_sdf_v44.py`, `scale_auto_box_5kg_v43.sdf`) | μ 0.9 |
+| PyBullet (`config/ahead_simulator.yaml`) | 박스-박스 0.64, 박스-팔레트 0.72 (측정값 아님) |
+| 재성 v3 안정성 계산 (`tools/prototypes/lookahead/lookahead.py` 230행) | μ 0.4 가정 |
+
+같은 적재가 시뮬레이터마다 다르게 미끄러지거나 버팁니다. 0.3 g 기준(재성 v3)은 μ 가정에 바로 영향을 받습니다.
+
+## C22. 컨베이어 모델 (중간)
+- **태현 실시간** (`pac_highlevel/realtime.py`): 6 s마다 1개 도착, 컨베이어에 최대 6개까지 쌓이며 상류에서 대기.
+- **재성 v3** (`ALGORITHM_V3_3.md` 7-2장): 축적 컨베이어 가정 없음(`queue_capacity` 0), 못 놓으면 컨베이어 정지 → 단계별 대응.
+- **Gazebo 사이클**: 한 박스씩 계량·적재(다음 박스는 로봇 작업 중 미리 계량).
+- 도착 간격 6 s(`environment.yaml`)가 로봇 1회 8 s(`highlevel.yaml`)보다 짧아 처리량·대기시간 평가가 컨베이어 가정에 크게 좌우됩니다.
+
+## C23. 계량 검증 기준 (낮음)
+V4.3 (`scale_cycle_core_v43.py` 45·73행)은 생성기의 정답 무게와 비교해 ± max(0.35 kg, 7 %)를 넘으면 실패, 2단계 `StateValidator`는 SKU 무게 범위와 ± 8 %로 비교합니다. 실제 셀에서는 정답 무게를 알 수 없으므로 2단계 방식이 기준입니다.
+
+## C24. 공통 값 중복 (낮음)
+값은 지금 같지만 원본이 여러 개입니다.
+| 값 | 위치 |
+|---|---|
+| 지지율 0.70 | `default.yaml` `constraint`, `candidates.yaml` `constraints` (후보기는 `default.yaml`을 읽지 않음) |
+| 팔레트 1000 kg | `default.yaml`, `candidates.yaml` `default_pallet_max_weight_kg`, `virtual_data.yaml`, `environment.yaml`, 주문 JSON |
+| 데크 0.15 m | `default.yaml`, `workcell.yaml`, `robot_check.yaml` (이 둘은 일치 검사 있음) |
+
+## C25. 안정성 가속도 (낮음, 설계)
+재성 v3 프로토타입의 안정성 점수는 중력을 0.2 g 기울여 계산하고(`TILT_G = 0.2`), 하드 검사 목표는 0.3 g(`a_target_g`)입니다. 0.3 g 기준이 확정되면 점수 쪽도 맞춰야 합니다.
+
+## C26. 이름·미사용 값 (낮음)
+- `SkuSpec`: 생성기(`ahead_dataset_generator.config`, 무게 범위)와 `pac_common.planning`(대표 무게 + 허용 하중)이 다른 필드를 가진 같은 이름.
+- 팔레트 ID: `P001`(`default.yaml`), `PALLET-01`(`StateManager.for_order`), 주문 파일 `id_prefix`.
+- `PlannerConfig.min_cog_margin`(`default.yaml` 0.02)은 코드에서 쓰이지 않습니다.
+
+## 2차 검토에서 충돌이 없었던 것
+공통 자료형 재정의(`BoxState`, `RejectCode` 등 없음), 박스 기준점(AABB 최소 모서리), 허용 yaw(0 / 90°), HDR50-22 관절 표·HOME 자세, Gazebo 월드 이름, 카메라 토픽, `default.yaml` 팔레트 값과 생성기·PyBullet·작업셀 설정(일치 검사 통과).
 
 ---
 
