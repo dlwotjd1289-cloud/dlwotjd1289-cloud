@@ -1,0 +1,86 @@
+{
+ "A 자동 교환·자체 지게차": {
+  "swap_s": 60,
+  "wrap_s": 0,
+  "cells_per_forklift": 1,
+  "forklift_service_s": 180,
+  "pallet_interval_s": 900,
+  "freight_krw": 300000,
+  "pallets_per_truck": 14,
+  "forklift_krw_h": 35000,
+  "film_krw": 500,
+  "cell_krw_s": 12,
+  "rho": 0.2,
+  "T_change": [
+   60.0,
+   60.0
+  ],
+  "krw_per_pallet": 23678.571428571428,
+  "truck_slot": 21428.571428571428,
+  "forklift": 1750.0,
+  "c_p": 1973.2142857142856
+ },
+ "B 수동 교체·지게차 4셀 공유": {
+  "swap_s": 90,
+  "wrap_s": 60,
+  "cells_per_forklift": 4,
+  "forklift_service_s": 180,
+  "pallet_interval_s": 900,
+  "freight_krw": 300000,
+  "pallets_per_truck": 14,
+  "forklift_krw_h": 35000,
+  "film_krw": 500,
+  "cell_krw_s": 8,
+  "rho": 0.8,
+  "T_change": [
+   510.00000000000006,
+   870.0000000000001
+  ],
+  "krw_per_pallet": 23678.571428571428,
+  "truck_slot": 21428.571428571428,
+  "forklift": 1750.0,
+  "c_p": 2959.8214285714284
+ },
+ "C 장거리 운송": {
+  "swap_s": 60,
+  "wrap_s": 60,
+  "cells_per_forklift": 2,
+  "forklift_service_s": 180,
+  "pallet_interval_s": 900,
+  "freight_krw": 700000,
+  "pallets_per_truck": 14,
+  "forklift_krw_h": 35000,
+  "film_krw": 500,
+  "cell_krw_s": 8,
+  "rho": 0.4,
+  "T_change": [
+   180.0,
+   240.0
+  ],
+  "krw_per_pallet": 52250.0,
+  "truck_slot": 50000.0,
+  "forklift": 1750.0,
+  "c_p": 6531.25
+ },
+ "D 근거리·처리량 우선": {
+  "swap_s": 60,
+  "wrap_s": 0,
+  "cells_per_forklift": 1,
+  "forklift_service_s": 180,
+  "pallet_interval_s": 900,
+  "freight_krw": 120000,
+  "pallets_per_truck": 14,
+  "forklift_krw_h": 35000,
+  "film_krw": 500,
+  "cell_krw_s": 15,
+  "rho": 0.2,
+  "T_change": [
+   60.0,
+   60.0
+  ],
+  "krw_per_pallet": 10821.42857142857,
+  "truck_slot": 8571.42857142857,
+  "forklift": 1750.0,
+  "c_p": 721.4285714285713
+ }
+}

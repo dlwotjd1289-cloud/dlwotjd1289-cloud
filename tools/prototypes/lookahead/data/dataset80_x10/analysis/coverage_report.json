@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "generator_version": "1.4.0",
+  "scenario_count": 60,
+  "box_count": 4800,
+  "sku_count": 13,
+  "family_counts": {
+    "late_heavy": 10,
+    "late_large": 10,
+    "normal": 10,
+    "repeated_sku": 10,
+    "size_mixed": 10,
+    "weight_mixed": 10
+  },
+  "sku_counts": {
+    "K01": 399,
+    "K02": 404,
+    "K03": 443,
+    "K04": 379,
+    "K05": 376,
+    "K06": 387,
+    "K07": 346,
+    "K08": 399,
+    "K09": 337,
+    "K10": 350,
+    "K11": 313,
+    "K12": 345,
+    "K13": 322
+  },
+  "weight_band_counts": {
+    "W_00_03": 1605,
+    "W_03_05": 987,
+    "W_05_07": 584,
+    "W_07_10": 550,
+    "W_10_15": 419,
+    "W_15_20": 296,
+    "W_20_25": 227,
+    "W_25_30": 132
+  },
+  "parcel_domain_violations": 0,
+  "duplicate_inventory_scenarios": 0,
+  "units": {
+    "length": "m",
+    "mass": "kg",
+    "time": "s",
+    "angle": "rad"
+  }
+}

@@ -1,0 +1,7 @@
+team
+team;cand=hol_off
+team;cand=hol_off;cap=general
+la_k3;cand=hol_off
+la_k3;cand=hol_off;cap=general
+la_k3;cand=hol_off;cap=humid
+la_k3;cand=hol_off;cap=long

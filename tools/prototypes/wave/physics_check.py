@@ -108,7 +108,7 @@ def job(args):
 
 
 if __name__ == "__main__":
-    C = Path.home() / "AHEAD/audit_20261009/07_ai_role/sweep/configs"
+    C = Path(__file__).resolve().parents[1] / "lookahead/configs"
     tune.setup(C / "perbox.yaml", "test")
     wv = json.loads((Path(__file__).parent / "tuned_perbox_wave.json").read_text())["mean"]
     variants = {"team_dblf_rule": (None, "rule"), "wave_full": (wv, "wave")}

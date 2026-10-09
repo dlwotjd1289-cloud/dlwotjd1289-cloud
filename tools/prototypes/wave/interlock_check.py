@@ -29,7 +29,7 @@ def job(a):
             bonded += len(s) >= 2; column += len(s) == 1
     return up, bonded, column
 
-C = Path.home() / "AHEAD/audit_20261009/07_ai_role/sweep/configs"
+C = Path(__file__).resolve().parents[1] / "lookahead/configs"
 res = {}
 for tag, cand, wfile in (("team_perbox", "perbox.yaml", None), ("wave_lbcp06", "perbox_lbcp06.yaml", "tuned_lbcp06_wave.json")):
     tune.setup(C / cand, "test")

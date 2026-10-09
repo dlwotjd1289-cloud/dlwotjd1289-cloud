@@ -1,0 +1,56 @@
+# AHEAD 알고리즘 v3: 설계, 비용함수, 실험 결과 (jaesung, 2026-10-09)
+
+현대 관계자 피드백 이후 알고리즘을 다시 정리한 결과입니다.
+- 무게 순서 규칙 대신 박스별 허용 하중을 씁니다.
+- 컨베이어 상류에서 미리 측정한 박스 정보와 미입고 수량을 활용합니다.
+- 계획 하나를 계속 갱신합니다.
+- 모든 행동을 같은 비용 J로 비교합니다.
+
+## 문서
+| 파일 | 내용 |
+|---|---|
+| [ALGORITHM_V3_3.md](ALGORITHM_V3_3.md) | 설계 전체: 입력, 계획 구조, MCTS + 롤링 호라이즌, 예정/확인, 예외, 0.3 g 검사, 파라미터 분류 |
+| [COST_FUNCTIONS.md](COST_FUNCTIONS.md) | 부분별 비용함수와 근거, 실험 결론 기록 |
+| [PRESENTATION_PARAMS.md](PRESENTATION_PARAMS.md) | **발표용**: 항목별 계산식, 파라미터 값, 근거 종류(실험·측정·문헌·가정·팀) |
+| [PRESENTATION_QA.md](PRESENTATION_QA.md) | 발표 예상 질문과 답변 |
+| [STABILITY_0_3G_BASIS.md](STABILITY_0_3G_BASIS.md) | 안정성 기준 0.3 g(랩 없음)의 근거: 지게차 서행·랩핑기 하중 계산, 표준, 출처 |
+| [COMPARE_TAEHYEON_N5.md](COMPARE_TAEHYEON_N5.md) | 태현 N=5 탐색(PR #4)과 같은 점·다른 점, 합치는 방법 제안 |
+| [results/](results/) | 실험 결과 요약. `raw/`는 에피소드별 원자료(jsonl) |
+
+## 주요 결과
+비교 대상은 팀 RulePolicy + DBLF이고, 같은 주문으로 짝비교했습니다.
+
+| 설정 | 팔레트 / 80박스 | 작업시간 | 0.3 g 통과 (PyBullet) | 근거 |
+|---|---|---|---|---|
+| 팀 방식 | 5.69 | 1197 s | 74% | `results/stage2_analysis.md` |
+| 제안 (미리보기 3 + 미래 5박스, **무게 순서 규칙 켬**) | 4.93 (−13%) | 990 s (−17%) | 73% | 54/54 승, 처음 보는 데이터 29/30 승 |
+| 제안 + 규칙 끔 + 박스별 허용 하중 + 기둥 0.3 g 검사 (**우리 설계 기준**) | 4.10 (−28%) | 907 s (−24%) | **62%** | `results/stack_check_summary.txt`. **안정성 미해결이라 아직 발표용 아님** |
+
+- 무게 순서 규칙을 끄면 0.3 g 통과율이 75%에서 34%로 떨어집니다. 이 규칙이 무게중심을 낮추는 역할도 했기 때문입니다(`results/capacity_summary.txt`).
+- 현장 비용(팔레트 1개 = 2,368 s, 교체 60 s)은 계산식으로 구했습니다. 입력을 하나씩 바꿔도 팀 대비 −13.5~14.2%입니다(`results/site_oat.md`).
+
+## 코드 (`tools/prototypes/`)
+| 경로 | 내용 |
+|---|---|
+| `lookahead/lookahead.py` | 프로토타입 플래너. 비선형 안정성 점수, 하중 여유, 시나리오 롤아웃, 기둥 0.3 g 검사(`stack_g`) |
+| `lookahead/run_eval.py` | 평가기. 변형 문자열(`la_k3;stack_g=0.3;cand=hol_off;cap=general`), PyBullet 흔들림 시험, 숨은 강도 찌그러짐 집계 |
+| `lookahead/shock_test.py` | PyBullet 흔들림 시험 (0.1~0.6 g, 위아래 충격 포함, **근거 문서보다 가혹함**) |
+| `lookahead/sweep/` | 파라미터 실험 분석 스크립트, 변형 목록 |
+| `site_params/` | `site_cost.py` 현장 비용 계산기, `site_oat.py` 하나씩 바꾼 민감도, `capacity.py` 박스별 허용 하중, `conveyor_from_logs.py` 컨베이어 측정 |
+
+- **레포만으로 실행 가능**: 데이터셋(`lookahead/data/`, 생성기 1.4.0, seed 20261007 / 777), 후보 설정(`lookahead/configs/`), 보조 모듈(`wave/`)이 모두 레포 안에 있습니다.
+  ```bash
+  tools/prototypes/lookahead/run.sh team la_k3 "la_k3;stack_g=0.3;cand=hol_off;cap=general" --episodes 2 --workers 4 --shock --out /tmp/la.json
+  LA_DATA=tools/prototypes/lookahead/data/holdout_seed777 tools/prototypes/lookahead/run.sh ...   # 처음 보는 데이터
+  ```
+- `results/`는 main 2bb4bac(마감 30% 문턱) 기준입니다. 지금 main은 막힌 팔레트 마감이 기본이라 다시 돌리면 수치가 달라질 수 있습니다.
+
+## 남은 일 (우선순위)
+1. **안정성 기준 확정**
+   - 0.3 g 계산 검사를 통과한 팔레트의 약 38%가 PyBullet에서 불통과입니다.
+   - 시험 조건(단계마다 위아래 충격, 누적 2 cm)이 근거보다 가혹합니다. 운반 조건에 맞는 시험으로 고치는 것과 안정성 AI(물리 결과로 학습한 무너짐 확률 예측)를 검토 중입니다.
+2. 우리 설계 기준으로 최종 결과 산출
+3. 모든 행동(놓기·버퍼·재적재·교체)을 J로 비교하고 기회형 재적재 구현. 현재 닫기는 30% 문턱, 재적재는 팀 규칙
+4. 예정/확인 2단계, 결정 마감, 컨베이어 정지·재가동
+5. 미정 기준: 작업자 개입·미처리 비용, 성능 합격 기준, 대기 한도, 일반화 범위, 실제 로봇 작업시간
+6. 트리 탐색(MCTS)과 정책·가치 AI는 다른 팀원 담당 → J 정의와 입출력 형식 맞추기

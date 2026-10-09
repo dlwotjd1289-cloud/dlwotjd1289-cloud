@@ -1,0 +1,5 @@
+team
+la_k3
+la_k3;stack_g=0.3
+la_k3;stack_g=0.3;cand=hol_off
+la_k3;stack_g=0.3;cand=hol_off;cap=general

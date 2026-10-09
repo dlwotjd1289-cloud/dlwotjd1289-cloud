@@ -37,7 +37,7 @@ from pathlib import Path
 for _v in ("OPENBLAS_NUM_THREADS", "OMP_NUM_THREADS", "MKL_NUM_THREADS"):
     os.environ.setdefault(_v, "1")
 
-REPO = Path.home() / "AHEAD/pac2026_integrated"
+REPO = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(REPO / "tools/highlevel/scripts"))
 import _common  # noqa: E402,F401  (team path bootstrap)
 
@@ -77,6 +77,9 @@ class Params:
     cvar_kappa: float = 0.3     # cost = (1-k) mean + k * worst
     gamma: float = 0.6          # weight of the rolled-out future vs the root step
     lookahead: bool = True
+    reserve_slots: int = 0      # buffer slots kept free for emergencies
+    stack_g: float = 0.0        # >0: hard stack-level lateral check at this g (0 = off)
+    stack_block: int = 1        # 1: neighbours reaching the CoG height block that direction; 0: never
     seed: int = 0
 
 
@@ -197,6 +200,116 @@ class Scorer:
         return float(np.dot(P.eff, eff) - phi_s - phi_l), {"S": S, "L": L, "comps": comps}
 
 
+Z_TOL = 0.004
+
+
+def _hull(pts):
+    pts = sorted(set(pts))
+    if len(pts) < 3:
+        return pts
+    def cross(o, a, b):
+        return (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0])
+    lo, hi = [], []
+    for q in pts:
+        while len(lo) >= 2 and cross(lo[-2], lo[-1], q) <= 0:
+            lo.pop()
+        lo.append(q)
+    for q in reversed(pts):
+        while len(hi) >= 2 and cross(hi[-2], hi[-1], q) <= 0:
+            hi.pop()
+        hi.append(q)
+    return lo[:-1] + hi[:-1]
+
+
+def stack_lateral_ok(boxes, new, a_g, grid=None):
+    """Stack-level lateral check (hard). boxes: [(x0,y0,z0,dx,dy,dz,w)] already on the pallet,
+    new: same tuple for the candidate. For the new box and every box below it on its load path,
+    the composite CoG of that box plus everything resting on it (transitively) must stay inside
+    the box's support polygon when shifted by a_g * (CoG height above the interface), in every
+    direction not blocked by a neighbour reaching the CoG height. Pallet edges are NOT walls.
+    Sliding is not checked separately because a_g < mu (0.3 < 0.4)."""
+    allb = list(boxes) + [new]
+    n = len(allb)
+    below = [[] for _ in range(n)]
+    for i, (x, y, z, dx, dy, dz, w) in enumerate(allb):
+        if z < 1e-6:
+            continue
+        for j, (x2, y2, z2, dx2, dy2, dz2, w2) in enumerate(allb):
+            if j != i and abs(z2 + dz2 - z) < Z_TOL:
+                ox0, ox1 = max(x, x2), min(x + dx, x2 + dx2)
+                oy0, oy1 = max(y, y2), min(y + dy, y2 + dy2)
+                if ox1 - ox0 > 1e-3 and oy1 - oy0 > 1e-3:
+                    below[i].append((j, (ox0, oy0, ox1, oy1)))
+    above = [[] for _ in range(n)]
+    for i in range(n):
+        for j, _ in below[i]:
+            above[j].append(i)
+    # load path of the new box
+    path, todo = [], [n - 1]
+    while todo:
+        k = todo.pop()
+        if k in path:
+            continue
+        path.append(k)
+        todo.extend(j for j, _ in below[k])
+    for k in path:
+        group, todo = set(), [k]
+        while todo:
+            q = todo.pop()
+            if q not in group:
+                group.add(q)
+                todo.extend(above[q])
+        m = sum(allb[q][6] for q in group) or 1e-9
+        cx = sum(allb[q][6] * (allb[q][0] + allb[q][3] / 2) for q in group) / m
+        cy = sum(allb[q][6] * (allb[q][1] + allb[q][4] / 2) for q in group) / m
+        cz = sum(allb[q][6] * (allb[q][2] + allb[q][5] / 2) for q in group) / m
+        x, y, z, dx, dy, dz, _ = allb[k]
+        if z < 1e-6:
+            poly = [(x, y), (x + dx, y), (x + dx, y + dy), (x, y + dy)]
+        else:
+            pts = []
+            for _, (a0, b0, a1, b1) in below[k]:
+                pts += [(a0, b0), (a1, b0), (a1, b1), (a0, b1)]
+            poly = _hull(pts)
+        h = cz - z
+        for ux, uy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+            if grid is not None and _blocked(grid, allb[k], (ux, uy), cz, group, allb):
+                continue
+            if _signed_dist_convex(poly, (cx + ux * a_g * h, cy + uy * a_g * h)) <= 0:
+                return False
+    return True
+
+
+def _blocked(grid, b, d, cz, group, allb):
+    """A neighbour face reaching the group's CoG height along >= half of the box side."""
+    x, y, z, dx, dy, dz, _ = b
+    hits = tot = 0
+    if d[0]:
+        xs = x + dx + 1e-4 if d[0] > 0 else x - 1e-4
+        for t in np.linspace(y + 0.01, y + dy - 0.01, 6):
+            tot += 1
+            hits += _height_at(allb, group, xs, t) >= cz
+    else:
+        ys = y + dy + 1e-4 if d[1] > 0 else y - 1e-4
+        for t in np.linspace(x + 0.01, x + dx - 0.01, 6):
+            tot += 1
+            hits += _height_at(allb, group, t, ys) >= cz
+    return hits >= 0.5 * tot
+
+
+def _height_at(allb, group, px, py):
+    top = 0.0
+    for q, (x, y, z, dx, dy, dz, w) in enumerate(allb):
+        if q not in group and x <= px <= x + dx and y <= py <= y + dy:
+            top = max(top, z + dz)
+    return top
+
+
+def _tup(b, pose, weight=None):
+    dx, dy, dz = rotated_dims(b.size, pose.yaw)
+    return (pose.x, pose.y, pose.z, dx, dy, dz, b.weight_kg if weight is None else weight)
+
+
 def grid_of(boxes, pallet):
     g = np.zeros((int(round(pallet.x / CELL)), int(round(pallet.y / CELL))))
     for b in boxes:
@@ -231,10 +344,17 @@ class Planner:
         grid = grid_of(state.pallet.boxes, state.pallet.size)
         hs = self.scorer.heavier_share(box.weight_kg, pool_counts, known_weights)
         out = []
+        placed_t = None
         for c in cset.valid:
             v = backend.validate_constraints(box, c, state)
             if not v.success:
                 continue
+            if self.p.stack_g > 0:
+                if placed_t is None:
+                    placed_t = [_tup(b, b.pose) for b in state.pallet.boxes]
+                if not stack_lateral_ok(placed_t, _tup(box, c.target_pose), self.p.stack_g, grid=True if self.p.stack_block else None):
+                    self.stats["stack_reject"] += 1
+                    continue
             cost, info = self.scorer.cost(c, box, v, grid, state.pallet.size, hs)
             out.append((cost, c.candidate_id, c, info))
         out.sort(key=lambda t: (t[0], t[1]))
@@ -377,7 +497,9 @@ class Planner:
                 self._evaluate(cost + self.p.theta_retrieve, placed + [pb], state, backend, extra,
                                hyp_boxes={b.box_id: b})
             options.append((q, ("retrieve", i), c))
-        if mask[1] and cur is not None:
+        free = sum(e is None for e in world.buffer)
+        park_ok = mask[1] and cur is not None and (free > self.p.reserve_slots or not options)
+        if park_ok:
             # park the current box: it comes back later, right after the next known box
             if self.p.lookahead:
                 # the parked box re-enters the rollout after the next known box
