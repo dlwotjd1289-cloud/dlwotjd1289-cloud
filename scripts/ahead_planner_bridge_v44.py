@@ -64,7 +64,9 @@ QUARTER = math.pi / 2
 # Placed boxes are committed at their true size, so the real gap to a neighbour is clearance/2:
 # 10 mm (5 mm gap) was too tight for a 13.8 kg box lowered at speed 0.2 -> 20 mm (10 mm gap).
 PLACE_CLEARANCE_M = 0.020
-PLANNED_TOL_M = 0.005             # placed within this of the plan -> committed at the planned corner
+# placed within this of the plan -> committed at the planned corner. 8 mm: the V4.6 pole CCTV
+# (3.6 m, ~4.5 mm/px) measures placed boxes to 2-6 mm, so 5 mm flipped between plan and measurement.
+PLANNED_TOL_M = 0.008
 # SKU master data. Default: the Gazebo 5 kg test box. --catalog loads the AHEAD dataset generator
 # sku_catalog instead. Top-load capacity is NOT in the generator and NOT measured: placeholder
 # 4 kPa x footprint area (K01 ~ 167 N ... K13 ~ 1000 N) until carton strength data exist.
@@ -187,7 +189,7 @@ def cmd_plan(a) -> int:
     else:
         sku = match_sku(per["length"], per["width"])
     remaining = json.loads(a.remaining_json) if a.remaining_json else a.remaining
-    config = load_config(str(PLANNER_ROOT / "config" / "default.yaml"))
+    config = load_config(str(REPO / "config" / "default.yaml"))
     pick_xy = (per.get("x", -1.03), per.get("y", 1.20)) if a.pick_xy is None else tuple(a.pick_xy)
     true_size = CATALOG[sku]["size"]
     chosen, notes = None, []
@@ -222,7 +224,8 @@ def cmd_plan(a) -> int:
         if MAX_STACK_HEIGHT_M <= NOMINAL_STACK_HEIGHT_M:
             break
     if chosen is None:
-        raise SystemExit("PLAN FAIL: NO_SLOT (" + "; ".join(notes) + ")")
+        print("PLAN FAIL: NO_SLOT (" + "; ".join(notes) + ")", file=sys.stderr)
+        return 20  # Only a valid no-slot decision may trigger buffering.
     cand, c, world, tz, mode = chosen
     out = {"box_id": a.box_id, "sku_id": sku, "mass_kg": a.mass, "state_version": st["state_version"],
            "candidate_id": cand.candidate_id, "score": cand.score,

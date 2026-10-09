@@ -42,6 +42,27 @@ READY_TCP = (-0.95, 0.95 + GZ_TO_SIM[1], 1.55 + GZ_TO_SIM[2])
 CCTV = {"pos": (-0.6, 1.78 + GZ_TO_SIM[1], 2.4 + GZ_TO_SIM[2]), "rpy": (0.0, 1.178996, -1.317721),
         "hfov": 1.40, "aspect": 1280 / 720, "pole_xy": (-0.6, 1.95 + GZ_TO_SIM[1])}
 
+# V4.6 layout (PAC_LAYOUT=v46, same as the Gazebo world from scripts/make_world_v46.py): long conveyor
+# with the scale at its start, camera 1 over the scale, pole CCTV at 3.6 m, buffer table next to PICK,
+# red NG floor area for damaged / crushed boxes. Static display geometry for the browser viewer.
+LAYOUT = {}
+if __import__("os").environ.get("PAC_LAYOUT") == "v46":
+    _dz = GZ_TO_SIM[2]
+    INFEED = {"x": (-6.985, -0.85), "y": (-0.34, 0.34), "top": ROLLER_TOP_Z}
+    CCTV = {"pos": (-0.6, 1.78 + GZ_TO_SIM[1], 3.6 + _dz), "rpy": (0.0, 1.265364, -1.352630),
+            "hfov": 1.60, "aspect": 1920 / 1080, "pole_xy": (-0.6, 1.95 + GZ_TO_SIM[1]), "label": "camera 2 (CCTV)"}
+    _bx, _by, _bd = -1.05, 0.44 + GZ_TO_SIM[1], 0.66
+    LAYOUT = {
+        "scale": {"center": (-5.985, 0.0, 0.755 + _dz), "size": (0.70, 0.70, 0.085)},
+        "scale_camera": {"pos": (-5.985, 0.0, 2.20 + _dz), "rpy": (0.0, 1.5708, 0.0), "hfov": 1.00,
+                         "aspect": 1280 / 960, "pole_xy": (-5.985, 2.00 + GZ_TO_SIM[1]), "label": "camera 1 (scale)"},
+        "buffer": {"center": (_bx, _by), "shelves": [(0.34 + _dz, 0.045), (0.92 + _dz, 0.045)],
+                   "size": (0.90, _bd), "posts": [(_bx + dx, _by + dy) for dx in (-0.43, 0.0, 0.43)
+                                                    for dy in (-(_bd / 2 - 0.03), _bd / 2 - 0.03)],
+                   "post_top": 0.97 + _dz, "bays": [(_bx - 0.215, _by), (_bx + 0.215, _by)]},
+        "ng_zone": {"x": (-1.45, -0.65), "y": (-0.60 + GZ_TO_SIM[1], 0.05 + GZ_TO_SIM[1]), "z": _dz},
+    }
+
 SPEED = 0.25          # fraction of joint velocity limits (free moves)
 CART_SPEED_M_S = 0.35  # straight lines with the box
 SLOW_M_S = 0.08        # contact / last part of lowering
@@ -455,7 +476,10 @@ class RobotCell:
         return {"visuals": {k: [{kk: vv for kk, vv in v.items() if kk != "path"} for v in items]
                             for k, items in self.visuals.items()},
                 "infeed": INFEED, "stopper": STOPPER, "pedestal": PEDESTAL, "ready_tcp": READY_TCP,
-                "cctv": {**CCTV, "quat": list(p.getQuaternionFromEuler(CCTV["rpy"]))}}
+                "cctv": {**CCTV, "quat": list(p.getQuaternionFromEuler(CCTV["rpy"]))},
+                "layout": {**LAYOUT, **({"scale_camera": {**LAYOUT["scale_camera"],
+                                                          "quat": list(p.getQuaternionFromEuler(LAYOUT["scale_camera"]["rpy"]))}}
+                                        if "scale_camera" in LAYOUT else {})}}
 
     def mesh_path(self, file_name: str) -> Optional[str]:
         for items in self.visuals.values():

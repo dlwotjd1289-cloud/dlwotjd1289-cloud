@@ -304,3 +304,24 @@ at the conveyor start, camera 1 OK, plan made while travelling, pick + transfer 
 verified (run interrupted by a reboot): CCTV check after release, buffer put/take, pallet change,
 and whether the arm at READY hides the buffer from the CCTV.
 How to verify: see `docs/jaesung/handoff_gpt/CONVERSATION_SUMMARY.md` ("How to verify").
+
+## 2026-10-10: V4.6 fixes, targeted scenarios, buffer/NG layout — IN PROGRESS
+- GPT session fixes (applied here): gripper target ACK before vacuum, planner config from the repo,
+  NO_SLOT exit code 20 (only that triggers buffering), wrist_camera:=false in the MoveIt launch.
+- CCTV pallet re-check: no blob selection for the known-size fit (box_07 picked a merged neighbour,
+  fit_inside 0.0); known neighbours' top faces masked (`others` in the target), supporting boxes kept;
+  edge refinement only on visible edges. Offline on the box_07 image: 2-6 mm, box_07 5.0 mm.
+- Lowering: slow from 3 cm above the tallest neighbour (box_09 caught a 0.28 m taller neighbour 7 mm
+  away); lowering keeps the yaw the arm actually reached (box_13 to the buffer: 180 deg mismatch);
+  TF retry in tcp_z / tcp_yaw. Commit tolerance 8 mm (CCTV ~5 mm).
+- Speed: V4.6 cameras 5 Hz -> RTF 0.28 -> 1.0 (1 ms step kept).
+- Buffer table 0.66 m deep toward the conveyor (bays y 0.44, boxes <= 0.37 x 0.64 m), red NG floor
+  area (x -1.45..-0.65, y -0.60..0.05; IK + CCTV view checked offline); browser viewer draws the V4.6
+  layout (scale + camera 1, CCTV at 3.6 m, buffer, NG area). The viewer is fed by HTTP from the cycle
+  (sync_pallet_viewer -> /api/robot_place) + its own PyBullet replay over /ws, not ROS topics.
+- Targeted runs: `bash scripts/run_scenario_v46.sh buffer_swap|recovery|full`
+  (restore: `scripts/restore_pallet_v46.py`, fixtures `test_data/v46_fixtures/`).
+Verified in Gazebo: boxes 7-12 resumed from a restore (box_07 CCTV check, box_09 lowering fixed).
+Not yet verified: buffer put/take and pallet change (buffer_swap stopped after the yaw fix), recovery
+in V4.6, real-height full run. Pending design (agreed): bridge gap 0.5 cm + MoveIt padding 2 cm with
+"offset descend then slide", payload-scaled speed.

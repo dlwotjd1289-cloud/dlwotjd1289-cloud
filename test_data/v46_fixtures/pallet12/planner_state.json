@@ -1,0 +1,234 @@
+{
+  "state_version": 13,
+  "stamp_sec": 13.0,
+  "placed": [
+    {
+      "box_id": "box_01",
+      "sku_id": "K09",
+      "size": {
+        "x": 0.37,
+        "y": 0.27,
+        "z": 0.15
+      },
+      "weight_kg": 5.637,
+      "pose": {
+        "frame_id": "pallet",
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "roll": 0.0,
+        "pitch": 0.0,
+        "yaw": 0.0
+      }
+    },
+    {
+      "box_id": "box_02",
+      "sku_id": "K11",
+      "size": {
+        "x": 0.41,
+        "y": 0.31,
+        "z": 0.28
+      },
+      "weight_kg": 13.792,
+      "pose": {
+        "frame_id": "pallet",
+        "x": 0.3753,
+        "y": 0.0123,
+        "z": 0.0,
+        "roll": 0.0,
+        "pitch": 0.0,
+        "yaw": 0.0
+      }
+    },
+    {
+      "box_id": "box_03",
+      "sku_id": "K11",
+      "size": {
+        "x": 0.43,
+        "y": 0.33,
+        "z": 0.28
+      },
+      "weight_kg": 12.018,
+      "pose": {
+        "frame_id": "pallet",
+        "x": 0,
+        "y": 0.77,
+        "z": 0,
+        "roll": 0.0,
+        "pitch": 0.0,
+        "yaw": 0.0
+      }
+    },
+    {
+      "box_id": "box_04",
+      "sku_id": "K02",
+      "size": {
+        "x": 0.27,
+        "y": 0.22,
+        "z": 0.15
+      },
+      "weight_kg": 0.919,
+      "pose": {
+        "frame_id": "pallet",
+        "x": 0.3753,
+        "y": 0.3223,
+        "z": 0,
+        "roll": 0.0,
+        "pitch": 0.0,
+        "yaw": 0.0
+      }
+    },
+    {
+      "box_id": "box_05",
+      "sku_id": "K02",
+      "size": {
+        "x": 0.27,
+        "y": 0.22,
+        "z": 0.15
+      },
+      "weight_kg": 0.547,
+      "pose": {
+        "frame_id": "pallet",
+        "x": 0,
+        "y": 0.55,
+        "z": 0,
+        "roll": 0.0,
+        "pitch": 0.0,
+        "yaw": 0.0
+      }
+    },
+    {
+      "box_id": "box_06",
+      "sku_id": "K09",
+      "size": {
+        "x": 0.37,
+        "y": 0.27,
+        "z": 0.15
+      },
+      "weight_kg": 5.2,
+      "pose": {
+        "frame_id": "pallet",
+        "x": 0,
+        "y": 0,
+        "z": 0.15,
+        "roll": 0.0,
+        "pitch": 0.0,
+        "yaw": 0.0
+      }
+    },
+    {
+      "box_id": "box_07",
+      "sku_id": "K07",
+      "size": {
+        "x": 0.36000000000000004,
+        "y": 0.28,
+        "z": 0.15
+      },
+      "weight_kg": 3.391,
+      "pose": {
+        "frame_id": "pallet",
+        "x": 0,
+        "y": 0.27,
+        "z": 0,
+        "roll": 0.0,
+        "pitch": 0.0,
+        "yaw": 0.0
+      }
+    },
+    {
+      "box_id": "box_08",
+      "sku_id": "K11",
+      "size": {
+        "x": 0.43,
+        "y": 0.33,
+        "z": 0.28
+      },
+      "weight_kg": 11.8,
+      "pose": {
+        "frame_id": "pallet",
+        "x": 0.67,
+        "y": 0.77,
+        "z": 0,
+        "roll": 0.0,
+        "pitch": 0.0,
+        "yaw": 0.0
+      }
+    },
+    {
+      "box_id": "box_09",
+      "sku_id": "K11",
+      "size": {
+        "x": 0.43,
+        "y": 0.33,
+        "z": 0.28
+      },
+      "weight_kg": 16.635,
+      "pose": {
+        "frame_id": "pallet",
+        "x": 0.6453,
+        "y": 0.3223,
+        "z": 0,
+        "roll": 0.0,
+        "pitch": 0.0,
+        "yaw": 0.0
+      }
+    },
+    {
+      "box_id": "box_10",
+      "sku_id": "K04",
+      "size": {
+        "x": 0.29000000000000004,
+        "y": 0.22,
+        "z": 0.13
+      },
+      "weight_kg": 2.224,
+      "pose": {
+        "frame_id": "pallet",
+        "x": 0.7853,
+        "y": 0.0123,
+        "z": 0,
+        "roll": 0.0,
+        "pitch": 0.0,
+        "yaw": 0.0
+      }
+    },
+    {
+      "box_id": "box_11",
+      "sku_id": "K07",
+      "size": {
+        "x": 0.34,
+        "y": 0.26,
+        "z": 0.15
+      },
+      "weight_kg": 4.743,
+      "pose": {
+        "frame_id": "pallet",
+        "x": 0.3804,
+        "y": 0.0151,
+        "z": 0.28,
+        "roll": 0.0,
+        "pitch": 0.0,
+        "yaw": 0.0
+      }
+    },
+    {
+      "box_id": "box_12",
+      "sku_id": "K09",
+      "size": {
+        "x": 0.37,
+        "y": 0.27,
+        "z": 0.15
+      },
+      "weight_kg": 8.43,
+      "pose": {
+        "frame_id": "pallet",
+        "x": 0,
+        "y": 0.83,
+        "z": 0.28,
+        "roll": 0.0,
+        "pitch": 0.0,
+        "yaw": 0.0
+      }
+    }
+  ]
+}

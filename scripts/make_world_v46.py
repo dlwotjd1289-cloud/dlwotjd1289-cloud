@@ -31,7 +31,11 @@ SHIFT_M = round(N_NEW * PITCH, 3)   # 2.185 m
 SPLIT_X = -3.50                 # V4.4: rollers upstream of this (x <= -3.56) belong to infeed + scale
 FIRST_DOWNSTREAM = -3.465       # V4.4 first roller after the scale (roller_06m)
 PICK_END_X = -0.85              # downstream end of the conveyor (pick stopper side)
-BUFFER_XY = (-1.05, 0.40)       # buffer table centre (bays at x -/+ 0.215): x -1.50..-0.60, y 0.11..0.69
+BUFFER_XY = (-1.05, 0.44)       # buffer table centre (bays at x -/+ 0.215): x -1.50..-0.60, y 0.11..0.77
+BUFFER_DEPTH = 0.66             # was 0.58: extended toward the conveyor (rail edge y 0.7875, 1.75 cm clear)
+NG_ZONE = ((-1.45, -0.65), (-0.60, 0.05))   # red floor area for damaged / crushed boxes (robot side of the
+                                             # buffer; IK + CCTV view checked offline 2026-10-10)
+CAM_HZ = 5                      # camera frame rate (both cameras)
 CAM2_Z = 3.60                   # pole CCTV height (was 2.40)
 CAM2_POSE = f"-0.6 1.78 {CAM2_Z} 0 1.265364 -1.352630"   # pitch 72.5 deg, yaw -77.5 deg
 
@@ -138,6 +142,31 @@ def main() -> int:
     a4 = s.index('<model name="buffer_rack">')
     k4 = s.index("<pose>1.45 -0.55 0 0 0 0</pose>", a4)       # model pose (after the V4.4 comment)
     s = s[:k4] + f"<pose>{BUFFER_XY[0]} {BUFFER_XY[1]} 0 0 0 0</pose>" + s[k4 + len("<pose>1.45 -0.55 0 0 0 0</pose>"):]
+    # deeper table: shelves BUFFER_DEPTH, posts / dividers at the new edges
+    b4 = s.index("</model>", a4)
+    rk = s[a4:b4].replace("<size>0.90 0.58 0.045</size>", f"<size>0.90 {BUFFER_DEPTH} 0.045</size>")
+    half = BUFFER_DEPTH / 2 - 0.03
+    for x in ("-0.43", "0", "0.43"):
+        rk = rk.replace(f"<pose>{x} -0.26 0.485 0 0 0</pose>", f"<pose>{x} {-half:.3f} 0.485 0 0 0</pose>")
+        rk = rk.replace(f"<pose>{x} 0.26 0.485 0 0 0</pose>", f"<pose>{x} {half:.3f} 0.485 0 0 0</pose>")
+    assert rk.count(f"{half:.3f} 0.485") == 12, rk.count(f"{half:.3f} 0.485")   # 6 posts+dividers x (collision, visual)
+    s = s[:a4] + rk + s[b4:]
+
+    # --- NG zone (damaged / crushed boxes): red floor marking next to the buffer table -----------
+    (nx0, nx1), (ny0, ny1) = NG_ZONE
+    ng = f"""
+    <model name="ng_zone">
+      <!-- V4.6: NG area for damaged / crushed boxes (floor marking, no collision) -->
+      <static>true</static>
+      <link name="ng_zone_link">
+        <visual name="ng_area"><pose>{(nx0 + nx1) / 2:.3f} {(ny0 + ny1) / 2:.3f} 0.003 0 0 0</pose>
+          <geometry><box><size>{nx1 - nx0:.3f} {ny1 - ny0:.3f} 0.004</size></box></geometry>
+          <material><ambient>0.60 0.05 0.05 1</ambient><diffuse>0.85 0.08 0.08 1</diffuse></material></visual>
+      </link>
+    </model>
+"""
+    k5 = s.index('<model name="camera_1_cctv_base">')
+    s = s[:k5] + ng.lstrip("\n") + "    " + s[k5:]
 
     # --- camera 2 (pole CCTV): higher and wider -------------------------------------------------
     a3 = s.index('<model name="camera_1_cctv_base">')
@@ -148,6 +177,8 @@ def main() -> int:
     c2 = c2.replace("<pose>-0.60 1.865 2.34 0 0 0</pose>", f"<pose>-0.60 1.865 {CAM2_Z - 0.06:.2f} 0 0 0</pose>")
     c2 = c2.replace("<pose>-0.6 1.78 2.4 0 1.178996 -1.317721</pose>", f"<pose>{CAM2_POSE}</pose>")
     c2 = c2.replace("<horizontal_fov>1.40</horizontal_fov>", "<horizontal_fov>1.60</horizontal_fov>")
+    # 5 Hz is enough for perception (2 stable frames) and halves the render load (RTF 0.28 at 15 Hz)
+    c2 = c2.replace("<update_rate>15</update_rate>", f"<update_rate>{CAM_HZ}</update_rate>")
     c2 = c2.replace("<width>1280</width>", "<width>1920</width>").replace("<height>720</height>", "<height>1080</height>")
     assert c2.count(CAM2_POSE) == 2, c2.count(CAM2_POSE)
     s = s[:a3] + c2 + s[b3:]
@@ -169,7 +200,7 @@ def main() -> int:
         <sensor name="scale_top_camera" type="camera">
           <pose>{fnum(sx)} 1.20 2.20 0 1.5708 0</pose>
           <always_on>true</always_on>
-          <update_rate>15</update_rate>
+          <update_rate>{CAM_HZ}</update_rate>
           <topic>/pac/scale_camera/image</topic>
           <camera>
             <horizontal_fov>1.00</horizontal_fov>

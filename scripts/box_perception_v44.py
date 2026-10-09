@@ -105,8 +105,62 @@ def world_to_pixel(x, y, z, cam: Camera):
     return int(round(cam.width / 2.0 - fx * d[1] / d[0])), int(round(cam.height / 2.0 - fx * d[2] / d[0]))
 
 
+def _known_size_result(out, xs, ys, cam, box_size, expect_xy, expect_yaw, z_top, hidden=None):
+    """Known-size rectangle fit of the top-face points (box on the pallet / buffer table)."""
+    fx_ = (cam.width / 2.0) / math.tan(cam.hfov / 2.0)
+
+    def visible(xw, yw, margin=4):
+        rel = np.stack([xw - cam.pos[0], yw - cam.pos[1], np.full_like(xw, z_top) - cam.pos[2]])
+        d = np.einsum("ij,j...->i...", cam.R.T, rel)
+        ok = d[0] > 0.05
+        den = np.where(ok, d[0], 1.0)
+        u_px = cam.width / 2.0 - fx_ * d[1] / den
+        v_px = cam.height / 2.0 - fx_ * d[2] / den
+        inside = ok & (u_px > margin) & (u_px < cam.width - margin) & (v_px > margin) & (v_px < cam.height - margin)
+        if hidden is not None:   # covered by another known box -> not visible
+            ui = np.clip(u_px.astype(int), 0, cam.width - 1)
+            vi = np.clip(v_px.astype(int), 0, cam.height - 1)
+            inside &= hidden[vi, ui] == 0
+        return inside
+
+    fit = fit_known_rect(xs, ys, box_size, expect_xy, expect_yaw, visible=visible)
+    if fit is None:
+        return out
+    # Sub-grid refinement from the box edges (the 5 mm grid alone reported exactly 5.0 mm offsets).
+    fit = refine_rect_edges(xs, ys, box_size, fit, visible=visible)
+    x, y, yaw, ins, rg, vf = fit
+    ok = ins >= FIT_MIN_INSIDE and rg <= FIT_MAX_RING and vf >= 0.35
+    out.update({"status": "OK" if ok else "FIT_POOR", "x": float(x), "y": float(y),
+                "z": z_top - box_size[2] / 2, "yaw": float(yaw), "length": float(box_size[0]),
+                "width": float(box_size[1]), "fit_inside": round(ins, 3), "fit_ring": round(rg, 3),
+                "fit_visible": round(vf, 3)})
+    return out
+
+
+def others_mask(shape, cam: Camera, others, grow_px=3):
+    """Image mask of the top faces of other known boxes [(x, y, z_top, sx, sy, yaw), ...] (already
+    placed boxes: their pixels must not be fitted as the checked box, and what they hide of it is
+    not visible)."""
+    m = np.zeros(shape[:2], np.uint8)
+    for x, y, zt, sx, sy, yaw in others or ():
+        c, s_ = math.cos(yaw), math.sin(yaw)
+        pts = []
+        for ex_, ey_ in ((1, 1), (1, -1), (-1, -1), (-1, 1)):
+            wx = x + ex_ * sx / 2 * c - ey_ * sy / 2 * s_
+            wy = y + ex_ * sx / 2 * s_ + ey_ * sy / 2 * c
+            d = cam.R.T @ (np.array([wx, wy, zt]) - cam.pos)
+            if d[0] <= 0.05:
+                break
+            pts.append(world_to_pixel(wx, wy, zt, cam))
+        else:
+            cv2.fillPoly(m, [np.array(pts, np.int32)], 1)
+    if grow_px:
+        m = cv2.dilate(m, np.ones((3, 3), np.uint8), iterations=grow_px)
+    return m
+
+
 def localize(rgb, cam: Camera, box_size=DEFAULT_BOX, roi=CONVEYOR_ROI, expect_xy=None, base_z=CONVEYOR_TOP_Z,
-             split_px=0, expect_yaw=None):
+             split_px=0, expect_yaw=None, others=None):
     """Return dict(status, x, y, z, yaw, length, width, pixels).
 
     The mask is split into connected blobs and only the blob whose projected centre is closest
@@ -119,6 +173,28 @@ def localize(rgb, cam: Camera, box_size=DEFAULT_BOX, roi=CONVEYOR_ROI, expect_xy
     z_top = base_z + box_size[2]
     if expect_xy is None:
         expect_xy = ((roi[0][0] + roi[0][1]) / 2, (roi[1][0] + roi[1][1]) / 2)
+    if expect_yaw is not None:
+        # Box on a known surface (pallet / buffer re-check): no blob selection. Seen from the pole
+        # CCTV a box merges with taller neighbours into one blob whose centre can be farther than
+        # a neighbour's, and the neighbour was fitted instead (box_07, fit_inside 0.0, 2026-10-10).
+        # Every mask pixel in the ROI goes to the known-size rectangle fit, which separates them.
+        # Boxes under the checked one (footprint overlap, lower top) cannot hide it: not masked.
+        zt_self = z_top
+        others = [o for o in (others or ())
+                  if not (o[2] < zt_self - 0.01
+                          and abs(o[0] - expect_xy[0]) < (o[3] + box_size[0]) / 2
+                          and abs(o[1] - expect_xy[1]) < (o[4] + box_size[1]) / 2)]
+        hidden = others_mask(mask.shape, cam, others) if others else None
+        if hidden is not None:
+            mask = mask & (1 - hidden)
+        vs, us = np.nonzero(mask)
+        xs, ys = pixels_to_plane(us.astype(float), vs.astype(float), cam, z_top)
+        keep = (xs > roi[0][0]) & (xs < roi[0][1]) & (ys > roi[1][0]) & (ys < roi[1][1])
+        xs, ys = xs[keep], ys[keep]
+        out["pixels"] = int(len(xs))
+        if len(xs) < MIN_PIXELS:
+            return out
+        return _known_size_result(out, xs, ys, cam, box_size, expect_xy, expect_yaw, z_top, hidden)
     # split_px: erode before labelling so that same-coloured neighbours touching in the image
     # (boxes 20 mm apart on the pallet) become separate blobs; the chosen blob is grown back
     # by the same amount inside the original mask.
@@ -156,31 +232,6 @@ def localize(rgb, cam: Camera, box_size=DEFAULT_BOX, roi=CONVEYOR_ROI, expect_xy
     xs, ys = xs[keep], ys[keep]
     out["pixels"] = int(len(xs))
     if len(xs) < MIN_PIXELS:
-        return out
-    if expect_yaw is not None:
-        # Box on the pallet: known-size rectangle fit (neighbours of the same colour may touch it).
-        fx_ = (cam.width / 2.0) / math.tan(cam.hfov / 2.0)
-
-        def visible(xw, yw, margin=4):
-            rel = np.stack([xw - cam.pos[0], yw - cam.pos[1], np.full_like(xw, z_top) - cam.pos[2]])
-            d = np.einsum("ij,j...->i...", cam.R.T, rel)
-            ok = d[0] > 0.05
-            den = np.where(ok, d[0], 1.0)
-            u_px = cam.width / 2.0 - fx_ * d[1] / den
-            v_px = cam.height / 2.0 - fx_ * d[2] / den
-            return ok & (u_px > margin) & (u_px < cam.width - margin) & (v_px > margin) & (v_px < cam.height - margin)
-
-        fit = fit_known_rect(xs, ys, box_size, expect_xy, expect_yaw, visible=visible)
-        if fit is None:
-            return out
-        # Sub-grid refinement from the box edges (the 5 mm grid alone reported exactly 5.0 mm offsets).
-        fit = refine_rect_edges(xs, ys, box_size, fit)
-        x, y, yaw, ins, rg, vf = fit
-        ok = ins >= FIT_MIN_INSIDE and rg <= FIT_MAX_RING and vf >= 0.35
-        out.update({"status": "OK" if ok else "FIT_POOR", "x": float(x), "y": float(y),
-                    "z": z_top - box_size[2] / 2, "yaw": float(yaw), "length": float(box_size[0]),
-                    "width": float(box_size[1]), "fit_inside": round(ins, 3), "fit_ring": round(rg, 3),
-                    "fit_visible": round(vf, 3)})
         return out
     pts = np.stack([xs, ys], axis=1)
     c = pts.mean(axis=0)
@@ -260,7 +311,7 @@ def fit_known_rect(xs, ys, box_size, expect_xy, yaw0, search=0.08, cell=0.005, b
     return x, y, (yaw + math.pi / 2) % math.pi - math.pi / 2, ins, rg, vf
 
 
-def refine_rect_edges(xs, ys, box_size, fit, band=0.025):
+def refine_rect_edges(xs, ys, box_size, fit, band=0.025, visible=None):
     """Refine a known-size fit from its free edges: along each box axis, an edge whose outside band
     is empty is measured (1st / 99th percentile of the top-face points); a side touching a
     same-coloured neighbour is not used (centre = free edge -+ half size). Returns the fit tuple."""
@@ -278,6 +329,20 @@ def refine_rect_edges(xs, ys, box_size, fit, band=0.025):
             continue
         lo_free = not np.any(near & (a < -half - 0.006))
         hi_free = not np.any(near & (a > half + 0.006))
+        if visible is not None:
+            # an edge only counts as free when the band just outside it is visible (a side hidden by
+            # a known neighbour looks empty but its edge is not seen)
+            t = np.linspace(-other_half * 0.8, other_half * 0.8, 7)
+            for sign in (-1, 1):
+                d = sign * (half + 0.012)
+                lu, lv = (np.full_like(t, d), t) if axis == 0 else (t, np.full_like(t, d))
+                wx = x + lu * c - lv * s_
+                wy = y + lu * s_ + lv * c
+                if visible(wx, wy).mean() < 0.8:
+                    if sign < 0:
+                        lo_free = False
+                    else:
+                        hi_free = False
         inner = core & (np.abs(a) < half + 0.006)
         if inner.sum() < 50:
             continue
@@ -327,6 +392,7 @@ class BoxPerception(Node):
         self.coarse = None
         self.pubs = {}
         self.scale_box, self.scale_size = None, DEFAULT_BOX
+        self.others = None
         for cam in ("far", "wrist", "scale"):
             self.pubs[cam] = (self.create_publisher(String, f"/pac/perception/{cam}/box_info", 10),
                               self.create_publisher(PoseStamped, f"/pac/perception/{cam}/box_pose", 10),
@@ -350,6 +416,7 @@ class BoxPerception(Node):
         t = json.loads(msg.data)
         base_z, expect = t.get("base_z"), t.get("expect")
         self.expect_yaw = t.get("expect_yaw")
+        self.others = t.get("others")
         if t.get("box") != self.box_name or base_z != self.base_z or (expect and tuple(expect) != self.coarse):
             self.box_name, self.box_size, self.coarse = t.get("box"), tuple(t.get("size", DEFAULT_BOX)), None
             self.base_z = base_z
@@ -395,7 +462,7 @@ class BoxPerception(Node):
             r = max(self.box_size[:2]) / 2 + 0.13
             roi = ((cx - r, cx + r), (cy - r, cy + r))
             res = localize(rgb, cam, self.box_size, roi, self.coarse, self.base_z, split_px=4,
-                           expect_yaw=self.expect_yaw or 0.0)
+                           expect_yaw=self.expect_yaw or 0.0, others=self.others)
         elif cam_name == "far":
             cam, roi = FAR_CCTV, CONVEYOR_ROI
         else:

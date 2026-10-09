@@ -195,9 +195,32 @@ plan_slot() {   # BOX SKU MASS PERCEPTION REMAINING [PICK_X PICK_Y] -> "x y z ya
   elif [[ "${PAC_LAYOUT:-}" == v46 ]]; then
     extra=(--pick-xy -1.03 1.20)   # perception came from the scale camera; the robot picks at PICK
   fi
+  local plan_rc=0 out="$RUN_DIR/${1}_plan.json" err="$RUN_DIR/${1}_plan.err"
+  rm -f "$out"
   python3 -I "$ROOT/scripts/ahead_planner_bridge_v44.py" plan --state "$STATE" --box-id "$1" --sku "$2" \
     --catalog "$CATALOG" --mass "$3" --perception "$4" --remaining-json "$5" "${extra[@]}" \
-    --out "$RUN_DIR/${1}_plan.json" 2> "$RUN_DIR/${1}_plan.err" | tail -1 || true
+    --out "$out" > "$RUN_DIR/${1}_plan.stdout" 2> "$err" || plan_rc=$?
+  if [[ "$plan_rc" == 20 ]] && grep -q '^PLAN FAIL: NO_SLOT (' "$err"; then
+    return 0  # Empty slot means a valid no-slot decision, never a Python failure.
+  fi
+  if [[ "$plan_rc" != 0 ]]; then
+    echo "PLANNER ERROR: $1 (exit $plan_rc); cell stops, no buffer/pallet fallback" >&2
+    tail -20 "$err" >&2
+    return "$plan_rc"
+  fi
+  # Parse the plan artifact, not arbitrary stdout; stale/malformed output is an error.
+  python3 - "$out" "$1" <<'PYPLAN'
+import json, math, sys
+try:
+    plan = json.load(open(sys.argv[1]))
+    assert plan['box_id'] == sys.argv[2]
+    values = [*plan['slot_world'], plan['yaw_rad']]
+    assert len(values) == 4 and all(math.isfinite(float(v)) for v in values)
+    print(' '.join(f'{float(v):.4f}' for v in values))
+except (OSError, ValueError, KeyError, TypeError, AssertionError) as exc:
+    print(f'PLANNER ERROR: invalid plan artifact: {exc}', file=sys.stderr)
+    sys.exit(21)
+PYPLAN
 }
 
 extra_placed() {   # boxes on the buffer table as MoveIt obstacles
@@ -264,7 +287,9 @@ import json, math, sys
 buf = json.load(open(sys.argv[1]))
 sx, sy, sz = map(float, sys.argv[2:5])
 across, along = min(sx, sy), max(sx, sy)
-if across > 0.37 or along > 0.56:        # bay: 0.38 m between posts (x), 0.58 m shelf depth (y)
+import os
+depth = float(os.environ.get("PAC_BUFFER_DEPTH", "0.58"))
+if across > 0.37 or along > depth - 0.02:   # bay: 0.38 m between posts (x), shelf depth (y; V4.6 0.66 m)
     sys.exit(0)
 yaw = math.pi / 2 if sx > sy else 0.0    # long side along the shelf depth
 import os
@@ -297,7 +322,7 @@ try_buffered() {   # K: re-plan every buffered box on the current pallet, place 
     rec=$(python3 -c "import json,sys; b=json.load(open(sys.argv[1])).get(sys.argv[2]); print('' if b is None else ' '.join(map(str, [b['box'], b['sku'], b['mass'], *b['size'], *b['pose'], b['perception']])))" "$BUFFER" "$bay")
     [[ -n "$rec" ]] || continue
     read -r BOX SKU MASS SX SY SZ PX PY PZ PW PERC <<< "$rec"
-    SLOT=$(plan_slot "$BOX" "$SKU" "$MASS" "$PERC" "$(remaining_json "$1")" "$PX" "$PY")
+    SLOT=$(plan_slot "$BOX" "$SKU" "$MASS" "$PERC" "$(remaining_json "$1")" "$PX" "$PY") || { echo "CYCLE FAIL: planner error for buffered $BOX"; exit 1; }
     [[ -n "$SLOT" ]] || continue
     echo ">>> 버퍼 칸 $bay 의 $BOX: 이제 자리 있음 -> 버퍼에서 집어 팔레트에 적재"
     show_plan "$BOX" "$SLOT"
@@ -403,7 +428,7 @@ PYEOF
   fi
 
   echo ">>> ===== [$K/$N] $BOX: ③ 적재 알고리즘 계획 (팔레트 $PALLET_NO) ====="
-  SLOT=$(plan_slot "$BOX" "$SKU" "$WMASS" "$RUN_DIR/${BOX}_perception.json" "$(remaining_json "$K")")
+  SLOT=$(plan_slot "$BOX" "$SKU" "$WMASS" "$RUN_DIR/${BOX}_perception.json" "$(remaining_json "$K")") || { echo "CYCLE FAIL: planner error for $BOX"; exit 1; }
   if [[ -z "$SLOT" ]]; then
     tail -1 "$RUN_DIR/${BOX}_plan.err" | cut -c1-240
     BAY=$(buffer_bay_slot "$SX" "$SY" "$SZ")
@@ -417,7 +442,7 @@ PYEOF
     swap_pallet
     try_buffered "$K"
     echo ">>> ===== [$K/$N] $BOX: ③ 적재 알고리즘 계획 (새 팔레트 $PALLET_NO) ====="
-    SLOT=$(plan_slot "$BOX" "$SKU" "$WMASS" "$RUN_DIR/${BOX}_perception.json" "$(remaining_json "$K")")
+    SLOT=$(plan_slot "$BOX" "$SKU" "$WMASS" "$RUN_DIR/${BOX}_perception.json" "$(remaining_json "$K")") || { echo "CYCLE FAIL: planner error for $BOX"; exit 1; }
     if [[ -z "$SLOT" ]]; then
       tail -1 "$RUN_DIR/${BOX}_plan.err" | cut -c1-240
       hold_box "$BOX" "$SZ" "빈 팔레트에도 자리 없음(planner)"

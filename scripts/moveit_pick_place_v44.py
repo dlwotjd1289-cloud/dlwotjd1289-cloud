@@ -85,6 +85,8 @@ REPLACE_ATTEMPTS = 1              # re-grip on the pallet when the camera finds 
 
 BUFFER_X = float(os.environ.get("PAC_BUFFER_X", "1.45"))     # buffer table centre (V4.6: -1.05, 0.40)
 BUFFER_Y = float(os.environ.get("PAC_BUFFER_Y", "-0.55"))
+BUFFER_DEPTH = float(os.environ.get("PAC_BUFFER_DEPTH", "0.58"))   # V4.6: 0.66 (extended toward the conveyor)
+_BP = BUFFER_DEPTH / 2 - 0.03                                        # post / divider offset from the centre
 # Workcell planning scene (world frame), from ahead_workcell_v4_2_physical_scale.sdf
 # collision geometry; boxes as (name, center xyz, size xyz).
 SCENE = [
@@ -95,10 +97,10 @@ SCENE = [
     ("pallet", (0.0, 1.20, 0.075), (1.10, 1.10, 0.15)),
     # buffer table (V4.4: 2 bays on the 0.92 m shelf, posts 0.97 m; V4.6: next to PICK)
     *[(f"buffer_post_{i}", (BUFFER_X + dx, BUFFER_Y + dy, 0.485), (0.055, 0.055, 0.97))
-      for i, (dx, dy) in enumerate(((-0.43, -0.26), (0.43, -0.26), (-0.43, 0.26), (0.43, 0.26)))],
-    *[(f"buffer_divider_{i}", (BUFFER_X, BUFFER_Y + dy, 0.485), (0.04, 0.04, 0.97)) for i, dy in enumerate((-0.26, 0.26))],
-    ("buffer_shelf_low", (BUFFER_X, BUFFER_Y, 0.34), (0.90, 0.58, 0.045)),
-    ("buffer_shelf", (BUFFER_X, BUFFER_Y, 0.92), (0.90, 0.58, 0.045)),
+      for i, (dx, dy) in enumerate(((-0.43, -_BP), (0.43, -_BP), (-0.43, _BP), (0.43, _BP)))],
+    *[(f"buffer_divider_{i}", (BUFFER_X, BUFFER_Y + dy, 0.485), (0.04, 0.04, 0.97)) for i, dy in enumerate((-_BP, _BP))],
+    ("buffer_shelf_low", (BUFFER_X, BUFFER_Y, 0.34), (0.90, BUFFER_DEPTH, 0.045)),
+    ("buffer_shelf", (BUFFER_X, BUFFER_Y, 0.92), (0.90, BUFFER_DEPTH, 0.045)),
     ("camera_pole", (-0.60, 1.95, 1.17), (0.24, 0.24, 2.34)),
 ]
 
@@ -226,6 +228,9 @@ class MoveItPickPlace(Node):
         self.suction = None
         self.create_subscription(PoseStamped, f"/model/{box}/pose", self.on_pose, qos_profile_sensor_data)
         self.target_pub = self.create_publisher(String, "/pac/suction/target", 10)
+        self.suction_target_ack = None
+        self.create_subscription(String, "/pac/suction/target_ack",
+                                 lambda m: setattr(self, "suction_target_ack", m.data), 10)
         self.percept = {}
         self.percept_target_pub = self.create_publisher(String, "/pac/perception/target", 10)
         for cam in ("far", "wrist"):
@@ -431,6 +436,49 @@ class MoveItPickPlace(Node):
         g.planning_options.planning_scene_diff.robot_state.is_diff = True
         self.run_action(self.move_ac, g, 120.0, what)
 
+    def record_cartesian_failure(self, req, res, what):
+        """Read-only evidence: no alternate trajectory execution or collision relaxation."""
+        directory = os.environ.get("PAC_DIAGNOSTIC_DIR")
+        if not directory:
+            return
+        import re
+        from pathlib import Path
+
+        def plain(value):
+            if hasattr(value, "get_fields_and_field_types"):
+                return {k: plain(getattr(value, k)) for k in value.get_fields_and_field_types()}
+            if isinstance(value, (list, tuple)):
+                return [plain(v) for v in value]
+            if hasattr(value, "tolist"):
+                return plain(value.tolist())
+            if isinstance(value, (str, int, float, bool)) or value is None:
+                return value
+            return str(value)
+
+        try:
+            data = {"step": what, "fraction": float(res.fraction),
+                    "error_code": res.error_code.val, "observed_joints": dict(self.joints),
+                    "request": plain(req), "response": plain(res)}
+            scene_req = GetPlanningScene.Request()
+            scene_req.components.components = (
+                PlanningSceneComponents.ROBOT_STATE
+                | PlanningSceneComponents.ROBOT_STATE_ATTACHED_OBJECTS
+                | PlanningSceneComponents.WORLD_OBJECT_GEOMETRY
+                | PlanningSceneComponents.ALLOWED_COLLISION_MATRIX
+                | PlanningSceneComponents.TRANSFORMS)
+            try:
+                data["planning_scene"] = plain(self.call(self.get_scene_cli, scene_req, attempts=1).scene)
+            except Exception as exc:
+                data["scene_error"] = str(exc)
+            target = Path(directory)
+            target.mkdir(parents=True, exist_ok=True)
+            safe = re.sub(r"[^A-Za-z0-9_-]+", "_", what)
+            path = target / f"cartesian_{time.time_ns()}_{safe}.json"
+            path.write_text(json.dumps(data, indent=2))
+            print(f"    [diagnostic] Cartesian failure saved: {path}", flush=True)
+        except Exception as exc:
+            print(f"    [diagnostic] Could not save failure evidence: {exc}", flush=True)
+
     def line(self, xyz, yaw, what, avoid_collisions=True, speed=CART_SPEED, _retry=False):
         req = GetCartesianPath.Request()
         req.header.frame_id = FRAME
@@ -448,6 +496,7 @@ class MoveItPickPlace(Node):
         req.max_acceleration_scaling_factor = speed
         res = self.call(self.cart_cli, req)
         if res.fraction < 0.999:
+            self.record_cartesian_failure(req, res, what)
             raise Failure(f"{what}: Cartesian path only {res.fraction * 100:.0f}% feasible")
         traj = res.solution
         # joint_trajectory_controller rejects a goal whose time_from_start is not strictly
@@ -600,10 +649,20 @@ class MoveItPickPlace(Node):
         if self.suction != "OFF":
             raise Fatal(f"suction must start OFF (is {self.suction})")
         pick_target = json.dumps({"box": box, "size": list(size)})
-        for _ in range(3):
+        self.suction_target_ack = None
+        # 새 suction 노드와 DDS 구독 연결이 늦으면 첫 target 명령이 유실될 수 있다.
+        # 실제 그리퍼 노드가 해당 박스 ID를 수신했다고 회신한 뒤에만 집기를 시작한다.
+        deadline = time.monotonic() + 15.0
+        while time.monotonic() < deadline:
             self.target_pub.publish(String(data=box))
             self.percept_target_pub.publish(String(data=pick_target))
-            self.spin_for(0.05)
+            self.spin_for(0.2)
+            if self.suction_target_ack == box:
+                break
+        else:
+            raise Fatal(f"suction target ACK timeout: expected {box}, "
+                        f"received {self.suction_target_ack!r}; stop before robot motion")
+        print(f"    [suction] target confirmed: {box}", flush=True)
 
         print(f">>> [MoveIt 2/7] 작업셀 장애물·박스·기적재 박스 {len(placed)}개를 planning scene에 등록 중...", flush=True)
         snap = gz_world_poses()
@@ -611,6 +670,8 @@ class MoveItPickPlace(Node):
         if any(v is None for v in before.values()):
             raise Fatal(f"placed box missing in Gazebo: {[n for n, v in before.items() if v is None]}")
         psz = {n: tuple(placed_sizes.get(n, size)) for n in before}
+        known_tops = [(p_[0][0], p_[0][1], p_[0][2] + psz[n][2] / 2, psz[n][0], psz[n][1], yaw_of(p_[1]))
+                      for n, p_ in before.items()]
         # Forget boxes that left the cell (pallet change): placed_* objects not in this cycle's list.
         req = GetPlanningScene.Request()
         req.components.components = PlanningSceneComponents.WORLD_OBJECT_NAMES
@@ -637,7 +698,8 @@ class MoveItPickPlace(Node):
                     b = np.array(pick_pose[:3], float)
                     q = (0.0, 0.0, math.sin(pick_pose[3] / 2), math.cos(pick_pose[3] / 2))
                     if NO_WRIST and pose_source == "camera":
-                        bf, q = self.far_locate(box, size, b, pick_pose[3], BUFFER_TOP_Z, "box on the buffer table")
+                        bf, q = self.far_locate(box, size, b, pick_pose[3], BUFFER_TOP_Z, "box on the buffer table",
+                                                others=known_tops)
                         b = np.array([bf[0], bf[1], b[2]])
                         err = np.linalg.norm((b - truth_b)[:2])
                         notes.append(f"CCTV (buffer) error {err * 1000:.1f} mm")
@@ -748,6 +810,12 @@ class MoveItPickPlace(Node):
                 raise Failure("move the box above the target (PTP): no IK")
             _, place_yaw, g = min(goals, key=lambda t: t[0])
             self.plan_joints(g, "move the box above the target (PTP)")
+            # Lower with the orientation the arm actually reached: the goal yaw and the reached one
+            # differed by 180 deg once (same placement, symmetric box) and the straight line down then
+            # also had to turn the wrist 180 deg (63-71 % feasible; box_13 to the buffer, 2026-10-10).
+            ry = self.tcp_yaw()
+            if ry is not None:
+                place_yaw = ry
         else:
             self.line((place[0], place[1], transfer_z), place_yaw, "level transfer above slot")
         self.check_carried(size, "transfer")
@@ -762,9 +830,15 @@ class MoveItPickPlace(Node):
         cam_note = ""
         for rp in range(REPLACE_ATTEMPTS + 1):
             print(">>> [MoveIt 6/7] 목표 위치로 내려놓고 진공 OFF(해제) 중 (주변 박스와 충돌 검사)...", flush=True)
-            # Fast to just above the slot, then the last SLOW_LOWER_M slowly: at 0.2 a 13.8 kg box
-            # swung into its neighbour (pushed it 6.9 mm, 2026-10-09).
-            self.line((target[0], target[1], place_top + PLACE_GAP_M + SLOW_LOWER_M), place_yaw, "lower above slot")
+            # Fast to just above the slot, then slowly: at 0.2 a 13.8 kg box swung into its neighbour
+            # (pushed it 6.9 mm, 2026-10-09). The slow part starts 3 cm above the tallest box next to
+            # the slot, not only SLOW_LOWER_M above the slot: a 16.6 kg box lowered fast past a 0.28 m
+            # taller neighbour 7 mm away caught its corner and pushed the wrist out (box_09, 2026-10-10).
+            near_top = max([PALLET_TOP_Z] + [p_[0][2] + psz[n][2] / 2 for n, p_ in before.items()
+                            if seg_rect_dist(target[:2], target[:2], p_[0][:2], psz[n], yaw_of(p_[1]))
+                            <= math.hypot(size[0], size[1]) / 2 + 0.10])
+            slow_from = min(transfer_z, max(place_top + PLACE_GAP_M + SLOW_LOWER_M, near_top + 0.03 + size[2]))
+            self.line((target[0], target[1], slow_from), place_yaw, "lower above slot")
             self.check_carried(size, "lowering")
             self.line((target[0], target[1], place_top + PLACE_GAP_M), place_yaw, "lower into slot (collision-checked)",
                       speed=CONTACT_SPEED)
@@ -782,10 +856,11 @@ class MoveItPickPlace(Node):
             if pose_source != "camera":
                 break
             if NO_WRIST:
-                c_b, c_q = self.far_check(box, size, place, place_yaw)
+                c_b, c_q = self.far_check(box, size, place, place_yaw, others=known_tops)
             # Gripper camera check of the placed box (RGB: top face on the plane slot top; a tilted
             # or fallen box does not match the SKU footprint there and is not confirmed).
-            print(">>> [MoveIt 6/7] 그리퍼 카메라로 놓인 박스 위치 확인 중...", flush=True)
+            if not NO_WRIST:
+                print(">>> [MoveIt 6/7] 그리퍼 카메라로 놓인 박스 위치 확인 중...", flush=True)
             # Look from INSPECT_M above the box top where the arm reaches (from 0.2 m only half of a
             # 0.41 m box was in the image: box_09 on the buffer, 2026-10-09); the fit counts only
             # the part of the footprint inside the image.
@@ -852,18 +927,20 @@ class MoveItPickPlace(Node):
             raise Fatal(f"an already placed box moved {worst * 1000:.1f} mm (> {DISTURB_TOL_M * 1000:.0f} mm): " + result)
         return result
 
-    def far_check(self, box, size, place, place_yaw):
+    def far_check(self, box, size, place, place_yaw, others=None):
         """V4.6: back to READY (out of the pole CCTV's view of the pallet), then measure the placed
         box with the pole CCTV (SKU-sized rectangle fit on the slot plane)."""
         print(">>> [MoveIt 6/7] 대기 자세로 물러난 뒤 고정 카메라(CCTV)로 놓인 박스 위치 확인 중...", flush=True)
         self.go_ready("back to ready pose for the CCTV check")
-        return self.far_locate(box, size, place, place_yaw, place[2] - size[2] / 2, "placed box")
+        return self.far_locate(box, size, place, place_yaw, place[2] - size[2] / 2, "placed box", others=others)
 
-    def far_locate(self, box, size, xy, yaw, base_z, what):
+    def far_locate(self, box, size, xy, yaw, base_z, what, others=None):
         """Pole CCTV measurement of a box resting on a known surface (pallet / buffer table), arm out
         of the view. Fatal if not confirmed."""
         msg = {"box": box, "size": list(size), "base_z": float(base_z),
-               "expect": [float(xy[0]), float(xy[1])], "expect_yaw": float(yaw)}
+               "expect": [float(xy[0]), float(xy[1])], "expect_yaw": float(yaw),
+               # top faces of the other known boxes: masked so a neighbour is never fitted (box_01, 2026-10-10)
+               "others": [[float(v) for v in o] for o in (others or [])]}
         for _ in range(3):
             self.percept_target_pub.publish(String(data=json.dumps(msg)))
             self.spin_for(0.05)
@@ -893,12 +970,27 @@ class MoveItPickPlace(Node):
             raise Fatal(f"box dropped during {phase} (box z {b[2]:.2f} m, expected {tcp_z - size[2] / 2:.2f} m): "
                         "cell stopped, operator needed")
 
+    def tcp_yaw(self):
+        """Yaw of the tool-down TCP in the world (direction of its +y axis), or None."""
+        end = time.monotonic() + 2.0
+        while time.monotonic() < end:
+            try:
+                q = self.tf_buffer.lookup_transform(FRAME, TCP, rclpy.time.Time()).transform.rotation
+                x, y, z, w = q.x, q.y, q.z, q.w
+                r01, r11 = 2 * (x * y - z * w), 1 - 2 * (x * x + z * z)   # TCP +y axis in world (x, y)
+                return math.atan2(r11, r01)
+            except Exception:
+                rclpy.spin_once(self, timeout_sec=0.05)
+        return None
+
     def tcp_z(self):
-        try:
-            tf = self.tf_buffer.lookup_transform(FRAME, TCP, rclpy.time.Time())
-            return tf.transform.translation.z
-        except Exception:
-            return None
+        end = time.monotonic() + 2.0      # TF may not be buffered yet: retry (drop check was skipped)
+        while time.monotonic() < end:
+            try:
+                return self.tf_buffer.lookup_transform(FRAME, TCP, rclpy.time.Time()).transform.translation.z
+            except Exception:
+                rclpy.spin_once(self, timeout_sec=0.05)
+        return None
 
 
 def _raise(signum, frame):
@@ -950,7 +1042,8 @@ def main():
         if args.result_json and node.placed_measured is not None:
             c_b, c_yaw = node.placed_measured
             json.dump({"box": args.box, "x": float(c_b[0]), "y": float(c_b[1]), "z": float(c_b[2]), "yaw": float(c_yaw),
-                       "source": "gripper camera (RGB, top face on the slot plane)",
+                       "source": ("fixed CCTV (RGB, top face on the slot plane)" if NO_WRIST
+                                  else "gripper camera (RGB, top face on the slot plane)"),
                        "recoveries": node.recoveries}, open(args.result_json, "w"))
         print(f"\nMOVEIT PICK&PLACE PASS: {result}", flush=True)
         return 0
