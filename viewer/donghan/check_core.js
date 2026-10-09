@@ -14,6 +14,9 @@ const [order = "demo_original10", seed = "20261009", repeat = "3", touchingP, in
 const extra = { ...(touchingP ? { touchingP: +touchingP } : {}), ...(intervalS ? { intervalS: +intervalS } : {}) };
 const faultP = Object.fromEntries(CORE.FAULTS.map(f => [f.key, f.p]));
 
+const L = CORE.LAYOUT, issues = CORE.checkLayout();
+console.log(`layout: buffer ${JSON.stringify(L.buffer.bays)}, NG ${JSON.stringify(L.ng.center)} -> ${issues.length ? issues.join("; ") : "reach / overlap OK"}`);
+
 for (const inletCamera of [true, false]) {
   const t0 = Date.now();
   const sim = new CORE.Sim({ order, seed: +seed, repeat: +repeat, faultP, flow: { inletCamera, ...extra } }).run();

@@ -202,11 +202,46 @@ const CORE = (() => {
     // second pole camera at the inlet: the Gazebo file is not shared yet, so this pose is ASSUMED
     inletCamera: { pos: [-4.30, 1.78, 2.40], target: [-4.48, 1.20, 0.895], hfov: 1.40, assumed: true },
     pallet: { cx: 0.0, cy: 1.20, size: 1.10, deck: 0.15 },
-    buffer: [[1.235, -0.55], [1.665, -0.55]], bufferTop: 0.9425,
-    hold: { x: -1.75, y: 0.25 },
     robot: { pedestal: 0.55 },
     arrival: { dyM: 0.08, yawDeg: 10 },
   };
+
+  // ---------- cell layout expected to change: buffer tables and the NG area ----------
+  // Change these positions HERE ONLY, or try new ones with ?buffer=x,y;x,y&ng=x,y.
+  // checkLayout() reports robot-reach and overlap problems (shown in the UI and by check_core.js).
+  const LAYOUT = {
+    source: "V4.4 world on GitHub (2026-10-09); 재성's moved buffer not pushed yet",
+    robot: { base: [0, 0], pedestalRadius: 0.35, minReachM: 0.5, reachM: 2.2 },   // reach ASSUMED from the model name
+    buffer: { bays: [[1.235, -0.55], [1.665, -0.55]], topZ: 0.9425, table: [0.40, 0.58], bayShort: 0.37, bayLong: 0.56 },
+    // NG: boxes routed to INSPECTION are put down here by the robot (option 가). Position ASSUMED.
+    ng: { center: [-1.75, 0.25], pad: [0.9, 0.7], cols: 3, rows: 2, pitch: [0.28, 0.34], layerH: 0.45, maxLayers: 2 },
+  };
+  function ngSlot(k) {             // world [x, y, z of the box bottom] of the k-th NG box
+    const n = LAYOUT.ng, col = k % n.cols, row = Math.floor(k / n.cols) % n.rows, lay = Math.floor(k / (n.cols * n.rows));
+    return [n.center[0] + (col - (n.cols - 1) / 2) * n.pitch[0], n.center[1] + (row - (n.rows - 1) / 2) * n.pitch[1], 0.02 + lay * n.layerH];
+  }
+  function checkLayout() {
+    const issues = [], L = LAYOUT, [bx, by] = L.robot.base, reach = ([x, y]) => Math.hypot(x - bx, y - by);
+    const rect = (c, s) => [c[0] - s[0] / 2, c[0] + s[0] / 2, c[1] - s[1] / 2, c[1] + s[1] / 2];
+    const overlap = (a, b) => a[0] < b[1] && b[0] < a[1] && a[2] < b[3] && b[2] < a[3];
+    const cv = WC.conveyor, p = WC.pallet;
+    const fixed = [["팔레트", rect([p.cx, p.cy], [p.size, p.size])], ["컨베이어", [cv.x0, cv.x1, cv.y - cv.halfW - 0.05, cv.y + cv.halfW + 0.05]],
+                   ["로봇 받침대", rect(L.robot.base, [2 * L.robot.pedestalRadius, 2 * L.robot.pedestalRadius])]];
+    const tables = L.buffer.bays.map((c, i) => [`버퍼 ${i + 1}`, rect(c, L.buffer.table)]);
+    const ngPad = ["NG 구역", rect(L.ng.center, L.ng.pad)];
+    const n = L.ng.cols * L.ng.rows * L.ng.maxLayers;
+    for (let k = 0; k < n; k++) {
+      const d = reach(ngSlot(k));
+      if (d > L.robot.reachM) issues.push(`NG 칸 ${k + 1}: 로봇 도달 범위 밖 (${d.toFixed(2)} m > ${L.robot.reachM} m)`);
+      if (d < L.robot.minReachM) issues.push(`NG 칸 ${k + 1}: 로봇에 너무 가까움 (${d.toFixed(2)} m)`);
+    }
+    L.buffer.bays.forEach((c, i) => { const d = reach(c); if (d > L.robot.reachM) issues.push(`버퍼 ${i + 1}: 로봇 도달 범위 밖 (${d.toFixed(2)} m)`); });
+    const movable = [ngPad, ...tables];
+    movable.forEach(([a, ra], i) => {
+      for (const [b, rb] of fixed.concat(movable.slice(i + 1))) if (overlap(ra, rb)) issues.push(`${a}·${b} 겹침`);
+    });
+    return issues;
+  }
   const HOME = [-0.6, 0.9, 1.6];
   const PICK_ORIGIN = [WC.pick.x, WC.pick.y, WC.conveyor.top];          // conveyor frame (assumed)
   const INLET_ORIGIN = [WC.inletCamera.target[0], WC.conveyor.y, WC.conveyor.top];
@@ -223,7 +258,6 @@ const CORE = (() => {
   const PERCEPTION = { weight_noise_std_ratio: 0.01, base_view_recover_probability: 0.7, base_view_size_noise_std_m: 0.001 };
   const HL = { good_support: 0.95, retrieve_margin_m: 0.02, max_buffer_age: 12 };     // pac_highlevel RuleConfig
   const PLACE = { res: 0.02, clearance: 0.01, uncertain_extra_m: 0.01, min_support: 0.70, max_height: 1.50 };
-  const BAY = { short: 0.37, long: 0.56 };                                               // V4.4 buffer table bay
   const FLOW = { beltSpeed: 0.25, intervalS: 7, intervalJitter: 0.4, minGapM: 0.05, gapTargetM: 0.25, touchingP: 0.10,
                  inletCamera: true, computeStop: true, classifyS: 0.5, planS: 1.0, palletChangeS: 60, bufferOn: true,
                  weighS: 1.9, depthNoiseM: 0.0015 };
@@ -578,7 +612,7 @@ const CORE = (() => {
     }
     fill() { return this.volume / (WC.pallet.size * WC.pallet.size * PLACE.max_height); }
   }
-  const bayFits = s => Math.min(s.x, s.y) <= BAY.short && Math.max(s.x, s.y) <= BAY.long;
+  const bayFits = s => Math.min(s.x, s.y) <= LAYOUT.buffer.bayShort && Math.max(s.x, s.y) <= LAYOUT.buffer.bayLong;
   const clearanceOf = st => PLACE.clearance + (st.uncertain ? PLACE.uncertain_extra_m : 0);
 
   // ---------- pac_highlevel.rules.RulePolicy (JS port) ----------
@@ -623,11 +657,12 @@ const CORE = (() => {
       this.stopUntil = 0; this.stopReason = null; this.stopTime = { classify: 0, plan: 0 };
       this.robot = { task: null, pos: HOME.slice(), busyTime: 0, carried: null, label: "대기" };
       this.pallet = new PalletModel(); this.palletNo = 1; this.closed = []; this.placed = [];
-      this.bays = WC.buffer.map(([x, y]) => ({ x, y, entry: null }));
+      this.bays = LAYOUT.buffer.bays.map(([x, y]) => ({ x, y, entry: null }));
       this.hold = []; this.results = []; this.events = []; this.decisions = 0; this.pickState = null; this.endPlan = null;
       this.lastPick = null; this.lastInlet = null; this.lastScale = null; this.done = false;
       this.counters = { gapping: 0, combinedWeigh: 0, bufferPut: 0, bufferGet: 0, palletChange: 0, inletLabel: 0 };
       this.rFlow = rng(o.seed ^ 0xf10e);
+      for (const issue of checkLayout()) this.log(`배치 점검: ${issue}`, "bad");
     }
     log(msg, cls = "") { this.events.push({ t: this.t, msg, cls }); }
     stopped() { return this.t < this.stopUntil; }
@@ -800,7 +835,7 @@ const CORE = (() => {
       } else {
         let fromXY, fromZ, h, yaw0, grip;
         if (type === "RETRIEVE") {
-          const bay = this.bays[p.bay], e = bay.entry; h = e.fb.size.z; fromXY = [bay.x, bay.y]; fromZ = WC.bufferTop + h; yaw0 = e.yaw;
+          const bay = this.bays[p.bay], e = bay.entry; h = e.fb.size.z; fromXY = [bay.x, bay.y]; fromZ = LAYOUT.buffer.topZ + h; yaw0 = e.yaw;
           grip = () => { this.robot.carried = { fb: e.fb, h, yaw: e.yaw, res: e.res, state: e.state }; bay.entry = null; this.counters.bufferGet++; };
         } else {
           const b = p.box; h = b.fb.size.z; fromXY = [b.x, b.y]; fromZ = top + h; yaw0 = b.yaw;
@@ -818,13 +853,12 @@ const CORE = (() => {
             this.placed.push({ fb: c.fb, x: s.x, y: s.y, z: s.z, yaw: s.yaw, palletNo: this.palletNo, size: c.state.size });
             c.res.disposition = `팔레트 ${this.palletNo}${type === "RETRIEVE" ? " (버퍼 경유)" : ""}`; this.robot.carried = null; };
         } else if (type === "BUFFER") {
-          const bay = this.bays[p.bay], s = p.box.res.verdict.box.size, yaw = s.x <= BAY.short && s.y <= BAY.long ? 0 : Math.PI / 2;
-          dest = [bay.x, bay.y, WC.bufferTop, yaw];
+          const bay = this.bays[p.bay], s = p.box.res.verdict.box.size, yaw = s.x <= LAYOUT.buffer.bayShort && s.y <= LAYOUT.buffer.bayLong ? 0 : Math.PI / 2;
+          dest = [bay.x, bay.y, LAYOUT.buffer.topZ, yaw];
           release = () => { const c = this.robot.carried; bay.entry = { fb: c.fb, res: c.res, state: c.state, storedAt: this.decisions, yaw };
             c.res.disposition = `버퍼 ${p.bay + 1}`; this.counters.bufferPut++; this.robot.carried = null; };
         } else {
-          const k = this.hold.length, col = k % 3, row = Math.floor(k / 3) % 2, lay = Math.floor(k / 6);
-          dest = [WC.hold.x - 0.28 + col * 0.28, WC.hold.y - 0.17 + row * 0.34, 0.02 + lay * 0.45, 0];
+          dest = [...ngSlot(this.hold.length), 0];
           release = () => { const c = this.robot.carried; this.hold.push({ fb: c.fb, x: dest[0], y: dest[1], z: dest[2] }); c.res.disposition = "Hold/NG"; this.robot.carried = null; };
         }
         const safe = Math.max(1.75, dest[2] + h + 0.35, fromZ + 0.3);
@@ -873,7 +907,7 @@ const CORE = (() => {
     }
   }
 
-  return { rng, gauss, ease, WC, HOME, PICK_ORIGIN, INLET_ORIGIN, DEPTH, INLET_DEPTH, RESOLVER, VALIDATOR, PERCEPTION, HL, PLACE, BAY, FLOW,
+  return { rng, gauss, ease, WC, LAYOUT, ngSlot, checkLayout, HOME, PICK_ORIGIN, INLET_ORIGIN, DEPTH, INLET_DEPTH, RESOLVER, VALIDATOR, PERCEPTION, HL, PLACE, FLOW,
            ORDERS, FAULTS, catalogOf, makeStream, halfX, scaleTrace, cameraModel, project, renderDepth, measureBox, resolveSku,
            buildRawObservation, validate, PalletModel, decide, expectedKinds, Sim };
 })();
@@ -886,6 +920,14 @@ if (typeof module !== "undefined") module.exports = CORE;
 <script>
 "use strict";
 const { WC } = CORE;
+// try a new cell layout without editing the file (e.g. a moved buffer): ?buffer=x,y;x,y&ng=x,y (world m)
+(() => {
+  const q = new URLSearchParams(location.search);
+  const pts = s => s.split(";").map(p => p.split(",").map(Number));
+  const ok = a => a.length && a.every(p => p.length === 2 && p.every(Number.isFinite));
+  if (q.get("buffer")) { const b = pts(q.get("buffer")); if (ok(b)) CORE.LAYOUT.buffer.bays = b; else console.warn("ignored ?buffer=", q.get("buffer")); }
+  if (q.get("ng")) { const n = pts(q.get("ng")); if (ok(n) && n.length === 1) CORE.LAYOUT.ng.center = n[0]; else console.warn("ignored ?ng=", q.get("ng")); }
+})();
 const W2T = (x, y, z) => new THREE.Vector3(x, z, -y);   // Gazebo world (z up) -> three.js (y up)
 const SKU_COLORS = { K01: 0xc9925b, K02: 0xd4a76a, K03: 0xb98552, K04: 0xe0b77c, K08: 0xc79a62, K10: 0xd9b07a, K13: 0xbf8d57, X99: 0x8a8f99 };
 const $ = id => document.getElementById(id);
@@ -976,13 +1018,15 @@ let convLabel, inletLabel, scaleLabel;
   const p = WC.pallet, base = boxMesh(p.size, p.size, p.deck - 0.035, 0x6b4a2b); placeBox(base, p.cx, p.cy, 0, p.deck - 0.035); scene.add(base);
   for (let i = 0; i < 5; i++) { const b = boxMesh(p.size, 0.143, 0.035, 0x9c7445); placeBox(b, p.cx, p.cy - p.size / 2 + 0.0715 + i * 0.23925, p.deck - 0.035, 0.035); scene.add(b); }
   label3d("팔레트 1.10 × 1.10 m", p.cx, p.cy + 0.78, 0.45);
-  WC.buffer.forEach(([bx, by], i) => {
-    const t = boxMesh(0.40, 0.58, 0.03, 0x4c5a66); placeBox(t, bx, by, WC.bufferTop - 0.03, 0.03); scene.add(t);
-    for (const [dx, dy] of [[-0.17, -0.26], [0.17, -0.26], [-0.17, 0.26], [0.17, 0.26]]) { const leg = boxMesh(0.04, 0.04, WC.bufferTop - 0.03, 0x34404a); placeBox(leg, bx + dx, by + dy, 0, WC.bufferTop - 0.03); scene.add(leg); }
+  const B = CORE.LAYOUT.buffer, [tw, tl] = B.table, legH = B.topZ - 0.03;
+  B.bays.forEach(([bx, by]) => {
+    const t = boxMesh(tw, tl, 0.03, 0x4c5a66); placeBox(t, bx, by, legH, 0.03); scene.add(t);
+    for (const [sx, sy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) { const leg = boxMesh(0.04, 0.04, legH, 0x34404a); placeBox(leg, bx + sx * (tw / 2 - 0.03), by + sy * (tl / 2 - 0.03), 0, legH); scene.add(leg); }
   });
-  label3d("버퍼 테이블 (2칸)", 1.45, -0.55, 1.35, "#b69cff");
-  const hold = boxMesh(0.9, 0.7, 0.02, 0x5a2a2a, { emissive: 0x220808 }); placeBox(hold, WC.hold.x, WC.hold.y, 0, 0.02); scene.add(hold);
-  label3d("Hold / NG (위치 임시)", WC.hold.x, WC.hold.y - 0.5, 0.45, "#ff6b6b");
+  const bmx = B.bays.reduce((a, b) => a + b[0], 0) / B.bays.length, bmy = B.bays.reduce((a, b) => a + b[1], 0) / B.bays.length;
+  label3d(`버퍼 테이블 (${B.bays.length}칸)`, bmx, bmy, B.topZ + 0.4, "#b69cff");
+  const N = CORE.LAYOUT.ng, ng = boxMesh(N.pad[0], N.pad[1], 0.02, 0x5a2a2a, { emissive: 0x220808 }); placeBox(ng, N.center[0], N.center[1], 0, 0.02); scene.add(ng);
+  label3d("NG 구역 (로봇 적치, 위치 가정)", N.center[0], N.center[1] - N.pad[1] / 2 - 0.15, 0.45, "#ff6b6b");
 })();
 
 const arm = (() => {
@@ -1017,7 +1061,7 @@ function syncScene() {
   for (const b of S.conv) put(b.fb, b.x, b.y, WC.conveyor.top, b.yaw);
   const c = S.robot.carried; if (c) put(c.fb, S.robot.pos[0], S.robot.pos[1], S.robot.pos[2] - c.h, c.yaw);
   for (const p of S.placed) if (p.palletNo === S.palletNo) put(p.fb, p.x, p.y, p.z, p.yaw);
-  for (const b of S.bays) if (b.entry) put(b.entry.fb, b.x, b.y, WC.bufferTop, b.entry.yaw);
+  for (const b of S.bays) if (b.entry) put(b.entry.fb, b.x, b.y, CORE.LAYOUT.buffer.topZ, b.entry.yaw);
   for (const h of S.hold) put(h.fb, h.x, h.y, h.z, 0, 0x8c3b3b);
   for (const [id, m] of UI.meshes) if (!seen.has(id)) m.visible = false;
   arm(...S.robot.pos);
@@ -1120,7 +1164,8 @@ function refreshPanels() {
     <span class="k">PICK</span><span>${ps ? `${ps.box.fb.box_id} · ${psTxt}` : "비어 있음"}</span>
     <span class="k">로봇</span><span>${S.robot.task ? `<span class="info">${S.robot.label}</span>` : "대기"}</span>
     <span class="k">버퍼</span><span>${S.bays.map((b, i) => `${i + 1}: ${b.entry ? `<span class="vio">${b.entry.fb.box_id} ${b.entry.state.size ? sizeTxt(b.entry.state.size) : ""}</span>` : '<span class="mut">빈 칸</span>'}`).join(" · ")}</span>
-    <span class="k">팔레트</span><span>#${S.palletNo} · ${S.pallet.boxes.length}개 · 적재율 ${(S.pallet.fill() * 100).toFixed(0)}% · 마감 ${S.closed.length}</span>`;
+    <span class="k">팔레트</span><span>#${S.palletNo} · ${S.pallet.boxes.length}개 · 적재율 ${(S.pallet.fill() * 100).toFixed(0)}% · 마감 ${S.closed.length}</span>
+    <span class="k">배치 점검</span><span>${(issues => issues.length ? `<span class="bad">${issues.join(" · ")}</span>` : '<span class="ok">도달 범위·겹침 문제 없음</span>')(CORE.checkLayout())} <span class="mut">(버퍼 ${CORE.LAYOUT.buffer.bays.map(b => `(${b.join(", ")})`).join(" ")}, NG (${CORE.LAYOUT.ng.center.join(", ")}))</span></span>`;
 
   $("queueTable").innerHTML = `<tr><th>ID</th><th>구역</th><th>초입 판독</th><th>무게</th></tr>` + S.conv.slice().reverse().map(b => {
     const i = b.inlet, m = i && i.meas;
