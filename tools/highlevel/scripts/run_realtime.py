@@ -12,7 +12,7 @@ import argparse
 import json
 from pathlib import Path
 
-from _common import add_common_args, load_all, load_env, load_lookahead
+from _common import add_budget_args, add_common_args, load_all, load_budget, load_env, load_lookahead
 
 from pac_highlevel.lookahead import LookaheadPolicy
 from pac_highlevel.placement import make_placer
@@ -23,6 +23,7 @@ from virtual_data.highlevel import split_ids, world_factory
 def main():
     parser = argparse.ArgumentParser()
     add_common_args(parser)
+    add_budget_args(parser)
     parser.add_argument("--split", default="test")
     parser.add_argument("--episode", type=int, default=0)
     parser.add_argument("--interval", type=float, default=0.0,
@@ -41,7 +42,7 @@ def main():
                           shuffle_seed=args.seed, placer=placer)(args.episode)
     policy = LookaheadPolicy(hl, la)
     conveyor = ConveyorConfig(interval, args.capacity or la.horizon + 1, args.compute_scale)
-    out = TimedRun(world, policy, conveyor, horizon=la.horizon).run()
+    out = TimedRun(world, policy, conveyor, horizon=la.horizon, budget=load_budget(args)).run()
     out["policy"] = "lookahead"
     out["placer"] = la.placer
     args.output.parent.mkdir(parents=True, exist_ok=True)

@@ -77,6 +77,40 @@ class LookaheadConfig:
             raise ValueError("placer must be layer or dblf")
 
 
+@dataclass
+class ActionBudget:
+    """Search time per decision from the robot action it is planned during
+    (same rule as the ROS runtime, ``runtime.yaml`` -> ``planning``):
+    ``ahead_ratio`` x the action's duration, clamped to [min, max];
+    ``wait_budget_s`` when nothing runs meanwhile (the robot waits).
+
+    As ``LookaheadPolicy.budget`` on a simulated world it reads the action
+    duration from the world clock: the time that passed since the previous
+    decision (the previous action and the rule actions after it)."""
+
+    ahead_ratio: float = 0.75
+    min_budget_s: float = 0.3
+    max_budget_s: float = 10.0
+    wait_budget_s: float = 1.5
+
+    def ahead(self, seconds):
+        if seconds <= 0.0:
+            return self.wait_budget_s
+        return min(self.max_budget_s, max(self.min_budget_s, self.ahead_ratio * seconds))
+
+    def __call__(self, world):
+        last = getattr(self, "_last", None)
+        self._last = (id(world), world.time_s)
+        if last is None or last[0] != id(world):
+            return self.wait_budget_s  # first decision of this world: nothing ran before it
+        return self.ahead(world.time_s - last[1])
+
+    @classmethod
+    def from_planning(cls, planning):
+        """From ``pac_runtime`` ``PlanningConfig`` (or any object with the fields)."""
+        return cls(planning.ahead_ratio, planning.min_budget_s, planning.max_budget_s, planning.wait_budget_s)
+
+
 def lookahead_config_from_dict(data):
     data = dict(data or {})
     known = LookaheadConfig.__dataclass_fields__
@@ -318,8 +352,11 @@ class LookaheadPolicy:
 
     name = "lookahead"
 
-    def __init__(self, hl_config, config=None):
+    def __init__(self, hl_config, config=None, budget=None):
+        """``budget``: ``ActionBudget`` (or ``world -> seconds``) for decisions
+        that get no explicit ``budget_s``; ``None`` = the configured budget."""
         self.cfg = config or LookaheadConfig()
+        self.budget = budget
         self.rule = RulePolicy(hl_config)
         self.hl = hl_config
         self.stats = SearchStats()
@@ -402,6 +439,8 @@ class LookaheadPolicy:
 
     def __call__(self, world, window_end=None, budget_s=None):
         start = time.perf_counter()
+        if budget_s is None and self.budget is not None:
+            budget_s = self.budget(world)
         rule_action = self.rule(world)
         self.stats.decisions += 1
         mask = world.action_mask()
@@ -429,6 +468,7 @@ class LookaheadPolicy:
 
 
 __all__ = [
+    "ActionBudget",
     "LookaheadConfig",
     "LookaheadPolicy",
     "SearchTimeout",

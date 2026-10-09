@@ -186,6 +186,26 @@ def test_time_budget_is_a_hard_limit():
     assert {k: out[k] for k in ("placed", "ng", "pallet_equivalents")} ==         {k: rule[k] for k in ("placed", "ng", "pallet_equivalents")}
 
 
+def test_action_budget_follows_the_world_clock():
+    """Simulated worlds get the runtime's search time: a share of the action
+    that ran since the previous decision, the wait budget at the start."""
+    from pac_highlevel import ActionBudget
+
+    budget = ActionBudget(ahead_ratio=0.75, min_budget_s=0.3, max_budget_s=10.0, wait_budget_s=1.5)
+    assert budget.ahead(8.0) == 6.0 and budget.ahead(100.0) == 10.0 and budget.ahead(0.1) == 0.3
+    assert budget.ahead(0.0) == 1.5
+    w = world(mixed_boxes())
+    assert budget(w) == 1.5                       # first decision: the robot waits
+    w.time_s += 8.0                               # a placement cycle ran meanwhile
+    assert budget(w) == 6.0
+    w.time_s += 4.0                               # a buffer move
+    assert budget(w) == 3.0
+    seen = []
+    policy = LookaheadPolicy(w.config, LookaheadConfig(horizon=3), budget=lambda world: seen.append(1) or 5.0)
+    run_policy(world(mixed_boxes(6)), policy)
+    assert seen and policy.stats.decisions == len(seen)
+
+
 # ---------------------------------------------------------------- real time
 
 

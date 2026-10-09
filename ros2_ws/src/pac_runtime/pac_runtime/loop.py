@@ -11,7 +11,9 @@ the ROS 2 node drives); this module only simulates the plant around it
 (``FieldBox`` truth, ``PerceptionSim``, ``ExecutorSim``, the clock).
 The conveyor camera sees the next ``hl_config.close.visible_boxes`` boxes of
 the stream (environment ``conveyor.visible_boxes``); they are handed to the
-core as the look-ahead window before every decision.
+core as the look-ahead window before every decision. The search time is the
+ROS runtime's: ``runtime.planning`` share of the previous command's expected
+duration (it is planned during that command), ``wait_budget_s`` otherwise.
 """
 
 from dataclasses import dataclass, field
@@ -62,6 +64,7 @@ class RuntimeLoop:
         travel = self.hl.buffer.travel_times()
         truth, true_stack, pallets, events = {}, [], [], []
         idx, missing_done = 0, False
+        prev = None  # command executed last: the next one is planned during it
 
         def log(kind, **kw):
             if self.log_events:
@@ -107,7 +110,9 @@ class RuntimeLoop:
             ahead = cell.stream[idx: idx + visible_n]
             core.on_preview([previews.setdefault(fb.truth.box_id, preview_cam.observe(fb, sm.t))
                              for fb in ahead])
-            cmd = core.next_command()
+            budget = core.ahead_budget(prev) if prev is not None else cfg.planning.wait_budget_s
+            cmd = core.next_command(budget_s=budget)
+            prev = cmd if cmd.action != "WAIT" else None
             a = cmd.action
             if a == "WAIT":
                 if cmd.reason == "REPACK_NOT_EXECUTABLE":

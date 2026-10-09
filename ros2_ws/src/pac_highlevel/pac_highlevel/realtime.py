@@ -11,6 +11,9 @@ The plain simulator is turn based. Here time flows:
             the current box plus up to N after it. If another box arrives
             while the planner is still computing and the window was not full,
             the planner restarts with the new window ("replan").
+            Search time (``budget``, the runtime rule): ``ahead_ratio`` of
+            the time until the robot is free, or ``wait_budget_s`` when it
+            already is.
             Compute time is measured and added to the timeline (``compute_scale``
             converts it, e.g. 0.5 for a machine twice as fast).
   robot     executes the decision when it is free AND the decision is ready
@@ -52,9 +55,11 @@ def _placed_rows(world):
 
 
 class TimedRun:
-    def __init__(self, world, policy, conveyor=None, horizon=None):
+    def __init__(self, world, policy, conveyor=None, horizon=None, budget=None):
+        """``budget``: ``ActionBudget``; ``None`` = the policy's own budget."""
         self.world = world
         self.policy = policy
+        self.budget = budget
         self.cfg = conveyor or ConveyorConfig()
         if horizon is None:
             horizon = policy.cfg.horizon if isinstance(policy, LookaheadPolicy) else 0
@@ -100,7 +105,7 @@ class TimedRun:
         return None
 
     # -- loop -------------------------------------------------------------
-    def _decide(self, plan_start):
+    def _decide(self, plan_start, robot_free=0.0):
         w = self.world
         first = w.next_arrival  # index of the first box after the current one
         replans, compute = 0, 0.0
@@ -109,7 +114,8 @@ class TimedRun:
             end = first + len(seen)
             t0 = time.perf_counter()
             if isinstance(self.policy, LookaheadPolicy):
-                action = self.policy(w, window_end=end)
+                budget = None if self.budget is None else self.budget.ahead(robot_free - plan_start)
+                action = self.policy(w, window_end=end, budget_s=budget)
             else:
                 action = self.policy(w)
             c = (time.perf_counter() - t0) * self.cfg.compute_scale
@@ -131,7 +137,7 @@ class TimedRun:
             cur_index = w.next_arrival - 1 if cur is not None else None
             if cur_index is not None:
                 plan_start = max(plan_start, self.arrival_time(cur_index))
-            action, ready, seen, replans, compute = self._decide(plan_start)
+            action, ready, seen, replans, compute = self._decide(plan_start, robot_free)
             box_ready = self.arrival_time(cur_index) if cur_index is not None else 0.0
             start = max(robot_free, ready, box_ready)
             idle = max(0.0, start - robot_free)

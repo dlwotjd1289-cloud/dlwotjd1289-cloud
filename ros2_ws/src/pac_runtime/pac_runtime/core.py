@@ -26,7 +26,7 @@ from dataclasses import dataclass, field, replace
 
 from pac_common import PalletState, PlacementCandidate, SystemState
 from pac_candidates.geometry import rotated_dims
-from pac_highlevel import ActionType, HighLevelDecider
+from pac_highlevel import ActionBudget, ActionType, HighLevelDecider
 
 from .executor import ExecutorSim, TrueBox
 from .perception import to_box_state
@@ -149,9 +149,8 @@ class RuntimeCore:
 
     def ahead_budget(self, cmd):
         """Search time for the decision planned while ``cmd`` executes."""
-        pl = self.cfg.planning
         seconds = self.expected_duration(cmd) * self.duration_scale.get(cmd.action, 1.0)
-        return min(pl.max_budget_s, max(pl.min_budget_s, pl.ahead_ratio * seconds))
+        return ActionBudget.from_planning(self.cfg.planning).ahead(seconds)
 
     def observe_duration(self, cmd, seconds):
         """Measured duration of ``cmd`` (command sent -> result) updates the
