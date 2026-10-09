@@ -8,7 +8,7 @@
 | **launch 인자 이름** | `ros2_ws/src/pac_runtime/launch/*.launch.py` | `pac_runtime` launch 예시가 `repo:=pac-mission1-shared`로 적혀 있습니다. 통합 저장소 경로를 넣으면 됩니다. |
 
 ### 해결됨 (`fix/planner5-runtime-integration`)
-- 깨진 import `make_runtime_ranker`: 동한 님 v3 런타임 패치를 `pac_runtime/ros_node.py`에 반영. `verified_runtime` 노드, `check_closed_loop_physics.py`, `check_robot_demo.py`가 다시 import됩니다. 함께 들어온 변경: `STALE_RESULT` 거부(`core.py`), 상자를 내보낸 뒤 다음 명령은 새 관측으로 계획(`CoreBridge`), 상태에 ranker 출처 표시.
+- 깨진 import `make_runtime_ranker`: 동한 님 v3 런타임 패치를 `pac_runtime/ros_node.py`에 반영. `verified_runtime` 노드, `check_closed_loop_physics.py`, `check_robot_demo.py`가 다시 import됩니다. 함께 들어온 변경: `STALE_RESULT` 거부(`core.py`), 상자를 내보낸 뒤 다음 명령은 새 관측으로 계획(`CoreBridge`), 상태에 ranker 출처 표시. 로봇이 명령을 실행하는 중에 들어온 관측·`conveyor_idle`은 `CoreBridge.deferred`에 보관했다가 결과 처리 직후 반영하므로 `STALE_RESULT`가 나지 않고, `runtime_node` 콜백은 거부된 메시지로 종료되지 않습니다.
 - ROS `runtime_node`에 ③~⑥ 연결: 파라미터 `ranker:=donghan`(기본 `dblf`), `ranker_model_path`, `ranker_config`, `ranker_seed`. `runtime.launch.py`·`gazebo_cell.launch.py`에도 같은 인자.
 - 학습 모델과 플래너 설정(horizon / scenario_count / cvar_alpha)이 다르면 이제 시작할 때 오류가 납니다(`pac_planning.team_bridge.load_checked_model`). 전에는 매 호출 `INFERENCE_FAILED`로 휴리스틱에 조용히 떨어졌습니다.
 - 저장소 밖 경로: `scripts/ahead_planner_bridge_v44.py`가 통합 저장소의 `pac_planning`을 씁니다.

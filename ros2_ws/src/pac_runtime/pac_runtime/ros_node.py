@@ -101,6 +101,11 @@ class CoreBridge:
     def __init__(self, core):
         self.core = core
         self.pending = None
+        # Observations / idle reports that arrive while a command is being
+        # executed (the next box reaches the pick point during a placement).
+        # Applying them at once would change the state under the outstanding
+        # command (STALE_RESULT); they are applied right after its result.
+        self.deferred = []
 
     def _next(self):
         if self.pending is None and self.core.has_work():
@@ -114,7 +119,13 @@ class CoreBridge:
         return None
 
     def on_observation(self, text):
-        verdict = self.core.on_observation(observation_from_dict(json.loads(text)))  # None: duplicate
+        """Returns (verdict, command); verdict None: duplicate or deferred
+        (``self.deferred`` non-empty) while a command is outstanding."""
+        obs = observation_from_dict(json.loads(text))
+        if self.pending is not None:
+            self.deferred.append(("obs", obs))
+            return None, None
+        verdict = self.core.on_observation(obs)  # None: duplicate
         out = self._next()
         return verdict, out
 
@@ -127,17 +138,27 @@ class CoreBridge:
         completed_action = self.pending.action
         level = self.core.on_result(self.pending, report_from_dict(d))
         self.pending = None
+        deferred, self.deferred = self.deferred, []
+        for kind, item in deferred:
+            if kind == "obs":
+                self.core.on_observation(item)
+            else:
+                self.core.on_conveyor_idle(item)
         # These commands release the conveyor box.  The plant publishes the
         # next observation immediately afterwards, so planning a buffered-box
         # command here would use the pre-arrival state and become stale as soon
         # as that observation lands.  Let on_observation/on_idle plan it from
-        # the authoritative new snapshot instead.
-        if completed_action in ("PLACE_CURRENT", "BUFFER_CURRENT", "REJECT_NG"):
+        # the authoritative new snapshot instead (unless it already arrived).
+        if not deferred and completed_action in ("PLACE_CURRENT", "BUFFER_CURRENT", "REJECT_NG"):
             return level, None
         return level, self._next()
 
     def on_idle(self, text):
-        out = self.core.on_conveyor_idle(float(json.loads(text)["idle_s"]))
+        idle_s = float(json.loads(text)["idle_s"])
+        if self.pending is not None:
+            self.deferred.append(("idle", idle_s))
+            return {}, None
+        out = self.core.on_conveyor_idle(idle_s)
         return dict(out), self._next()
 
     def status(self):
@@ -146,7 +167,8 @@ class CoreBridge:
         out = {"state_version": sm.version, "pallet_id": sm.pallet_id, "placed": len(sm.placed),
                "buffer": sm.buffer_slots(), "mode": self.core.supervisor.mode.value,
                "inspection": len(self.core.inspection), "counts": dict(self.core.counts),
-               "ranker": getattr(ranker, "name", "dblf") if ranker is not None else "dblf"}
+               "ranker": getattr(ranker, "name", "dblf") if ranker is not None else "dblf",
+               "deferred": len(self.deferred)}
         if ranker is not None and hasattr(ranker, "provenance"):
             out["ranker_provenance"] = ranker.provenance()
         return out
@@ -191,17 +213,35 @@ def main(args=None):  # pragma: no cover - needs ROS 2
             self.status_pub.publish(String(data=json.dumps(self.bridge.status())))
 
         def _obs(self, msg):
-            verdict, cmd = self.bridge.on_observation(msg.data)
-            self.get_logger().info("observation -> " + (verdict.kind.value if verdict else "duplicate, ignored"))
+            try:
+                verdict, cmd = self.bridge.on_observation(msg.data)
+            except (ValueError, KeyError, TypeError) as error:
+                self.get_logger().error(f"observation rejected: {error}")
+                return
+            if verdict is None and self.bridge.pending is not None:
+                self.get_logger().info("observation -> deferred until the current command's result")
+            else:
+                self.get_logger().info("observation -> " + (verdict.kind.value if verdict else "duplicate, ignored"))
             self._publish(cmd)
 
         def _result(self, msg):
-            level, cmd = self.bridge.on_result(msg.data)
+            try:
+                level, cmd = self.bridge.on_result(msg.data)
+            except (ValueError, KeyError, TypeError) as error:
+                # STALE_RESULT / result for another command: the command stays
+                # outstanding; never commit a pose that the state cannot explain.
+                self.get_logger().error(f"result rejected, command still outstanding: {error}")
+                self._publish(None)
+                return
             self.get_logger().info(f"result -> {level}")
             self._publish(cmd)
 
         def _idle(self, msg):
-            missing, cmd = self.bridge.on_idle(msg.data)
+            try:
+                missing, cmd = self.bridge.on_idle(msg.data)
+            except (ValueError, KeyError, TypeError) as error:
+                self.get_logger().error(f"conveyor_idle rejected: {error}")
+                return
             if missing:
                 self.get_logger().warn(f"MISSING confirmed: {missing}")
             self._publish(cmd)
