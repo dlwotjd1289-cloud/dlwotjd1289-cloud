@@ -13,7 +13,7 @@ Topics (all JSON):
 
 Parameters: ``order_file`` (see ``order.py``), ``candidates_config``,
 ``highlevel_config``, ``runtime_config``, ``robot_config``, ``policy``
-(rule | numpy | sb3), ``policy_file``, ``ranker`` (dblf | donghan),
+(rule | greedy), ``ranker`` (dblf | donghan),
 ``ranker_model_path``, ``ranker_config`` and ``ranker_seed``.
 
 Run (after ``colcon build``)::
@@ -75,7 +75,7 @@ def report_from_dict(d):
 
 
 def make_runtime_ranker(name="dblf", model_path="", seed=7, config_path=""):
-    """Build the optional stage-5 ranker without changing the PPO contract.
+    """Build the optional stage-5 ranker.
 
     ``dblf`` keeps the existing runtime behaviour.  ``donghan`` only replaces
     the low-level ordering inside :class:`RobotAwarePlacer`; stage 4 still uses
@@ -192,11 +192,11 @@ def main(args=None):  # pragma: no cover - needs ROS 2
             super().__init__("pac_runtime")
             p = {n: self.declare_parameter(n, d).value for n, d in (
                 ("order_file", ""), ("candidates_config", ""), ("highlevel_config", ""),
-                ("runtime_config", ""), ("robot_config", ""), ("policy", "rule"), ("policy_file", ""),
+                ("runtime_config", ""), ("robot_config", ""), ("policy", "rule"),
                 ("ranker", "dblf"), ("ranker_model_path", ""), ("ranker_config", ""), ("ranker_seed", 7))}
             cand = load_candidate_config(p["candidates_config"])
             hl = load_highlevel_config(p["highlevel_config"])
-            policy = load_policy(p["policy"], p["policy_file"] or None, config=hl)
+            policy = load_policy(p["policy"], config=hl)
             ranker = make_runtime_ranker(p["ranker"], p["ranker_model_path"], p["ranker_seed"], p["ranker_config"])
             core = RuntimeCore(load_order(p["order_file"], cand), cand, hl, load_runtime_config(p["runtime_config"]),
                                RobotFeasibility(load_robot_check_config(p["robot_config"])), policy, ranker=ranker)

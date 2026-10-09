@@ -1,10 +1,10 @@
 """Stage 4 high-level actions (flowchart box 4).
 
-Five actions exist. The first three are the learned ones (MaskablePPO in the
-extension step); PALLET_CLOSE and PARTIAL_REPACK always stay rules (TXT 6/8
+Five actions exist. The first three are chosen by the stage-4 policy (Rule or
+Lookahead); PALLET_CLOSE and PARTIAL_REPACK always stay rules (TXT 6/8
 conditions). Every action that cannot be executed is masked.
 
-Discrete index layout used by the PPO policy (buffer of S slots)::
+Discrete index layout of the action mask (buffer of S slots)::
 
     0           PLACE_CURRENT
     1           BUFFER_CURRENT

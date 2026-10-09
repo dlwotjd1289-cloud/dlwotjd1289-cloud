@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 
 # Worker processes each run single-threaded BLAS; nested BLAS threads in 4+
-# forked workers oversubscribe the CPU (sb3 vector step 170 -> 128 ms).
+# forked workers oversubscribe the CPU.
 for _var in ("OPENBLAS_NUM_THREADS", "OMP_NUM_THREADS", "MKL_NUM_THREADS"):
     os.environ.setdefault(_var, "1")
 

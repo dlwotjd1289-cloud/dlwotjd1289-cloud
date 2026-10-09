@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 """Compare stage-4 policies on held-out scenarios (same box streams).
 
-Policies: no_buffer (slots = 0), greedy, rule (1st step) and ppo (trained
-MaskablePPO, deterministic). Every policy sees identical arrivals, noise and
-pallet footprints; differences are therefore paired.
+Policies: no_buffer (slots = 0), greedy and rule. Every policy sees identical
+arrivals, noise and pallet footprints; differences are therefore paired.
+(Look-ahead is compared in ``evaluate_lookahead.py``.)
 
     python tools/highlevel/scripts/evaluate_highlevel.py --run-generator 10 \
-        --split test --policy-file ros2_ws/src/pac_highlevel/models/highlevel_ppo.json \
-        --report docs/taehyeon/reports/highlevel_eval.json
+        --split test --report docs/taehyeon/reports/highlevel_eval.json
 """
 
 import argparse
@@ -18,15 +17,7 @@ from dataclasses import replace
 from pathlib import Path
 
 from _common import add_common_args, load_all
-from pac_highlevel import (
-    GreedyPolicy,
-    MaskablePPO,
-    RulePolicy,
-    agent_chooser,
-    feature_names,
-    policy_contract,
-    run_policy,
-)
+from pac_highlevel import GreedyPolicy, RulePolicy, run_policy
 from virtual_data.highlevel import split_ids, world_factory
 
 METRICS = ("pallet_equivalents", "pallets_used", "fill_per_pallet_used", "closed_fill_mean", "placed", "ng",
@@ -47,11 +38,7 @@ def main():
     add_common_args(parser)
     parser.add_argument("--split", default="test")
     parser.add_argument("--passes", type=int, default=3, help="noise / footprint passes per scenario")
-    parser.add_argument("--policy-file", type=Path, help="NumPy MaskablePPO policy (ppo)")
-    parser.add_argument("--sb3-file", type=Path, help="sb3-contrib MaskablePPO policy (sb3)")
-    parser.add_argument("--policies", nargs="+", default=["no_buffer", "greedy", "rule", "ppo"])
-    parser.add_argument("--sb3-extra", nargs="*", default=[], metavar="NAME=PATH",
-                        help="more sb3 policies, evaluated under NAME")
+    parser.add_argument("--policies", nargs="+", default=["no_buffer", "greedy", "rule"])
     parser.add_argument("--workers", type=int, default=4)
     parser.add_argument("--report", type=Path)
     args = parser.parse_args()
@@ -60,8 +47,6 @@ def main():
     episodes = len(specs) * args.passes
     no_buf = replace(hl, buffer=replace(hl.buffer, slots=0))
     FACTORIES, CHOOSERS = {}, {}
-    extra = dict(item.split("=", 1) for item in args.sb3_extra)
-    args.policies = list(args.policies) + [n for n in extra if n not in args.policies]
     for name in args.policies:
         cfg = no_buf if name == "no_buffer" else hl
         FACTORIES[name] = world_factory(dataset, specs, cand, vcfg, cfg, shuffle_seed=12345)
@@ -69,21 +54,6 @@ def main():
             CHOOSERS[name] = GreedyPolicy()
         elif name == "rule":
             CHOOSERS[name] = RulePolicy(hl)
-        elif name == "ppo":
-            if args.policy_file is None:
-                parser.error("--policy-file is required for ppo")
-            agent = MaskablePPO.load(args.policy_file, feature_names=feature_names(hl.buffer.slots),
-                                     contract=policy_contract(hl, args.candidate_config.name))
-            CHOOSERS[name] = agent_chooser(agent, deterministic=True)
-        elif name == "sb3" or name in extra:
-            path = Path(extra[name]) if name in extra else args.sb3_file
-            if path is None:
-                parser.error("--sb3-file is required for sb3")
-            from pac_highlevel import sb3
-
-            model = sb3.load(path, slots=hl.buffer.slots,
-                             contract=policy_contract(hl, args.candidate_config.name))
-            CHOOSERS[name] = sb3.chooser(model)
         else:
             parser.error(f"unknown policy {name}")
     jobs = [(n, i) for n in args.policies for i in range(episodes)]

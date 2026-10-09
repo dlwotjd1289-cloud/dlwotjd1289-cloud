@@ -10,7 +10,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 import wave  # noqa: E402  (bootstraps team paths)
 from pac_candidates import load_candidate_config
 from pac_highlevel import load_highlevel_config, RulePolicy, GreedyPolicy
-from pac_highlevel.trainer import run_policy
+from pac_highlevel.rollout import run_policy
 from virtual_data import load_virtual_config
 from virtual_data.scenario_source import load_dataset
 from virtual_data.highlevel import split_ids, world_factory

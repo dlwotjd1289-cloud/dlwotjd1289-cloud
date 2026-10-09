@@ -14,7 +14,7 @@ import tune_phys
 import shock_test
 from pac_candidates import load_candidate_config
 from pac_highlevel import load_highlevel_config, RulePolicy
-from pac_highlevel.trainer import run_policy
+from pac_highlevel.rollout import run_policy
 from pac_highlevel.world import PalletizingWorld
 from virtual_data import load_virtual_config
 from virtual_data.scenario_source import load_dataset

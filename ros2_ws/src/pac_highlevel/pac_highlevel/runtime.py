@@ -3,7 +3,7 @@
 ```python
 decider = HighLevelDecider(
     context,                                   # PlanningContext of this cycle
-    policy=load_policy("numpy", "models/highlevel_ppo.json"),
+    policy=load_policy("rule", config=high_level_config),
 )
 decision = decider.decide(state, current_box_id="B0123",
                           buffer_slots={0: "B0101", 2: "B0117"})
@@ -12,8 +12,8 @@ if decision.requires_low_level:                # PLACE_CURRENT / RETRIEVE_BUFFER
 ```
 
 The decision is computed on a private copy of the snapshot with the same
-world logic, masks, features and rules used for training (flowchart: "학습·
-실전 동일"). Nothing is executed and the inputs are never modified; the
+world logic, masks and rules used in the offline evaluation (flowchart:
+"학습·실전 동일"). Nothing is executed and the inputs are never modified; the
 State Manager applies the outcome and sends a new snapshot (new version).
 
 Priority (identical to the training world):
@@ -33,10 +33,8 @@ from pac_common import BoxState, BoxStatus
 
 from .actions import ActionType, HighLevelAction, action_count
 from .config import HighLevelConfig
-from .features import feature_names, observe
 from .repack import plan_repack
 from .rules import GreedyPolicy, RulePolicy
-from .trainer import policy_contract
 from .world import MAX_REPACKS_PER_BOX, Arrival, BufferEntry, PalletizingWorld
 
 PENDING_STATUSES = (BoxStatus.MEASURED, BoxStatus.ON_CONVEYOR, BoxStatus.READY_FOR_PICK)
@@ -83,38 +81,18 @@ class LoadedPolicy:
         self.probs = probs
 
 
-def load_policy(kind="numpy", path=None, *, config=None, candidate_config_name="candidates.yaml"):
-    """``rule`` | ``greedy`` | ``numpy`` (MaskablePPO json) | ``sb3`` (zip).
-
-    Learned policies are checked against the feature layout and the
-    contract (buffer slots, value provider, placer, candidate config).
-    """
+def load_policy(kind="rule", path=None, *, config=None):
+    """``rule`` | ``greedy``. ``path`` is accepted for call compatibility and
+    must stay empty: learned (PPO) policies were removed (team decision
+    2026-10-09)."""
     config = config or HighLevelConfig()
+    if path:
+        raise ValueError(f"policy kind {kind!r} takes no policy file (learned policies were removed)")
     if kind == "rule":
         return LoadedPolicy("rule", RulePolicy(config))
     if kind == "greedy":
         return LoadedPolicy("greedy", GreedyPolicy())
-    contract = policy_contract(config, candidate_config_name)
-    if kind == "numpy":
-        from .actions import from_index
-        from .ppo import MaskablePPO
-
-        agent = MaskablePPO.load(path, feature_names=feature_names(config.buffer.slots), contract=contract)
-
-        def choose(world):
-            a, _, _ = agent.act(observe(world), world.action_mask(), deterministic=True)
-            return from_index(a, world.slots)
-
-        def probs(world):
-            return agent.probs(observe(world), world.action_mask())[0]
-
-        return LoadedPolicy("maskable_ppo_numpy", choose, probs)
-    if kind == "sb3":
-        from . import sb3
-
-        model = sb3.load(path, slots=config.buffer.slots, contract=contract)
-        return LoadedPolicy("maskable_ppo_sb3", sb3.chooser(model))
-    raise ValueError(f"unknown policy kind {kind}")
+    raise ValueError(f"unknown policy kind {kind!r} (rule | greedy)")
 
 
 class HighLevelDecider:
@@ -174,7 +152,6 @@ class HighLevelDecider:
         n_actions = action_count(world.slots)
         diag = {
             "policy": self.policy.name,
-            "contract": policy_contract(self.config),
             "buffer_slots": {i: e.arrival.box.box_id for i, e in enumerate(world.buffer) if e is not None},
             "pallet_fill": world.fill(),
             "robot_validation": "NOT_CHECKED",

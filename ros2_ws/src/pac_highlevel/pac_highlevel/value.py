@@ -1,10 +1,9 @@
 """Per-option future value ("선택지별 AI Future Value 값, 학습·실전 동일").
 
-The provider name is stored in the trained policy and checked on load, so a
-policy trained with one provider is never deployed with another.
+The provider is chosen by ``features.value_provider`` in highlevel.yaml.
 
 * ``proxy``  : heightmap flatness after the placement (1 - std/H). Fast, no
-               team dependency; used for training in this repository.
+               team dependency.
 * ``donghan``: donghan's 5-4 value head (``PlacementPlanner.plan`` in
                ``ranking`` mode, no rollout): predicted mean future added
                volume / pallet capacity for the chosen candidate.
@@ -60,7 +59,7 @@ def DonghanPlacer(model_path=None, planner_config=None, seed=7):
 
     Called with the hard-mask-valid candidates of 5-1/5-2; returns the
     planner's rank-1 candidate. Slow (one ``plan`` per option and decision),
-    used for evaluation, not for PPO training. Same adapter as the runtime
+    used for evaluation. Same adapter as the runtime
     (``pac_planning.team_bridge``), so the EMS mapping and the model's rollout
     contract are checked in one place.
     """

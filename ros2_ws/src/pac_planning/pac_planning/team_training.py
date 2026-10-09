@@ -2,7 +2,7 @@
 
 Ground-truth arrival order is consumed only by the team's simulated world.
 The planner receives its public snapshot/context, never that order list.
-This does not train or modify the stage-4 PPO.
+This does not modify the stage-4 policy.
 """
 
 from collections import Counter, defaultdict

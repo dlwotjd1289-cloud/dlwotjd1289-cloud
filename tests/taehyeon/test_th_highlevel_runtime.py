@@ -13,9 +13,7 @@ from pac_highlevel import (
     ActionType,
     HighLevelConfig,
     HighLevelDecider,
-    feature_names,
     load_policy,
-    new_agent,
 )
 from pac_highlevel.runtime import as_dict
 
@@ -137,22 +135,11 @@ def test_input_validation():
     assert decider().decide(two, current_box_id="C2").box.box_id == "C2"
 
 
-def test_learned_policy_and_contract(tmp_path):
-    config = cfg()
-    path = tmp_path / "p.json"
-    new_agent(config).save(path)
-    policy = load_policy("numpy", path, config=config)
-    state = snapshot([], current=make_box("C1", (0.2, 0.4, 0.1)))
-    d = decider(config, policy).decide(state)
-    assert d.decided_by == "policy:maskable_ppo_numpy"
-    assert len(d.probabilities) == len(d.mask) and sum(d.probabilities) == pytest.approx(1.0)
-    assert all(p == 0.0 for p, m in zip(d.probabilities, d.mask) if not m)
-    assert d.mask[d.action.slot + 2 if d.action.slot is not None else
-                  (0 if d.action.type == ActionType.PLACE_CURRENT else 1)]
-    other = replace(config, buffer=replace(config.buffer, slots=3))
+def test_learned_policies_are_rejected(tmp_path):
     with pytest.raises(ValueError):
-        load_policy("numpy", path, config=other)
-    assert len(feature_names(2)) == len(new_agent(config).feature_names)
+        load_policy("numpy", tmp_path / "p.json")
+    with pytest.raises(ValueError, match="no policy file"):
+        load_policy("rule", tmp_path / "p.json")
 
 
 @pytest.mark.skipif(PLANNING is None, reason="pac_planning not available")

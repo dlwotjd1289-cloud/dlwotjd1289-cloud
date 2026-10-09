@@ -104,30 +104,13 @@ class RepackConfig:
 
 @dataclass(frozen=True)
 class FeatureConfig:
-    value_provider: str = "proxy"  # proxy | donghan (must match training and deployment)
+    value_provider: str = "proxy"  # proxy | donghan
     value_model_path: str = ""  # donghan: path of dual_head_ranker.json
     # the order list (SKU types, sizes, weights and quantities) is known in
     # advance, only the arrival order is not (mission brief; taehyeon
     # 2026-10-08). False hides remaining counts from the policy and stages 5.
     order_list_known: bool = True
     heightmap_cell_m: float = 0.02
-
-
-@dataclass(frozen=True)
-class PPOConfig:
-    hidden: tuple = (64, 64)
-    learning_rate: float = 3e-4
-    gamma: float = 0.995
-    gae_lambda: float = 0.95
-    clip_range: float = 0.2
-    entropy_coef: float = 0.01
-    value_coef: float = 0.5
-    max_grad_norm: float = 0.5
-    n_steps: int = 1024  # per update (all workers)
-    batch_size: int = 128
-    n_epochs: int = 6
-    total_steps: int = 30000
-    seed: int = 0
 
 
 @dataclass(frozen=True)
@@ -139,7 +122,6 @@ class HighLevelConfig:
     close: CloseConfig = field(default_factory=CloseConfig)
     repack: RepackConfig = field(default_factory=RepackConfig)
     features: FeatureConfig = field(default_factory=FeatureConfig)
-    ppo: PPOConfig = field(default_factory=PPOConfig)
 
     def __post_init__(self):
         if self.buffer.slots < 0:

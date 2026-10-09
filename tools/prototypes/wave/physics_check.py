@@ -13,7 +13,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 import tune, wave  # noqa: E402
 import pybullet as p  # noqa: E402
 from pac_highlevel import RulePolicy  # noqa: E402
-from pac_highlevel.trainer import run_policy  # noqa: E402
+from pac_highlevel.rollout import run_policy  # noqa: E402
 from pac_highlevel.world import PalletizingWorld  # noqa: E402
 from pac_candidates.geometry import rotated_dims  # noqa: E402
 from virtual_data.highlevel import world_factory  # noqa: E402

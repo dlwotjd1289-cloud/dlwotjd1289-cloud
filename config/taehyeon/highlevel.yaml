@@ -39,21 +39,7 @@ highlevel:
     max_nodes: 24
     min_gain: 0.0
   features:
-    value_provider: proxy    # proxy | donghan  (policy refuses to load on mismatch)
+    value_provider: proxy    # proxy | donghan
     value_model_path: ""     # donghan: path of dual_head_ranker.json
     order_list_known: true   # SKU types/sizes/weights/quantities known in advance, order not (mission brief)
     heightmap_cell_m: 0.02
-  ppo:
-    hidden: [64, 64]
-    learning_rate: 0.0003
-    gamma: 0.995
-    gae_lambda: 0.95
-    clip_range: 0.2
-    entropy_coef: 0.01
-    value_coef: 0.5
-    max_grad_norm: 0.5
-    n_steps: 1024
-    batch_size: 128
-    n_epochs: 6
-    total_steps: 30000
-    seed: 0

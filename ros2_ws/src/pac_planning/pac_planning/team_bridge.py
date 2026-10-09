@@ -116,7 +116,7 @@ def plan_high_level_decision(decision, state, backend, **planning_options):
 class TeamPlacer:
     """Optional pac_highlevel.PalletizingWorld placer; all states stay SIMULATED.
 
-Only changes placement selection. It does NOT replace the PPO's trained
+Only changes placement selection. It does NOT replace the stage-4
 value_provider=proxy observation with a different future-value definition.
 """
 
@@ -228,13 +228,3 @@ class TeamRuntimeRanker:
             "backend_contract_sha256": self.backend_contract_sha256,
         }
 
-
-def check_policy_contract(contract, *, placer_name, value_provider):
-    """Changing the low-level placer changes PPO observations and transitions.
-
-Do not relabel a DBLF-trained policy as compatible by rewriting its metadata.
-Train/evaluate the policy with the intended placer before deploying it.
-"""
-    if (contract.get("placer") != placer_name
-            or contract.get("value_provider") != value_provider):
-        raise ValueError("PPO placer/value-provider mismatch: retraining or explicit offline evaluation required")

@@ -1,8 +1,8 @@
 """Reuse the team's runtime, with stricter physical result acceptance.
 
 This node replaces runtime_node only for the physical acceptance demo. It
-keeps the same stage-4 proxy / four-slot policy contract and existing stage-5
-ranker factory; it does not alter PPO observations or train PPO.
+keeps the same stage-4 proxy / four-slot configuration and existing stage-5
+ranker factory.
 """
 
 from dataclasses import replace
@@ -42,17 +42,17 @@ def main(args=None):  # requires ROS2 Humble
             super().__init__('pac_verified_runtime')
             p = {n: self.declare_parameter(n, default).value for n, default in (
                 ('order_file', ''), ('candidates_config', ''), ('highlevel_config', ''),
-                ('runtime_config', ''), ('robot_config', ''), ('policy', 'rule'), ('policy_file', ''),
+                ('runtime_config', ''), ('robot_config', ''), ('policy', 'rule'),
                 ('ranker', 'dblf'), ('ranker_model_path', ''), ('ranker_config', ''), ('ranker_seed', 7))}
             cand, high = load_candidate_config(p['candidates_config']), load_highlevel_config(p['highlevel_config'])
             if high.features.value_provider != 'proxy' or high.buffer.slots != 4:
-                raise ExecutionFault('The existing proxy + four-slot policy contract is required')
+                raise ExecutionFault('The proxy value provider and four buffer slots are required')
             order = json.loads(Path(p['order_file']).read_text())
             cell = explicit_capacities(load_order(p['order_file'], cand), order)
             self.bridge = CoreBridge(RuntimeCore(
                 cell, cand, high, load_runtime_config(p['runtime_config']),
                 RobotFeasibility(load_robot_check_config(p['robot_config'])),
-                load_policy(p['policy'], p['policy_file'] or None, config=high),
+                load_policy(p['policy'], config=high),
                 make_runtime_ranker(p['ranker'], p['ranker_model_path'], p['ranker_seed'], p['ranker_config'])))
             self.command_pub = self.create_publisher(String, '/pac/command', 10)
             self.status_pub = self.create_publisher(String, '/pac/status', 10)

@@ -1,6 +1,5 @@
-"""Stage 4 high-level action selection (taehyeon): world, masks, rules, PPO."""
+"""Stage 4 high-level action selection (taehyeon): world, masks, rules."""
 
-import copy
 import math
 from dataclasses import replace
 
@@ -14,24 +13,15 @@ from pac_highlevel import (
     GreedyPolicy,
     HighLevelAction,
     HighLevelConfig,
-    MaskablePPO,
     PalletizingWorld,
     RulePolicy,
     action_count,
-    agent_chooser,
-    feature_names,
     from_index,
-    imitate_teacher,
     load_highlevel_config,
-    new_agent,
-    observe,
-    policy_contract,
     run_policy,
     to_index,
-    train,
 )
-from pac_highlevel.config import PPOConfig, config_from_dict
-from pac_highlevel.ppo import masked_softmax
+from pac_highlevel.config import config_from_dict
 from pac_highlevel.repack import accessible_ids, plan_repack
 from th_helpers import HALF_PI, REPO, make_box
 
@@ -149,18 +139,6 @@ def test_end_of_stream_flushes_the_buffer():
     assert w.summary()["placed"] == 3
 
 
-def test_observation_layout_is_fixed():
-    w = world([box(i) for i in range(3)], slots=2)
-    x = observe(w)
-    assert x.shape == (len(feature_names(2)),)
-    assert np.all(np.isfinite(x))
-    w.step(HighLevelAction(ActionType.BUFFER_CURRENT))
-    names = feature_names(2)
-    x = observe(w)
-    assert x[names.index("s0.occupied")] == 1.0 and x[names.index("s0.opt.feasible")] == 1.0
-    assert x[names.index("s1.occupied")] == 0.0
-
-
 # ---------------------------------------------------------------- repack
 
 
@@ -185,181 +163,6 @@ def test_repack_moves_an_accessible_box_to_free_the_floor():
     w.step(HighLevelAction(ActionType.PLACE_CURRENT))
     s = w.summary()
     assert s["pallets_used"] == 1 and s["placed"] == 3 and s["safety_issues"] == 0
-
-
-# ---------------------------------------------------------------- PPO
-
-
-def test_masked_softmax_never_samples_masked_actions():
-    agent = MaskablePPO(4, 5, PPOConfig(hidden=(8,), seed=3))
-    mask = np.array([False, True, False, True, False])
-    for _ in range(200):
-        a, _, _ = agent.act(np.random.default_rng(_).standard_normal(4), mask)
-        assert mask[a]
-    p = masked_softmax(np.zeros((1, 5)), mask[None])
-    assert p[0, 0] == 0.0 and math.isclose(p.sum(), 1.0)
-
-
-def test_policy_gradient_matches_finite_differences():
-    cfg = PPOConfig(hidden=(6, 6), seed=1)
-    agent = MaskablePPO(5, 4, cfg)
-    rng = np.random.default_rng(1)
-    k = 12
-    x = rng.standard_normal((k, 5))
-    m = rng.random((k, 4)) > 0.3
-    m[:, 0] = True
-    a = np.array([rng.choice(np.flatnonzero(r)) for r in m])
-    A = rng.standard_normal(k)
-    old = np.log(rng.uniform(0.1, 0.9, k))
-    An = (A - A.mean()) / (A.std() + 1e-8)
-
-    def loss(pi):
-        logits, _ = pi.forward(x)
-        p = masked_softmax(logits, m)
-        lpa = np.where(m, np.log(np.where(m, p, 1)), 0)
-        r = np.exp(lpa[np.arange(k), a] - old)
-        ent = -(p * lpa).sum(1)
-        surr = np.minimum(r * An, np.clip(r, 1 - cfg.clip_range, 1 + cfg.clip_range) * An)
-        return -surr.mean() - cfg.entropy_coef * ent.mean()
-
-    # analytic gradient: run one update with lr=0 and capture the gradients
-    captured = {}
-
-    class Spy:
-        def step(self, params, grads):
-            captured.setdefault("g", grads)
-
-    agent.pi_opt = Spy()
-    agent.vf_opt = Spy()
-    cfg_one = replace(cfg, n_epochs=1, batch_size=k, max_grad_norm=1e9)
-    agent.cfg = cfg_one
-    agent.rng = type("R", (), {"permutation": staticmethod(lambda n: np.arange(n))})()
-    base = copy.deepcopy(agent.pi)
-    agent.update({"obs": x, "masks": m, "actions": a, "logp": old, "adv": A, "ret": np.zeros(k)})
-    grads = captured["g"]
-    eps = 1e-6
-    for li in range(len(base.W)):
-        num = np.zeros_like(base.W[li])
-        for idx in [(0, 0), (1, 1), (2, 3)]:
-            if idx[0] >= num.shape[0] or idx[1] >= num.shape[1]:
-                continue
-            plus = copy.deepcopy(base)
-            plus.W[li][idx] += eps
-            minus = copy.deepcopy(base)
-            minus.W[li][idx] -= eps
-            fd = (loss(plus) - loss(minus)) / (2 * eps)
-            assert grads[li][idx] == pytest.approx(fd, rel=1e-4, abs=1e-8)
-
-
-def test_policy_save_load_and_contract(tmp_path):
-    cfg = HighLevelConfig()
-    agent = new_agent(cfg)
-    path = tmp_path / "p.json"
-    agent.save(path)
-    names = feature_names(cfg.buffer.slots)
-    loaded = MaskablePPO.load(path, feature_names=names, contract=policy_contract(cfg))
-    x = np.random.default_rng(0).standard_normal(len(names))
-    mask = np.ones(action_count(cfg.buffer.slots), dtype=bool)
-    assert np.allclose(agent.probs(x, mask), loaded.probs(x, mask))
-    other = replace(cfg, features=replace(cfg.features, value_provider="donghan"))
-    with pytest.raises(ValueError, match="value_provider"):
-        MaskablePPO.load(path, feature_names=names, contract=policy_contract(other))
-    with pytest.raises(ValueError, match="feature layout"):
-        MaskablePPO.load(path, feature_names=feature_names(3))
-
-
-def test_training_loop_runs_and_policy_respects_masks():
-    weights = [5, 20, 5, 5, 20, 20]
-    boxes = [box(i, weight=w, sku="H" if w > 10 else "K") for i, w in enumerate(weights)]
-    cfg = HighLevelConfig()
-    cfg = replace(cfg, buffer=replace(cfg.buffer, slots=2),
-                  ppo=replace(cfg.ppo, n_steps=48, batch_size=16, n_epochs=2, hidden=(16, 16)))
-    sizes = catalog(("K", (0.2, 0.4, 0.1), 5.0), ("H", (0.2, 0.4, 0.1), 20.0))
-
-    def make_world(i):
-        return PalletizingWorld([Arrival(b) for b in boxes], SMALL, sizes, CandidateConfig(), cfg)
-
-    agent = new_agent(cfg)
-    finished = train(agent, make_world, 96, workers=1, log=lambda row: None)
-    assert len(agent.history) == 2 and finished
-    out = run_policy(make_world(0), agent_chooser(agent))
-    assert out["placed"] == 6 and out["safety_issues"] == 0
-
-
-def test_gym_env_interface():
-    gym_env = pytest.importorskip("pac_highlevel.gym_env")
-    if gym_env.HighLevelGymEnv is None:
-        pytest.skip("gymnasium not installed")
-    boxes = [box(i) for i in range(4)]
-
-    def make_world(i):
-        return world(boxes, slots=2)
-
-    env = gym_env.HighLevelGymEnv(make_world, 2)
-    obs, _ = env.reset(seed=0)
-    assert env.observation_space.shape == obs.shape
-    done = False
-    while not done:
-        mask = env.action_masks()
-        obs, r, done, trunc, info = env.step(int(np.flatnonzero(mask)[0]))
-    assert info["summary"]["placed"] == 4
-
-
-def test_imitation_warm_start_reproduces_the_rule_teacher():
-    weights = [5, 20, 5, 5, 20, 20, 5, 20]
-    boxes = [box(i, weight=w, sku="H" if w > 10 else "K") for i, w in enumerate(weights)]
-    cfg = HighLevelConfig()
-    cfg = replace(cfg, buffer=replace(cfg.buffer, slots=2),
-                  ppo=replace(cfg.ppo, batch_size=16, hidden=(32, 32), learning_rate=3e-3))
-    cat = catalog(("K", (0.2, 0.4, 0.1), 5.0), ("H", (0.2, 0.4, 0.1), 20.0))
-
-    def make_world(i):
-        return PalletizingWorld([Arrival(b) for b in boxes], SMALL, cat, CandidateConfig(), cfg)
-
-    agent = new_agent(cfg)
-    hist = imitate_teacher(agent, make_world, RulePolicy(cfg), 4, epochs=60, workers=2)
-    assert hist[-1]["bc_accuracy"] > 0.95
-    rule = run_policy(make_world(0), RulePolicy(cfg))
-    clone = run_policy(make_world(0), agent_chooser(agent))
-    assert clone["counts"] == rule["counts"]
-    assert clone["pallet_equivalents"] == pytest.approx(rule["pallet_equivalents"])
-
-
-def test_sb3_backend_trains_imitates_and_respects_masks(tmp_path):
-    pytest.importorskip("torch")
-    pytest.importorskip("sb3_contrib")
-    from pac_highlevel import sb3
-    from pac_highlevel.trainer import collect_teacher
-
-    weights = [5, 20, 5, 5, 20, 20]
-    boxes = [box(i, weight=w, sku="H" if w > 10 else "K") for i, w in enumerate(weights)]
-    cfg = HighLevelConfig()
-    cfg = replace(cfg, buffer=replace(cfg.buffer, slots=2),
-                  ppo=replace(cfg.ppo, n_steps=64, batch_size=16, n_epochs=2, hidden=(16, 16)))
-    cat = catalog(("K", (0.2, 0.4, 0.1), 5.0), ("H", (0.2, 0.4, 0.1), 20.0))
-
-    def make_world(i):
-        return PalletizingWorld([Arrival(b) for b in boxes], SMALL, cat, CandidateConfig(), cfg)
-
-    env = sb3.make_vec_env(make_world, 2, n_envs=2, subprocess=False)
-    model = sb3.new_model(env, cfg.ppo)
-    data = collect_teacher(make_world, RulePolicy(cfg), 3, gamma=cfg.ppo.gamma)
-    hist = sb3.imitate(model, data, epochs=40, batch_size=16, lr=3e-3)
-    assert hist[-1]["bc_accuracy"] > 0.9
-    model.learn(total_timesteps=64)
-    path = tmp_path / "p.zip"
-    sb3.save(model, path, 2, policy_contract(cfg))
-    loaded = sb3.load(path, slots=2, contract=policy_contract(cfg))
-    # frozen normalisation stored with the policy == VecNormalize at save time
-    assert loaded.pac_obs_norm is not None
-    x = observe(make_world(0))
-    expected = model.get_vec_normalize_env().normalize_obs(x)
-    assert np.allclose(sb3.normalize_obs(x, loaded.pac_obs_norm), expected, atol=1e-5)
-    out = run_policy(make_world(0), sb3.chooser(loaded))
-    assert out["placed"] == 6 and out["safety_issues"] == 0
-    other = replace(cfg, features=replace(cfg.features, value_provider="donghan"))
-    with pytest.raises(ValueError, match="value_provider"):
-        sb3.load(path, slots=2, contract=policy_contract(other))
 
 
 def test_close_before_buffer_rule():
@@ -402,9 +205,6 @@ def test_order_list_known_flag_controls_remaining_counts():
     assert known.state().inventory.remaining_by_sku == {"K": 3}
     hidden = world(boxes, features=replace(HighLevelConfig().features, order_list_known=False))
     assert dict(hidden.state().inventory.remaining_by_sku) == {}
-    names = feature_names(2)
-    assert observe(hidden)[names.index("inv.unseen_count")] == 0.0
-    assert observe(known)[names.index("inv.unseen_count")] > 0.0
 
 
 def test_ng_before_first_decision_is_charged_once():
@@ -455,65 +255,3 @@ def test_donghan_value_provider_requires_a_model():
 
     with pytest.raises(ValueError, match="model_path"):
         make_value_provider("donghan")
-
-
-def test_rule_baseline_reward_and_teacher_labels():
-    gym_env = pytest.importorskip("pac_highlevel.gym_env")
-    if gym_env.HighLevelGymEnv is None:
-        pytest.skip("gymnasium not installed")
-    from pac_highlevel.trainer import collect_teacher
-
-    weights = [5, 20, 5, 5, 20, 20]
-    boxes = [box(i, weight=w, sku="H" if w > 10 else "K") for i, w in enumerate(weights)]
-    cfg = replace(HighLevelConfig(), buffer=replace(HighLevelConfig().buffer, slots=2))
-    cat = catalog(("K", (0.2, 0.4, 0.1), 5.0), ("H", (0.2, 0.4, 0.1), 20.0))
-
-    def make_world(i):
-        return PalletizingWorld([Arrival(b) for b in boxes], SMALL, cat, CandidateConfig(), cfg)
-
-    rule = RulePolicy(cfg)
-    rule_return = run_policy(make_world(0), rule)["return"]
-    env = gym_env.HighLevelGymEnv(make_world, 2, baseline=lambda w: run_policy(w, rule)["return"], teacher=rule)
-    env.reset(seed=0)
-    total, done, labels = 0.0, False, []
-    while not done:  # follow the teacher: relative return must be 0
-        expected = to_index(rule(env.world))
-        _, r, done, _, info = env.step(expected)
-        labels.append(info["teacher_action"] == expected)
-        total += r
-    assert all(labels)
-    assert info["summary"]["baseline_return"] == pytest.approx(rule_return)
-    assert info["summary"]["return"] == pytest.approx(rule_return)
-    assert total == pytest.approx(0.0, abs=1e-9)
-    data = collect_teacher(make_world, rule, 1, gamma=1.0, relative=True)
-    assert data["returns"][0] == pytest.approx(0.0, abs=1e-9)
-
-
-def test_sb3_teacher_bc_callback_pulls_policy_to_the_rule():
-    pytest.importorskip("torch")
-    pytest.importorskip("sb3_contrib")
-    from pac_highlevel import sb3
-
-    weights = [5, 20, 5, 5, 20, 20]
-    boxes = [box(i, weight=w, sku="H" if w > 10 else "K") for i, w in enumerate(weights)]
-    cfg = HighLevelConfig()
-    cfg = replace(cfg, buffer=replace(cfg.buffer, slots=2),
-                  ppo=replace(cfg.ppo, n_steps=64, batch_size=16, n_epochs=1, hidden=(16, 16), learning_rate=3e-3))
-    cat = catalog(("K", (0.2, 0.4, 0.1), 5.0), ("H", (0.2, 0.4, 0.1), 20.0))
-
-    def make_world(i):
-        return PalletizingWorld([Arrival(b) for b in boxes], SMALL, cat, CandidateConfig(), cfg)
-
-    rule = RulePolicy(cfg)
-    env = sb3.make_vec_env(make_world, 2, n_envs=2, subprocess=False, teacher=rule,
-                           baseline=lambda w: run_policy(w, rule)["return"])
-    model = sb3.new_model(env, cfg.ppo)
-    cb = sb3.teacher_bc_callback(5.0, 5.0, epochs=20, batch_size=16)
-    model.learn(total_timesteps=64 * 6, callback=cb)
-    assert model.logger.name_to_value.get("bc/agreement", 0.0) > 0.9 or cb.pending is not None
-    cb._clone(*cb.pending)
-    norm = model.get_vec_normalize_env()
-    model.pac_obs_norm = {"mean": norm.obs_rms.mean.tolist(), "var": norm.obs_rms.var.tolist(),
-                          "clip": float(norm.clip_obs), "eps": float(norm.epsilon)}
-    out = run_policy(make_world(0), sb3.chooser(model))
-    assert out["counts"] == run_policy(make_world(0), rule)["counts"]

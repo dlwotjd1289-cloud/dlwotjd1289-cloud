@@ -13,7 +13,6 @@ from pac_planning import PlannerConfig
 from pac_planning.team_bridge import TeamPlacer, TeamRuntimeRanker, plan_with_backend
 from pac_planning.planning_service import plan_request
 from pac_planning.scene_bridge import PalletFrame, bullet_payload
-from pac_planning.team_bridge import check_policy_contract
 
 FAST = PlannerConfig(horizon=1, scenario_count=1)
 
@@ -133,17 +132,6 @@ def test_workcell_wood_center_is_not_deck_top(tmp_path):
     path.write_text("layout:\n  pallet:\n    size_m: [1.2, 1.0, 0.15]\n    center_world_m: [1.35, -1.0, 0.075]\n")
     frame = PalletFrame.from_workcell(path)
     assert frame.top_center.z == .15
-
-
-def test_ppo_dblf_contract_cannot_be_relabelled_as_new_placer():
-    with pytest.raises(ValueError, match="PPO placer"):
-        check_policy_contract({"placer":"dblf", "value_provider":"proxy"},
-                              placer_name=TeamPlacer.name, value_provider="proxy")
-    with pytest.raises(ValueError):
-        check_policy_contract({"placer":TeamPlacer.name, "value_provider":"proxy"},
-                              placer_name=TeamPlacer.name, value_provider="donghan")
-    check_policy_contract({"placer":TeamPlacer.name, "value_provider":"proxy"},
-                          placer_name=TeamPlacer.name, value_provider="proxy")
 
 
 @pytest.mark.parametrize('uncertain', [False, True])

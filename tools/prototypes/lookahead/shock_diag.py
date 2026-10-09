@@ -6,7 +6,7 @@ import numpy as np, pybullet as p
 sys.path.insert(0, str(Path(__file__).parent))
 import run_eval as R, shock_test as ST, lookahead as LA
 from pac_candidates.geometry import rotated_dims
-from pac_highlevel.trainer import run_policy
+from pac_highlevel.rollout import run_policy
 from pac_highlevel.world import PalletizingWorld
 from pac_highlevel import RulePolicy
 from virtual_data.highlevel import world_factory

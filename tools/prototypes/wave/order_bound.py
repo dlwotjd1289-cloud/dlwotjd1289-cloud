@@ -6,7 +6,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 import tune
 from pac_highlevel import RulePolicy
-from pac_highlevel.trainer import run_policy
+from pac_highlevel.rollout import run_policy
 from virtual_data.highlevel import world_factory
 
 def run(job):

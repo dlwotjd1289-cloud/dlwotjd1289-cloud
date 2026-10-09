@@ -1,8 +1,8 @@
 """Stage 4 world: one order stream, a buffer and a sequence of pallets.
 
 The world is the single place where stage-4 actions are *executed in
-simulation*. It is used identically by the rule policy, the PPO training
-environment and the evaluation scripts (flowchart: "학습·실전 동일").
+simulation*. It is used identically by the rule / look-ahead policies, the runtime
+decider and the evaluation scripts (flowchart: "학습·실전 동일").
 
 * Every option is checked with stages 5-1/5-2 (``pac_candidates``); an
   action is feasible only if the low-level placer finds a hard-mask-valid
