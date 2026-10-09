@@ -20,8 +20,11 @@ class Mode(str, Enum):
 
 
 class Supervisor:
-    def __init__(self, config, expected_by_sku):
+    def __init__(self, config, expected_by_sku, pallet_change_time_s=60.0):
+        """``pallet_change_time_s`` (T_change) comes from highlevel.yaml
+        ``timing``, the single source shared with the stage-4 planning model."""
         self.cfg = config
+        self.pallet_change_time_s = float(pallet_change_time_s)
         self.mode = Mode.NORMAL
         self.conveyor_running = True
         self.expected = Counter(expected_by_sku)
@@ -43,7 +46,7 @@ class Supervisor:
         manual = self.cfg.pallet_change_manual if manual is None else manual
         self._set(Mode.HOLD if manual else Mode.PALLET_CHANGE, t, "manual pallet change" if manual else "PALLET_CLOSE")
         self.conveyor_running = False
-        blocked = self.cfg.pallet_change_time_s
+        blocked = self.pallet_change_time_s
         self.time_in[self.mode.value] += blocked
         self._set(Mode.NORMAL, t + blocked, "new pallet in place")
         self.conveyor_running = True

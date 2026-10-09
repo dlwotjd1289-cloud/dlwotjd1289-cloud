@@ -35,7 +35,6 @@ class ValidatorConfig:           # stage 2
 
 @dataclass(frozen=True)
 class SupervisorConfig:          # stage 3
-    pallet_change_time_s: float = 60.0
     pallet_change_manual: bool = False        # a person swaps the pallet: robot stopped, HOLD (flowchart)
     missing_timeout_s: float = 30.0           # conveyor idle this long -> remaining boxes MISSING
     operator_time_s: float = 120.0            # HOLD for a manual correction (L4)

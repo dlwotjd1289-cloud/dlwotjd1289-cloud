@@ -58,7 +58,8 @@ class RuntimeCore:
         self.hl = hl_config
         self.robot = robot
         self.validator = StateValidator(cell.catalog, rt_config.validator, cell.weight_ranges)
-        self.supervisor = Supervisor(rt_config.supervisor, cell.expected_by_sku)
+        self.supervisor = Supervisor(rt_config.supervisor, cell.expected_by_sku,
+                                     hl_config.timing.pallet_change_time_s)
         self.sm = StateManager.for_order(cell.pallet_size, cell.catalog, cell.expected_by_sku,
                                pallet_max_weight_kg=cell.pallet_max_weight_kg, pallet_prefix=cell.pallet_prefix,
                                buffer_slots=hl_config.buffer.slots)

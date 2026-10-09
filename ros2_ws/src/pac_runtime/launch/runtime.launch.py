@@ -1,12 +1,13 @@
-"""Start the AHEAD runtime node (stages 1-8 decisions) with taehyeon's configs.
+"""Start the AHEAD runtime node (stages 1-8 decisions) with the team configs.
 
-    ros2 launch pac_runtime runtime.launch.py repo:=/path/to/pac-mission1-shared \
-      order_file:=/path/order.json ranker:=donghan
+    source scripts/env.sh          # sets PAC_REPO to this checkout
+    ros2 launch pac_runtime runtime.launch.py order_file:=/path/order.json ranker:=donghan
+    # without env.sh: add repo:=/path/to/this/checkout
 """
 
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
-from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
+from launch.substitutions import EnvironmentVariable, LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node
 
 
@@ -14,7 +15,8 @@ def generate_launch_description():
     repo = LaunchConfiguration("repo")
     cfg = lambda name: PathJoinSubstitution([repo, "config", "taehyeon", name])  # noqa: E731
     return LaunchDescription([
-        DeclareLaunchArgument("repo", description="pac-mission1-shared checkout (for config/taehyeon)"),
+        DeclareLaunchArgument("repo", default_value=EnvironmentVariable("PAC_REPO", default_value=""),
+                              description="monorepo checkout (config/); default $PAC_REPO from scripts/env.sh"),
         DeclareLaunchArgument("order_file", description="order list JSON (see pac_runtime/order.py)"),
         DeclareLaunchArgument("policy", default_value="rule"),
         DeclareLaunchArgument("ranker", default_value="dblf",
