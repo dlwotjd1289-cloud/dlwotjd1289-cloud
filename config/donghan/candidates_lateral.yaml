@@ -59,10 +59,11 @@ candidates:
       deck_board_count: 5                     # 96 mm gaps
       deck_board_width_ratio: 0.13            # 143 mm boards
       side_contact_gap_m: 0.010
-      band_low_g: 0.20                        # LP below: reject
-      band_high_g: 0.35                       # LP at/above: pass; between: tilt test
+      band_low_g: 0.25                        # LP below: reject (not calibrated, see the doc)
+      band_high_g: 0.30                       # LP at/above: pass; between: tilt test (0.25 x 0.35/0.3)
       borderline: simulate                    # simulate | reject | accept (no pybullet -> reject)
-      sim_directions: 2
+      sim_max_bodies: 15                      # larger borderline systems are rejected without simulating
+      sim_directions: 1
       sim_ramp_s: 0.10
       sim_hold_s: 0.30
       sim_disp_tol_m: 0.010

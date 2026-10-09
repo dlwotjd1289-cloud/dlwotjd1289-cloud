@@ -230,12 +230,17 @@ class LateralConfig:
     # Neighbours closer than this may lean on each other (compression only).
     side_contact_gap_m: float = 0.010
     # LP result a_max (g): >= band_high pass, < band_low reject, else
-    # ``borderline`` (calibrated, docs/donghan/lateral_stability.md).
-    band_low_g: float = 0.20
-    band_high_g: float = 0.35
+    # ``borderline``. Not calibrated yet (docs/donghan/lateral_stability.md):
+    # low = accel (no equilibrium at accel -> a rigid stack cannot hold it),
+    # high = accel x 1.17 (Jaesung's LP margin 0.35 / 0.3), rounded to 0.30.
+    band_low_g: float = 0.25
+    band_high_g: float = 0.30
     borderline: str = "simulate"
-    # Short tilt test (borderline only): worst LP directions, ramp then hold.
-    sim_directions: int = 2
+    # Short tilt test (borderline only): worst LP direction(s), ramp then hold.
+    # Systems larger than sim_max_bodies are rejected without simulating
+    # (bounds the decision time; conservative).
+    sim_max_bodies: int = 15
+    sim_directions: int = 1
     sim_ramp_s: float = 0.10
     sim_hold_s: float = 0.30
     sim_disp_tol_m: float = 0.010
@@ -262,6 +267,8 @@ class LateralConfig:
             raise ValueError("lateral bands must satisfy band_low_g <= accel_g <= band_high_g")
         if self.borderline not in LATERAL_BORDERLINE:
             raise ValueError(f"lateral.borderline must be one of {LATERAL_BORDERLINE}")
+        if type(self.sim_max_bodies) is not int or self.sim_max_bodies < 1:
+            raise ValueError("sim_max_bodies must be a positive integer")
         if type(self.sim_directions) is not int or not 1 <= self.sim_directions <= self.directions:
             raise ValueError("sim_directions must be an integer in [1, directions]")
         for name in ("sim_ramp_s", "sim_hold_s", "sim_disp_tol_m", "sim_tilt_tol_deg", "sim_speed_tol_m_s"):

@@ -1,7 +1,7 @@
 """PyBullet tilt tests for hard-mask step 13 (lateral stability).
 
 short_tilt_test: stage 3 of the cascade (borderline LP results only). The
-    affected system is built at its planned poses, settles 0.25 s, then gravity
+    affected system is built at its planned poses, settles 0.15 s, then gravity
     is tilted by ``accel_g`` (ramp ``sim_ramp_s``, hold ``sim_hold_s``) in the
     worst LP directions. Fails if a box moves > sim_disp_tol_m, tilts >
     sim_tilt_tol_deg or still moves faster than sim_speed_tol_m_s at the end.
@@ -27,7 +27,7 @@ DAMPING = 0.04
 SPINNING_FRICTION = 0.01
 ROLLING_FRICTION = 0.001
 DECK_THICKNESS_M = 0.22 * 0.15
-SETTLE_S = 0.25
+SETTLE_S = 0.15
 STATIC_DISP_TOL_M = 0.005
 STATIC_TILT_TOL_DEG = 2.0
 

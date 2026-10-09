@@ -8,6 +8,12 @@ Three stages, cheapest first (docs/donghan/lateral_stability.md):
          plus everything resting on it, shifted by a * (CoG height above the
          contact), must stay inside its support polygon (Jaesung's stack check,
          no side support, no friction). a_geom >= band_high_g: pass.
+   exact If every box involved (load path and everything resting on it) has
+         one supporter, the statics without side contacts are determinate and
+         stage 1 is exact up to sliding: a = min(a_geom, mu along the path).
+         a >= accel_g: pass (side contacts push only, so they cannot make it
+         worse). a < accel_g and no neighbour within ``side_contact_gap_m``:
+         reject. Otherwise a neighbour may hold it: stage 2.
 2. lp    Force-equilibrium LP over the affected system (load path, everything
          on it, neighbours within ``side_contact_gap_m``, closed transitively).
          Bottom contacts push only, friction is a Coulomb octagon inside
@@ -63,12 +69,18 @@ class Assessment:
     a_geom: list                      # per direction
     a_lp: list = field(default_factory=list)   # per direction (None = not solved)
     lp_status: list = field(default_factory=list)
+    single_supported: bool = False    # every involved box has one supporter
+    side_contacts: bool = True        # some involved box has a neighbour within the gap
+    mu_limit: float = math.inf        # sliding limit along the load path (g)
+
+    def exact_accel(self):
+        return min(min(self.a_geom), self.mu_limit)
 
 
 @dataclass(frozen=True)
 class LateralResult:
     passed: bool
-    stage: str        # geom | lp | sim | borderline_reject | borderline_accept
+    stage: str        # geom | exact | lp | sim | borderline_reject | borderline_accept
     a_max_g: float    # lowest estimate available at the deciding stage
     detail: dict
 
@@ -330,28 +342,53 @@ def lp_accel(scene, system, u):
     return 0.0, "solver_error"
 
 
+def determinacy(scene):
+    """(single_supported, side_contacts, mu along the load path): stage ``exact``."""
+    cfg = scene.cfg
+    path = scene.closure(scene.new, (scene.below,))
+    involved = set()
+    for k in path:
+        involved.update(scene.closure(k, (scene.above,)))
+    mu = min(cfg.mu_box_pallet if scene.lo[k, 2] <= scene.htol else cfg.mu_box_box for k in path)
+    single = all(len(scene.below(b)) <= 1 for b in involved)
+    side = any(scene.side(b) for b in involved)
+    return single, side, mu
+
+
 def assess(model, box, pose, rect, dz, tol, uncertain, *, lp_all=False):
-    """Geometric and (where needed) LP critical accelerations per direction."""
+    """Geometric and (where needed) LP critical accelerations per direction.
+
+    ``lp_all`` (calibration) solves the LP in every direction, also when
+    stage 1 or the determinate shortcut would decide."""
     cfg = model.config.constraints.lateral
     scene = Scene(model, box, pose, rect, dz, tol, uncertain)
     dirs = directions(cfg.directions)
     out = Assessment(system=[], directions=dirs, a_geom=[geom_accel(scene, u) for u in dirs])
-    need = [k for k, g in enumerate(out.a_geom) if lp_all or g < cfg.band_high_g]
     out.a_lp = [None] * len(dirs)
     out.lp_status = [None] * len(dirs)
-    if need:
-        out.system = scene.system()
-        for k in need:
-            out.a_lp[k], out.lp_status[k] = lp_accel(scene, out.system, dirs[k])
     out.scene = scene
+    need = [k for k, g in enumerate(out.a_geom) if lp_all or g < cfg.band_high_g]
+    if not need:
+        return out
+    out.single_supported, out.side_contacts, out.mu_limit = determinacy(scene)
+    if not lp_all and out.single_supported and (
+            out.exact_accel() >= cfg.accel_g or not out.side_contacts):
+        return out
+    out.system = scene.system()
+    for k in need:
+        out.a_lp[k], out.lp_status[k] = lp_accel(scene, out.system, dirs[k])
     return out
 
 
 def decide(assessment, cfg):
     """Cascade verdict from an assessment (no simulation)."""
-    lp = [a for a in assessment.a_lp if a is not None]
-    if not lp:
+    if min(assessment.a_geom) >= cfg.band_high_g:
         return LateralResult(True, "geom", min(assessment.a_geom), {})
+    if assessment.single_supported:
+        a = assessment.exact_accel()
+        if a >= cfg.accel_g or not assessment.side_contacts:
+            return LateralResult(a >= cfg.accel_g, "exact", a, {})
+    lp = [a for a in assessment.a_lp if a is not None]
     a = min(lp)
     if a >= cfg.band_high_g:
         return LateralResult(True, "lp", a, {})
@@ -371,6 +408,8 @@ def check(model, box, pose, rect, dz, tol, uncertain):
     if cfg.borderline == "accept":
         return LateralResult(True, "borderline_accept", a, {})
     if cfg.borderline == "simulate":
+        if len(asm.system) > cfg.sim_max_bodies:
+            return LateralResult(False, "borderline_reject", a, {"reason": "system too large to simulate"})
         try:
             from . import lateral_sim
         except ImportError:          # pybullet missing -> conservative

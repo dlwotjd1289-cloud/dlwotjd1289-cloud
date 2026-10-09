@@ -13,7 +13,7 @@ analyze: emulate the cascade for a grid of (band_low_g, band_high_g) and
     rejections (UE) and how often each stage runs. Rows after a chosen
     placement that failed the reference (state no longer stable) are dropped.
 
-    python3 tools/donghan/lateral_calibrate.py collect --episodes 7 --out cal.jsonl
+    python3 tools/donghan/lateral_calibrate.py collect --episodes 7 --planner-borderline reject --out cal.jsonl
     python3 tools/donghan/lateral_calibrate.py collect --cand config/taehyeon/candidates.yaml --samples 0 --out off.jsonl
     python3 tools/donghan/lateral_calibrate.py analyze cal.jsonl
 Linux/WSL (fork workers); needs scipy and pybullet.
@@ -44,7 +44,13 @@ def _setup(a):
     from virtual_data.scenario_source import load_dataset
 
     ds = load_dataset(Path(a.data))
-    G.update(ds=ds, specs=split_ids(ds, a.split), cand=load_candidate_config(a.cand),
+    from dataclasses import replace
+
+    cand = load_candidate_config(a.cand)
+    if a.planner_borderline:
+        lat = replace(cand.constraints.lateral, borderline=a.planner_borderline)
+        cand = replace(cand, constraints=replace(cand.constraints, lateral=lat))
+    G.update(ds=ds, specs=split_ids(ds, a.split), cand=cand,
              lat=load_candidate_config(a.lateral_config), team=load_candidate_config(TEAM_CAND),
              samples=a.samples,
              vcfg=load_virtual_config(REPO / "config/taehyeon/virtual_data.yaml"),
@@ -74,6 +80,7 @@ def _evaluate(rec, lat_cfg):
     return {
         "n": len(asm.scene.bodies), "system": len(asm.system), "on_floor": pose.z < 1e-6, "top_m": pose.z + dz,
         "a_geom": [round(x, 4) for x in asm.a_geom], "a_lp": [round(x, 4) for x in asm.a_lp],
+        "single_supported": asm.single_supported, "side_contacts": asm.side_contacts, "mu_limit": asm.mu_limit,
         "lp_status": asm.lp_status, "short": {k: short[k] for k in keep}, "ref": {k: ref[k] for k in keep},
         "t_assess_ms": 1000 * (t1 - t0), "t_short_ms": 1000 * (t2 - t1), "t_ref_ms": 1000 * (t3 - t2),
     }
@@ -104,9 +111,12 @@ def _episode(i):
         wall = time.perf_counter() - t
     finally:
         PalletizingWorld._place = orig
+    print(f"episode {i}: planned {len(records)} placements in {wall:.0f} s, evaluating", flush=True)
     rows = []
     rng = random.Random(f"lateral-cal:{i}")
     for step, (pallet, state, ctx, box, pose) in enumerate(records):
+        if step and step % 20 == 0:
+            print(f"episode {i}: evaluated {step}/{len(records)} placements", flush=True)
         poses = [("chosen", pose)]
         if G["samples"]:
             team = CandidateBackend(ctx, G["team"]).candidate_set(box, state)
@@ -136,11 +146,15 @@ def collect(a):
                   flush=True)
 
 
-def cascade(row, lo, hi):
+def cascade(row, lo, hi, accel=0.25):
     """Stage and verdict the hard mask would give for this placement."""
     geom = row["a_geom"]
     if min(geom) >= hi:
         return "geom", True
+    if row["single_supported"]:
+        a = min(min(geom), row["mu_limit"])
+        if a >= accel or not row["side_contacts"]:
+            return "exact", a >= accel
     lp = min(x for x, g in zip(row["a_lp"], geom) if g < hi)
     if lp >= hi:
         return "lp", True
@@ -157,7 +171,7 @@ def _score(rows, lo, hi):
         oe += ok and not truth
         ue += truth and not ok
         sim += stage == "sim"
-        lp += stage != "geom"
+        lp += stage in ("lp", "sim")
     return oe, ue, sim, lp
 
 
@@ -205,6 +219,18 @@ def analyze(a):
     for lo, hi, oe, ue, sim, lp in (best[:8] if best else sorted(grid, key=lambda g: g[2])[:8]):
         print(f"{lo:.2f} | {hi:.2f} | {oe} ({100 * oe / n:.2f} %) | {ue} ({100 * ue / n:.2f} %) | "
               f"{100 * lp / n:.0f} % | {100 * sim / n:.1f} %")
+    if best:
+        lo, hi = best[0][:2]
+        print(f"\nper stage at band {lo:.2f} / {hi:.2f}: stage | rows | OE | UE")
+        per = {}
+        for r in rows:
+            stage, ok = cascade(r, lo, hi)
+            s = per.setdefault(stage, [0, 0, 0])
+            s[0] += 1
+            s[1] += ok and not r["ref"]["passed"]
+            s[2] += r["ref"]["passed"] and not ok
+        for stage, (cnt, oe, ue) in sorted(per.items()):
+            print(f"  {stage} | {cnt} | {oe} | {ue}")
     times = {k: statistics.fmean(r[k] for r in rows) for k in ("t_assess_ms", "t_short_ms", "t_ref_ms")}
     print("\nmean time per placement: " + ", ".join(f"{k[2:-3]} {v:.0f} ms" for k, v in times.items()))
 
@@ -221,6 +247,8 @@ if __name__ == "__main__":
     c.add_argument("--lateral-config", type=Path, default=LATERAL_CAND, help="lateral parameters for the checks")
     c.add_argument("--cand", type=Path, default=LATERAL_CAND, help="planner candidate config")
     c.add_argument("--samples", type=int, default=4, help="extra steps 1-12 valid candidates per placement")
+    c.add_argument("--planner-borderline", choices=("simulate", "reject", "accept"),
+                   help="override the planner's borderline policy (reject: no simulation while planning)")
     c.add_argument("--out", type=Path, required=True)
     z = sub.add_parser("analyze")
     z.add_argument("paths", type=Path, nargs="+")

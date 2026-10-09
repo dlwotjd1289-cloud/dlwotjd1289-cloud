@@ -75,6 +75,9 @@ def test_lp_single_tall_box_is_friction_limited():
     a = assess([], make_box("N", (0.3, 0.3, 0.6), 10), 0.4, 0.4, 0.0, deck="solid")
     assert min(a.a_geom) == pytest.approx(0.4433, abs=1e-3)
     assert min(a.a_lp) == pytest.approx(0.40, abs=2e-3)
+    # one supporter, no neighbours: the shortcut min(geom, mu) equals the LP
+    assert a.single_supported and not a.side_contacts
+    assert a.exact_accel() == pytest.approx(min(a.a_lp), abs=2e-3)
 
 
 def test_lp_four_high_column_below_quarter_g():
@@ -82,6 +85,7 @@ def test_lp_four_high_column_below_quarter_g():
     a = assess(COLUMN, make_box("N", (0.3, 0.3, 0.3), 10), 0.4, 0.4, 0.9, deck="solid")
     assert min(a.a_lp) == pytest.approx(0.2217, abs=2e-3)
     assert min(a.a_geom) == pytest.approx(0.2217, abs=2e-3)
+    assert a.single_supported and a.exact_accel() == pytest.approx(min(a.a_lp), abs=2e-3)
 
 
 def test_lp_side_support_from_neighbours():
@@ -93,6 +97,9 @@ def test_lp_side_support_from_neighbours():
     supported = assess(walls, slender, 0.4, 0.3, 0.0, deck="solid")
     assert min(alone.a_lp) == pytest.approx(0.218, abs=2e-3)
     assert min(supported.a_lp) > 0.35          # leans on the blocks 5 mm away
+    # alone: exact reject; with neighbours: exact fails, side contacts -> LP decides
+    assert alone.single_supported and not alone.side_contacts
+    assert supported.single_supported and supported.side_contacts
     assert min(supported.a_geom) == pytest.approx(0.218, abs=2e-3)   # geom ignores neighbours
 
 
@@ -154,6 +161,29 @@ def test_geom_stage_equals_jaesung_stack_check_without_margins():
         new = (x, y, z, *size, kg)
         for a in (0.1, 0.2, 0.24, 0.26, 0.3, 0.4, 0.6):
             assert (a_geom > a) == LA.stack_lateral_ok(proto, new, a), (bid, boxes, a, a_geom)
+
+
+def test_borderline_policies():
+    """Slender box between two blocks: LP 0.39 g, made borderline with band 0.25-0.45."""
+    pytest.importorskip("scipy")
+    from pac_candidates import lateral as L
+
+    walls = [placed("W1", 0.0, 0.3, 0.0, size=(0.395, 0.6, 0.6), weight=40),
+             placed("W2", 0.555, 0.3, 0.0, size=(0.5, 0.6, 0.6), weight=40)]
+    box = make_box("N", (0.15, 0.6, 0.6), 5)
+
+    def run(**kw):
+        model = PalletModel(make_state(walls), make_context(),
+                            lateral_config(deck="solid", band_low_g=0.25, band_high_g=0.45, **kw))
+        return L.check(model, box, Pose3D("pallet", 0.4, 0.3, 0.0), footprint(0.4, 0.3, 0.15, 0.6), 0.6, 0.002, False)
+
+    capped = run(sim_max_bodies=1)
+    assert not capped.passed and capped.stage == "borderline_reject"
+    accepted = run(borderline="accept")
+    assert accepted.passed and accepted.stage == "borderline_accept"
+    pytest.importorskip("pybullet")
+    simulated = run()
+    assert simulated.stage == "sim" and simulated.passed, simulated.detail
 
 
 def test_short_tilt_test_matches_hand_cases():
