@@ -110,11 +110,26 @@ def test_layer_placer_continues_a_level_surface():
     grid[0:20, :] = 0.2  # a 0.4 m wide strip of 0.2 m boxes along x = 0..0.4
     args = (grid, 0.4, 0.0, 0.0, 0.2, 0.4)
     # 0.2 m box on the floor right next to the strip: level with its top
-    level_a, step_a, flush_a = ring_metrics(*args, 0.2, 0.02, 0.003, 0.15)
+    level_a, step_a, flush_a, _ = ring_metrics(*args, 0.2, 0.02, 0.003, 0.15)
     # 0.1 m box there: leaves a 0.1 m step
-    level_b, step_b, flush_b = ring_metrics(*args, 0.1, 0.02, 0.003, 0.15)
+    level_b, step_b, flush_b, _ = ring_metrics(*args, 0.1, 0.02, 0.003, 0.15)
     assert level_a == 0.0 and level_b == 1.0
     assert step_a < step_b and flush_a > flush_b
+
+
+def test_layer_placer_prefers_touching_boxes_over_the_pallet_edge():
+    """No edge-first rule: the pallet edge gives no credit, a neighbour's side does."""
+    from pac_highlevel.placement import ring_metrics
+    import numpy as np
+
+    grid = np.zeros((60, 50))
+    grid[20:40, 15:35] = 0.2  # one 0.4 x 0.4 m box in the middle
+    # 0.2 m box in the pallet corner: two sides on the pallet edge, no neighbour
+    corner = ring_metrics(grid, 0.0, 0.0, 0.0, 0.2, 0.2, 0.2, 0.02, 0.003, 0.15)
+    # same box right next to the middle box
+    beside = ring_metrics(grid, 0.8, 0.3, 0.0, 0.2, 0.2, 0.2, 0.02, 0.003, 0.15)
+    assert corner[2] == corner[3] == 0.0
+    assert beside[3] > 0.0 and beside[2] == beside[3]
 
 
 def test_any_step_breaks_the_level_whatever_the_box_size():
