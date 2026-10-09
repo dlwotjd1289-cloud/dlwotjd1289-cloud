@@ -54,23 +54,22 @@ def run_scenario(
         future = item.box
         proposals = generator(future, virtual.state)
         proposals.sort(key=lambda c: greedy_key(future, c, virtual.state))
-        valid = []
+        # The proposals are already in the exact greedy order. The first
+        # hard-mask-valid one is the same minimum previously obtained after
+        # collecting up to rollout_candidate_limit valid proposals. Do not
+        # spend geometry checks on later candidates that cannot be selected.
+        # Check identities for the entire generated list before short-circuiting.
+        if any(c.box_id != future.box_id or
+               c.base_state_version != virtual.state.state_version for c in proposals):
+            raise ValueError("Invalid future generator contract")
+        best = None
         for proposal in proposals:
             check_budget(deadline, clock)
-            if (
-                proposal.box_id != future.box_id
-                or proposal.base_state_version != virtual.state.state_version
-            ):
-                raise ValueError("Invalid future generator contract")
-            verdict = validator(future, proposal, virtual.state)
-            if verdict.success:
-                valid.append(proposal)
-                # Limit after masking. Invalid early proposals cannot erase valid ones.
-                if len(valid) >= config.rollout_candidate_limit:
-                    break
-        if not valid:
+            if validator(future, proposal, virtual.state).success:
+                best = proposal
+                break
+        if best is None:
             break  # No implicit discard/reorder/buffer of an unplaceable arrival.
-        best = min(valid, key=lambda c: greedy_key(future, c, virtual.state))
         virtual = simulate_placement(
             virtual.state, future, best, consume_unseen=item.consume_unseen
         )

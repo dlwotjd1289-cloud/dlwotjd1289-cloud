@@ -4,9 +4,11 @@ Keep pac_common/pac_planning from the planner repository on the import path.
 The workcell repository has different packages with those same names.
 """
 
+from collections import Counter
 from dataclasses import replace
 import hashlib
 import inspect
+import json
 from pathlib import Path
 
 from pac_common import plain
@@ -127,6 +129,83 @@ value_provider=proxy observation with a different future-value definition.
         if self.on_plan is not None:
             self.on_plan(box, state, self.last_result)
         return self.last_result.ranked[0] if self.last_result.ranked else None
+
+
+class TeamRuntimeRanker:
+    """Ordered stage-5 output for ``pac_runtime.RobotAwarePlacer``.
+
+    The runtime's ranker contract returns a list rather than one candidate.
+    Reuse :func:`plan_with_backend` so the runtime cannot silently bypass the
+    real EMS mapping or a learned model's candidate-backend fingerprint.
+    Candidates rejected while building typed features are not appended again.
+    """
+
+    name = TeamPlacer.name
+
+    def __init__(self, config=None, *, seed=7, use_time_budget=False,
+                 on_plan=None, model_path=None, mode="ahead"):
+        if mode not in ("ahead", "ranking", "current", "greedy", "teacher"):
+            raise ValueError("Unknown placement mode")
+        self.config = config or PlannerConfig()
+        self.model = DualHeadRanker.load(model_path) if model_path is not None else None
+        self.mode = mode
+        self.seed = seed
+        self.use_time_budget = use_time_budget
+        self.on_plan = on_plan
+        self.last_result = None
+        self.calls = 0
+        self.candidate_evaluations = 0
+        self.geometry_sources = Counter()
+        self.model_statuses = Counter()
+        self.robot_validation_required_calls = 0
+        self.backend_contract_sha256 = None
+
+    def __call__(self, valid, box, state, backend):
+        self.last_result = None
+        self.calls += 1
+        box = state.inventory.tracked_boxes[box.box_id]
+        self.last_result = plan_with_backend(
+            box, state, backend, candidates=valid, config=self.config,
+            model=self.model, mode=self.mode, seed=self.seed,
+            use_time_budget=self.use_time_budget,
+        )
+        if self.backend_contract_sha256 is None:
+            payload = json.dumps(
+                backend_contract(backend), sort_keys=True,
+                separators=(",", ":"), ensure_ascii=True,
+            ).encode("utf-8")
+            self.backend_contract_sha256 = hashlib.sha256(payload).hexdigest()
+        self.candidate_evaluations += len(self.last_result.evaluations)
+        self.geometry_sources.update(
+            evaluation.features.geometry_source
+            for evaluation in self.last_result.evaluations
+        )
+        self.model_statuses[str(
+            self.last_result.diagnostics.get("model_status", "UNKNOWN")
+        )] += 1
+        self.robot_validation_required_calls += int(
+            self.last_result.requires_robot_validation
+        )
+        if self.on_plan is not None:
+            self.on_plan(box, state, self.last_result)
+        return list(self.last_result.ranked)
+
+    def provenance(self):
+        """Compact evidence for runtime reports; does not change ranking."""
+        evaluated = sum(self.geometry_sources.values())
+        return {
+            "ranker": self.name,
+            "calls": self.calls,
+            "candidate_evaluations": self.candidate_evaluations,
+            "geometry_sources": dict(sorted(self.geometry_sources.items())),
+            "ems_verified": (
+                evaluated > 0
+                and set(self.geometry_sources) == {"EMS_SUPPLIED"}
+            ),
+            "model_statuses": dict(sorted(self.model_statuses.items())),
+            "robot_validation_required_calls": self.robot_validation_required_calls,
+            "backend_contract_sha256": self.backend_contract_sha256,
+        }
 
 
 def check_policy_contract(contract, *, placer_name, value_provider):

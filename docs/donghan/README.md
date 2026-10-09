@@ -1,75 +1,77 @@
-> **모노레포 통합 (2026-10-08):** 이 문서의 경로는 저장소 루트 기준으로 바뀌었습니다 (`docs/` → `docs/donghan/`, `tests/` → `tests/donghan/`, `reports/` → `reports/donghan/`). 의존성은 루트 `pyproject.toml`, 팀 공통 값은 `config/default.yaml`입니다.
+> **모노레포 통합 (2026-10-09 갱신):** 이 문서는 동한 v3 저장소(`donghan7298-code/pac2026-ahead-donghan` c0dd992)의 README입니다. 통합 저장소에서는 경로가 저장소 루트 기준입니다 (`docs/` → `docs/donghan/`, `tests/` → `tests/donghan/`, `reports/` → `reports/donghan/`). 아래 "필요한 외부 저장소"(팀 runtime, 생성기, AHEAD 시뮬레이터)는 이 저장소 안에 함께 들어 있습니다. 보존용 `archive/`는 통합하지 않았으므로 원본 저장소에서 보세요.
 
-**흐름도 5번 Low-level Placement Planner의 ③~⑥**.
-2026-10-08 팀 후보 검사기·PPO·물리 작업셀 연결 변경과 실행 순서는
-[팀 통합 기록](docs/team_integration_20261008.md)을 먼저 확인하세요.
-ROS 서비스/launch 코드는 추가됐지만 실제 Humble 실행 검증은 아직입니다.
-후보의 특징을 계산하고, AI로 Top-K를 고른 뒤, 같은 미래 시나리오에서 비교하여 순위 목록을 반환
-ROS 2가 설치되지 않아도 알고리즘 개발·학습·테스트가 가능
+# PAC 2026 AHEAD — 동한 Low-level Placement Planner (v3 작업 스냅샷)
 
-| 흐름도 | 구현 | 설명 |
-|---|---|---|
-| 5-③ Feature | `pac_planning/features.py` | OPAL 기반 15항목을 SI 단위로 적용하고 정규화·잔여재고·버퍼·의존성·CoG 등으로 45차원 확장 |
-| 5-④ AI → Top-K | `pac_planning/model.py` | LambdaRank 순위 헤드 + 별도 미래 성과 회귀 헤드 |
-| 5-⑤ Future Rollout | `pac_planning/scenarios.py`, `rollout.py` | 7종 시나리오·공통 난수·Greedy 가상 적재·평균/최악/하위 CVaR/막힘 |
-| 5-⑥ 최종 점수 | `pac_planning/scoring.py`, `planner.py` | 안전 포화 + 공간 + 미래 − 하방 위험 − 시간, 후보 목록 반환 |
+PAC 2026 AHEAD 프로젝트에서 동한이 맡은 **Low-level Placement Planner 5-③~⑥**
+(특징 계산 → AI Top-K → 미래 롤아웃 → 최종 점수)과, 이를 ROS2 Humble + 로봇
+시뮬레이터의 연속 pick & place로 연결하기 위한 실행 코드의 작업 저장소입니다.
 
-## 처음 실행
+최종 목표는 현장에서 실제 박스를 인식하고, 적재 위치를 평가하고, 로봇팔이
+pick & place를 수행하는 시연입니다. **아직 그 단계에 도달하지 않았습니다.**
+현재 상태는 아래 세 가지로 구분해서 읽어 주세요. 자세한 근거는
+[docs/PROGRESS_STATUS_20261009.md](docs/PROGRESS_STATUS_20261009.md)에 있습니다.
 
-Ubuntu 22.04 / Python 3.10 기준입니다. 저장소 루트에서 실행하세요.
+| 상태 | 내용 |
+|---|---|
+| 실제 검증됨 | Python 단위 테스트 95 passed (Ubuntu 22.04 / Python 3.10), ROS 패키지 4개 빌드, 학습·평가 파이프라인 import |
+| 코드만 있고 미검증 | `pac_gazebo_grasp`(C++ Gazebo 플러그인), 14개 패키지 workspace, MoveIt 실행, Gazebo pick & place |
+| 앞으로 구현 | 물리 버퍼/NG/팔레트 교체 actuator, 시연 계약에 맞춘 모델 재학습, 현장 인식 연동 |
 
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install -e '.[dev]'
-python -m pytest -q
-python -m pac_planning.demo --model models/dual_head_ranker.json --fixed-work
-```
+## 폴더 구성
 
-`runs/demo/result.json`, `decisions.jsonl`, `preview.svg`가 생성됩니다.
-`--fixed-work`를 빼면 1초 **소프트 예산**을 적용합니다. 안전 검사나 외부 콜백이 오래 걸리면 초과할 수 있습니다.
-학습 모델 없이 실행하려면 `--model` 옵션을 빼세요. 휴리스틱 Top-K + 실제 롤아웃으로 동작합니다.
+| 경로 | 내용 |
+|---|---|
+| `ros2_ws/src/` | ROS2 패키지: `pac_common`, `pac_planning`, `pac_planning_interfaces`, `pac_execution`, `pac_gazebo_grasp` |
+| `scripts/donghan/` | 학습·수집·평가 파이프라인(`model_pipeline.py`), 로봇 시연 준비·검사 스크립트 |
+| `config/` | 학습/평가 설정, 원본 박스 시연 설정(`demo_original6/8/10`) |
+| `tests/` | 단위·계약 테스트 |
+| `docs/` | 개발 문서와 통합 점검 기록 (`project_readme_v3.md`는 이전 README) |
+| `models/`, `reports/` | 기존 모델과 검증 보고서 |
+| `archive/` | **보존용** 자료. v2 실험 데이터, v3 증거, 패치, 팀 참조 코드, ZIP 출처 기록 ([archive/README.md](archive/README.md)) |
 
-![실행 예시](reports/demo_preview.svg)
+팀원 담당인 후보 생성(5-①), Hard Mask(5-②), Stage 4 PPO, 로봇 체커, 물리 시뮬레이터는
+이 저장소에 없습니다. 별도 checkout이 필요합니다.
 
-## 먼저 볼 문서
+| 필요한 외부 저장소 | 기준 커밋 |
+|---|---|
+| 팀 runtime (`yang8988/pac-mission1-shared`, `claude/pensive-pasteur-dwbu3g`) | `81d0333ba6550d9ee6f02661d8b8d9e79beaca6c` |
+| 데이터 생성기 (같은 저장소, `feature/jaesung-dataset-generator`) | `cc4c075daa3dd4c7f80510042732763fc9502933` |
+| AHEAD 시뮬레이터 (`dlwotjd1289-cloud/pac2026-ahead`, Hyundai submodule 포함) | 확인 필요 (`main` `fa3115a`, `fix/hyundai-submodule-init` `0c8fb80`) |
 
-1. [공통 개발 기준 v0.2 원문](docs/common_development_standard.md)
-2. [입출력·함수 연결 예제와 추가 계약](docs/integration.md)
-3. [GitHub 협업 방법 / GitHub Desktop 순서](CONTRIBUTING.md)
-4. [동한 담당 알고리즘 설명·점수식](docs/low_level_planner.md)
-5. [기존 개발·회의·미션·논문 반영표](docs/requirements_traceability.md)
-6. [검증 결과와 미완료 연결점](reports/VALIDATION.md)
+## 테스트 실행
 
-## 담당 범위의 경계
-
-5-① 후보 생성 / 5-② Hard Mask는 `generate_candidates`, `validate_constraints` 콜백으로 연결
-`reference_backend.py`는 단독 테스트용 **완전 지지·단일 하부 박스** 기준선
-태현님의 EMS/Extreme Point/LBCP 구현을 대체하거나 이미 구현한 것은 아님
-
-4번 High-level의 버퍼·팔레트 마감·재적재 선택, 6번의 IK/충돌/가반하중 검사,
-7번 실행·사후 측정, 8번 실제 State Manager는 각 담당 모듈에서 연결합니다.
-출력은 항상 `requires_robot_validation=True`; 이 패키지는 로봇을 움직이거나 ACTUAL 상태를 갱신하지 않음
-
-## 재학습과 비교
+팀 runtime 체크아웃(`ros2_ws/src/pac_candidates` 등)을 경로에 추가해야 팀 연동 테스트까지 실행됩니다.
+아래는 실제로 실행해 본 방식입니다(Ubuntu 22.04, Python 3.10.12, 시스템 pytest 6.2.5).
 
 ```bash
-OPENBLAS_NUM_THREADS=1 python -m pac_planning.experiment --output runs/retrain \
-  --train-groups 12 --validation-groups 4 --holdout-groups 4 \
-  --epochs 80 --aggregate-rounds 1 --seed 20261007
+TEAM=/path/to/pac-team/ros2_ws/src
+source /opt/ros/humble/setup.bash
+PYTHONPATH=$PYTHONPATH:ros2_ws/src/pac_common:ros2_ws/src/pac_planning:ros2_ws/src/pac_execution:\
+$TEAM/pac_candidates:$TEAM/pac_highlevel:$TEAM/pac_runtime:$TEAM/pac_robot_check \
+python3 -m pytest -p no:cacheprovider -q tests --ignore=tests/test_team_physics.py
 ```
 
-teacher: 모든 유효 후보를 평가하고, 방문한 상태를 다시 teacher로 라벨링해 데이터를 누적합니다.
-학습/검증/최종 시험은 **박스 구성 그룹**을 분리합니다. PPO 학습은 이 파트의 구현 범위에 포함되지 않습니다.
-지금 모델은 작은 합성 데이터로 학습한 통합용 출발점입니다. 데이터 규모·기하 검사기·목표 분포가 바뀌면 다시 평가해야 합니다.
+- `tests/test_team_physics.py`는 `pybullet`과 팀 물리 시뮬레이터(`pac_simulation`)가 있어야 하므로 위에서 제외했습니다.
+- 시스템 pytest 6은 `pyproject.toml`의 `pythonpath` 옵션을 무시합니다. 위처럼 `PYTHONPATH`를 직접 지정하거나, pytest 7 이상을 설치해 사용하세요.
+- 이 환경에서 ROS를 `source`한 상태로 `tests` 전체를 지정하면 pytest 6이 모듈 수준 skip 하나 때문에 수집을 중단하는 현상이 있어, 물리 테스트를 `--ignore`로 제외하는 방식을 썼습니다.
 
-## 저장소 배치
+## ROS2 패키지 빌드 (일부만 확인)
 
-`ros2_ws/src/pac_common`은 공통 dataclass 단일 원본,
-`ros2_ws/src/pac_planning`은 이 담당 파트입니다.
-설정은 `config/default.yaml`, JSON 입력은 `test_data/`, 테스트는 `tests/`를 사용합니다.
-의존성 선언은 루트 `pyproject.toml` 한 곳을 사용합니다.
-ROS 패키지의 `setup.py`는 ament 설치용 메타데이터입니다.
+저장소 전체를 colcon으로 탐색하면 `archive/` 아래의 복사본과 중복될 수 있으므로,
+**반드시 `--base-paths`로 `ros2_ws/src`를 명시**하세요.
 
-ROS 환경이 준비되면 `source /opt/ros/humble/setup.bash` 후 `ros2_ws`에서 `colcon build`할 수 있는 패키지 구조입니다.
-실제 ROS 빌드·MoveIt2 연결은 별도 검증이 필요합니다.
+```bash
+source /opt/ros/humble/setup.bash
+colcon build --base-paths ros2_ws/src --packages-select pac_common pac_planning pac_planning_interfaces pac_execution
+```
+
+위 4개는 실제로 빌드됐습니다. `pac_gazebo_grasp`는 Gazebo Fortress(`ignition-gazebo6`)
+개발 패키지가 있어야 하며, 이를 설치하지 않은 환경에서는 빌드에 실패합니다.
+14개 패키지 workspace(`scripts/donghan/stage_demo_workspace.py`)는 AHEAD 저장소의
+Hyundai submodule이 필요해서 아직 구성하지 못했습니다.
+
+## 출처와 라이선스
+
+- 원본 코드의 출처와 변경 범위는 [NOTICE.md](NOTICE.md), [docs/requirements_traceability.md](docs/requirements_traceability.md)를 참고하세요.
+- `archive/` 안에는 팀원 저장소에서 가져온 파일(팀 runtime 패치, 물리 시뮬레이터 참조)이 있습니다. 모두 공개 저장소 기준 커밋이 `archive/` 문서에 적혀 있습니다.
+- **이 저장소와 원본 저장소들 모두 라이선스 파일이 없습니다.** 별도의 오픈소스 라이선스를 임의로 부여하지 않았으며, 정책은 팀이 정합니다.

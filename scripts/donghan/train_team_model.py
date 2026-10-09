@@ -52,7 +52,7 @@ def main():
     from pac_planning.config import PlannerConfig, load_config
     from pac_planning.model import train_model
     from pac_planning.team_training import (benchmark_holdout, collect_teacher, query_report,
-                                            training_splits)
+                                            training_splits, measurement_xy_assessment)
     from virtual_data import load_virtual_config
     from virtual_data.scenario_source import load_dataset, run_generator
 
@@ -67,6 +67,8 @@ def main():
     cand = load_candidate_config(team / "config/taehyeon/candidates.yaml")
     virtual = load_virtual_config(team / "config/taehyeon/virtual_data.yaml")
     high = load_highlevel_config(team / "config/taehyeon/highlevel.yaml")
+    measurement_assessment = measurement_xy_assessment(cand, virtual)
+    print(json.dumps({"measurement_geometry_assessment": measurement_assessment}), flush=True)
     config = load_config(args.planner_config) if args.planner_config else PlannerConfig()
     overrides = {name: getattr(args, name) for name in ("horizon", "scenario_count", "top_k")
                  if getattr(args, name) is not None}
@@ -97,6 +99,7 @@ def main():
         "virtual_config": plain(virtual), "highlevel_config": plain(high),
         "effective_splits": splits, "split_note": split_note,
         "planner_config": plain(config), "initialization": "NEW_MODEL",
+        "measurement_geometry_assessment": measurement_assessment,
     }
     model.payload.update(backend_contract=contract, training_provenance=provenance,
                          rollout_contract={name: getattr(config, name)
