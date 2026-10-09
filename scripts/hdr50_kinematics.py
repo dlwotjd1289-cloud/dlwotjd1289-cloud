@@ -18,7 +18,8 @@ import numpy as np
 try:
     from pac_robot_check import kinematics as _kin
 except ImportError:  # running from a plain checkout without colcon / pip install
-    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "ros2_ws/src/pac_robot_check"))
+    for _pkg in ("pac_robot_check", "pac_common"):
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "ros2_ws/src" / _pkg))
     from pac_robot_check import kinematics as _kin
 
 BASE_Z_M = 0.40

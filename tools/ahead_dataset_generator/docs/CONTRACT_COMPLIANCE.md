@@ -3,7 +3,7 @@
 | 기준 | v1.2 대응 |
 |---|---|
 | Ubuntu 22.04 / Python 3.10 | Python 3.10 문법 호환 테스트 포함 |
-| 설정 YAML | `config/default.yaml`, `robot.yaml`, `local.example.yaml` |
+| 설정 YAML | `config/default.yaml` (팔레트 값은 저장소 `config/default.yaml`을 따름) |
 | 테스트 데이터 JSON | `test_data/*.json`, 생성 dataset의 `test_data/` |
 | 로그 JSONL | `logs/dataset_generation.jsonl` |
 | 내부 SI 단위 | m, kg, s, rad |
@@ -16,7 +16,7 @@
 | Scenario-level split | train/val/test 분할 + overlap validator |
 | Reproducibility | seed + core file SHA-256 + pytest 재현성 테스트 |
 | pytest | Contract/Reproducibility/Schema/Python3.10 테스트 |
-| Robot feasibility 분리 | `config/robot.yaml`에 `feasibility_owner: pac_robot`; Generator 미판정 |
+| Robot feasibility 분리 | Generator는 로봇 판정을 하지 않음 (6단계 `pac_robot_check`) |
 
 ## 의도적으로 Generator 책임 밖에 둔 항목
 

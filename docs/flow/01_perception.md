@@ -12,4 +12,4 @@
 
 - **테스트**: `tests/taehyeon/test_th_runtime.py` (`test_label_failure_uses_the_base_view_then_inspection`), `tests/workcell/test_auto_scale_v43.py`, `test_box_perception_v44.py`, `test_observation_boundary.py`, `tests/donghan/test_depth_measurement.py`, `test_sku_resolver.py`, `test_stage1_to_stage2_contract.py`
 - **문서**: `docs/taehyeon/runtime.md`, `docs/jaesung/README_V43.md`, `docs/jaesung/README_V44.md`, `docs/donghan/perception_depth.md`
-- **미구현**: 실제 ID·라벨 판독기, 실제 Base-view 카메라, Gazebo 깊이 카메라(`config/camera.yaml` `optional_3d_camera: false`). 깊이 처리는 계산부만 있고 합성 이미지로만 검증했습니다. Gazebo에서는 라벨을 도착 정보나 크기 매칭으로 대신합니다(`scripts/ahead_planner_bridge_v44.py` `match_sku`).
+- **미구현**: 실제 ID·라벨 판독기, 실제 Base-view 카메라, Gazebo 깊이 카메라(V4.4 월드의 카메라는 RGB만, 위치·토픽은 `config/workcell.yaml`). 깊이 처리는 계산부만 있고 합성 이미지로만 검증했습니다. Gazebo에서는 라벨을 도착 정보나 크기 매칭으로 대신합니다(`scripts/ahead_planner_bridge_v44.py` `match_sku`).

@@ -4,15 +4,14 @@
 
 | 구현 | 위치 | 환경 |
 |---|---|---|
-| 가상 실행 (태현) | `ros2_ws/src/pac_runtime/pac_runtime/executor.py` `ExecutorSim` (:56: `grip`, `check` :78, `place` :107, 단계적 대응 L0~L4); 결과 분류 `core.py` `RuntimeCore.verify` (:148); 설정 `ExecutionConfig`, `VerifyConfig` | 가상 셀 |
-| Gazebo 순간이동형 (태현) | `pac_runtime/gazebo_driver.py` `GazeboDriverCore.on_command` (:154); launch `ros2_ws/src/pac_runtime/launch/gazebo_cell.launch.py` + `tools/runtime/launch/hdr50_pedestal_workcell.launch.py` | 궤적 재생 후 측정 위치에 박스 생성, 흡착 없음 |
-| **Gazebo + MoveIt 물리형 (동한)** | `ros2_ws/src/pac_execution/pac_execution/`: `executor_node.py` (MoveGroup / ExecuteTrajectory, `/pac/command` → `/pac/execution_result`), `grasp_node.py` + C++ 플러그인 `ros2_ws/src/pac_gazebo_grasp/src/confirmed_grasp.cpp`, `source_node.py` (박스 생성), `audit.py` `check_placement` (측정 위치로 Hard Mask 재검사), `contract.py`, `node_io.py`, `trace_check.py`, `runtime_node.py`; launch `original_boxes_demo.launch.py` | PLACE_CURRENT만 지원 |
-| V4.x 흡착 실행 (재성) | `scripts/moveit_pick_place_v44.py` `MoveItPickPlace` (:215), `run_pick_place_v44.py`, `run_mission_v45.py`, `scripts/suction_gripper_node.py`; EOAT `ros2_ws/src/pac_eoat/urdf/vacuum_gripper_v1.urdf.xacro` | Gazebo + MoveIt, 실제 흡착(DetachableJoint) |
-| 물리 재생·검증 | `ros2_ws/src/pac_simulation/pac_simulation/ahead_sim/` (`simulator.py`, `robot_cell.py`, `server.py`), `scripts/verify_stack_bullet_v45.py`, `tools/runtime/scripts/physics_replay.py`, `tools/virtual_data/scripts/physics_crosscheck.py` | PyBullet |
+| 가상 실행 (태현) | `ros2_ws/src/pac_runtime/pac_runtime/executor.py` `ExecutorSim` (`grip`, `check`, `place`, 단계적 대응 L0~L4; L0 = 공통 확정 허용오차); 결과 분류 `core.py` `RuntimeCore.verify`; 설정 `ExecutionConfig`, `VerifyConfig` | 가상 셀 |
+| **Gazebo 실행 (재성, 단일)** | V4.5 미션 `scripts/run_mission_v45.sh` → `plan_placement_v45.py`(5·6단계 팀 구현) → `run_mission_v45.py`(관절 경로 + 흡착) → `ExecutionResult` JSON. 다중 박스 사이클 `run_generator_cycle_v44.sh` + `ahead_planner_bridge_v44.py`(plan: 5·6단계, commit: 8단계 확정 규칙) + `moveit_pick_place_v44.py`. 흡착 `scripts/suction_gripper_node.py` (DetachableJoint) | Gazebo Fortress + MoveIt (V4.4 월드) |
+| 물리 재생·검증 | `ros2_ws/src/pac_simulation/pac_simulation/ahead_sim/`, `scripts/verify_stack_bullet_v45.py`(5·6단계 → PyBullet → StateManager 폐루프), `tools/runtime/scripts/physics_replay.py`, `tools/virtual_data/scripts/physics_crosscheck.py` | PyBullet |
 
-- **테스트**: `tests/donghan/test_execution.py`; 점검 스크립트 `scripts/donghan/check_execution_trace.py`, `check_closed_loop_physics.py`, `check_robot_demo.py`, `robot_preflight.py`
-- **문서**: `docs/donghan/original_boxes_demo_v3_ko.md`, `docs/jaesung/README_V44.md`, `docs/taehyeon/runtime.md`
+- **테스트**: `tests/workcell/test_planner_bridge_v44.py`, `test_mission_bridge_v45.py`, `test_pick_place_v44.py`, `test_state_manager.py`
+- **문서**: `docs/jaesung/README_V44.md`, `docs/taehyeon/runtime.md`
+- **삭제한 중복**: `pac_execution`·`pac_gazebo_grasp`(1.2 × 1.0 m 팔레트를 강제하던 원박스 데모), `pac_runtime/gazebo_driver.py`(순간이동형), `tools/realtime/gazebo_replay.py`, 이전 월드·launch V2~V4.1.
 - **미구현·주의**:
   - 흐름도의 Heightmap 전후 비교는 아직 없습니다. 위치·외곽 기하로 비교합니다(`VerifyConfig.heightmap_cell_m` 미사용).
-  - 실행 스택이 3개입니다([KNOWN_ISSUES](KNOWN_ISSUES.md)).
+  - Gazebo 경로는 ROS `runtime_node`(`/pac/command`)로 구동하지 않고, 스크립트가 같은 팀 함수(5·6·8단계)를 직접 부릅니다. 4단계 버퍼·재적재 동작은 Gazebo에 없습니다(PLACE_CURRENT만).
 - **편차·실패 시**: 단계적 대응 L0~L4, 영향 부분만 재계획, 집기 실패는 재시도 → 다른 집기 → 확인 영역([곁가지](09_side_flows.md))

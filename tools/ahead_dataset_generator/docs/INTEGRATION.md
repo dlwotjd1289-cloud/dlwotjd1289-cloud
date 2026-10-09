@@ -6,14 +6,13 @@
 pac2026/
 ├── config/
 │   ├── default.yaml
-│   ├── robot.yaml
-│   └── local.example.yaml
+│   └── workcell.yaml
 ├── test_data/
 ├── ros2_ws/src/
 │   ├── pac_common/
 │   ├── pac_perception/
 │   ├── pac_planning/
-│   ├── pac_robot/
+│   ├── pac_robot_check/
 │   └── pac_bringup/
 └── tools/
     └── ahead_dataset_generator/

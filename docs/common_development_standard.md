@@ -1,7 +1,7 @@
 # PAC 2026 팀 공통 개발 기준서
 
 > **프로젝트:** HD현대로보틱스 미션 1 — Mixed Palletizing  
-> **문서 버전:** v0.3  
+> **문서 버전:** v0.3.1  
 > **상태:** 모노레포 통합 반영 — **팀 확인 대기** (26장: 공통 계약 변경은 팀원 1명 이상 확인)  
 > **목적:** 3인이 독립적으로 모듈을 개발해도 공통 데이터 계약을 통해 쉽게 통합되도록 한다.
 
@@ -40,7 +40,8 @@
 
 의존성은 `requirements.txt` 또는 `pyproject.toml` 중 팀에서 하나를 선택해 저장소 전체에서 동일하게 사용한다.
 
-**v0.3 결정:** 저장소 루트 `pyproject.toml` 하나만 사용한다 (`pip install -e '.[dev,sim]'`, 선택: `rl`).
+**v0.3 결정:** 저장소 루트 `pyproject.toml` 하나만 사용한다 (`pip install -e '.[dev,sim]'`).
+**v0.3.1:** ROS·Gazebo·MoveIt를 포함한 기준 환경은 `docker/Dockerfile`(실행 `docker/run.sh`) 또는 `scripts/setup_ubuntu22.sh`로 만든다.
 Ubuntu 22.04 기본 pytest(6.2)도 지원하도록 패키지 경로는 루트 `conftest.py`가 추가한다.
 
 ---
@@ -57,8 +58,7 @@ pac2026/
 │
 ├── config/
 │   ├── default.yaml
-│   ├── robot.yaml
-│   └── local.example.yaml
+│   └── workcell.yaml
 │
 ├── test_data/
 │   ├── scenario_001_basic.json
@@ -69,7 +69,7 @@ pac2026/
 │       ├── pac_common/
 │       ├── pac_perception/
 │       ├── pac_planning/
-│       ├── pac_robot/
+│       ├── pac_robot_check/
 │       └── pac_bringup/
 │
 ├── tests/
@@ -82,12 +82,15 @@ pac2026/
 
 ```text
 ros2_ws/src/
-  pac_common/               공통 dataclass · StateManager · config · frames (단일 원본)
+  pac_common/               공통 dataclass · StateManager(8단계) · config · frames (단일 원본)
   pac_planning/             5-③~⑥ 동한 (+ physics/, interfaces.py: 작업셀 분석 물리)
   pac_planning_interfaces/  /pac/plan_placement 서비스 정의
   pac_candidates/           5-①② 태현
-  pac_highlevel/            4 태현 (Rule / PPO)
-  pac_perception/ pac_robot/ pac_eoat/ pac_simulation/ pac_bringup/   작업셀·로봇·시뮬 재성
+  pac_highlevel/            4 태현 (Rule / Look-ahead; PPO 미사용)
+  pac_runtime/              1~3·7단계와 1→8 루프 태현
+  pac_robot_check/          6 로봇 실행 가능성 태현 (HDR50-22)
+  pac_perception/ pac_reinspection/   1·2단계 보조 (깊이 측정, 재인식)
+  pac_simulation/ pac_bringup/        작업셀 월드·launch·URDF 재성 (V4.2 배치, V4.4 흡착)
   hdr_*                     현대로보틱스 공식 저장소 (external/ 서브모듈 심볼릭 링크)
 tools/ahead_dataset_generator/   재성 데이터 생성기
 tools/virtual_data/ tools/highlevel/   태현 가상데이터·학습 도구
@@ -237,6 +240,7 @@ box_<id>
 ## 8.1 `pallet` frame (v0.3)
 
 - 원점: 사용 가능한 적재면(데크 윗면)의 한쪽 아래 모서리, `z = 0`은 데크 윗면
+- **v0.3.1:** 팀 작업셀에서는 로봇에서 가장 **먼** 모서리가 원점이고 x/y 축은 월드 축을 180° 돌린 방향이다 (`config/workcell.yaml` `layout.pallet.frame_yaw_rad`). 후보 생성기가 원점부터 채우므로 먼 칸부터 쌓이고, 로봇이 놓인 박스 위로 팔을 뻗지 않는다. 6단계 설정과 Gazebo 브리지는 모두 이 값을 따른다
 - `PalletState.size.x/y` = 적재면 크기, **`PalletState.size.z` = 데크 위 최대 적재 높이** (목재 두께가 아님)
 - 팔레트 목재 두께는 `config/default.yaml`의 `pallet.deck_height_m`로 따로 둔다
 
@@ -410,12 +414,15 @@ Result 검증
 
 ## 12.2 State Manager 구현과 확정 규칙 (v0.3)
 
-구현: `pac_common.state_manager.StateManager`
+구현: `pac_common.state_manager.StateManager` (v0.3.1: 런타임 루프의 상태 관리도 이 클래스 하나로 통합)
 
 ```text
 commit_observation(box)   새 박스 추적 시작, remaining_by_sku 1 감소, version+1
 register_plan(candidate)  실행기로 보낸 후보 기록 (버전 일치 필수, 박스당 1개)
 commit_execution(result)  ExecutionResult → CommitOutcome(state, placed, codes, reason)
+for_order(...)            런타임 루프용 생성 (주문 목록 = remaining_by_sku, 버퍼 칸 수)
+arrive / to_buffer / reject / close_pallet / confirm_missing   런타임 사건
+place(box_id, measured, planned)   다시 측정한 결과 기록 (아래 확정 규칙 적용)
 ```
 
 실행 결과 확정 규칙 (팀 결정 2026-10-08):
@@ -423,6 +430,8 @@ commit_execution(result)  ExecutionResult → CommitOutcome(state, placed, codes
 - 측정 pose와 계획 pose(둘 다 `pallet` frame 모서리)의 차이가 **xy 5 mm, z 3 mm, yaw 1°** 이내이면 **계획 pose를 확정**한다.
   (물리 접촉·센서 오차로 0.01 mm 수준의 겹침이 생기면 플래너의 1e-8 m 기하 검사가 기존 상태 전체를 거부하기 때문)
 - 범위를 벗어나면 PLACED로 기록하지 않고 박스를 `FAILED`로 두며 `SENSOR_UNCERTAIN`을 반환한다. 다시 인식한 뒤 재계획한다.
+  런타임 루프(`place`)처럼 7단계가 이미 위에서 다시 측정한 경우에는 그 측정 pose를 `reconcile` 후 기록한다.
+- PLACED 박스는 팔레트를 닫을 때까지 `tracked_boxes`에 status `PLACED`로 남는다 (11장 단일 원본).
 - 계획 이후 팔레트가 바뀌었으면 `STALE_PLAN`, 등록되지 않았거나 중복된 실행 결과는 거부한다.
 - yaw는 박스 대칭(180°)을 고려해 비교한다. 허용 오차는 `CommitTolerance`로 바꿀 수 있다.
 
@@ -602,7 +611,8 @@ def evaluate_future_value(
 ## 16.6 Robot Feasibility
 
 **목표 로봇 (v0.3, 팀 결정 2026-10-08): HD현대로보틱스 HDR50-22.** (이전 목표 HDP160-31은 검증된 모델이 없어 보관만 한다.)
-구현: `pac_robot.Hdr50_22Adapter`. 명령은 x/y/z/yaw 팔레타이저 공간의 **박스 중심**이다 (10.1).
+구현 (v0.3.1): `pac_robot_check.RobotFeasibility` 하나. 설정 `config/taehyeon/robot_check.yaml`은 팀 작업셀(`config/workcell.yaml`)과 일치해야 한다 (`tests/test_config_consistency.py`).
+로봇 명령은 x/y/z/yaw 팔레타이저 공간의 **박스 중심**이다 (10.1).
 
 ```python
 def validate_robot_motion(
@@ -696,12 +706,14 @@ state_version += 1
 
 ```text
 config/
-├── default.yaml
-├── robot.yaml
-└── local.example.yaml
+├── default.yaml      팀 공통 값 (팔레트, 제약, 5-③~⑥)
+├── workcell.yaml     작업셀 배치·pallet frame 방향 (Gazebo V4.2/V4.4)
+└── <담당자>/          모듈 설정
 ```
 
-`local.yaml`은 개인 경로/장치명처럼 환경별 값만 저장하고 Git에서 제외한다.
+v0.3.1: 코드가 읽지 않던 `robot.yaml`, `eoat.yaml`, `camera.yaml`, `local.example.yaml`은 삭제했다.
+로봇·그리퍼 값은 `config/taehyeon/robot_check.yaml`, 카메라 위치·토픽은 `config/workcell.yaml`에 있다.
+`config/local.yaml`은 Git에서 제외되지만 현재 읽는 코드는 없다.
 
 **v0.3: 팀 공통 값은 `config/default.yaml` 한 곳에만 쓴다.** 모든 모듈은 `pac_common.config.load_common_config()`로 읽는다.
 시뮬레이터·작업셀 파일이 이 값과 어긋나면 `tests/test_config_consistency.py`가 실패한다.
@@ -730,7 +742,7 @@ planning:          # 동한 5-③~⑥ PlannerConfig (top_k, horizon, scenario_co
 ```
 
 모듈 전용 설정은 `config/<담당자>/` (예: `config/taehyeon/candidates.yaml`), 시뮬레이션 설정은
-`config/ahead_simulator.yaml`, 작업셀 배치는 `config/workcell.yaml`, 로봇은 `config/robot.yaml`에 둔다.
+`config/ahead_simulator.yaml`, 작업셀 배치는 `config/workcell.yaml`, 로봇(6단계)은 `config/taehyeon/robot_check.yaml`에 둔다.
 
 ---
 
@@ -1010,6 +1022,7 @@ Sensor / Simulation
 | v0.1 | 2026-10-06 | 최초 공통 개발 기준 |
 | v0.2 | 2026-10-06 | 모의 3인 통합 테스트 결과 반영: Validator 입력, frame, orientation, state copy, inventory, single-writer 수정 |
 | v0.3 | 2026-10-08 | 모노레포 통합 (팀 확인 대기): pyproject 단일화, 실제 폴더 배치, `pallet` frame·`size.z` 의미, 박스 기준점=AABB 최소 모서리, State Manager 확정 규칙, 공통 값 단일 원본(1.10×1.10 m, 데크 위 1.5 m, 1000 kg), 목표 로봇 HDR50-22 |
+| v0.3.1 | 2026-10-09 | 단계별 단일 구현(StateManager 통합, 6단계 `pac_robot_check`, 5-①② `pac_candidates`), PPO 삭제, pallet frame 원점 = 로봇에서 먼 모서리(`workcell.yaml`), 미사용 설정 삭제, Docker 기준 환경. 충돌 검토: `docs/flow/DECISION_REVIEW.md` |
 
 ---
 

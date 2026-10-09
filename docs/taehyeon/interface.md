@@ -109,18 +109,18 @@ context가 없으면(`CandidateBackend(None)`) 설정의 `default_pallet_max_wei
 ## 7. 재성 님 제너레이터·시뮬레이터와의 연결
 
 - 제너레이터: subprocess로 실행하고 출력 파일(`test_data`, `ground_truth`, `analysis/catalog.csv`, `splits.json`)만 읽습니다.
-  제너레이터 팔레트의 `size.z`(목재 0.15 m)와 `max_height_m`(1.5 m)는 **적재 높이 1.35 m**로 변환합니다(`height_limit_includes_pallet: true`).
+  제너레이터(1.3.0~)의 `max_height_m`은 바닥부터 높이(데크 0.15 m + 적재 1.5 m)이고, `height_limit_includes_pallet: true`로 데크를 빼 **데크 위 적재 1.5 m**(`config/default.yaml`)로 읽습니다.
 - 시뮬레이터: `pac_simulation.ahead_sim.world.BulletPalletWorld`로 물리 교차 검증을 합니다(좌표: 팔레트 중심 원점, 박스 중심 좌표).
 
 ## 8. 확정 사항 (태현 결정)
 
 | # | 항목 | 확정 내용 | 날짜 |
 |---|---|---|---|
-| 1 | 최대 높이 | 1.5 m는 팔레트 목재(0.15 m) 포함 → 적재 높이 1.35 m (`height_limit_includes_pallet: true`) | 2026-10-07 |
+| 1 | 최대 높이 | **데크 위 적재 1.5 m** (공통 기준 v0.3, `config/default.yaml`; 2026-10-07의 "목재 포함 1.35 m" 해석은 폐기) | 2026-10-08 |
 | 2 | 박스 허용하중 | 사양 비공개·실측 없음 → McKee 식(ECT 5 kN/m, 두께 3 mm) + **안전계수 4**. 숨겨진 실제 강도 6개 프로필 모두 실제 눌림 0건([VALIDATION.md](VALIDATION.md) 8장). 실측값이 생기면 `SkuSpec.top_load_capacity_n` 또는 `capacity_overrides_n`에 넣습니다 | 2026-10-07 |
-| 3 | 무거운-위-가벼운 | 주최측 필수 고려사항 "무거운 박스가 가벼운 박스 위에 적재되지 않도록 하중 제약 반영"을 **`share`**(각 지지 박스가 실제로 받는 하중 = 새 박스 무게 × 분배 비율과 지지 박스 무게 비교, 모든 지지 박스 검사)로 구현 | 2026-10-08 (`per_box`에서 변경) |
+| 3 | 무거운-위-가벼운 (**2026-10-09 철회**: 허용 하중 누적 검사로 대체, 규칙은 `heavy_on_light.enabled: false`) | 주최측 필수 고려사항 "무거운 박스가 가벼운 박스 위에 적재되지 않도록 하중 제약 반영"을 **`share`**(각 지지 박스가 실제로 받는 하중 = 새 박스 무게 × 분배 비율과 지지 박스 무게 비교, 모든 지지 박스 검사)로 구현 | 2026-10-08 (`per_box`에서 변경) |
 | 4 | 주문 목록 | SKU 종류·크기·무게·수량은 사전에 알고 투입 순서만 모름(미션 설명서) → `remaining_by_sku` 사용 (`order_list_known: true`) | 2026-10-08 |
-| 5 | 4번 High-level | PLACE_CURRENT / BUFFER_CURRENT / RETRIEVE_BUFFER(i)는 MaskablePPO, PALLET_CLOSE / PARTIAL_REPACK은 Rule, 채움률 30 % 이상이면 버퍼 대신 마감 | 2026-10-08 |
+| 5 | 4번 High-level | 모든 행동 Rule / Look-ahead, **PPO 미사용** (2026-10-09). 팔레트 마감은 `close.mode: dead` | 2026-10-09 |
 | 6 | 사용 로봇 | HDR50-22 (로봇 판정은 6단계 범위) | 2026-10-07 |
 
 ### 동한 님 파트에 대한 제안 (변경하지 않음, 참고용)

@@ -1,9 +1,9 @@
 # 태현 담당 파트: 5-① 후보 생성 · 5-② Hard Mask · 가상데이터 생성 · 4. High-level 행동 선택 · 1~3 · 6~8단계
 
-> **모노레포 통합 (2026-10-08):** 팀원 패키지가 이미 `ros2_ws/src`에 있어 `fetch_team_deps.sh`는 필요 없습니다. 의존성은 루트 `pyproject.toml`. 팔레트 적재 높이는 데크 위 **1.5 m**로 바뀌었습니다 (`config/default.yaml`). 아래 1.35 m 기준 수치는 변경 전 기록입니다.
+> **모노레포 통합 (2026-10-08):** 팀원 패키지가 `ros2_ws/src`에 있습니다(이전 `fetch_team_deps.sh`·`.deps/`는 삭제). 의존성은 루트 `pyproject.toml`. 팔레트 적재 높이는 데크 위 **1.5 m**로 바뀌었습니다 (`config/default.yaml`). 아래 1.35 m 기준 수치는 변경 전 기록입니다.
 
 흐름도 **5. Low-level Placement Planner** 중 앞의 두 단계와 학습·검증용 가상데이터를 담당합니다.
-2026-10-08부터 **4. High-level 행동 선택**(앞 3개 행동 MaskablePPO, CLOSE·REPACK Rule)도 맡았습니다 → [highlevel.md](highlevel.md).
+2026-10-08부터 **4. High-level 행동 선택**(Rule / Look-ahead, CLOSE·REPACK Rule; PPO는 2026-10-09 삭제)도 맡았습니다 → [highlevel.md](highlevel.md).
 같은 날 흐름도의 **미완성 부분(1 인식, 2 State Validator, 3 Supervisor, 6 로봇 실행 가능성, 7 사후 검증, 8 상태 갱신)과 1→8 루프·ROS 2 노드**도 맡았습니다 → [robot_check.md](robot_check.md), [runtime.md](runtime.md).
 결과물은 동한 님 5-③~⑥(`pac_planning`)이 그대로 호출하는 두 콜백과, 그 콜백을 대량으로 돌려 만든 데이터입니다.
 
@@ -29,12 +29,10 @@
 python3.10 -m venv .venv && . .venv/bin/activate          # 또는 uv venv --python 3.10
 pip install "numpy>=1.23,<3" "PyYAML>=6,<7" "pytest>=7,<9"
 pip install "pybullet>=3.2.6,<4" "networkx>=2.8,<4"       # 물리 교차 검증을 돌릴 때만
-scripts/taehyeon/fetch_team_deps.sh                          # 팀원 코드를 .deps/team 에 읽기 전용으로 추출
 python -m pytest -q tests/taehyeon                           # 199 passed (PyTorch 없으면 sb3 테스트 skip)
 scripts/taehyeon/run_validation.sh                           # 모든 검증 리포트 재생성 (약 6~11분, 머신에 따라 다름)
 ```
 
-`fetch_team_deps.sh`는 팀원 브랜치에서 `pac_common`, `pac_planning`, 재성 님 제너레이터와 시뮬레이터를 꺼내 git 제외 폴더(`.deps/`)에 둡니다.
 브랜치가 main에 합쳐진 뒤에는 `ros2_ws/src/pac_common` 같은 원래 위치를 자동으로 우선 사용합니다(`scripts/taehyeon/team_paths.py`).
 
 코드에서 사용하는 방법:
@@ -60,9 +58,9 @@ print(cset.summary(), dict(cset.reason_counts))
 | `├ pallet_model.py` | 스냅샷 기하 모델: 지지 그래프, LBCP, 누적 하중, 압축 heightmap, EMS |
 | `├ loads.py` | 하중 분배(lever/area), McKee 상자 압축강도 |
 | `├ geometry.py` · `config.py` · `reports.py` | 기하 연산, 검증되는 YAML 설정, 결과 자료형 |
-| `ros2_ws/src/pac_highlevel/` | 4번 High-level: 시뮬레이션 세계(버퍼·다중 팔레트), Rule 정책, PARTIAL_REPACK 탐색, NumPy MaskablePPO, Gymnasium 환경 |
+| `ros2_ws/src/pac_highlevel/` | 4번 High-level: 시뮬레이션 세계(버퍼·다중 팔레트), Rule 정책, PARTIAL_REPACK 탐색, Look-ahead 탐색 |
 | `tools/highlevel/` | 4번 학습·평가 스크립트 (`train_highlevel_ppo.py`, `evaluate_highlevel.py`) |
-| `config/taehyeon/highlevel.yaml` | 4번 설정 (버퍼 칸 수, 시간, 보상, PPO) |
+| `config/taehyeon/highlevel.yaml` | 4번 설정 (버퍼 칸 수, 시간, 보상, 규칙) |
 | `tools/virtual_data/` | 가상데이터 생성기, 2D 시각화, 오라클·물리·planner·박스 강도 벤치마크 스크립트 |
 | `config/taehyeon/candidates.yaml` | 5-①/5-② 설정 (모든 기본값의 근거는 [algorithms.md](algorithms.md)) |
 | `config/taehyeon/virtual_data.yaml` | 가상데이터 설정 |
@@ -80,7 +78,7 @@ print(cset.summary(), dict(cset.reason_counts))
 2. [algorithms.md](algorithms.md): 5-①/5-② 알고리즘과 기본값 근거
 3. [virtual_data.md](virtual_data.md): 가상데이터 생성기 사용법과 출력 스키마
 4. [VALIDATION.md](VALIDATION.md): 검증 방법과 결과 (오라클, 물리, planner 연동)
-5. [highlevel.md](highlevel.md): 4번 High-level 행동 선택 (MaskablePPO, Rule, 버퍼, 재적재)
+5. [highlevel.md](highlevel.md): 4번 High-level 행동 선택 (Rule, Look-ahead, 버퍼, 재적재)
 6. [robot_check.md](robot_check.md): 6단계 로봇 실행 가능성 (HDR50-22, 셀 배치 비교)
 7. [runtime.md](runtime.md): 1~3·7~8단계, 1→8 루프, ROS 2 노드
 8. [team_review_2026-10-08.md](team_review_2026-10-08.md): 저장소 전체 검토 (모든 브랜치, 미션 대응표, main 통합 방법)

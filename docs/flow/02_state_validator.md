@@ -10,5 +10,5 @@
 | 재인식 RI 코드 (동한, 제안) | `ros2_ws/src/pac_reinspection/` `ReinspectionValidator`: `StateValidator`를 수정 없이 감싸 재판독·재계량·재촬영(상한·시간 예산)과 RI 코드(`Verdict.notes`)를 더함. 같은 `validate` 시그니처. **`core.py`에는 아직 연결 안 됨.** 규정 `docs/donghan/reinspection_policy.md`, 설정 `config/donghan/reinspection_policy.yaml`(가정치) |
 
 - **테스트**: `tests/taehyeon/test_th_runtime.py` (`test_validator_ok_*`, `test_damage_policy_reject_or_no_load`, `test_spec_mismatch_is_remeasured_*`), `tests/donghan/test_reinspection.py`; 교체 확인 `tools/donghan/reinspection_drop_in.py`
-- **미구현**: 실제 파손 검출기. 확신도는 시뮬레이터 값입니다. 재성 V4.x Gazebo 파이프라인에는 검증기가 연결되어 있지 않습니다.
+- **미구현**: 실제 파손 검출기. 확신도는 시뮬레이터 값입니다. Gazebo V4.x 브리지는 계량값과 카메라 크기를 그대로 쓰며 검증기를 거치지 않습니다(4~6단계는 팀 구현을 씀, [07](07_execution.md)).
 - **연결**: 이상 박스는 [곁가지: Inspection/NG](09_side_flows.md#inspection--ng)

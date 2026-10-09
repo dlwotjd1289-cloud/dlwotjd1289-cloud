@@ -3,18 +3,18 @@
 ## Inspection / NG
 - **코드**: `ActionType.REJECT_NG`, 검증기의 `"INSPECTION"` 경로, `RuntimeCore` `on_result`, `pac_highlevel/world.py` `_reject` (:455)
 - **흐름도**: 파손은 Reject + 관리자 알림, 인지 실패는 Base-view로 Recover, 규격 불일치는 재측정 → 실측값으로 갱신 후 진행
-- **미구현**: Gazebo에 물리 NG 구역이 없습니다(`gazebo_driver`는 박스를 지우기만 함).
+- **미구현**: Gazebo에 물리 NG 구역이 없습니다.
 
 ## Pallet 교체 (T_change)
-- **코드**: `Supervisor.pallet_change` (`SupervisorConfig.pallet_change_time_s`), `pac_highlevel` `TimingConfig.pallet_change_time_s` (둘 다 60 s, 함께 유지)
-- **Gazebo**: `gazebo_driver`가 박스 제거, 재성 `scripts/pallet_swap_v44.py`가 팔레트 반출(가상 AGV, 시험 중)
+- **코드**: `Supervisor.pallet_change`; 시간 T_change는 `config/taehyeon/highlevel.yaml` `timing.pallet_change_time_s` 하나(60 s)를 4단계 모델과 Supervisor가 함께 씀
+- **Gazebo**: 재성 `scripts/pallet_swap_v44.py`가 팔레트 반출(가상 AGV, 시험 중)
 
 ## Buffer 선반 (팔레트 양쪽)
-- **코드**: `BufferConfig` (4칸, 칸별 이동시간), `StateManager.to_buffer`, `world.free_slot`
+- **코드**: `BufferConfig` (4칸, 칸별 이동시간), `pac_common.StateManager.to_buffer`, `world.free_slot`
 - **미구현**: 논리 모델뿐이고 Gazebo에 선반·동작이 없습니다.
 
 ## Partial Repack
-- **코드**: `pac_highlevel/repack.py` `plan_repack` (:47), 이동마다 6단계 검사(`core.py` `next_command`), `Supervisor.repacking`, `gazebo_driver` 재생성
+- **코드**: `pac_highlevel/repack.py` `plan_repack`, 이동마다 6단계 검사(`core.py` `next_command`), `Supervisor.repacking`
 - **흐름도와 차이**: 흐름도는 MCTS + A*인데, 구현은 BFS 기반 소규모 탐색입니다(최대 2회 이동·24노드).
 
 ## 잔여재고 (EXPECTED_UNSEEN)

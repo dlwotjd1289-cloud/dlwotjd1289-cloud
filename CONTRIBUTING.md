@@ -13,7 +13,7 @@
 | 운영 상태·행동 | 흐름도 3~4, 8 | 담당자가 State Manager 단일 소유 | `feature/state-manager` |
 | 후보 생성·필수 제약 | 5-①~② | `pac_planning/candidates/`, `pac_planning/constraints/` | `feature/candidate-hard-mask` |
 | 특징·AI·미래·최종 점수 | **동한, 5-③~⑥** | 이번 PR의 `pac_planning` 핵심 파일 | `feature/donghan-placement-planner` |
-| 로봇·실행·사후 확인 | 흐름도 6~7 | `ros2_ws/src/pac_robot/` | `feature/robot-validation` |
+| 로봇·실행·사후 확인 | 흐름도 6~7 | `ros2_ws/src/pac_robot_check/`, `scripts/*_v44/v45` (Gazebo) | `feature/robot-validation` |
 | 공통 모델·계약 | 한 사람이 수정, 다른 1명 확인 | `pac_common`, `config/default.yaml`, 공통 문서 | `refactor/common-contract` |
 
 ## 이번 최초 통합
@@ -47,7 +47,8 @@
 - 코드 소유자는 내부 구현을 자유롭게 바꿔도 됩니다. 입출력 변경은 먼저 공통 계약 PR로 설명합니다.
 - 각자의 코드 안에 `BoxState`, `SystemState`, `PlacementCandidate`를 다시 정의하지 않습니다.
 - `config/default.yaml`을 각자 덮어쓰지 않고, 공통 키 변경은 영향 모듈을 PR에 기록합니다.
-- 현장 경로·카메라 장치명은 `config/local.yaml`; 이 파일은 Git에서 제외됩니다.
+- 현장 경로·카메라 장치명 같은 기계별 값은 커밋하지 않습니다(`config/local.yaml`은 Git 제외 대상이지만 아직 읽는 코드가 없습니다).
+- 같은 단계를 두 번 구현하지 않습니다. 단계별 단일 구현은 [docs/flow/KNOWN_ISSUES.md](docs/flow/KNOWN_ISSUES.md) 2장.
 - 대형 학습 데이터·실행 로그는 `runs/`에 두고 생성 명령·시드·작은 결과 요약을 커밋합니다.
 - 하루 한 번 이상 최신 main과 맞춥니다. 다른 사람 브랜치를 강제 push하거나 충돌 해결 중 상대 파일을 통째로 버리지 않습니다.
 - `main`은 동료가 바로 설치·테스트할 수 있는 상태로 유지합니다.

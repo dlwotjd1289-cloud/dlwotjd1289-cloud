@@ -4,9 +4,9 @@
 
 | 구현 | 위치 | 사용처 |
 |---|---|---|
-| **런타임 상태 (태현)** | `ros2_ws/src/pac_runtime/pac_runtime/state_manager.py` `StateManager` (:16, 가변): `arrive`, `to_buffer`, `place`, `reconcile` (:109), `cog_and_weight` (:66), `close_pallet`, `confirm_missing`, `snapshot`, `context` | `RuntimeCore` |
-| 공통 상태 (공통 기준 v0.3) | `ros2_ws/src/pac_common/pac_common/state_manager.py` `StateManager` (:63, 불변·단일 작성자): `commit_observation`, `register_plan`, `commit_execution`, `CommitTolerance` (xy 5 mm / z 3 mm / yaw 1°) | `scripts/verify_stack_bullet_v45.py`, 테스트 |
-| V4.4 브리지 상태 (재성) | `scripts/ahead_planner_bridge_v44.py` `cmd_commit` (:244, JSON 파일) | V4.4 Gazebo 사이클 |
+| **State Manager (단일)** | `ros2_ws/src/pac_common/pac_common/state_manager.py` `StateManager`: 런타임 `arrive`, `to_buffer`, `place`(확정 규칙 적용), `reconcile`, `cog_and_weight`, `close_pallet`, `confirm_missing`, `context`; 스냅샷 `commit_observation`, `register_plan`, `commit_execution`; `CommitTolerance` (xy 5 mm / z 3 mm / yaw 1°) | `RuntimeCore`(`StateManager.for_order`), Gazebo V4.4 commit, PyBullet 폐루프 |
 
-- **테스트**: `tests/taehyeon/test_th_runtime.py::test_state_manager_*`, `tests/workcell/test_state_manager.py`
-- **주의**: 상태 관리가 세 갈래입니다. 공통 기준서는 단일 작성자 원칙을 정했지만, 실제 런타임은 `pac_runtime` 것을 씁니다([KNOWN_ISSUES](KNOWN_ISSUES.md)).
+- **확정 규칙**: 측정 pose가 계획과 허용오차 안이면 계획 pose, 밖이면 다시 측정한 pose(`reconcile` 후). `commit_execution`(단발 실행기)은 허용오차 밖이면 FAILED + `SENSOR_UNCERTAIN`.
+- **Inventory**: PLACED 박스도 팔레트를 닫을 때까지 `tracked_boxes`에 status로 남습니다(기준서 11장).
+- **테스트**: `tests/workcell/test_state_manager.py`, `tests/taehyeon/test_th_runtime.py::test_state_manager_*`
+- **삭제한 중복**: `pac_runtime/state_manager.py`, V4.4 브리지의 JSON 직접 기록.
