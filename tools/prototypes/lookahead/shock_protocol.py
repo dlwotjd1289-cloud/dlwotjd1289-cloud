@@ -14,7 +14,7 @@ Same rebuild and return keys as shock_test.shock_test(layout). What changes:
 
 STEP_TEST reproduces shock_test.py, so one code path can be checked against the
 old numbers after merging; REVISED is the proposal. Values marked ASSUMED still
-need a source or a site measurement.
+need a source or a site measurement. compare_shock.py runs both on run_eval pallets.
 """
 import math
 import sys
@@ -24,6 +24,9 @@ from pathlib import Path
 import numpy as np
 import pybullet as p
 
+REPO = Path(__file__).resolve().parents[3]
+# pac_simulation is not in team_paths.bootstrap(); run.sh adds it through PYTHONPATH
+sys.path.insert(0, str(REPO / "ros2_ws/src/pac_simulation"))
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "wave"))
 import physics_check as pc  # noqa: E402  (team simulator imports)
 from pac_candidates.geometry import rotated_dims  # noqa: E402
@@ -180,6 +183,6 @@ def shock_test(layout, proto=REVISED):
         passed = a
     sim.close()
     out.update(passed_g=passed, failed_at_g=failed)
-    out.setdefault("moved", 0)
-    out.setdefault("tilted", 0)
+    for k in ("moved", "shaken", "tilted"):
+        out.setdefault(k, 0)
     return out
