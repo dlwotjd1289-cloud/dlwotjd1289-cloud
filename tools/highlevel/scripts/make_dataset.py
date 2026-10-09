@@ -1,4 +1,4 @@
-"""Generate the evaluation dataset with jaesung's generator (read-only copy in .deps).
+"""Generate the evaluation dataset with jaesung's generator (tools/ahead_dataset_generator).
 
 Defaults reproduce ``dataset80_x40_s8`` used in the reports: 40 scenarios per
 family (240 in total, split 168/36/36), 80 boxes per scenario, seed 20261008.

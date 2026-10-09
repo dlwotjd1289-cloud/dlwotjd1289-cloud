@@ -10,7 +10,7 @@ WORLD="ahead_workcell_v4_2_physical_scale"
 # Box model name: V43_BOX=box_03 bash scripts/run_auto_scale_v43.sh (stacking runs).
 BOX="${V43_BOX:-v43_scale_box_5kg}"
 # Generator boxes: V43_BOX_SDF (model file), V43_BOX_LENGTH [m], V43_EXPECTED_MASS [kg], V43_SPAWN_Z [m].
-BOX_SDF="${V43_BOX_SDF:-$ROOT/test_data/scale_auto_box_5kg_v43.sdf}"
+BOX_SDF="${V43_BOX_SDF:-$ROOT/test_data/workcell/scale_auto_box_5kg_v43.sdf}"
 SPAWN_Z="${V43_SPAWN_Z:-1.05}"
 # Arrival pose at the inlet (generator cycle ARRIVAL_JITTER=1: lateral offset / yaw of the arriving box).
 SPAWN_Y="${V43_SPAWN_Y:-1.20}"

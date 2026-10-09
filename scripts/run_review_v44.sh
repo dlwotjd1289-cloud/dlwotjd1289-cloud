@@ -9,7 +9,7 @@
 set -eo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SCEN="${1:-S0001}"; COUNT="${2:-5}"
-DATASET="${DATASET:-$ROOT/../v44_generated/sample_seed20261009}"
+DATASET="${DATASET:-$ROOT/runs/v44_generated/sample_seed20261009}"
 LOG="$ROOT/logs/v44_review/$(date +%Y%m%d_%H%M%S)"
 mkdir -p "$LOG"
 source /opt/ros/humble/setup.bash

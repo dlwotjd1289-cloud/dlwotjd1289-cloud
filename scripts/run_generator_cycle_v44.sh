@@ -16,7 +16,7 @@ source /opt/ros/humble/setup.bash
 source "$ROOT/ros2_ws/install/setup.bash"
 set -u
 DATASET="$1"; SCEN="$2"; COUNT="${3:-24}"
-CATALOG="${GENERATOR_CONFIG:-$ROOT/../ahead-dataset-generator/config/default.yaml}"
+CATALOG="${GENERATOR_CONFIG:-$ROOT/tools/ahead_dataset_generator/config/default.yaml}"
 ARRIVALS="$DATASET/simulation_observations/$SCEN.jsonl"
 [[ -f "$ARRIVALS" && -f "$CATALOG" ]] || { echo "ERROR: $ARRIVALS or $CATALOG not found" >&2; exit 1; }
 RUN_DIR="$ROOT/logs/v44_generator_cycle/${SCEN}_$(date +%Y%m%d_%H%M%S)"

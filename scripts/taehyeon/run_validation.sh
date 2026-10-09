@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Reproduce every validation report (5-1/5-2, runtime 1->8) in docs/taehyeon/reports/.
 #   scripts/taehyeon/run_validation.sh [SAMPLE_PER_FAMILY]
-# Needs: python3.10 venv with numpy/PyYAML/pytest (+ pybullet, networkx for
-# the physics cross-check) and scripts/taehyeon/fetch_team_deps.sh once.
+# Needs: python3.10 with numpy/PyYAML/Shapely/pytest (+ pybullet, networkx for
+# the physics cross-check), e.g. the docker/run.sh container.
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$ROOT"
@@ -10,9 +10,6 @@ PER_FAMILY="${1:-5}"
 OUT="tools/virtual_data/output/validation"
 REPORTS="docs/taehyeon/reports"
 mkdir -p "$REPORTS"
-
-# Monorepo: teammates' packages are already in ros2_ws/src; fetch only for a split checkout.
-[ -d ros2_ws/src/pac_common ] || [ -f .deps/team/paths.env ] || scripts/taehyeon/fetch_team_deps.sh
 
 echo "== 1. unit / oracle / integration tests"
 python -m pytest -q tests/taehyeon | tee "$REPORTS/pytest.txt"
