@@ -1,7 +1,8 @@
 # PAC2026 AHEAD 작업셀 — 대화 전체 정리 (Claude Code → GPT 인수인계, 2026-10-09)
 
 작성: 재성 담당 작업셀/실행기(executor) 작업을 Claude Code와 진행한 대화 전체 요약.
-코드: GitHub `dlwotjd1289-cloud/dlwotjd1289-cloud`, 브랜치 `jaesung/workcell-v46` (main 기준, PR로 합칠 것).
+코드: GitHub `dlwotjd1289-cloud/dlwotjd1289-cloud`, 브랜치 `jaesung/workcell-v46` (최신 커밋 36e7c45, main 기준, PR로 합칠 것).
+최종 갱신: 2026-10-10 04:15 (Claude Code → GPT 2차 인수인계).
 
 ---
 
@@ -22,6 +23,9 @@
 - 네트워크 설정 변경 금지(원인 확인 전). 다운로드한 ZIP 안의 스크립트 실행 금지.
 - 성능 수치는 실측만 보고(추측 금지).
 - 진행 상황을 짧은 한국어 메시지로 알려주기를 선호.
+- **이미 통과한 부분은 다시 검증하지 말고, 실패한 지점부터** 재현·수정·검증 (복원 스크립트 사용).
+- 시뮬레이션 실행 중 감시에 토큰을 쓰지 말 것: 띄워 두면 사용자가 직접 보고 실패 로그만 전달함.
+- 땜질식 수정보다 체계적 해결 선호 (예: MoveIt 안전마진·간격 기준). 적재 알고리즘 쪽은 바꾸지 않고 실행기(브리지·MoveIt)에서 해결.
 
 ## 3. 환경
 
@@ -60,13 +64,26 @@
 17. **팔레트 구조**: 윗판이 공중에 떠 있던 문제 → 실제 블록형 팔레트(윗판→가로대→블록→바닥판)로 재설계(가제보·브라우저 동일). Bullet 16부품 제한으로 부품이 빠지던 숨은 버그도 수정.
 18. **V4.6 설계(사용자 요청)**: 계량 구간을 컨베이어 맨 앞으로, 컨베이어 연장(연산 시간 확보), 카메라 2대(계량 구간 탑뷰 + 픽업존·적재존 CCTV), 그리퍼 카메라 제거, 버퍼를 픽업존 옆 로봇 쪽에 컨베이어와 평행하게. → 구현 완료, 일부 검증(아래 6절).
 
+19. **GPT 세션 (2026-10-10 새벽)**: PLANNER_ROOT 오류 수정, 7번 박스 흡착 실패 → 그리퍼 목표 박스 ACK 추가, NO_SLOT은 종료코드 20, MoveIt 런치에 wrist_camera 인자.
+20. **Claude 재개 (2026-10-10)**:
+    - 7번 CCTV 확인 실패(FIT_POOR, fit_inside 0.0): 인식기가 합쳐진 이웃 박스 blob을 골랐음 → 박스 선택 제거, 이미 놓인 이웃 박스 윗면을 가리고 맞춤, 보이는 가장자리만 보정. 같은 영상 오프라인 재현 2~6mm.
+    - 9번 하강 충돌: 16.6kg 박스가 7mm 옆 키 큰 박스 모서리에 걸림 → 주변 최고 박스 +3cm부터 저속.
+    - 13번 버퍼 하강 71%: 도달 yaw와 목표 yaw 180° 불일치 → 실제 도달 방향 유지. TF 재시도.
+    - 복원 스크립트로 1~6, 1~8번 상태 복원 후 실패 지점부터 재검증: 7~12번 통과.
+    - 시뮬레이션 속도: 카메라 15→5Hz로 0.28배속 → 1.0배속(1ms 스텝 유지, 더 빠르게는 불가).
+    - 버퍼 테이블 깊이 58→66cm(컨베이어 쪽), NG 바닥 구역(빨간색) 추가, 브라우저 뷰어에 V4.6 배치 반영.
+    - 항목별 짧은 시나리오(`run_scenario_v46.sh buffer_swap|recovery|full`).
+    - 실제 로봇 오차 검토(5~15mm 추정) → **합의: 박스 간격 0.5cm(브리지에서), MoveIt 안전마진 2cm(공중 이동), 마지막 붙이기 구간만 2mm, "비켜서 내리고 붙이기", 무게 기반 속도** — 아직 미구현.
+
 ## 5. 현재 구조 (V4.6)
 
 - 월드: `ros2_ws/src/pac_simulation/worlds/ahead_workcell_v4_6_two_cam.sdf` (`scripts/make_world_v46.py`로 V4.4에서 생성)
   - 컨베이어 6.18 m(롤러 64개, 0.095 m 간격), 계량대 중심 x −5.985(맨 앞), 투입 x −6.635, PICK 스토퍼 x −0.845
   - 카메라 1: `camera_scale_top` 계량대 위 수직 하향 (`/pac/scale_camera/image`, 1280×960)
   - 카메라 2: 기둥 CCTV 3.6 m, hfov 1.6, 1920×1080 (`/pac/top_camera/image`) — PICK·팔레트·버퍼 동시 관측
-  - 버퍼 테이블(2칸, 상판 0.9425 m) 중심 (−1.05, 0.40), 칸 x −1.265 / −0.835
+  - 버퍼 테이블(2칸, 상판 0.9425 m, 깊이 0.66 m) 중심 (−1.05, 0.44), 칸 x −1.265 / −0.835, 칸당 ≤0.37×0.64 m
+  - NG 구역(파손·찌그러짐, 빨간 바닥) x −1.45~−0.65, y −0.60~0.05
+  - 카메라 갱신 5Hz
   - 팔레트: 블록형 1.1×1.1×0.15 m (임시 치수)
 - 런치: `hdr50_workcell_v4_6.launch.py` (그리퍼 카메라 없음 `wrist_camera:=false`), MoveIt은 `hdr50_moveit_v44.launch.py`
 - 실행 흐름(`scripts/run_generator_cycle_v44.sh`, `PAC_LAYOUT=v46`):
@@ -78,43 +95,47 @@
 - 주요 파일: `scripts/moveit_pick_place_v44.py`(로봇 실행·복구), `scripts/box_perception_v44.py`(카메라 인식, 팔레트 위 박스는 SKU 크기 사각형 맞춤), `scripts/ahead_planner_bridge_v44.py`(플래너 연결), `scripts/scale_cycle_core_v43.py`·`run_auto_scale_v43.*`(계량), `scripts/suction_gripper_node.py`(흡착), `scripts/run_review_v44.sh`/`stop_review_v44.sh`(원클릭 실행/종료)
 - 상세 기록: `docs/jaesung/README_V44.md`
 
-## 6. 검증 상태
+## 6. 검증 상태 (2026-10-10 04:15)
 
 | 항목 | 상태 |
 |---|---|
-| V4.4 전체 흐름, 파이프라인, 실패 복구, 비뚤게 들어오는 박스, 팔레트 통일 | 검증됨 |
-| 버퍼에 놓기 (V4.4, 칸 0) | 검증됨 (0.7 mm) |
-| V4.6 월드 생성, 카메라 2대 영상, 그리퍼 카메라 제거 | 검증됨 |
-| V4.6 계량→카메라1 인식→이동 중 계획→1번 박스 집기·이송·내려놓기 | 검증됨 (재부팅 직전까지) |
-| V4.6 내려놓은 뒤 CCTV 확인, 버퍼 놓기/꺼내기, 팔레트 교체 | **미검증** (재부팅으로 중단) |
-| 대기 자세의 로봇 팔이 CCTV에서 버퍼를 가리는지 | **미검증** |
-| 단위 테스트 | 473 통과 (main 최신 기준) |
+| 계량·카메라1·이동 중 계획·1~12번 적재·CCTV 확인 | 통과 (복원 후 7~12 재검증 포함) |
+| 7번 흡착, 7번 CCTV 확인, 9번 하강 | 수정 후 통과 |
+| 버퍼 놓기 (13번, 새 깊이 0.66m) | yaw 수정 직후 중단 → **재검증 필요** |
+| 버퍼 꺼내기, 팔레트 교체, 대기 자세 팔의 CCTV 가림 | **미검증** |
+| V4.6 실패 복구 (다시 놓기·다시 집기) | **미검증** (V4.4에서는 통과) |
+| 실제 높이(1.5/1.6m) 전체 24개 | **미검증** (마지막 1회) |
+| 단위 테스트 | 74 통과 (tests/workcell) |
 
-## 7. 직접 검증하는 방법
+## 7. 실행 / 검증 방법
 
 ```bash
 cd ~/AHEAD/pac2026_integrated
-# 기본(박스 5개, 10~15분)
-LAYOUT=v46 bash scripts/run_review_v44.sh S0001 5
-# 버퍼·팔레트 교체(시험용 높이 0.30 m, 18개, 약 1시간)
-LAYOUT=v46 PAC_STACK_NOMINAL_M=0.30 PAC_STACK_MAX_M=0.35 bash scripts/run_review_v44.sh S0001 18
-# 실패 복구
-LAYOUT=v46 PAC_FAULT=place_offset:box_01,suction_once:box_02 bash scripts/run_review_v44.sh S0001 2
-# 종료
-bash scripts/stop_review_v44.sh
+bash scripts/run_scenario_v46.sh buffer_swap   # 12개 복원 + 4개: 버퍼0 → 빈자리 채움 → 버퍼1 → 팔레트 교체 → 버퍼 꺼내기 ×2 (~10-15분)
+bash scripts/run_scenario_v46.sh recovery      # 4cm 어긋나게 놓기 → 다시 놓기, 흡착 실패 → 다시 집기 (~5분)
+bash scripts/run_scenario_v46.sh full          # S0001 24개, 실제 높이 (~30-50분)
+bash scripts/stop_review_v44.sh                # 종료
 ```
-- 가제보 창 없이: 앞에 `GZ_GUI=0`. 브라우저 자동 열기 끄기: `NO_BROWSER=1`. 브라우저 뷰어: http://127.0.0.1:4173
-- 성공 표시: `PERCEPTION OK (scale)`, `(계획 완료, 박스 PICK 도착 대기)`, `MOVEIT PICK&PLACE PASS`, `버퍼 테이블 칸`, `PALLET SWAP OK`, 마지막 `GENERATOR CYCLE PASS`
-- 실패 표시: `CYCLE FAIL at box_NN (log …)` → 해당 로그 확인
-- 로그: `logs/v44_generator_cycle/S0001_날짜_시간/` (박스별 `_v43.log` 계량, `_moveit_*.log` 로봇, `buffer.json`, `pallet_N_final_state.json`)
+- 실패 지점부터 이어서: `LAYOUT=v46 RESTORE_FROM=<이전 run 폴더> PAC_STACK_NOMINAL_M=0.45 PAC_STACK_MAX_M=0.45 bash scripts/run_review_v44.sh <시나리오> <개수>`
+  (복원 폴더에는 planner_state.json, box_NN_placed_pallet.json, boxes/box_NN.sdf 필요)
+- 화면: Gazebo, RViz, 브라우저 http://127.0.0.1:4173 (Gazebo에서 커밋될 때마다 HTTP로 동기화되어 브라우저의 PyBullet 로봇이 재현. ROS 토픽 직접 구독 아님)
+- 성공 표시: `MOVEIT PICK&PLACE PASS`, `버퍼 테이블 칸`, `버퍼에서 집어 팔레트에 적재`, `PALLET SWAP OK`, `GENERATOR CYCLE PASS`
+- 실패 표시: `CYCLE FAIL at box_NN (log …)`
 - 빌드(처음 한 번): `cd ros2_ws && colcon build --symlink-install --packages-up-to pac_bringup pac_simulation hdr50_22_moveit_config hdr_simulation_gz`
+  (현대 서브모듈이 비어 있으면 scaffold의 같은 커밋에서 로컬 초기화)
+- 월드 재생성: `python3 scripts/make_world_v46.py` (V4.4 월드에서 V4.6 생성)
 
-## 8. 남은 작업 / 알려진 한계
+## 8. 다음 할 일 (우선순위)
 
-1. V4.6 검증 1회(위 "버퍼·팔레트 교체" 명령) — 미검증 항목 확인.
-2. 정답값 대신 센서로 바꾸기: 컨베이어 정지(광센서), 흡착 확인(진공 센서), 기적재 박스 밀림(카메라).
-3. 흡착 힘 한계를 물리적으로 반영(현재는 무게 대 정격 비교만, DetachableJoint는 무한 강도).
-4. 속도: 박스당 약 55초(실제 라인은 약 10초) — 로봇 속도/동작 순서 다듬기.
-5. 카메라 인식은 박스 색 기반(시뮬레이션용) — 인쇄·테이프가 있는 실제 박스용 인식은 추후.
-6. 팔레트·흡착판 실제 사양이 나오면 설정 한 곳에서 교체(가제보 생성기·`config/ahead_simulator.yaml`·그리퍼 정격).
-7. 플래너 브리지는 아직 `~/AHEAD/planner_donghan_7860043`(저장소 밖)을 사용 — 통합 저장소의 pac_planning으로 옮길지 팀과 결정.
+1. **buffer_swap 시나리오 검증** — 13번 버퍼 놓기부터. 실패 시 해당 박스 로그만 분석.
+2. **합의된 설계 구현** (적재 알고리즘은 변경하지 않음):
+   - 브리지 `PLACE_CLEARANCE_M` 0.02 → 0.005 (박스 간격 약 5mm), 놓인 박스 반영도 같은 기준
+   - MoveIt 장애물 안전마진(padding) 2cm, 마지막 붙이기 구간만 약 2mm
+   - "비켜서 내리고 붙이기": 이웃 반대쪽으로 1.5cm 비켜 수직 하강 → 바닥 1cm 위에서 이웃 쪽으로 저속 수평 이동 → 해제
+   - 들고 있는 박스 무게에 따른 속도 자동 조절
+   - 경로가 안 나오면 실행 불가로 보고
+3. `recovery`, 마지막에 `full` 1회.
+4. NG 판정 로직(파손·찌그러짐: 계량 이상, 카메라 형상) — 구역만 있고 판정 없음.
+5. (선택) Gazebo 실제 동작을 브라우저에 실시간 미러링하는 브리지 (/joint_states, 박스 포즈 → 뷰어 서버).
+6. 실제 로봇 전환 준비: HDR50-22 데이터시트, 카메라·그리퍼 선정, 셀 보정(카메라·TCP), 오차 측정 후 간격·안전마진 확정, 정답값 → 센서(광센서·진공센서·카메라).
+7. 커밋/PR은 사용자 요청 시에만.
