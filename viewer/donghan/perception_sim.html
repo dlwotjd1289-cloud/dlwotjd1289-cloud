@@ -209,12 +209,18 @@ const CORE = (() => {
   // ---------- cell layout expected to change: buffer tables and the NG area ----------
   // Change these positions HERE ONLY, or try new ones with ?buffer=x,y;x,y&ng=x,y.
   // checkLayout() reports robot-reach and overlap problems (shown in the UI and by check_core.js).
+  // 2026-10-10 plan (재성, Gazebo update pending): the buffer moves to the conveyor end beside the
+  // pick zone, and the NG area sits right next to it, about 1 m from the conveyor. Coordinates are
+  // ASSUMED until the world file is pushed; V4.4 on GitHub still has the buffer at (1.235 / 1.665, -0.55).
   const LAYOUT = {
-    source: "V4.4 world on GitHub (2026-10-09); 재성's moved buffer not pushed yet",
+    source: "planned layout 2026-10-10 (assumed coordinates; Gazebo world not updated yet)",
     robot: { base: [0, 0], pedestalRadius: 0.35, minReachM: 0.5, reachM: 2.2 },   // reach ASSUMED from the model name
-    buffer: { bays: [[1.235, -0.55], [1.665, -0.55]], topZ: 0.9425, table: [0.40, 0.58], bayShort: 0.37, bayLong: 0.56 },
-    // NG: boxes routed to INSPECTION are put down here by the robot (option 가). Position ASSUMED.
-    ng: { center: [-1.75, 0.25], pad: [0.9, 0.7], cols: 3, rows: 2, pitch: [0.28, 0.34], layerH: 0.45, maxLayers: 2 },
+    clearanceM: 0.05,                                                              // min gap between floor items
+    // V4.4 two-bay buffer table (bays 0.43 m apart, 0.40 x 0.58 m each, top 0.9425 m) moved next to the conveyor end
+    buffer: { bays: [[-1.965, 0.25], [-1.535, 0.25]], topZ: 0.9425, table: [0.40, 0.58], bayShort: 0.37, bayLong: 0.56 },
+    // NG: boxes routed to INSPECTION are put down here by the robot (option 가), on the far side of the
+    // buffer: pad edge ~0.9 m and centre ~1.3 m from the conveyor edge.
+    ng: { center: [-1.75, -0.45], pad: [0.9, 0.7], cols: 3, rows: 2, pitch: [0.28, 0.34], layerH: 0.45, maxLayers: 2 },
   };
   function ngSlot(k) {             // world [x, y, z of the box bottom] of the k-th NG box
     const n = LAYOUT.ng, col = k % n.cols, row = Math.floor(k / n.cols) % n.rows, lay = Math.floor(k / (n.cols * n.rows));
@@ -223,11 +229,13 @@ const CORE = (() => {
   function checkLayout() {
     const issues = [], L = LAYOUT, [bx, by] = L.robot.base, reach = ([x, y]) => Math.hypot(x - bx, y - by);
     const rect = (c, s) => [c[0] - s[0] / 2, c[0] + s[0] / 2, c[1] - s[1] / 2, c[1] + s[1] / 2];
-    const overlap = (a, b) => a[0] < b[1] && b[0] < a[1] && a[2] < b[3] && b[2] < a[3];
+    const g = L.clearanceM / 2, overlap = (a, b) => a[0] - g < b[1] + g && b[0] - g < a[1] + g && a[2] - g < b[3] + g && b[2] - g < a[3] + g;
     const cv = WC.conveyor, p = WC.pallet;
     const fixed = [["팔레트", rect([p.cx, p.cy], [p.size, p.size])], ["컨베이어", [cv.x0, cv.x1, cv.y - cv.halfW - 0.05, cv.y + cv.halfW + 0.05]],
-                   ["로봇 받침대", rect(L.robot.base, [2 * L.robot.pedestalRadius, 2 * L.robot.pedestalRadius])]];
-    const tables = L.buffer.bays.map((c, i) => [`버퍼 ${i + 1}`, rect(c, L.buffer.table)]);
+                   ["로봇 받침대", rect(L.robot.base, [2 * L.robot.pedestalRadius, 2 * L.robot.pedestalRadius])],
+                   ["PICK 카메라 기둥", rect([WC.camera.pos[0], 1.95], [0.24, 0.24])], ["초입 카메라 기둥", rect([WC.inletCamera.pos[0], 1.95], [0.24, 0.24])]];
+    const bays = L.buffer.bays.map(c => rect(c, L.buffer.table));   // one table with several bays
+    const tables = [["버퍼 테이블", [Math.min(...bays.map(r => r[0])), Math.max(...bays.map(r => r[1])), Math.min(...bays.map(r => r[2])), Math.max(...bays.map(r => r[3]))]]];
     const ngPad = ["NG 구역", rect(L.ng.center, L.ng.pad)];
     const n = L.ng.cols * L.ng.rows * L.ng.maxLayers;
     for (let k = 0; k < n; k++) {
@@ -238,7 +246,7 @@ const CORE = (() => {
     L.buffer.bays.forEach((c, i) => { const d = reach(c); if (d > L.robot.reachM) issues.push(`버퍼 ${i + 1}: 로봇 도달 범위 밖 (${d.toFixed(2)} m)`); });
     const movable = [ngPad, ...tables];
     movable.forEach(([a, ra], i) => {
-      for (const [b, rb] of fixed.concat(movable.slice(i + 1))) if (overlap(ra, rb)) issues.push(`${a}·${b} 겹침`);
+      for (const [b, rb] of fixed.concat(movable.slice(i + 1))) if (overlap(ra, rb)) issues.push(`${a}·${b} 겹침 또는 간격 < ${L.clearanceM * 100} cm`);
     });
     return issues;
   }
@@ -824,7 +832,7 @@ const CORE = (() => {
     }
     _task(type, p) {
       const legs = [], go = (to, dur, extra = {}) => legs.push({ to, dur, t: 0, ...extra }), top = WC.conveyor.top;
-      const labels = { PLACE: "PICK → 팔레트", BUFFER: "PICK → 버퍼", RETRIEVE: "버퍼 → 팔레트", REJECT: "PICK → Hold/NG", CHANGE: "팔레트 교체 대기" };
+      const labels = { PLACE: "PICK → 팔레트", BUFFER: "PICK → 버퍼", RETRIEVE: "버퍼 → 팔레트", REJECT: "PICK → NG 구역", CHANGE: "팔레트 교체 대기" };
       if (type === "CHANGE") {
         this.counters.palletChange++;
         this.log(`팔레트 ${this.palletNo} 마감 (적재율 ${(this.pallet.fill() * 100).toFixed(0)}%) → 교체 ${this.flow.palletChangeS} s`, "bad");
@@ -859,7 +867,7 @@ const CORE = (() => {
             c.res.disposition = `버퍼 ${p.bay + 1}`; this.counters.bufferPut++; this.robot.carried = null; };
         } else {
           dest = [...ngSlot(this.hold.length), 0];
-          release = () => { const c = this.robot.carried; this.hold.push({ fb: c.fb, x: dest[0], y: dest[1], z: dest[2] }); c.res.disposition = "Hold/NG"; this.robot.carried = null; };
+          release = () => { const c = this.robot.carried; this.hold.push({ fb: c.fb, x: dest[0], y: dest[1], z: dest[2] }); c.res.disposition = "NG 구역"; this.robot.carried = null; };
         }
         const safe = Math.max(1.75, dest[2] + h + 0.35, fromZ + 0.3);
         go([fromXY[0], fromXY[1], safe], 1.2);
@@ -902,7 +910,7 @@ const CORE = (() => {
         throughput: R.length / T * 60, stopClassify: this.stopTime.classify / T, stopPlan: this.stopTime.plan / T, robotUtil: this.robot.busyTime / T,
         pallets: pallets.length, fill: pallets.length ? pallets.reduce((a, p) => a + p.fill, 0) / pallets.length : 0,
         wrong: R.filter(r => !r.correct).length, weightErr: R.filter(r => r.weight != null && Math.abs(r.weight - r.fb.weight_kg) / r.fb.weight_kg > 0.05).length,
-        placed: R.filter(r => r.disposition.startsWith("팔레트")).length, held: R.filter(r => r.disposition === "Hold/NG").length, ...this.counters,
+        placed: R.filter(r => r.disposition.startsWith("팔레트")).length, held: R.filter(r => r.disposition === "NG 구역").length, ...this.counters,
       };
     }
   }
@@ -1024,10 +1032,9 @@ let convLabel, inletLabel, scaleLabel;
     for (const [sx, sy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) { const leg = boxMesh(0.04, 0.04, legH, 0x34404a); placeBox(leg, bx + sx * (tw / 2 - 0.03), by + sy * (tl / 2 - 0.03), 0, legH); scene.add(leg); }
   });
   const bmx = B.bays.reduce((a, b) => a + b[0], 0) / B.bays.length, bmy = B.bays.reduce((a, b) => a + b[1], 0) / B.bays.length;
-  label3d(`버퍼 테이블 (${B.bays.length}칸)`, bmx, bmy, B.topZ + 0.4, "#b69cff");
+  label3d(`버퍼 ${B.bays.length}칸 (컨베이어 끝, 위치 가정)`, bmx, bmy, B.topZ + 0.8, "#b69cff");
   const N = CORE.LAYOUT.ng, ng = boxMesh(N.pad[0], N.pad[1], 0.02, 0x5a2a2a, { emissive: 0x220808 }); placeBox(ng, N.center[0], N.center[1], 0, 0.02); scene.add(ng);
-  label3d("NG 구역 (로봇 적치, 위치 가정)", N.center[0], N.center[1] - N.pad[1] / 2 - 0.15, 0.45, "#ff6b6b");
-})();
+  label3d("NG 구역 (로봇 적치, 위치 가정)", N.center[0], N.center[1] - N.pad[1] / 2 - 0.15, 0.45, "#ff6b6b");})();
 
 const arm = (() => {
   const g = new THREE.Group(), shoulderZ = WC.robot.pedestal + 0.35, L1 = 1.05, L2 = 1.15;
@@ -1247,7 +1254,7 @@ function drawDepth(src) {
 function renderSummary() {
   const S = UI.sim, s = S.summary(), R = S.results;
   const items = [
-    ["판정", `${R.length} / ${S.stream.length}`, ""], ["팔레트 적재", s.placed, "ok"], ["Hold/NG", s.held, "bad"],
+    ["판정", `${R.length} / ${S.stream.length}`, ""], ["팔레트 적재", s.placed, "ok"], ["NG 구역", s.held, "bad"],
     ["판정 오류", s.wrong, s.wrong ? "warn" : "ok"], ["함께 계량", s.combinedWeigh, s.combinedWeigh ? "bad" : "ok"], ["갭 생성", s.gapping, "info"],
     ["버퍼 보관/인출", `${s.bufferPut}/${s.bufferGet}`, "vio"], ["팔레트 (마감)", `${s.pallets} (${s.palletChange})`, ""], ["평균 적재율", `${(s.fill * 100).toFixed(0)}%`, ""],
     ["처리량 (박스/분)", s.throughput.toFixed(2), ""], ["정지: 분류/적재", `${(s.stopClassify * 100).toFixed(1)}% / ${(s.stopPlan * 100).toFixed(1)}%`, "warn"], ["로봇 가동률", `${(s.robotUtil * 100).toFixed(0)}%`, ""],
