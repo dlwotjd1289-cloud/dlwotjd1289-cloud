@@ -38,6 +38,7 @@ from rclpy.signals import SignalHandlerOptions
 from shape_msgs.msg import SolidPrimitive
 from sensor_msgs.msg import JointState
 from std_msgs.msg import Bool, String
+from vertical_descent_v46 import BOX_FACE_MARGIN_M, VerticalDescent, error_metrics, quaternion_matrix
 
 GROUP = "hdr_manipulator"
 TCP = "suction_tcp"
@@ -212,7 +213,12 @@ def box_object(name, center, size, quat=(0.0, 0.0, 0.0, 1.0), op=CollisionObject
     co.id = name
     co.operation = op
     if op == CollisionObject.ADD:
-        co.primitives = [SolidPrimitive(type=SolidPrimitive.BOX, dimensions=list(size))]
+        # Only cartons get lateral padding; retain true height for support/contact.
+        dims = list(size)
+        if name == BOX_ID or name.startswith("placed_"):
+            dims[0] += 2 * BOX_FACE_MARGIN_M
+            dims[1] += 2 * BOX_FACE_MARGIN_M
+        co.primitives = [SolidPrimitive(type=SolidPrimitive.BOX, dimensions=dims)]
         p = Pose()
         p.position.x, p.position.y, p.position.z = (float(v) for v in center)
         p.orientation = Quaternion(x=quat[0], y=quat[1], z=quat[2], w=quat[3])
@@ -253,6 +259,7 @@ class MoveItPickPlace(Node):
                                  lambda m: self.joints.update(zip(m.name, m.position)), 10)
         self.tf_buffer = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
+        self.vertical = VerticalDescent(self, Fatal)
 
     def on_percept(self, m, cam):
         p, o = m.pose.position, m.pose.orientation
@@ -297,9 +304,11 @@ class MoveItPickPlace(Node):
         self.active = handle
         res = handle.get_result_async()
         rclpy.spin_until_future_complete(self, res, timeout_sec=timeout)
-        self.active = None
         if res.result() is None:
-            raise Failure(f"{what}: no result within {timeout:.0f} s")
+            rclpy.spin_until_future_complete(self, handle.cancel_goal_async(), timeout_sec=2.0)
+            self.active = None
+            raise Failure(f"{what}: no result within {timeout:.0f} s; cancellation requested")
+        self.active = None
         code = res.result().result.error_code.val
         if code != MoveItErrorCodes.SUCCESS:
             raise Failure(f"{what}: MoveIt error_code {code}")
@@ -438,7 +447,7 @@ class MoveItPickPlace(Node):
 
     def record_cartesian_failure(self, req, res, what):
         """Read-only evidence: no alternate trajectory execution or collision relaxation."""
-        directory = os.environ.get("PAC_DIAGNOSTIC_DIR")
+        directory = os.environ.get("PAC_DIAGNOSTIC_DIR", os.path.join(os.path.dirname(__file__), "../logs/vertical_v46"))
         if not directory:
             return
         import re
@@ -479,7 +488,8 @@ class MoveItPickPlace(Node):
         except Exception as exc:
             print(f"    [diagnostic] Could not save failure evidence: {exc}", flush=True)
 
-    def line(self, xyz, yaw, what, avoid_collisions=True, speed=CART_SPEED, _retry=False):
+    def line(self, xyz, yaw, what, avoid_collisions=True, speed=CART_SPEED, _retry=False,
+             orientation=None, vertical_guard=None):
         req = GetCartesianPath.Request()
         req.header.frame_id = FRAME
         req.start_state.is_diff = True
@@ -487,18 +497,19 @@ class MoveItPickPlace(Node):
         req.link_name = TCP
         p = Pose()
         p.position.x, p.position.y, p.position.z = (float(v) for v in xyz)
-        p.orientation = tool_down_quat(yaw)
+        p.orientation = orientation if orientation is not None else tool_down_quat(yaw)
         req.waypoints = [p]
-        req.max_step = 0.005
+        req.max_step = 0.002 if vertical_guard is not None else 0.005
         req.jump_threshold = 0.0
         req.avoid_collisions = avoid_collisions
         req.max_velocity_scaling_factor = speed
         req.max_acceleration_scaling_factor = speed
         res = self.call(self.cart_cli, req)
-        if res.fraction < 0.999:
+        if res.error_code.val != MoveItErrorCodes.SUCCESS or res.fraction < 0.999:
             self.record_cartesian_failure(req, res, what)
             raise Failure(f"{what}: Cartesian path only {res.fraction * 100:.0f}% feasible")
         traj = res.solution
+        self.vertical.record_alignment_plan(traj, what)  # read-only alignment evidence
         # joint_trajectory_controller rejects a goal whose time_from_start is not strictly
         # increasing. A near-zero first segment (cup still touching the released box) produced
         # two points at t=0 once; drop such duplicates before sending.
@@ -509,13 +520,26 @@ class MoveItPickPlace(Node):
                 kept.append(pt)
                 last_t = t
         if len(kept) < 2:
+            # A 100% Cartesian fraction does not prove an executable timed path.
+            # Keep the rejection, but retain the raw request/response this time.
+            times = [pt.time_from_start.sec + pt.time_from_start.nanosec * 1e-9 for pt in pts]
+            print(f"    [trajectory] {what}: raw={len(pts)}, unique_times={len(kept)}, "
+                  f"time_from_start={times}, fraction={res.fraction:.6f}", flush=True)
+            self.record_cartesian_failure(req, res, what + "_short_timed_trajectory")
+            if vertical_guard is not None:
+                raise Failure(f"{what}: empty/short Cartesian trajectory; no descent")
             print(f"    - {what}: already there (no motion needed)", flush=True)
             return
         traj.joint_trajectory.points = kept
+        if vertical_guard is not None:
+            vertical_guard.audit(traj, what)
         g = ExecuteTrajectory.Goal(trajectory=traj)
         try:
-            self.run_action(self.exec_ac, g, 60.0, what)
+            self.run_action(self.exec_ac, g, 120.0 if vertical_guard is not None else 60.0, what)
         except Failure as exc:
+            if vertical_guard is not None:
+                vertical_guard.finish(False)
+                raise
             if f"error_code {MoveItErrorCodes.CONTROL_FAILED}" not in str(exc) or _retry:
                 raise
             # Controller abort: recompute the straight line from where the arm stopped, once.
@@ -523,6 +547,13 @@ class MoveItPickPlace(Node):
             self.recoveries.append(f"{what}: controller abort, line recomputed")
             self.spin_for(1.0)
             self.line(xyz, yaw, what + " (retry)", avoid_collisions, speed, _retry=True)
+        except BaseException:
+            if vertical_guard is not None:
+                vertical_guard.finish(False)
+            raise
+        else:
+            if vertical_guard is not None:
+                vertical_guard.finish(True)
 
     # ---- cycle -------------------------------------------------------------
     def wrist_look(self, box, size, xy, yaw, top, base_z=None, timeout=10.0, move=True):
@@ -549,9 +580,18 @@ class MoveItPickPlace(Node):
         """Approach the box top, press, vacuum on, wait GRIPPED, attach it in the planning scene,
         lift APPROACH_M straight up and check that the box followed."""
         self.apply_scene(objects=[box_object(BOX_ID, b, size, q)])
-        self.line((b[0], b[1], top + APPROACH_M), yaw, "lower to approach height")
-        self.line((b[0], b[1], top + CHECKED_GAP_M), yaw, "descend to box (collision-checked)", speed=CONTACT_SPEED)
-        self.line((b[0], b[1], top - PRESS_M), yaw, "press cup on box", avoid_collisions=False, speed=CONTACT_SPEED)
+        self.vertical.prepare(b[:2], yaw, size, "pickup alignment")
+        # V4.6: run() already moved to top + APPROACH_M before grip().
+        # Alignment holds the attained Z. Do not command a second ~1 mm approach
+        # correction: Humble timing may collapse it to a one-point trajectory.
+        # The following guarded, collision-checked descent covers the whole line
+        # from the current aligned height to CHECKED_GAP_M. No tolerance change.
+        if not NO_WRIST:
+            self.vertical.descend(top + APPROACH_M, yaw, "lower to approach height")
+        else:
+            print("    [pickup] duplicate approach waypoint omitted; next: guarded descent to box", flush=True)
+        self.vertical.descend(top + CHECKED_GAP_M, yaw, "descend to box (collision-checked)")
+        self.vertical.descend(top - PRESS_M, yaw, "press cup on box", avoid_collisions=False)
         gate = os.environ.get("SPAWN_GATE") if at_pick else None
         if gate and not os.path.exists(gate):
             # The cycle runner creates the next box at the inlet now: the gripper's DetachableJoint
@@ -815,7 +855,8 @@ class MoveItPickPlace(Node):
             # also had to turn the wrist 180 deg (63-71 % feasible; box_13 to the buffer, 2026-10-10).
             ry = self.tcp_yaw()
             if ry is not None:
-                place_yaw = ry
+                # Pick only the equivalent 180-degree branch; correct residual yaw ABOVE the slot.
+                place_yaw += round((ry - place_yaw) / math.pi) * math.pi
         else:
             self.line((place[0], place[1], transfer_z), place_yaw, "level transfer above slot")
         self.check_carried(size, "transfer")
@@ -838,10 +879,11 @@ class MoveItPickPlace(Node):
                             if seg_rect_dist(target[:2], target[:2], p_[0][:2], psz[n], yaw_of(p_[1]))
                             <= math.hypot(size[0], size[1]) / 2 + 0.10])
             slow_from = min(transfer_z, max(place_top + PLACE_GAP_M + SLOW_LOWER_M, near_top + 0.03 + size[2]))
-            self.line((target[0], target[1], slow_from), place_yaw, "lower above slot")
+            # Finish horizontal/orientation correction above neighbours, not during descent.
+            self.vertical.prepare(target[:2], place_yaw, size, "placement alignment")
+            self.vertical.descend(slow_from, place_yaw, "lower above slot")
             self.check_carried(size, "lowering")
-            self.line((target[0], target[1], place_top + PLACE_GAP_M), place_yaw, "lower into slot (collision-checked)",
-                      speed=CONTACT_SPEED)
+            self.vertical.descend(place_top + PLACE_GAP_M, place_yaw, "lower into slot (collision-checked)")
             self.set_vacuum(False)
             self.wait(lambda: self.suction == "OFF", 5, "suction OFF")
             self.spin_for(1.0)
@@ -911,6 +953,18 @@ class MoveItPickPlace(Node):
         err_z = pb[2] - place[2]
         tilt = math.degrees(2 * math.asin(min(1.0, math.hypot(pq[0], pq[1]))))
         yaw_err = math.degrees((yaw_of(pq) - place_yaw + math.pi / 2) % math.pi - math.pi / 2)
+        actual_box, nominal_box = np.eye(4), np.eye(4)
+        actual_box[:3, 3], nominal_box[:3, 3] = pb, place
+        actual_box[:3, :3] = quaternion_matrix(pq)
+        final_edges = []
+        for equivalent_yaw in (place_yaw, place_yaw + math.pi):  # rectangular footprint symmetry
+            nominal_box[:3, :3] = quaternion_matrix((0.0, 0.0, math.sin(equivalent_yaw / 2), math.cos(equivalent_yaw / 2)))
+            final_edges.append(error_metrics(actual_box, nominal_box, float(np.linalg.norm(size)) / 2)["edge_bound_m"])
+        final_edge = min(final_edges)
+        print(f"    [vertical] settled box edge bound vs target: {final_edge * 1000:.2f} mm (limit 2.0 mm)", flush=True)
+        if final_edge > BOX_FACE_MARGIN_M:
+            raise Fatal(f"8 mm gap validation failed: settled box edge deviation {final_edge * 1000:.2f} mm > 2 mm; "
+                        "simulation ground-truth check, not a camera accuracy claim")
         snap = gz_world_poses()
         moved = {n: float(np.linalg.norm(gz_model_pose(n, snap)[0] - p_[0])) for n, p_ in before.items()}
         worst = max(moved.values(), default=0.0)
@@ -1006,6 +1060,7 @@ def main():
     ap.add_argument("--placed", nargs="*", default=[], help="names of boxes already on the pallet")
     ap.add_argument("--size", type=float, nargs=3, default=list(BOX_SIZE), metavar=("X", "Y", "Z"),
                     help="box size [m] (generator SKU)")
+    ap.add_argument("--catalog", help="generator catalog: physical carton dimensions, before planner padding")
     ap.add_argument("--placed-state", help="planner state JSON (placed box ids and sizes)")
     ap.add_argument("--slot-yaw", type=float, default=None,
                     help="target box yaw [rad] (default: keep the picked yaw)")
@@ -1025,9 +1080,18 @@ def main():
     signal.signal(signal.SIGINT, _raise)
     signal.signal(signal.SIGTERM, _raise)
     placed, placed_sizes = list(args.placed), {}
+    physical_catalog = {}
+    if args.catalog:
+        import yaml
+        with open(args.catalog) as f:
+            physical_catalog = {s["sku_id"]: s["size_m"] for s in yaml.safe_load(f)["sku_catalog"]}
     if args.placed_state and os.path.exists(args.placed_state):   # absent before the first commit
         for pb in json.load(open(args.placed_state)).get("placed", []):
-            placed_sizes[pb["box_id"]] = (pb["size"]["x"], pb["size"]["y"], pb["size"]["z"])
+            # Old fixture states contain +20 mm PLAN sizes. Prefer SKU physical dimensions.
+            physical = physical_catalog.get(pb["sku_id"], pb.get("physical_size"))
+            if physical is None:
+                raise SystemExit("physical placed-box dimensions missing; supply --catalog (do not double-pad planner sizes)")
+            placed_sizes[pb["box_id"]] = tuple(float(physical[k]) for k in ("x", "y", "z"))
             if pb["box_id"] not in placed:
                 placed.append(pb["box_id"])
     if args.extra_placed_json and os.path.exists(args.extra_placed_json):

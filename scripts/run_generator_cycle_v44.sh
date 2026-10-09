@@ -239,7 +239,7 @@ robot_move() {   # BOX SX SY SZ MASS TAG -- extra moveit args. Pipelining only f
     fi
   fi
   SPAWN_GATE="$GATE" PERCEPTION_EXTERNAL=1 setsid bash "$ROOT/scripts/run_moveit_pick_place_v44.sh" --box "$BOX" \
-    --size "$SX" "$SY" "$SZ" --mass "$MASS" --gripper "$GRIPPER" --pose-source camera --placed-state "$STATE" \
+    --size "$SX" "$SY" "$SZ" --mass "$MASS" --gripper "$GRIPPER" --pose-source camera --placed-state "$STATE" --catalog "$CATALOG" \
     --extra-placed-json "$RUN_DIR/buffer_obstacles.json" --result-json "$RUN_DIR/${BOX}_placed_${TAG}.json" "$@" \
     > "$LOG" 2>&1 < /dev/null &
   local MOVEIT_PID=$!
