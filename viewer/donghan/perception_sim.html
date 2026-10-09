@@ -1,0 +1,1252 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AHEAD 인식·흐름 시뮬레이터 · Gazebo V4.4 작업셀</title>
+<style>
+:root {
+  --bg: #0b1015; --panel: rgba(15, 22, 29, 0.92); --panel-2: rgba(25, 35, 44, 0.92);
+  --line: rgba(160, 190, 215, 0.18); --text: #edf5fb; --muted: #93a6b6;
+  --cyan: #56d9ff; --green: #62df97; --amber: #ffd166; --red: #ff6b6b; --violet: #b69cff;
+}
+* { box-sizing: border-box; }
+html, body, #app { width: 100%; height: 100%; margin: 0; overflow: hidden; }
+body { background: var(--bg); color: var(--text); font: 12px/1.45 Inter, ui-sans-serif, system-ui, "Segoe UI", "Malgun Gothic", sans-serif; }
+#viewport { position: absolute; inset: 0; }
+canvas { display: block; }
+code { color: #c9dbe8; font-size: 11px; }
+.glass { border: 1px solid var(--line); background: var(--panel); backdrop-filter: blur(10px); box-shadow: 0 14px 40px rgba(0,0,0,.25); border-radius: 13px; }
+.title-panel { position: absolute; left: 18px; top: 18px; z-index: 10; padding: 12px 16px 11px; max-width: 560px; }
+.eyebrow { color: var(--cyan); font-size: 10px; font-weight: 800; letter-spacing: 1.6px; }
+h1 { font-size: 18px; margin: 3px 0 2px; }
+h2 { font-size: 11.5px; margin: 0 0 8px; color: var(--muted); letter-spacing: 1.1px; font-weight: 800; display: flex; justify-content: space-between; align-items: center; }
+.subtitle { font-size: 11px; color: var(--muted); }
+.side { position: absolute; z-index: 10; right: 14px; top: 14px; bottom: 14px; width: 410px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-right: 2px; }
+.side section { padding: 11px 13px; }
+.left { position: absolute; z-index: 10; left: 18px; bottom: 18px; display: flex; flex-direction: column; gap: 10px; width: 500px; }
+.left section { padding: 10px 12px; }
+.row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+button { background: #1f6f8b; color: var(--text); border: 0; border-radius: 8px; padding: 6px 10px; font-weight: 700; cursor: pointer; font-size: 12px; }
+button.secondary { background: #2b3a46; }
+button.tab { background: #22303b; padding: 3px 9px; font-size: 11px; }
+button.tab.on { background: #1f6f8b; }
+button:disabled { opacity: .45; cursor: default; }
+select, input[type=number] { background: var(--panel-2); color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 3px 6px; font-size: 12px; }
+input[type=number] { width: 76px; }
+label.inline { color: var(--muted); font-size: 11px; display: flex; gap: 5px; align-items: center; }
+details summary { cursor: pointer; color: var(--muted); font-size: 11px; font-weight: 700; margin: 6px 0 4px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; }
+.sliders { display: grid; grid-template-columns: 1fr 44px; gap: 2px 8px; align-items: center; font-size: 11px; color: var(--muted); }
+.sliders input[type=range] { width: 100%; }
+.sliders .v { text-align: right; color: var(--text); font-variant-numeric: tabular-nums; }
+table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 3px 4px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--muted); font-weight: 600; font-size: 11px; }
+.ok { color: var(--green); } .warn { color: var(--amber); } .bad { color: var(--red); } .info { color: var(--cyan); } .mut { color: var(--muted); } .vio { color: var(--violet); }
+.pill { display: inline-block; padding: 0 6px; border-radius: 999px; font-size: 10px; font-weight: 800; border: 1px solid currentColor; white-space: nowrap; }
+.scroll { max-height: 230px; overflow-y: auto; }
+.scroll tr { cursor: pointer; }
+.scroll tr:hover { background: rgba(255,255,255,.04); }
+.metric-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.metric { background: var(--panel-2); border-radius: 8px; padding: 5px 8px; }
+.metric b { display: block; font-size: 15px; }
+.metric span { color: var(--muted); font-size: 10px; }
+.status { display: grid; grid-template-columns: 74px 1fr; gap: 4px 8px; align-items: center; }
+.status .k { color: var(--muted); font-size: 11px; }
+.note { color: var(--muted); font-size: 10.5px; margin-top: 6px; }
+.notes { color: var(--muted); font-size: 11px; margin-top: 4px; }
+.log { max-height: 150px; overflow-y: auto; font-size: 11px; font-variant-numeric: tabular-nums; }
+.log div { padding: 1px 0; border-bottom: 1px solid rgba(160,190,215,.07); }
+.log .t { color: var(--muted); display: inline-block; width: 52px; }
+.conf { font-size: 10.5px; }
+.conf th, .conf td { white-space: nowrap; text-align: center; padding: 3px 2px; }
+.conf th:first-child, .conf td:first-child { text-align: left; }
+#depthCanvas { width: 476px; height: 268px; border-radius: 8px; background: #000; }
+#scaleCanvas { width: 476px; height: 110px; border-radius: 8px; background: #0d151c; }
+.legend { display: flex; gap: 10px; font-size: 10px; color: var(--muted); margin-top: 4px; flex-wrap: wrap; }
+.legend i { display: inline-block; width: 10px; height: 3px; vertical-align: middle; margin-right: 3px; }
+.bottom-info { position: absolute; z-index: 10; left: 540px; bottom: 18px; padding: 7px 12px; display: flex; gap: 14px; font-size: 11px; color: var(--muted); }
+.bottom-info b { color: var(--text); }
+.cmp td, .cmp th { text-align: right; } .cmp td:first-child, .cmp th:first-child { text-align: left; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="viewport"></div>
+
+  <header class="glass title-panel">
+    <div class="eyebrow">PAC2026 · AHEAD · 1 인식 → 2 검증 → 4 행동(버퍼) → 7 실행</div>
+    <h1>인식·컨베이어 흐름 시뮬레이터 (Gazebo V4.4 작업셀)</h1>
+    <div class="subtitle">연속 투입 · 존(zone) 축적 컨베이어 · 정지 계량 · 분류/적재 연산 시 정지 · 초입 카메라 · 버퍼 테이블 2칸</div>
+    <div class="subtitle">배치: <code>config/workcell.yaml</code>, <code>ahead_workcell_v4_4_suction.sdf</code> · 계산: <code>pac_perception</code>, <code>pac_runtime.state_validator</code>, <code>pac_highlevel.rules.RulePolicy</code>의 JS 이식</div>
+  </header>
+
+  <div class="left">
+    <section class="glass">
+      <h2><span>깊이 이미지 <span id="depthTitle" class="mut"></span></span>
+        <span class="row"><button class="tab on" id="tabPick">PICK 카메라</button><button class="tab" id="tabInlet">초입 카메라</button></span></h2>
+      <canvas id="depthCanvas" width="640" height="360"></canvas>
+      <div class="legend">
+        <span><i style="background:#56d9ff"></i>ROI</span><span><i style="background:#62df97"></i>측정 박스</span>
+        <span><i style="background:#ff6b6b"></i>파손 단서</span><span><i style="background:#ffd166"></i>다른 박스(분리됨)</span><span>검정: 결측</span>
+      </div>
+    </section>
+    <section class="glass">
+      <h2><span>인라인 저울 (kg) <span id="scaleTitle" class="mut"></span></span></h2>
+      <canvas id="scaleCanvas" width="640" height="150"></canvas>
+    </section>
+  </div>
+
+  <aside class="side">
+    <section class="glass">
+      <h2>실행</h2>
+      <div class="row">
+        <label class="inline">주문 <select id="orderSel"></select></label>
+        <label class="inline">시드 <input id="seedInp" type="number" value="20261009" style="width:96px"></label>
+        <label class="inline">반복 <input id="repeatInp" type="number" value="2" min="1" max="20" style="width:46px"></label>
+        <label class="inline">속도 <select id="speedSel">
+          <option value="1">1×</option><option value="2">2×</option><option value="4" selected>4×</option><option value="8">8×</option><option value="16">16×</option><option value="inf">즉시</option>
+        </select></label>
+      </div>
+      <div class="row" style="margin-top:7px">
+        <button id="runBtn">시작</button>
+        <button id="resetBtn" class="secondary">초기화 (설정 적용)</button>
+        <button id="cmpBtn" class="secondary">초입 카메라 유무 비교</button>
+        <button id="exportBtn" class="secondary">JSONL</button>
+      </div>
+      <details open><summary>흐름 설정</summary>
+        <div class="grid2">
+          <label class="inline">투입 간격 평균 (s) <input id="intervalInp" type="number" value="7" step="0.5" min="1"></label>
+          <label class="inline">간격 변동 ± <input id="jitterInp" type="number" value="0.4" step="0.1" min="0" max="0.9"></label>
+          <label class="inline">벨트 속도 (m/s) <input id="beltInp" type="number" value="0.25" step="0.05" min="0.05"></label>
+          <label class="inline">붙어서 투입 확률 <input id="touchInp" type="number" value="0.10" step="0.02" min="0" max="0.6"></label>
+          <label class="inline">분류 연산 (s) <input id="clsInp" type="number" value="0.5" step="0.1" min="0"></label>
+          <label class="inline">적재 연산 (s) <input id="planInp" type="number" value="1.0" step="0.1" min="0"></label>
+          <label class="inline">팔레트 교체 (s) <input id="changeInp" type="number" value="60" step="5" min="0"></label>
+        </div>
+        <div class="row" style="margin-top:5px">
+          <label class="inline"><input type="checkbox" id="inletChk" checked> 초입 카메라 (가정 위치)</label>
+          <label class="inline"><input type="checkbox" id="stopChk" checked> 연산 중 컨베이어 정지</label>
+          <label class="inline"><input type="checkbox" id="bufChk" checked> 버퍼 사용</label>
+        </div>
+      </details>
+      <details><summary>박스 이상 주입 (박스당 확률)</summary><div class="sliders" id="faultSliders"></div></details>
+      <div class="note" id="streamInfo"></div>
+    </section>
+
+    <section class="glass">
+      <h2>상태 <span id="clockInfo" class="mut"></span></h2>
+      <div class="status" id="status"></div>
+    </section>
+
+    <section class="glass">
+      <h2>컨베이어 대기열 (초입 카메라 Look-ahead)</h2>
+      <div class="scroll" style="max-height:170px"><table id="queueTable"></table></div>
+    </section>
+
+    <section class="glass">
+      <h2>PICK 박스 · 판정 · 행동</h2>
+      <div id="current" class="mut">대기 중</div>
+    </section>
+
+    <section class="glass">
+      <h2>결과 요약</h2>
+      <div class="metric-grid" id="metrics"></div>
+      <div id="confusion" style="margin-top:8px"></div>
+      <div id="compare" style="margin-top:8px"></div>
+    </section>
+
+    <section class="glass">
+      <h2>이벤트</h2>
+      <div class="log" id="log"></div>
+    </section>
+
+    <section class="glass">
+      <h2>박스 목록</h2>
+      <div class="scroll"><table id="boxTable"><thead><tr><th>ID</th><th>SKU</th><th>주입</th><th>판정</th><th>처리</th></tr></thead><tbody></tbody></table></div>
+      <div class="note">팔레트 배치는 데모용 높이맵 규칙(최저 높이 우선, 지지율 ≥ 0.70, 높이 ≤ 1.5 m)입니다. 실제 배치는 5단계 플래너가 정합니다.</div>
+    </section>
+  </div>
+
+  <div class="glass bottom-info">
+    <span><b>왼쪽 드래그</b> 회전</span><span><b>오른쪽 드래그</b> 이동</span><span><b>휠</b> 확대</span>
+  </div>
+</div>
+
+<!-- ===================== core: no DOM, no three.js (node-testable) ===================== -->
+<script id="core">
+"use strict";
+const CORE = (() => {
+  // ---------- seeded RNG (common standard 22) ----------
+  function rng(seed) {
+    let a = seed >>> 0;
+    return () => {
+      a = (a + 0x6D2B79F5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function gauss(r) { let u = 0; while (u === 0) u = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * r()); }
+  const ease = p => p < 0.5 ? 2 * p * p : 1 - (-2 * p + 2) ** 2 / 2;
+
+  // ---------- workcell (Gazebo world frame, SI): config/workcell.yaml + ahead_workcell_v4_4_suction.sdf ----------
+  const WC = {
+    conveyor: { x0: -4.80, x1: -0.80, y: 1.20, halfW: 0.38, top: 0.895, rollerPitch: 0.095 },
+    scale: { x: -3.80, half: 0.35 },
+    stopper: { min: [-0.845, 0.87, 0.87], max: [-0.795, 1.53, 1.05] },
+    pick: { x: -1.08, y: 1.20 },
+    stopGapM: 0.01,
+    camera: { pos: [-0.60, 1.78, 2.40], rpy: [0, 1.178996, -1.317721], hfov: 1.40 },
+    // second pole camera at the inlet: the Gazebo file is not shared yet, so this pose is ASSUMED
+    inletCamera: { pos: [-4.30, 1.78, 2.40], target: [-4.48, 1.20, 0.895], hfov: 1.40, assumed: true },
+    pallet: { cx: 0.0, cy: 1.20, size: 1.10, deck: 0.15 },
+    buffer: [[1.235, -0.55], [1.665, -0.55]], bufferTop: 0.9425,
+    hold: { x: -1.75, y: 0.25 },
+    robot: { pedestal: 0.55 },
+    arrival: { dyM: 0.08, yawDeg: 10 },
+  };
+  const HOME = [-0.6, 0.9, 1.6];
+  const PICK_ORIGIN = [WC.pick.x, WC.pick.y, WC.conveyor.top];          // conveyor frame (assumed)
+  const INLET_ORIGIN = [WC.inletCamera.target[0], WC.conveyor.y, WC.conveyor.top];
+
+  // ---------- configs (Python defaults) ----------
+  const DEPTH = {
+    roi_xy_m: [-0.50, 0.232, -0.375, 0.375], min_depth_m: 0.2, max_depth_m: 4.0, min_box_height_m: 0.03, min_points: 200,
+    cluster_gap_m: 0.02, edge_margin_m: 0.004, top_percentile: 90.0, interior_margin_m: 0.03, max_dent_m: 0.012, max_tilt_rad: 3 * Math.PI / 180,
+    min_rectangularity: 0.92, max_corner_gap_m: 0.02, min_valid_ratio: 0.85, uncertain_confidence: 0.6,
+  };
+  const INLET_DEPTH = { ...DEPTH, roi_xy_m: [-0.40, 1.00, -0.375, 0.375] };
+  const RESOLVER = { size_tolerance_m: 0.012, size_tolerance_ratio: 0.04, weight_tolerance_ratio: 0.08, inferred_confidence: 0.9 };
+  const VALIDATOR = { min_label_confidence: 0.5, size_tolerance_m: 0.012, size_tolerance_ratio: 0.04, weight_tolerance_ratio: 0.08, damage_policy: "reject" };
+  const PERCEPTION = { weight_noise_std_ratio: 0.01, base_view_recover_probability: 0.7, base_view_size_noise_std_m: 0.001 };
+  const HL = { good_support: 0.95, retrieve_margin_m: 0.02, max_buffer_age: 12 };     // pac_highlevel RuleConfig
+  const PLACE = { res: 0.02, clearance: 0.01, uncertain_extra_m: 0.01, min_support: 0.70, max_height: 1.50 };
+  const BAY = { short: 0.37, long: 0.56 };                                               // V4.4 buffer table bay
+  const FLOW = { beltSpeed: 0.25, intervalS: 7, intervalJitter: 0.4, minGapM: 0.05, gapTargetM: 0.25, touchingP: 0.10,
+                 inletCamera: true, computeStop: true, classifyS: 0.5, planS: 1.0, palletChangeS: 60, bufferOn: true,
+                 weighS: 1.9, depthNoiseM: 0.0015 };
+
+  // ---------- orders: config/donghan/demo_original*/order.json ----------
+  const YAWS = [0, Math.PI / 2];
+  const ORDERS = {
+    demo_original6: { K03: [[0.27, 0.18, 0.15], [1.394617, 1.394617], 1], K04: [[0.27, 0.2, 0.13], [0.860186, 0.860186], 1],
+      K08: [[0.34, 0.25, 0.21], [1.741063, 4.800477], 2], K13: [[0.52, 0.48, 0.4], [13.087056, 28.486273], 2] },
+    demo_original8: { K01: [[0.22, 0.19, 0.09], [28.67967, 28.67967], 1], K02: [[0.25, 0.2, 0.15], [3.446461, 3.446461], 1],
+      K03: [[0.27, 0.18, 0.15], [1.394617, 1.394617], 1], K04: [[0.27, 0.2, 0.13], [0.860186, 0.860186], 1],
+      K08: [[0.34, 0.25, 0.21], [1.741063, 4.800477], 2], K13: [[0.52, 0.48, 0.4], [13.087056, 28.486273], 2] },
+    demo_original10: { K01: [[0.22, 0.19, 0.09], [28.67967, 28.67967], 1], K02: [[0.25, 0.2, 0.15], [3.446461, 3.446461], 1],
+      K03: [[0.27, 0.18, 0.15], [1.394617, 1.394617], 1], K04: [[0.27, 0.2, 0.13], [0.860186, 4.792606], 2],
+      K08: [[0.34, 0.25, 0.21], [1.741063, 4.800477], 2], K10: [[0.4, 0.3, 0.13], [10.089455, 10.089455], 1],
+      K13: [[0.52, 0.48, 0.4], [13.087056, 28.486273], 2] },
+  };
+  function catalogOf(order) {
+    const catalog = {}, ranges = {}, counts = {};
+    for (const sku of Object.keys(order).sort()) {
+      const [size, [lo, hi], n] = order[sku];
+      catalog[sku] = { sku_id: sku, size: { x: size[0], y: size[1], z: size[2] }, weight_kg: hi, allowed_yaws_rad: YAWS };
+      ranges[sku] = [lo, hi]; counts[sku] = n;
+    }
+    return { catalog, ranges, counts };
+  }
+
+  const FAULTS = [
+    { key: "label_fail", name: "라벨 미판독", p: 0.12 },
+    { key: "dent", name: "윗면 눌림", p: 0.08 },
+    { key: "corner", name: "모서리 찌그러짐", p: 0.06 },
+    { key: "weight_loss", name: "내용물 손실 (무게)", p: 0.06 },
+    { key: "size_off", name: "규격 불량 (+3 cm)", p: 0.05 },
+    { key: "glare", name: "깊이 결측 (반사)", p: 0.06 },
+    { key: "unknown", name: "미등록 박스", p: 0.03 },
+  ];
+  function makeStream(orderName, seed, faultP, repeat, touchingP) {
+    const r = rng(seed), { catalog, ranges, counts } = catalogOf(ORDERS[orderName]), list = [];
+    for (let k = 0; k < repeat; k++) for (const sku of Object.keys(counts)) for (let i = 0; i < counts[sku]; i++) list.push(sku);
+    for (let i = list.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [list[i], list[j]] = [list[j], list[i]]; }
+    return list.map((sku, i) => {
+      const spec = catalog[sku], [lo, hi] = ranges[sku];
+      let fault = "none", u = r(), acc = 0;
+      for (const f of FAULTS) { acc += faultP[f.key] || 0; if (u < acc) { fault = f.key; break; } }
+      let size = { ...spec.size }, weight = lo + (hi - lo) * r(), trueSku = sku, label = sku;
+      const fb = { dent: 0, corner: 0, holeRatio: 0 };
+      if (fault === "dent") fb.dent = 0.025 + 0.02 * r();
+      if (fault === "corner") fb.corner = 0.10 + 0.05 * r();
+      if (fault === "weight_loss") weight = lo * (0.55 + 0.2 * r());
+      if (fault === "size_off") size.x += 0.03;
+      if (fault === "glare") fb.holeRatio = 0.35 + 0.2 * r();
+      if (fault === "unknown") { trueSku = "X99"; label = "X99"; size = { x: 0.46, y: 0.36, z: 0.28 }; weight = 6 + 4 * r(); }
+      const labelRead = fault !== "label_fail" && !(fault === "unknown" && r() < 0.5);
+      const touching = i > 0 && r() < touchingP;
+      return {
+        box_id: `B${String(i + 1).padStart(3, "0")}`, sku: trueSku, orderSku: sku, size, weight_kg: weight, label: labelRead ? label : null,
+        fault, touching, ...fb, dy: (2 * r() - 1) * WC.arrival.dyM, yaw: (2 * r() - 1) * WC.arrival.yawDeg * Math.PI / 180,
+        scaleBias: gauss(r) * PERCEPTION.weight_noise_std_ratio, seed: Math.floor(r() * 2 ** 31),
+      };
+    });
+  }
+  const halfX = (size, yaw) => size.x / 2 * Math.abs(Math.cos(yaw)) + size.y / 2 * Math.abs(Math.sin(yaw));
+
+  // ---------- inline scale: AutoScaleCycle-like settle, mean of the last 0.5 s ----------
+  function scaleTrace(massKg, fb) {
+    const r = rng(fb.seed ^ 0x5ca1e), dt = 0.02, total = FLOW.weighS, m = massKg * (1 + fb.scaleBias), samples = [];
+    for (let t = 0; t <= total + 1e-9; t += dt) {
+      const ring = t < 0.05 ? m * t / 0.05 : m + 0.35 * m * Math.exp(-(t - 0.05) / 0.18) * Math.cos(2 * Math.PI * 4.2 * (t - 0.05));
+      samples.push([t, ring + 0.02 * gauss(r)]);
+    }
+    const tail = samples.filter(([t]) => t >= total - 0.5).map(([, v]) => v), mean = tail.reduce((a, b) => a + b, 0) / tail.length;
+    const sd = Math.sqrt(tail.reduce((a, b) => a + (b - mean) ** 2, 0) / tail.length);
+    return { samples, measured: Math.round(mean * 1e4) / 1e4, stdev: sd, ok: sd <= 0.12 };
+  }
+
+  // ---------- cameras ----------
+  function cameraModel(def, width = 640, height = 360) {
+    let lx, ly, lz;
+    if (def.rpy) {
+      const [, p, y] = def.rpy, cy = Math.cos(y), sy = Math.sin(y), cp = Math.cos(p), sp = Math.sin(p);
+      lx = [cy * cp, sy * cp, -sp]; ly = [-sy, cy, 0]; lz = [cy * sp, sy * sp, cp];
+    } else {                                   // look-at, camera link x forward / y left / z up
+      const d = def.target.map((v, i) => v - def.pos[i]), n = Math.hypot(...d);
+      lx = d.map(v => v / n);
+      const yl = [-lx[1], lx[0], 0], m = Math.hypot(...yl); ly = yl.map(v => v / m);
+      lz = [lx[1] * ly[2] - lx[2] * ly[1], lx[2] * ly[0] - lx[0] * ly[2], lx[0] * ly[1] - lx[1] * ly[0]];
+    }
+    const fx = width / 2 / Math.tan(def.hfov / 2);
+    return { pos: def.pos, ox: ly.map(v => -v), oy: lz.map(v => -v), oz: lx, fx, fy: fx, cx: width / 2, cy: height / 2, width, height };
+  }
+  function rayDir(cam, u, v) {
+    const a = (u - cam.cx) / cam.fx, b = (v - cam.cy) / cam.fy;
+    return [cam.ox[0] * a + cam.oy[0] * b + cam.oz[0], cam.ox[1] * a + cam.oy[1] * b + cam.oz[1], cam.ox[2] * a + cam.oy[2] * b + cam.oz[2]];
+  }
+  function project(cam, p) {
+    const d = [p[0] - cam.pos[0], p[1] - cam.pos[1], p[2] - cam.pos[2]];
+    const x = d[0] * cam.ox[0] + d[1] * cam.ox[1] + d[2] * cam.ox[2], y = d[0] * cam.oy[0] + d[1] * cam.oy[1] + d[2] * cam.oy[2];
+    const z = d[0] * cam.oz[0] + d[1] * cam.oz[1] + d[2] * cam.oz[2];
+    return [cam.fx * x / z + cam.cx, cam.fy * y / z + cam.cy, z];
+  }
+  function slab(o, d, mn, mx) {
+    let t0 = -Infinity, t1 = Infinity, axis = -1, sign = 0;
+    for (let i = 0; i < 3; i++) {
+      if (Math.abs(d[i]) < 1e-12) { if (o[i] < mn[i] || o[i] > mx[i]) return null; continue; }
+      let ta = (mn[i] - o[i]) / d[i], tb = (mx[i] - o[i]) / d[i], s = -1;
+      if (ta > tb) { const t = ta; ta = tb; tb = t; s = 1; }
+      if (ta > t0) { t0 = ta; axis = i; sign = s; }
+      if (tb < t1) t1 = tb;
+      if (t0 > t1) return null;
+    }
+    return t1 < 0 ? null : { t: t0, axis, sign };
+  }
+  function screenBox(cam, corners) {
+    let u0 = Infinity, u1 = -Infinity, v0 = Infinity, v1 = -Infinity;
+    for (const p of corners) {
+      const [u, v, z] = project(cam, p);
+      if (z <= 0.05) return [0, cam.width - 1, 0, cam.height - 1];
+      u0 = Math.min(u0, u); u1 = Math.max(u1, u); v0 = Math.min(v0, v); v1 = Math.max(v1, v);
+    }
+    return [Math.floor(u0) - 1, Math.ceil(u1) + 1, Math.floor(v0) - 1, Math.ceil(v1) + 1];
+  }
+  const STATICS = [
+    [WC.stopper.min, WC.stopper.max],
+    [[WC.conveyor.x0, WC.conveyor.y + WC.conveyor.halfW + 0.005, WC.conveyor.top - 0.10], [WC.conveyor.x1, WC.conveyor.y + WC.conveyor.halfW + 0.035, WC.conveyor.top + 0.06]],
+    [[WC.conveyor.x0, WC.conveyor.y - WC.conveyor.halfW - 0.035, WC.conveyor.top - 0.10], [WC.conveyor.x1, WC.conveyor.y - WC.conveyor.halfW - 0.005, WC.conveyor.top + 0.06]],
+    [[WC.pallet.cx - 0.55, WC.pallet.cy - 0.55, 0], [WC.pallet.cx + 0.55, WC.pallet.cy + 0.55, WC.pallet.deck]],
+  ];
+
+  // boxes: [{size, x, y, yaw, dent, corner, holeRatio}] standing on the roller top
+  function renderDepth(boxes, cam, noiseM, seed) {
+    const r = rng(seed), W = cam.width, H = cam.height, out = new Float32Array(W * H), o = cam.pos;
+    const objs = STATICS.map(([mn, mx]) => ({ kind: "aabb", mn, mx,
+      sb: screenBox(cam, [0, 1, 2, 3, 4, 5, 6, 7].map(k => [k & 1 ? mx[0] : mn[0], k & 2 ? mx[1] : mn[1], k & 4 ? mx[2] : mn[2]])) }));
+    for (const b of boxes) {
+      const c = Math.cos(-b.yaw), s = Math.sin(-b.yaw), L = b.size.x, Wd = b.size.y, Hb = b.size.z, z0 = WC.conveyor.top;
+      const cc = Math.cos(b.yaw), ss = Math.sin(b.yaw), corners = [];
+      for (const a of [-L / 2, L / 2]) for (const q of [-Wd / 2, Wd / 2]) for (const z of [z0, z0 + Hb]) corners.push([b.x + cc * a - ss * q, b.y + ss * a + cc * q, z]);
+      objs.push({ kind: "box", c, s, L, Wd, Hb, b, R: Math.min(L, Wd) / 4,
+        ol: [c * (o[0] - b.x) - s * (o[1] - b.y), s * (o[0] - b.x) + c * (o[1] - b.y), o[2] - z0], sb: screenBox(cam, corners) });
+    }
+    for (let v = 0; v < H; v++) for (let u = 0; u < W; u++) {
+      const d = rayDir(cam, u, v);
+      let best = Infinity, hole = 0;
+      if (d[2] < 0) {
+        const tr = (WC.conveyor.top - o[2]) / d[2], px = o[0] + tr * d[0], py = o[1] + tr * d[1];
+        best = px >= WC.conveyor.x0 && px <= WC.conveyor.x1 && Math.abs(py - WC.conveyor.y) <= WC.conveyor.halfW ? tr : -o[2] / d[2];
+      }
+      for (const ob of objs) {
+        const sb = ob.sb;
+        if (u < sb[0] || u > sb[1] || v < sb[2] || v > sb[3]) continue;
+        if (ob.kind === "aabb") { const h = slab(o, d, ob.mn, ob.mx); if (h && h.t < best) { best = h.t; hole = 0; } continue; }
+        const dl = [ob.c * d[0] - ob.s * d[1], ob.s * d[0] + ob.c * d[1], d[2]];
+        const h = slab(ob.ol, dl, [-ob.L / 2, -ob.Wd / 2, 0], [ob.L / 2, ob.Wd / 2, ob.Hb]);
+        if (!h || h.t >= best) continue;
+        let t = h.t;
+        const a = ob.ol[0] + t * dl[0], q = ob.ol[1] + t * dl[1];
+        if (ob.b.corner > 0 && (ob.L / 2 - a) + (ob.Wd / 2 - q) < ob.b.corner) continue;
+        if (ob.b.dent > 0 && h.axis === 2 && h.sign === 1) {
+          const f = ob.b.dent * Math.max(0, 1 - Math.hypot(a, q) / ob.R);
+          if (f > 0) t += f / -dl[2];
+        }
+        best = t; hole = ob.b.holeRatio || 0;
+      }
+      let z = Number.isFinite(best) ? best + gauss(r) * noiseM : NaN;
+      if (r() < 0.002 || (hole && r() < hole)) z = NaN;
+      out[v * W + u] = z;
+    }
+    return out;
+  }
+
+  // ---------- pac_perception.depth_measurement.measure_box (JS port, with conveyor-x clustering) ----------
+  function percentile(sorted, q) { const p = (sorted.length - 1) * q / 100, lo = Math.floor(p), hi = Math.ceil(p); return sorted[lo] + (sorted[hi] - sorted[lo]) * (p - lo); }
+  function convexHull(points) {
+    const seen = new Set(), pts = [];
+    for (const [x, y] of points) { const X = Math.round(x * 1e5), Y = Math.round(y * 1e5), k = X + "," + Y; if (!seen.has(k)) { seen.add(k); pts.push([X / 1e5, Y / 1e5]); } }
+    if (pts.length < 3) throw new Error("box footprint is degenerate");
+    pts.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+    const cross = (o, a, b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+    const half = seq => { const out = []; for (const p of seq) { while (out.length >= 2 && cross(out[out.length - 2], out[out.length - 1], p) <= 0) out.pop(); out.push(p); } out.pop(); return out; };
+    return half(pts).concat(half(pts.slice().reverse()));
+  }
+  function polygonArea(poly) { let s = 0; for (let i = 0; i < poly.length; i++) { const [x1, y1] = poly[i], [x2, y2] = poly[(i + 1) % poly.length]; s += x1 * y2 - x2 * y1; } return Math.abs(s) / 2; }
+  function minAreaRect(hull) {
+    let best = null;
+    for (let i = 0; i < hull.length; i++) {
+      const [x1, y1] = hull[i], [x2, y2] = hull[(i + 1) % hull.length], th = Math.atan2(y2 - y1, x2 - x1), c = Math.cos(th), s = Math.sin(th);
+      let a0 = Infinity, a1 = -Infinity, b0 = Infinity, b1 = -Infinity;
+      for (const [x, y] of hull) { const a = x * c + y * s, b = -x * s + y * c; a0 = Math.min(a0, a); a1 = Math.max(a1, a); b0 = Math.min(b0, b); b1 = Math.max(b1, b); }
+      const area = (a1 - a0) * (b1 - b0);
+      if (!best || area < best.area) best = { area, th, a0, a1, b0, b1 };
+    }
+    let { th, a0, a1, b0, b1 } = best; const c = Math.cos(th), s = Math.sin(th), ma = (a0 + a1) / 2, mb = (b0 + b1) / 2;
+    let length = a1 - a0, width = b1 - b0;
+    if (width > length) { [length, width] = [width, length]; th += Math.PI / 2; }
+    let yaw = Math.atan2(Math.sin(th), Math.cos(th));
+    if (yaw <= -Math.PI / 2) yaw += Math.PI; else if (yaw > Math.PI / 2) yaw -= Math.PI;
+    return { cx: ma * c - mb * s, cy: ma * s + mb * c, length, width, yaw };
+  }
+  function measureBox(depth, cam, cfg, origin, targetX = null) {
+    const W = cam.width, H = cam.height, [x0, x1, y0, y1] = cfg.roi_xy_m, O = origin;
+    const valid = new Uint8Array(W * H), all = [];
+    for (let v = 0; v < H; v++) for (let u = 0; u < W; u++) {
+      const z = depth[v * W + u];
+      if (!(z >= cfg.min_depth_m && z <= cfg.max_depth_m)) continue;
+      valid[v * W + u] = 1;
+      const d = rayDir(cam, u, v), px = cam.pos[0] + z * d[0] - O[0], py = cam.pos[1] + z * d[1] - O[1], pz = cam.pos[2] + z * d[2] - O[2];
+      if (px >= x0 && px <= x1 && py >= y0 && py <= y1 && pz > cfg.min_box_height_m) all.push([px, py, pz, u, v]);
+    }
+    if (all.length < cfg.min_points) throw new Error(`no box in the zone (${all.length} points)`);
+    all.sort((a, b) => a[0] - b[0]);
+    const clusters = [[all[0]]];
+    for (let i = 1; i < all.length; i++) { if (all[i][0] - all[i - 1][0] > cfg.cluster_gap_m) clusters.push([]); clusters[clusters.length - 1].push(all[i]); }
+    const spans = clusters.map(c => [c[0][0], c[c.length - 1][0]]);
+    let k = clusters.length - 1;
+    if (targetX != null) {
+      const miss = spans.map(([lo, hi]) => Math.max(lo - targetX, targetX - hi, 0));
+      k = miss.indexOf(Math.min(...miss));
+      if (miss[k] > 0.05) throw new Error(`no box at target_x ${targetX.toFixed(3)} m`);
+    }
+    const pts = clusters[k];
+    if (pts.length < cfg.min_points) throw new Error(`no box in the zone (${pts.length} points in the selected cluster)`);
+    const hull = convexHull(pts), rect = minAreaRect(hull);
+    const height = percentile(pts.map(p => p[2]).sort((a, b) => a - b), cfg.top_percentile);
+    const rectangularity = polygonArea(hull) / (rect.length * rect.width);
+    const c = Math.cos(rect.yaw), s = Math.sin(rect.yaw), m = cfg.interior_margin_m, inner = [];
+    const cornerGap = Math.max(...[[1, 1], [-1, 1], [-1, -1], [1, -1]].map(([sa, sb]) => {
+      const a = sa * rect.length / 2, b = sb * rect.width / 2, qx = rect.cx + c * a - s * b, qy = rect.cy + s * a + c * b;
+      return Math.min(...hull.map(([x, y]) => Math.hypot(x - qx, y - qy)));
+    }));
+    for (const p of pts) {
+      const dx = p[0] - rect.cx, dy = p[1] - rect.cy, a = c * dx + s * dy, b = -s * dx + c * dy;
+      if (Math.abs(a) <= rect.length / 2 - m && Math.abs(b) <= rect.width / 2 - m) inner.push(p);
+    }
+    let tilt = 0, dent = 0;
+    if (inner.length >= 3) {
+      let sxx = 0, sxy = 0, sx = 0, syy = 0, sy = 0, sxz = 0, syz = 0, sz = 0; const n = inner.length;
+      for (const [x, y, z] of inner) { sxx += x * x; sxy += x * y; sx += x; syy += y * y; sy += y; sxz += x * z; syz += y * z; sz += z; }
+      const A = [[sxx, sxy, sx], [sxy, syy, sy], [sx, sy, n]], B = [sxz, syz, sz];
+      const det = M => M[0][0] * (M[1][1] * M[2][2] - M[1][2] * M[2][1]) - M[0][1] * (M[1][0] * M[2][2] - M[1][2] * M[2][0]) + M[0][2] * (M[1][0] * M[2][1] - M[1][1] * M[2][0]);
+      const D = det(A);
+      if (Math.abs(D) > 1e-18) { const col = k2 => A.map((row, i) => row.map((v, j) => (j === k2 ? B[i] : v))); tilt = Math.atan(Math.hypot(det(col(0)) / D, det(col(1)) / D)); }
+      dent = Math.max(0, height - percentile(inner.map(p => p[2]).sort((a, b) => a - b), 2.0));
+    }
+    let u0 = Infinity, u1 = -Infinity, v0 = Infinity, v1 = -Infinity;
+    for (const p of pts) { u0 = Math.min(u0, p[3]); u1 = Math.max(u1, p[3]); v0 = Math.min(v0, p[4]); v1 = Math.max(v1, p[4]); }
+    let nv = 0; for (let v = v0; v <= v1; v++) for (let u = u0; u <= u1; u++) nv += valid[v * W + u];
+    const validRatio = nv / ((u1 - u0 + 1) * (v1 - v0 + 1));
+    const e = cfg.edge_margin_m;
+    let bx0 = Infinity, bx1 = -Infinity, by0 = Infinity, by1 = -Infinity;
+    for (const p of pts) { bx0 = Math.min(bx0, p[0]); bx1 = Math.max(bx1, p[0]); by0 = Math.min(by0, p[1]); by1 = Math.max(by1, p[1]); }
+    const onImageEdge = u0 === 0 || v0 === 0 || u1 === W - 1 || v1 === H - 1;
+    const fullView = bx0 - x0 > e && x1 - bx1 > e && by0 - y0 > e && y1 - by1 > e && !onImageEdge;
+    const reasons = !fullView ? [] : [["top_dent", dent > cfg.max_dent_m], ["top_tilt", tilt > cfg.max_tilt_rad],
+      ["crushed_corner", rectangularity < cfg.min_rectangularity || cornerGap > cfg.max_corner_gap_m]].filter(x => x[1]).map(x => x[0]);
+    const r4 = v => Math.round(v * 1e4) / 1e4;
+    return {
+      size: { x: r4(rect.length), y: r4(rect.width), z: r4(height) }, pose: { frame_id: "conveyor", x: rect.cx, y: rect.cy, z: 0, yaw: rect.yaw },
+      tilt_rad: tilt, dent_depth_m: dent, rectangularity, corner_gap_m: cornerGap, valid_ratio: validRatio, point_count: pts.length,
+      box_count: clusters.length, gap_upstream_m: k > 0 ? spans[k][0] - spans[k - 1][1] : null,
+      gap_downstream_m: k + 1 < spans.length ? spans[k + 1][0] - spans[k][1] : null, others: spans.filter((_, i) => i !== k), in_full_view: fullView,
+      damage_reasons: reasons, damaged: reasons.length > 0, confidence: validRatio >= cfg.min_valid_ratio && fullView ? 1.0 : cfg.uncertain_confidence,
+    };
+  }
+
+  // ---------- pac_perception.sku_resolver / raw_observation ----------
+  function sizeFits(meas, nom, cfg) {
+    const tol = v => Math.max(cfg.size_tolerance_m, cfg.size_tolerance_ratio * v), m = [meas.x, meas.y, meas.z];
+    return [[nom.x, nom.y, nom.z], [nom.y, nom.x, nom.z]].some(n => m.every((a, i) => Math.abs(a - n[i]) <= tol(n[i])));
+  }
+  function weightFits(w, [lo, hi], cfg) { const r = cfg.weight_tolerance_ratio; if (hi != null && w > hi * (1 + r)) return false; return lo == null || w >= lo * (1 - r); }
+  function resolveSku(size, weight, catalog, ranges, remaining, cfg = RESOLVER) {   // weight null: size only (inlet, before the scale)
+    const cands = Object.keys(catalog).sort().filter(sku => (!remaining || (remaining[sku] || 0) > 0)
+      && sizeFits(size, catalog[sku].size, cfg) && (weight == null || weightFits(weight, ranges[sku] || [null, catalog[sku].weight_kg], cfg)));
+    if (cands.length === 1) return { sku_id: cands[0], confidence: cfg.inferred_confidence, candidates: cands, reason: "unique" };
+    return { sku_id: null, confidence: 0, candidates: cands, reason: cands.length ? "ambiguous" : "no_match" };
+  }
+  function buildRawObservation(boxId, weight, meas, stamp, label, catalog, ranges, remaining) {
+    let confidence = meas.confidence, resolution = null;
+    if (label == null && catalog) {
+      resolution = resolveSku(meas.size, weight, catalog, ranges, remaining);
+      if (resolution.sku_id) { label = resolution.sku_id; confidence = Math.min(confidence, resolution.confidence); }
+    }
+    return { obs: { box_id: boxId, label_sku: label, weight_kg: Math.round(weight * 1e4) / 1e4, size: meas.size, confidence, visual_damage: meas.damaged, view: "top", stamp_sec: stamp }, resolution };
+  }
+
+  // ---------- pac_runtime.state_validator.StateValidator (JS port); baseView(prev) -> second look ----------
+  function validate(obs, baseView, catalog, ranges, cfg = VALIDATOR) {
+    const notes = []; let used = false;
+    const sizeBad = (m, nom) => !sizeFits(m, nom, cfg);
+    const weightBad = (w, sku) => { const [lo, hi] = ranges[sku] || [null, catalog[sku].weight_kg], k = cfg.weight_tolerance_ratio; return (hi != null && w > hi * (1 + k)) || (lo != null && w < lo * (1 - k)); };
+    const box = (o, spec, size) => ({ box_id: o.box_id, sku_id: spec.sku_id, size: size || o.size, weight_kg: o.weight_kg, pose: { frame_id: "conveyor", x: 0, y: 0, z: 0 },
+      allowed_yaws_rad: spec.allowed_yaws_rad, status: "MEASURED", confidence: o.confidence, stamp_sec: o.stamp_sec, source: "RUNTIME_PERCEPTION_" + o.view.toUpperCase() });
+    if (obs.label_sku == null || obs.confidence < cfg.min_label_confidence) {
+      obs = baseView(obs); used = true;
+      notes.push("base view: label " + (obs.label_sku ? "recovered" : "still unread"));
+      if (obs.label_sku == null) return { kind: "RECOGNITION_FAIL", route: "INSPECTION", codes: ["TRACKING_LOST"], notes, used_base_view: used, sku: null };
+    }
+    const sku = obs.label_sku;
+    if (!(sku in catalog)) return { kind: "UNKNOWN_SKU", route: "INSPECTION", codes: ["INVALID_STATE"], notes, used_base_view: used, sku };
+    const spec = catalog[sku];
+    if (obs.visual_damage) {
+      if (cfg.damage_policy === "reject") return { kind: "DAMAGED", route: "INSPECTION", codes: ["INVALID_STATE"], notes: notes.concat(["dented: rejected, operator alerted"]), used_base_view: used, sku };
+      return { kind: "DAMAGED", route: "PLAN", box: box(obs, spec), uncertain: obs.confidence < 1, no_load_on_top: true, codes: [], notes: notes.concat(["dented: placed, nothing on top"]), used_base_view: used, sku };
+    }
+    const sb = sizeBad(obs.size, spec.size), wb = weightBad(obs.weight_kg, sku);
+    if (sb || wb) {
+      const codes = [sb && "SIZE_MISMATCH", wb && "WEIGHT_MISMATCH"].filter(Boolean);
+      if (!used) { obs = baseView(obs); used = true; }
+      if (!sizeBad(obs.size, spec.size) && !wb) return { kind: "OK", route: "PLAN", box: box(obs, spec, spec.size), uncertain: false, codes: [], notes: notes.concat(["re-measured: matches the SKU (first reading was noise)"]), used_base_view: used, sku };
+      return { kind: "SPEC_MISMATCH", route: "PLAN", box: box(obs, spec), uncertain: true, codes, notes: notes.concat(["re-measured: continue with the measured size / weight"]), used_base_view: used, sku };
+    }
+    const uncertain = obs.confidence < 1;
+    return { kind: "OK", route: "PLAN", box: box(obs, spec, uncertain ? obs.size : spec.size), uncertain, codes: [], notes, used_base_view: used, sku };
+  }
+  function virtualBaseView(fb, prev, r) {      // PerceptionSim.base_view: simulated auxiliary camera
+    let label = prev.label_sku;
+    if (label == null && r() < PERCEPTION.base_view_recover_probability) label = fb.sku;
+    const n = () => gauss(r) * PERCEPTION.base_view_size_noise_std_m;
+    return { ...prev, label_sku: label, size: { x: fb.size.x + n(), y: fb.size.y + n(), z: fb.size.z + n() }, confidence: label != null ? 1.0 : prev.confidence, view: "base" };
+  }
+
+  // ---------- demo pallet model: 2 cm height map, lowest base first ----------
+  class PalletModel {
+    constructor() { this.res = PLACE.res; this.n = Math.round(WC.pallet.size / this.res); this.hm = new Float32Array(this.n * this.n); this.boxes = []; this.volume = 0; }
+    best(size, clr) {
+      const res = this.res, n = this.n, hm = this.hm; let best = null;
+      for (const yaw of [0, Math.PI / 2]) {
+        const sx = yaw ? size.y : size.x, sy = yaw ? size.x : size.y;
+        const nx = Math.ceil((sx + clr) / res - 1e-9), ny = Math.ceil((sy + clr) / res - 1e-9);
+        if (nx > n || ny > n) continue;
+        for (let j = n - ny; j >= 0; j--) for (let i = 0; i + nx <= n; i++) {
+          let base = 0;
+          for (let jj = j; jj < j + ny; jj++) { const row = jj * n; for (let ii = i; ii < i + nx; ii++) if (hm[row + ii] > base) base = hm[row + ii]; }
+          if (best && base >= best.z - 1e-9) continue;
+          const top = base + size.z;
+          if (top > PLACE.max_height + 1e-9) continue;
+          let sup = nx * ny;
+          if (base > 0) { sup = 0; for (let jj = j; jj < j + ny; jj++) { const row = jj * n; for (let ii = i; ii < i + nx; ii++) if (hm[row + ii] >= base - 0.005) sup++; } }
+          const support = sup / (nx * ny);
+          if (support < PLACE.min_support) continue;
+          const x0 = WC.pallet.cx - WC.pallet.size / 2, y0 = WC.pallet.cy - WC.pallet.size / 2;
+          best = { x: x0 + (i + nx / 2) * res, y: y0 + (j + ny / 2) * res, z: base, yaw, top_after: top, support, i, j, nx, ny };
+        }
+      }
+      if (best) best.z += WC.pallet.deck;   // world z of the box bottom
+      return best;
+    }
+    commit(opt, size, id) {
+      const top = opt.z - WC.pallet.deck + size.z;
+      for (let jj = opt.j; jj < opt.j + opt.ny; jj++) for (let ii = opt.i; ii < opt.i + opt.nx; ii++) this.hm[jj * this.n + ii] = top;
+      this.boxes.push(id); this.volume += size.x * size.y * size.z;
+    }
+    fill() { return this.volume / (WC.pallet.size * WC.pallet.size * PLACE.max_height); }
+  }
+  const bayFits = s => Math.min(s.x, s.y) <= BAY.short && Math.max(s.x, s.y) <= BAY.long;
+  const clearanceOf = st => PLACE.clearance + (st.uncertain ? PLACE.uncertain_extra_m : 0);
+
+  // ---------- pac_highlevel.rules.RulePolicy (JS port) ----------
+  function decide(sim, cur) {
+    const opt = st => sim.pallet.best(st.size, clearanceOf(st));
+    const curOpt = cur ? opt(cur) : null;
+    const bayOpts = sim.bays.map(b => (b.entry ? opt(b.entry.state) : null));
+    const freeBay = sim.flow.bufferOn && cur && bayFits(cur.size) ? sim.bays.findIndex(b => !b.entry) : -1;
+    for (let i = 0; i < sim.bays.length; i++) {
+      const e = sim.bays[i].entry;
+      if (e && bayOpts[i] && sim.decisions - e.storedAt >= HL.max_buffer_age) return { type: "RETRIEVE_BUFFER", bay: i, option: bayOpts[i], reason: `버퍼 보관 ${HL.max_buffer_age}회 이상` };
+    }
+    let best = -1;
+    bayOpts.forEach((o, i) => { if (o && (best < 0 || o.top_after < bayOpts[best].top_after - 1e-9 || (Math.abs(o.top_after - bayOpts[best].top_after) < 1e-9 && o.support > bayOpts[best].support))) best = i; });
+    if (curOpt && curOpt.support >= HL.good_support) {
+      if (best >= 0 && bayOpts[best].top_after < curOpt.top_after - HL.retrieve_margin_m) return { type: "RETRIEVE_BUFFER", bay: best, option: bayOpts[best], reason: "버퍼 박스가 2 cm 이상 낮게 놓임" };
+      return { type: "PLACE_CURRENT", option: curOpt, reason: `지지율 ${curOpt.support.toFixed(2)} ≥ ${HL.good_support}` };
+    }
+    if (best >= 0) return { type: "RETRIEVE_BUFFER", bay: best, option: bayOpts[best], reason: cur ? "현재 박스 배치 불량 → 버퍼 박스 먼저" : "주문 끝: 버퍼 박스 적재" };
+    if (freeBay >= 0) return { type: "BUFFER_CURRENT", bay: freeBay, reason: curOpt ? `지지율 ${curOpt.support.toFixed(2)} < ${HL.good_support} → 버퍼 보관` : "팔레트 자리 없음 → 버퍼 보관" };
+    if (curOpt) return { type: "PLACE_CURRENT", option: curOpt, reason: `지지율 ${curOpt.support.toFixed(2)}, 버퍼 없음/불가` };
+    return { type: "PALLET_CLOSE", reason: cur && !bayFits(cur.size) ? "자리 없음, 버퍼 칸보다 큰 박스" : "자리 없음, 버퍼 가득" };
+  }
+
+  function expectedKinds(fb) {
+    if (fb.fault === "dent" || fb.fault === "corner") return ["DAMAGED"];
+    if (fb.fault === "weight_loss" || fb.fault === "size_off") return ["SPEC_MISMATCH"];
+    if (fb.fault === "unknown") return ["UNKNOWN_SKU", "RECOGNITION_FAIL"];
+    return ["OK"];
+  }
+
+  // ---------- line simulation: zoned accumulating conveyor + scale + cameras + robot + buffer ----------
+  class Sim {
+    constructor(o) {
+      this.o = o; this.flow = { ...FLOW, ...(o.flow || {}) };
+      const { catalog, ranges, counts } = catalogOf(ORDERS[o.order]);
+      this.catalog = catalog; this.ranges = ranges;
+      this.remaining = Object.fromEntries(Object.entries(counts).map(([k, v]) => [k, v * o.repeat]));
+      this.stream = makeStream(o.order, o.seed, o.faultP, o.repeat, this.flow.touchingP);
+      this.camPick = cameraModel(WC.camera); this.camInlet = cameraModel(WC.inletCamera);
+      this.t = 0; this.spawnIdx = 0; this.nextSpawn = 0; this.conv = [];
+      this.stopUntil = 0; this.stopReason = null; this.stopTime = { classify: 0, plan: 0 };
+      this.robot = { task: null, pos: HOME.slice(), busyTime: 0, carried: null, label: "대기" };
+      this.pallet = new PalletModel(); this.palletNo = 1; this.closed = []; this.placed = [];
+      this.bays = WC.buffer.map(([x, y]) => ({ x, y, entry: null }));
+      this.hold = []; this.results = []; this.events = []; this.decisions = 0; this.pickState = null; this.endPlan = null;
+      this.lastPick = null; this.lastInlet = null; this.lastScale = null; this.done = false;
+      this.counters = { gapping: 0, combinedWeigh: 0, bufferPut: 0, bufferGet: 0, palletChange: 0, inletLabel: 0 };
+      this.rFlow = rng(o.seed ^ 0xf10e);
+    }
+    log(msg, cls = "") { this.events.push({ t: this.t, msg, cls }); }
+    stopped() { return this.t < this.stopUntil; }
+    halt(sec, reason) { if (!this.flow.computeStop || sec <= 0) return; this.stopUntil = Math.max(this.stopUntil, this.t + sec); this.stopReason = reason; }
+    run(maxT = 36000) { while (!this.done && this.t < maxT) this.step(1.0); return this; }
+    step(dt) { while (dt > 1e-9 && !this.done) { const h = Math.min(0.05, dt); this._tick(h); dt -= h; } }
+    _tick(h) {
+      this.t += h;
+      if (this.stopped()) this.stopTime[this.stopReason] += h;
+      if (this.robot.task) this.robot.busyTime += h;
+      this._spawn(); this._move(h); this._scale(); this._inlet(); this._pick(); this._robot(h); this._finish();
+    }
+    _boxObj(b) { return { size: b.fb.size, x: b.x, y: b.y, yaw: b.yaw, dent: b.fb.dent, corner: b.fb.corner, holeRatio: b.fb.holeRatio }; }
+    _spawn() {
+      if (this.spawnIdx >= this.stream.length || this.stopped()) return;
+      const fb = this.stream[this.spawnIdx], last = this.conv[this.conv.length - 1], hx = halfX(fb.size, fb.yaw);
+      if (!fb.touching && this.t < this.nextSpawn) return;
+      let x = WC.conveyor.x0 + hx + 0.02, linked = false;
+      if (last) {
+        if (fb.touching && last.fb === this.stream[this.spawnIdx - 1] && last.x - last.hx < WC.conveyor.x0 + 0.6) {
+          const xt = last.x - last.hx - hx; if (xt < x) return; x = xt; linked = true;
+        } else if (last.x - last.hx - this.flow.minGapM - hx < x) return;
+      }
+      this.conv.push({ fb, x, y: WC.conveyor.y + fb.dy, yaw: fb.yaw, hx, linked, gapHold: false, frontRecaptured: false,
+                       weigh: "pending", weighT0: 0, trace: null, weight: null, scaleParts: null, inlet: null, inletDone: false, res: null });
+      this.spawnIdx++;
+      this.nextSpawn = this.t + this.flow.intervalS * (1 + this.flow.intervalJitter * (2 * this.rFlow() - 1));
+      this.log(`${fb.box_id} 투입${linked ? " (앞 박스와 붙어서)" : ""}`, linked ? "warn" : "mut");
+    }
+    _chain(i) { let a = i, z = i; while (a > 0 && this.conv[a].linked) a--; while (z + 1 < this.conv.length && this.conv[z + 1].linked) z++; return [a, z]; }
+    _admitted(i) {
+      const S = WC.scale, lo = S.x - S.half, hi = S.x + S.half, [a, z] = this._chain(i);
+      return this.conv.every((o, j) => (j >= a && j <= z) || !(o.x + o.hx > lo && o.x - o.hx < hi));
+    }
+    _move(h) {
+      if (this.stopped()) return;
+      const v = this.flow.beltSpeed, S = WC.scale, face = WC.stopper.min[0] - WC.stopGapM;
+      for (let i = 0; i < this.conv.length; i++) {
+        const b = this.conv[i], ahead = this.conv[i - 1];
+        let xmax = !ahead ? face - b.hx : b.linked ? ahead.x - ahead.hx - b.hx : ahead.x - ahead.hx - this.flow.minGapM - b.hx;
+        if (b.weigh === "pending") xmax = Math.min(xmax, this._admitted(i) ? S.x : S.x - S.half - 0.01 - b.hx);
+        if (b.weigh === "weighing" || b.gapHold) xmax = Math.min(xmax, b.x);
+        b.x = Math.max(b.x, Math.min(b.x + v * h, xmax));
+      }
+    }
+    _scale() {
+      const S = WC.scale, lo = S.x - S.half, hi = S.x + S.half;
+      for (const b of this.conv) {
+        if (b.weigh === "pending" && Math.abs(b.x - S.x) < 1e-6) {
+          let m = 0; const parts = [];
+          for (const o of this.conv) {
+            const ov = Math.max(0, Math.min(hi, o.x + o.hx) - Math.max(lo, o.x - o.hx)) / (2 * o.hx);
+            if (ov > 0.001) { m += o.fb.weight_kg * ov; parts.push({ id: o.fb.box_id, share: ov }); }
+          }
+          b.weigh = "weighing"; b.weighT0 = this.t; b.trace = scaleTrace(m, b.fb); b.scaleParts = parts;
+          this.lastScale = { b, trace: b.trace, truth: b.fb.weight_kg, parts, t0: this.t };
+        } else if (b.weigh === "weighing" && this.t - b.weighT0 >= this.flow.weighS) {
+          b.weigh = "done"; b.weight = b.trace.measured;
+          if (b.scaleParts.length > 1) { this.counters.combinedWeigh++; this.log(`${b.fb.box_id} 계량에 다른 박스 포함 (${b.scaleParts.map(p => p.id + " " + Math.round(p.share * 100) + "%").join(", ")}) → ${b.weight.toFixed(2)} kg`, "bad"); }
+          else this.log(`${b.fb.box_id} 계량 ${b.weight.toFixed(3)} kg`, "mut");
+        }
+      }
+    }
+    _inlet() {
+      if (!this.flow.inletCamera) return;
+      for (let i = 0; i < this.conv.length; i++) {
+        const b = this.conv[i], ahead = this.conv[i - 1];
+        if (b.gapHold) {
+          const gap = ahead ? ahead.x - ahead.hx - (b.x + b.hx) : Infinity;
+          if (ahead && !b.frontRecaptured && gap >= this.flow.minGapM) { b.frontRecaptured = true; this._inletCapture(i - 1, true); }
+          if (gap >= this.flow.gapTargetM) { b.gapHold = false; this._inletCapture(i, true); this.log(`갭 생성 완료: ${b.fb.box_id} 재측정`, "info"); }
+          continue;
+        }
+        if (!b.inletDone && b.x >= INLET_ORIGIN[0]) this._inletCapture(i, false);
+      }
+    }
+    _inletCapture(i, recapture) {
+      const b = this.conv[i];
+      const depth = renderDepth(this.conv.filter(o => o.x < -3.0).map(o => this._boxObj(o)), this.camInlet, this.flow.depthNoiseM, b.fb.seed ^ (recapture ? 0x2c : 0x1c));
+      let meas = null, err = null;
+      try { meas = measureBox(depth, this.camInlet, INLET_DEPTH, INLET_ORIGIN, b.x - INLET_ORIGIN[0]); } catch (e) { err = e.message; }
+      const r = rng(b.fb.seed ^ 0x51de);
+      const sideLabel = b.fb.label != null ? (r() < 0.98 ? b.fb.sku : null) : (r() < PERCEPTION.base_view_recover_probability ? b.fb.sku : null);
+      if (meas && !meas.in_full_view) { err = "부분 시야 (ROI 경계)"; }
+      const sizeOnly = meas && meas.in_full_view ? resolveSku(meas.size, null, this.catalog, this.ranges, null) : { sku_id: null, reason: "partial", candidates: [] };
+      // touching boxes form one cluster whose footprint matches no SKU; the rear one is held (gapping)
+      const follower = this.conv[i + 1];
+      const rear = b.linked ? b : follower && follower.linked ? follower : null;
+      const merged = !!(meas && sizeOnly.reason === "no_match" && rear && !recapture);
+      if (recapture && b.inlet && b.inlet.meas && !(meas && meas.in_full_view)) { b.inletDone = true; return; }   // keep the earlier full view
+      b.inlet = { meas, err, sideLabel, sizeOnly, merged, outOfSpec: !!(meas && sizeOnly.reason === "no_match" && !merged), t: this.t, recapture };
+      b.inletDone = true;
+      this.lastInlet = { depth, meas, id: b.fb.box_id, cam: this.camInlet, origin: INLET_ORIGIN, cfg: INLET_DEPTH };
+      if (merged) {
+        rear.gapHold = true; rear.linked = false; rear.inletDone = true; rear.frontRecaptured = false; this.counters.gapping++;
+        const front = this.conv[this.conv.indexOf(rear) - 1];
+        this.log(`초입: ${front.fb.box_id}+${rear.fb.box_id} 붙음 감지 (길이 ${(meas.size.x * 1000).toFixed(0)} mm, 등록 SKU 없음) → ${rear.fb.box_id} 정지, 갭 생성`, "warn");
+      } else if (meas) {
+        const sk = sideLabel ?? (sizeOnly.sku_id ? sizeOnly.sku_id + "?" : "?");
+        this.log(`초입: ${b.fb.box_id} ${sk} ${(meas.size.x * 1000).toFixed(0)}×${(meas.size.y * 1000).toFixed(0)}×${(meas.size.z * 1000).toFixed(0)}${meas.damaged ? " · 파손 단서 " + meas.damage_reasons.join(",") : ""}${b.inlet.outOfSpec ? " · 등록 규격 없음" : ""}`, meas.damaged || b.inlet.outOfSpec ? "warn" : "mut");
+      }
+    }
+    _classify(b) {
+      const depth = renderDepth(this.conv.filter(o => o.x > -2.4).map(o => this._boxObj(o)), this.camPick, this.flow.depthNoiseM, b.fb.seed ^ 0x9e);
+      let meas = null, err = null;
+      try { meas = measureBox(depth, this.camPick, DEPTH, PICK_ORIGIN, null); } catch (e) { err = e.message; }
+      const r = rng(b.fb.seed ^ 0xba5e), notes = [];
+      let label = b.fb.label, labelSrc = label != null ? "상단" : null;
+      if (label == null && this.flow.inletCamera && b.inlet && b.inlet.sideLabel) { label = b.inlet.sideLabel; labelSrc = "초입(측면)"; this.counters.inletLabel++; }
+      let built = null, verdict;
+      if (meas) {
+        built = buildRawObservation(b.fb.box_id, b.weight, meas, +this.t.toFixed(3), label, this.catalog, this.ranges, this.remaining);
+        if (label == null && built.obs.label_sku) labelSrc = "추정 (resolve_sku)";
+        const im = b.inlet && b.inlet.meas;
+        if (im) {
+          const a = [im.size.x, im.size.y].sort(), c = [meas.size.x, meas.size.y].sort();
+          const d = Math.max(Math.abs(a[0] - c[0]), Math.abs(a[1] - c[1]), Math.abs(im.size.z - meas.size.z));
+          if (d > 0.015) { built.obs.confidence = Math.min(built.obs.confidence, DEPTH.uncertain_confidence); notes.push(`초입/PICK 크기 차 ${(d * 1000).toFixed(0)} mm → 확신도 ${DEPTH.uncertain_confidence}`); }
+        }
+        const baseView = this.flow.inletCamera && b.inlet
+          ? prev => { const l = prev.label_sku ?? b.inlet.sideLabel ?? null; return { ...prev, label_sku: l, size: (b.inlet.meas && b.inlet.meas.size) || prev.size, confidence: l != null ? 1.0 : prev.confidence, view: "base" }; }
+          : prev => virtualBaseView(b.fb, prev, r);
+        verdict = validate(built.obs, baseView, this.catalog, this.ranges);
+        if (verdict.used_base_view) notes.push(this.flow.inletCamera && b.inlet ? "Base-view = 초입 카메라 기록" : "Base-view = 가상 보조 카메라 (PerceptionSim)");
+      } else verdict = { kind: "RECOGNITION_FAIL", route: "INSPECTION", codes: ["TRACKING_LOST"], notes: ["depth: " + err], used_base_view: false, sku: null };
+      if (verdict.route === "PLAN" && verdict.sku && this.remaining[verdict.sku] > 0) this.remaining[verdict.sku] -= 1;
+      const res = { fb: b.fb, t: this.t, trace: b.trace, weight: b.weight, scaleParts: b.scaleParts, inlet: b.inlet, meas, err, obs: built && built.obs,
+                    resolution: built && built.resolution, verdict, labelSrc, notes, actions: [], disposition: "판정됨" };
+      res.correct = expectedKinds(b.fb).includes(verdict.kind);
+      this.results.push(res); b.res = res;
+      this.lastPick = { depth, meas, id: b.fb.box_id, cam: this.camPick, origin: PICK_ORIGIN, cfg: DEPTH, res };
+      this.log(`PICK: ${b.fb.box_id} → ${verdict.kind}${verdict.uncertain ? " δ" : ""} / ${verdict.route}`, verdict.route === "PLAN" ? (verdict.kind === "OK" ? "ok" : "warn") : "bad");
+      return res;
+    }
+    _pick() {
+      const b = this.conv[0];
+      if (!b || b.weigh !== "done" || Math.abs(b.x + b.hx - (WC.stopper.min[0] - WC.stopGapM)) > 1e-6) return;
+      if (!this.pickState || this.pickState.box !== b) {
+        this.pickState = { box: b, phase: "classify", until: this.t + this.flow.classifyS };
+        this.halt(this.flow.classifyS, "classify");
+        return;
+      }
+      const ps = this.pickState;
+      if (ps.phase === "classify" && this.t >= ps.until) { this._classify(b); ps.phase = "ready"; }
+      if (ps.phase === "ready" && !this.robot.task) {
+        if (b.res.verdict.route === "INSPECTION") { this._task("REJECT", { box: b }); ps.phase = "acting"; }
+        else { ps.phase = "plan"; ps.until = this.t + this.flow.planS; this.halt(this.flow.planS, "plan"); }
+      }
+      if (ps.phase === "plan" && this.t >= ps.until) {
+        const v = b.res.verdict, cur = { id: b.fb.box_id, size: v.box.size, uncertain: !!v.uncertain };
+        const d = decide(this, cur); this.decisions++;
+        b.res.actions.push(d.type); ps.decision = d;
+        this.log(`행동: ${d.type}${d.bay != null ? " (버퍼 " + (d.bay + 1) + ")" : ""} · ${d.reason}`, d.type === "PLACE_CURRENT" ? "ok" : d.type === "PALLET_CLOSE" ? "bad" : "vio");
+        if (d.type === "PLACE_CURRENT") { this._task("PLACE", { box: b, slot: d.option }); ps.phase = "acting"; }
+        else if (d.type === "BUFFER_CURRENT") { this._task("BUFFER", { box: b, bay: d.bay }); ps.phase = "acting"; }
+        else if (d.type === "RETRIEVE_BUFFER") { this._task("RETRIEVE", { bay: d.bay, slot: d.option }); ps.phase = "ready"; }
+        else { this._task("CHANGE", {}); ps.phase = "ready"; }
+      }
+    }
+    _task(type, p) {
+      const legs = [], go = (to, dur, extra = {}) => legs.push({ to, dur, t: 0, ...extra }), top = WC.conveyor.top;
+      const labels = { PLACE: "PICK → 팔레트", BUFFER: "PICK → 버퍼", RETRIEVE: "버퍼 → 팔레트", REJECT: "PICK → Hold/NG", CHANGE: "팔레트 교체 대기" };
+      if (type === "CHANGE") {
+        this.counters.palletChange++;
+        this.log(`팔레트 ${this.palletNo} 마감 (적재율 ${(this.pallet.fill() * 100).toFixed(0)}%) → 교체 ${this.flow.palletChangeS} s`, "bad");
+        go(HOME, Math.max(0.1, this.flow.palletChangeS), { onEnd: () => {
+          this.closed.push({ no: this.palletNo, boxes: this.pallet.boxes.length, fill: this.pallet.fill() });
+          this.pallet = new PalletModel(); this.palletNo++; this.log(`새 팔레트 ${this.palletNo}`, "info");
+        } });
+      } else {
+        let fromXY, fromZ, h, yaw0, grip;
+        if (type === "RETRIEVE") {
+          const bay = this.bays[p.bay], e = bay.entry; h = e.fb.size.z; fromXY = [bay.x, bay.y]; fromZ = WC.bufferTop + h; yaw0 = e.yaw;
+          grip = () => { this.robot.carried = { fb: e.fb, h, yaw: e.yaw, res: e.res, state: e.state }; bay.entry = null; this.counters.bufferGet++; };
+        } else {
+          const b = p.box; h = b.fb.size.z; fromXY = [b.x, b.y]; fromZ = top + h; yaw0 = b.yaw;
+          grip = () => {
+            this.conv.splice(this.conv.indexOf(b), 1);
+            if (this.conv[0] && this.conv[0].linked) this.conv[0].linked = false;
+            this.robot.carried = { fb: b.fb, h, yaw: b.yaw, res: b.res, state: b.res.verdict.box ? { size: b.res.verdict.box.size, uncertain: !!b.res.verdict.uncertain } : null };
+            if (this.pickState && this.pickState.box === b) this.pickState = null;
+          };
+        }
+        let dest, release;
+        if (type === "PLACE" || type === "RETRIEVE") {
+          const s = p.slot; dest = [s.x, s.y, s.z, s.yaw];
+          release = () => { const c = this.robot.carried; this.pallet.commit(s, c.state.size, c.fb.box_id);
+            this.placed.push({ fb: c.fb, x: s.x, y: s.y, z: s.z, yaw: s.yaw, palletNo: this.palletNo, size: c.state.size });
+            c.res.disposition = `팔레트 ${this.palletNo}${type === "RETRIEVE" ? " (버퍼 경유)" : ""}`; this.robot.carried = null; };
+        } else if (type === "BUFFER") {
+          const bay = this.bays[p.bay], s = p.box.res.verdict.box.size, yaw = s.x <= BAY.short && s.y <= BAY.long ? 0 : Math.PI / 2;
+          dest = [bay.x, bay.y, WC.bufferTop, yaw];
+          release = () => { const c = this.robot.carried; bay.entry = { fb: c.fb, res: c.res, state: c.state, storedAt: this.decisions, yaw };
+            c.res.disposition = `버퍼 ${p.bay + 1}`; this.counters.bufferPut++; this.robot.carried = null; };
+        } else {
+          const k = this.hold.length, col = k % 3, row = Math.floor(k / 3) % 2, lay = Math.floor(k / 6);
+          dest = [WC.hold.x - 0.28 + col * 0.28, WC.hold.y - 0.17 + row * 0.34, 0.02 + lay * 0.45, 0];
+          release = () => { const c = this.robot.carried; this.hold.push({ fb: c.fb, x: dest[0], y: dest[1], z: dest[2] }); c.res.disposition = "Hold/NG"; this.robot.carried = null; };
+        }
+        const safe = Math.max(1.75, dest[2] + h + 0.35, fromZ + 0.3);
+        go([fromXY[0], fromXY[1], safe], 1.2);
+        go([fromXY[0], fromXY[1], fromZ], 0.6);
+        go([fromXY[0], fromXY[1], safe], 0.6, { onStart: grip });
+        go([dest[0], dest[1], safe], 2.0, { yaw: [yaw0, dest[3]] });
+        go([dest[0], dest[1], dest[2] + h], 0.8);
+        go(HOME, 1.2, { onStart: release });
+      }
+      this.robot.task = { type, legs, i: 0 }; this.robot.label = labels[type];
+    }
+    _robot(h) {
+      const R = this.robot, task = R.task; if (!task) return;
+      const leg = task.legs[task.i];
+      if (!leg.started) { leg.started = true; leg.from = R.pos.slice(); if (leg.onStart) leg.onStart(); }
+      leg.t += h; const e = ease(Math.min(1, leg.t / leg.dur));
+      R.pos = leg.from.map((v, k) => v + (leg.to[k] - v) * e);
+      if (R.carried && leg.yaw) R.carried.yaw = leg.yaw[0] + (leg.yaw[1] - leg.yaw[0]) * e;
+      if (leg.t >= leg.dur) { if (leg.onEnd) leg.onEnd(); if (++task.i >= task.legs.length) { R.task = null; R.label = "대기"; } }
+    }
+    _finish() {
+      if (this.spawnIdx < this.stream.length || this.conv.length || this.robot.task) return;
+      if (this.bays.some(b => b.entry)) {
+        if (!this.endPlan) { this.endPlan = this.t + this.flow.planS; return; }
+        if (this.t < this.endPlan) return;
+        this.endPlan = null;
+        const d = decide(this, null); this.decisions++;
+        this.log(`행동: ${d.type}${d.bay != null ? " (버퍼 " + (d.bay + 1) + ")" : ""} · ${d.reason}`, "vio");
+        if (d.type === "RETRIEVE_BUFFER") this._task("RETRIEVE", { bay: d.bay, slot: d.option }); else this._task("CHANGE", {});
+        return;
+      }
+      this.done = true;
+      this.log(`완료: 박스 ${this.results.length}개, ${this.t.toFixed(0)} s`, "info");
+    }
+    summary() {
+      const R = this.results, n = R.length, T = Math.max(this.t, 1e-6);
+      const pallets = this.closed.concat(this.pallet.boxes.length ? [{ no: this.palletNo, boxes: this.pallet.boxes.length, fill: this.pallet.fill() }] : []);
+      return {
+        boxes: this.stream.length, finished: R.filter(r => !["판정됨"].includes(r.disposition) && !r.disposition.startsWith("버퍼")).length, t: this.t,
+        throughput: R.length / T * 60, stopClassify: this.stopTime.classify / T, stopPlan: this.stopTime.plan / T, robotUtil: this.robot.busyTime / T,
+        pallets: pallets.length, fill: pallets.length ? pallets.reduce((a, p) => a + p.fill, 0) / pallets.length : 0,
+        wrong: R.filter(r => !r.correct).length, weightErr: R.filter(r => r.weight != null && Math.abs(r.weight - r.fb.weight_kg) / r.fb.weight_kg > 0.05).length,
+        placed: R.filter(r => r.disposition.startsWith("팔레트")).length, held: R.filter(r => r.disposition === "Hold/NG").length, ...this.counters,
+      };
+    }
+  }
+
+  return { rng, gauss, ease, WC, HOME, PICK_ORIGIN, INLET_ORIGIN, DEPTH, INLET_DEPTH, RESOLVER, VALIDATOR, PERCEPTION, HL, PLACE, BAY, FLOW,
+           ORDERS, FAULTS, catalogOf, makeStream, halfX, scaleTrace, cameraModel, project, renderDepth, measureBox, resolveSku,
+           buildRawObservation, validate, PalletModel, decide, expectedKinds, Sim };
+})();
+if (typeof module !== "undefined") module.exports = CORE;
+</script>
+
+<!-- ===================== UI ===================== -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+"use strict";
+const { WC } = CORE;
+const W2T = (x, y, z) => new THREE.Vector3(x, z, -y);   // Gazebo world (z up) -> three.js (y up)
+const SKU_COLORS = { K01: 0xc9925b, K02: 0xd4a76a, K03: 0xb98552, K04: 0xe0b77c, K08: 0xc79a62, K10: 0xd9b07a, K13: 0xbf8d57, X99: 0x8a8f99 };
+const $ = id => document.getElementById(id);
+const UI = { sim: null, running: false, speed: 4, instant: false, depthTab: "pick", drawn: { pick: null, inlet: null }, meshes: new Map(), shownPick: null };
+
+// ---------------- three.js scene ----------------
+const viewport = $("viewport");
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2)); renderer.shadowMap.enabled = true;
+viewport.appendChild(renderer.domElement);
+const scene = new THREE.Scene(); scene.background = new THREE.Color(0x0b1015);
+const camera3 = new THREE.PerspectiveCamera(45, 1, 0.05, 100);
+camera3.position.copy(W2T(-2.0, -5.6, 5.6));
+const controls = new THREE.OrbitControls(camera3, renderer.domElement);
+controls.target.copy(W2T(-1.7, 0.8, 0.4)); controls.update();
+scene.add(new THREE.HemisphereLight(0xdfefff, 0x1a2229, 0.75));
+const sun = new THREE.DirectionalLight(0xffffff, 0.8);
+sun.position.copy(W2T(-2, -3, 6)); sun.castShadow = true;
+Object.assign(sun.shadow.camera, { left: -7, right: 7, top: 7, bottom: -7 }); sun.shadow.mapSize.set(2048, 2048);
+scene.add(sun);
+
+const mat = (color, opts = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.75, metalness: 0.05, ...opts });
+function boxMesh(sx, sy, sz, color, opts) { const m = new THREE.Mesh(new THREE.BoxGeometry(sx, sz, sy), mat(color, opts)); m.castShadow = true; m.receiveShadow = true; return m; }
+function placeBox(mesh, x, y, zBottom, sz) { mesh.position.copy(W2T(x, y, zBottom + sz / 2)); }
+function label3d(text, x, y, z, color = "#edf5fb", scale = 0.9) {
+  const c = document.createElement("canvas"), g = c.getContext("2d"); c.width = 512; c.height = 96;
+  const tex = new THREE.CanvasTexture(c), sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, depthTest: false }));
+  const set = (t, col) => {
+    g.clearRect(0, 0, 512, 96); g.fillStyle = "rgba(15,22,29,.85)"; g.strokeStyle = col; g.globalAlpha = 1; g.lineWidth = 3;
+    g.beginPath(); g.roundRect ? g.roundRect(4, 4, 504, 88, 18) : g.rect(4, 4, 504, 88); g.fill(); g.stroke();
+    g.fillStyle = col; g.font = "bold 38px 'Malgun Gothic', sans-serif"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(t, 256, 50); tex.needsUpdate = true;
+  };
+  set(text, color);
+  sp.scale.set(scale, scale * 0.19, 1); sp.position.copy(W2T(x, y, z)); sp.renderOrder = 10; scene.add(sp);
+  return { sprite: sp, set };
+}
+function frustum(cam, color) {
+  const far = 2.3, corners = [[0, 0], [cam.width, 0], [cam.width, cam.height], [0, cam.height]].map(([u, v]) => {
+    const a = (u - cam.cx) / cam.fx, b = (v - cam.cy) / cam.fy;
+    return [0, 1, 2].map(i => cam.pos[i] + far * (cam.ox[i] * a + cam.oy[i] * b + cam.oz[i]));
+  });
+  const P = W2T(...cam.pos), seg = [];
+  corners.forEach((c, i) => seg.push(P, W2T(...c), W2T(...c), W2T(...corners[(i + 1) % 4])));
+  scene.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(seg), new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.4 })));
+}
+function roiLine(origin, roi, color) {
+  const [x0, x1, y0, y1] = roi, z = origin[2] + 0.004;
+  const pts = [[x0, y0], [x1, y0], [x1, y1], [x0, y1], [x0, y0]].map(([x, y]) => W2T(origin[0] + x, origin[1] + y, z));
+  scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color })));
+}
+let convLabel, inletLabel, scaleLabel;
+(function buildWorkcell() {
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(14, 10), mat(0x161e25));
+  floor.rotation.x = -Math.PI / 2; floor.position.copy(W2T(-1.5, 0.6, 0)); floor.receiveShadow = true; scene.add(floor);
+  const grid = new THREE.GridHelper(14, 28, 0x2a3946, 0x1c2731); grid.position.copy(W2T(-1.5, 0.6, 0.001)); scene.add(grid);
+  const cv = WC.conveyor, len = cv.x1 - cv.x0, cx = (cv.x0 + cv.x1) / 2;
+  const frame = boxMesh(len, cv.halfW * 2 + 0.08, 0.1, 0x37444f); placeBox(frame, cx, cv.y, cv.top - 0.16, 0.1); scene.add(frame);
+  for (const s of [1, -1]) { const rail = boxMesh(len, 0.03, 0.16, 0x51606c); placeBox(rail, cx, cv.y + s * (cv.halfW + 0.02), cv.top - 0.10, 0.16); scene.add(rail); }
+  const legGeo = new THREE.BoxGeometry(0.06, cv.top - 0.16, 0.06);
+  for (let x = cv.x0 + 0.1; x < cv.x1; x += 0.9) for (const s of [1, -1]) { const leg = new THREE.Mesh(legGeo, mat(0x2b3640)); leg.position.copy(W2T(x, cv.y + s * (cv.halfW + 0.02), (cv.top - 0.16) / 2)); scene.add(leg); }
+  const rollers = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.024, 0.024, cv.halfW * 2, 12), mat(0x9aa7b1, { metalness: 0.6, roughness: 0.35 }), Math.ceil(len / cv.rollerPitch));
+  const dummy = new THREE.Object3D(); let n = 0;
+  for (let x = cv.x0 + cv.rollerPitch / 2; x < cv.x1; x += cv.rollerPitch) { dummy.position.copy(W2T(x, cv.y, cv.top - 0.024)); dummy.rotation.set(Math.PI / 2, 0, 0); dummy.updateMatrix(); rollers.setMatrixAt(n++, dummy.matrix); }
+  rollers.count = n; rollers.receiveShadow = true; scene.add(rollers);
+  const sc = boxMesh(0.70, 0.70, 0.02, 0x2f7d99, { emissive: 0x0b3442 }); placeBox(sc, WC.scale.x, cv.y, cv.top - 0.055, 0.02); scene.add(sc);
+  const scBase = boxMesh(0.78, 0.82, 0.12, 0x24566a); placeBox(scBase, WC.scale.x, cv.y, cv.top - 0.30, 0.12); scene.add(scBase);
+  scaleLabel = label3d("인라인 저울", WC.scale.x, cv.y - 0.75, cv.top + 0.3, "#56d9ff");
+  const st = WC.stopper, stopper = boxMesh(st.max[0] - st.min[0], st.max[1] - st.min[1], st.max[2] - st.min[2], 0xf26b08);
+  placeBox(stopper, (st.min[0] + st.max[0]) / 2, (st.min[1] + st.max[1]) / 2, st.min[2], st.max[2] - st.min[2]); scene.add(stopper);
+  label3d("PICK · 스토퍼", WC.pick.x, cv.y - 0.75, cv.top + 0.3, "#ffd166");
+  convLabel = label3d("컨베이어 가동", -2.6, cv.y, 1.75, "#62df97", 1.1);
+  // pick pole CCTV
+  const pole = boxMesh(0.07, 0.07, 2.34, 0x2a2d33); placeBox(pole, -0.6, 1.95, 0, 2.34); scene.add(pole);
+  const housing = boxMesh(0.2, 0.11, 0.095, 0x111316); housing.position.copy(W2T(...WC.camera.pos)); scene.add(housing);
+  frustum(CORE.cameraModel(WC.camera), 0x56d9ff);
+  label3d("PICK 기둥 CCTV (RGB-D 가정)", -0.6, 2.05, 2.62, "#56d9ff");
+  roiLine(CORE.PICK_ORIGIN, CORE.DEPTH.roi_xy_m, 0x56d9ff);
+  // inlet pole camera (assumed pose)
+  const ic = WC.inletCamera, pole2 = boxMesh(0.07, 0.07, 2.34, 0x2a2d33); placeBox(pole2, ic.pos[0], 1.95, 0, 2.34); scene.add(pole2);
+  const housing2 = boxMesh(0.2, 0.11, 0.095, 0x111316); housing2.position.copy(W2T(...ic.pos)); scene.add(housing2);
+  frustum(CORE.cameraModel(ic), 0xb69cff);
+  inletLabel = label3d("초입 기둥 카메라 (위치 가정)", ic.pos[0], 2.05, 2.62, "#b69cff");
+  roiLine(CORE.INLET_ORIGIN, CORE.INLET_DEPTH.roi_xy_m, 0xb69cff);
+  // robot pedestal
+  const ped = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.32, WC.robot.pedestal, 24), mat(0x30404c));
+  ped.position.copy(W2T(0, 0, WC.robot.pedestal / 2)); ped.castShadow = true; scene.add(ped);
+  label3d("HDR50-22 (형상 단순화)", 0, -0.6, 1.95);
+  const p = WC.pallet, base = boxMesh(p.size, p.size, p.deck - 0.035, 0x6b4a2b); placeBox(base, p.cx, p.cy, 0, p.deck - 0.035); scene.add(base);
+  for (let i = 0; i < 5; i++) { const b = boxMesh(p.size, 0.143, 0.035, 0x9c7445); placeBox(b, p.cx, p.cy - p.size / 2 + 0.0715 + i * 0.23925, p.deck - 0.035, 0.035); scene.add(b); }
+  label3d("팔레트 1.10 × 1.10 m", p.cx, p.cy + 0.78, 0.45);
+  WC.buffer.forEach(([bx, by], i) => {
+    const t = boxMesh(0.40, 0.58, 0.03, 0x4c5a66); placeBox(t, bx, by, WC.bufferTop - 0.03, 0.03); scene.add(t);
+    for (const [dx, dy] of [[-0.17, -0.26], [0.17, -0.26], [-0.17, 0.26], [0.17, 0.26]]) { const leg = boxMesh(0.04, 0.04, WC.bufferTop - 0.03, 0x34404a); placeBox(leg, bx + dx, by + dy, 0, WC.bufferTop - 0.03); scene.add(leg); }
+  });
+  label3d("버퍼 테이블 (2칸)", 1.45, -0.55, 1.35, "#b69cff");
+  const hold = boxMesh(0.9, 0.7, 0.02, 0x5a2a2a, { emissive: 0x220808 }); placeBox(hold, WC.hold.x, WC.hold.y, 0, 0.02); scene.add(hold);
+  label3d("Hold / NG (위치 임시)", WC.hold.x, WC.hold.y - 0.5, 0.45, "#ff6b6b");
+})();
+
+const arm = (() => {
+  const g = new THREE.Group(), shoulderZ = WC.robot.pedestal + 0.35, L1 = 1.05, L2 = 1.15;
+  const m = mat(0xe8eef3, { metalness: 0.2, roughness: 0.5 });
+  const turret = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.22, 0.35, 20), m); turret.position.y = WC.robot.pedestal + 0.175;
+  const up = new THREE.Mesh(new THREE.BoxGeometry(0.16, L1, 0.16), m), fo = new THREE.Mesh(new THREE.BoxGeometry(0.12, L2, 0.12), m);
+  const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.08, 16), mat(0x26313a));
+  [turret, up, fo, cup].forEach(o => { o.castShadow = true; g.add(o); }); scene.add(g);
+  return (x, y, z) => {
+    const r = Math.hypot(x, y), h = z - shoulderZ, d = Math.min(Math.hypot(r, h), L1 + L2 - 1e-3);
+    const yaw = Math.atan2(y, x), a2 = Math.acos(Math.max(-1, Math.min(1, (L1 * L1 + L2 * L2 - d * d) / (2 * L1 * L2))));
+    const a1 = Math.atan2(h, r) + Math.asin(Math.min(1, L2 * Math.sin(a2) / d));
+    const sh = [0, 0, shoulderZ], el = [Math.cos(yaw) * L1 * Math.cos(a1), Math.sin(yaw) * L1 * Math.cos(a1), shoulderZ + L1 * Math.sin(a1)];
+    const seg = (mesh, a, b) => { const A = W2T(...a), B = W2T(...b); mesh.position.copy(A).add(B).multiplyScalar(0.5); mesh.lookAt(B); mesh.rotateX(Math.PI / 2); };
+    seg(up, sh, el); seg(fo, el, [x, y, z]); cup.position.copy(W2T(x, y, z + 0.04));
+  };
+})();
+
+function resize() { const w = viewport.clientWidth, h = viewport.clientHeight; renderer.setSize(w, h); camera3.aspect = w / h; camera3.updateProjectionMatrix(); }
+addEventListener("resize", resize); resize();
+
+// ---------------- sync meshes with the simulation ----------------
+function meshFor(fb) {
+  let m = UI.meshes.get(fb.box_id);
+  if (!m) { m = boxMesh(fb.size.x, fb.size.y, fb.size.z, SKU_COLORS[fb.sku] || 0xbfa070); if (fb.dent) m.material.color.offsetHSL(0, 0, -0.08); scene.add(m); UI.meshes.set(fb.box_id, m); }
+  return m;
+}
+function syncScene() {
+  const S = UI.sim, seen = new Set();
+  const put = (fb, x, y, zb, yaw, tint) => { const m = meshFor(fb); placeBox(m, x, y, zb, fb.size.z); m.rotation.set(0, yaw, 0); m.visible = true; seen.add(fb.box_id); if (tint) m.material.color.setHex(tint); };
+  for (const b of S.conv) put(b.fb, b.x, b.y, WC.conveyor.top, b.yaw);
+  const c = S.robot.carried; if (c) put(c.fb, S.robot.pos[0], S.robot.pos[1], S.robot.pos[2] - c.h, c.yaw);
+  for (const p of S.placed) if (p.palletNo === S.palletNo) put(p.fb, p.x, p.y, p.z, p.yaw);
+  for (const b of S.bays) if (b.entry) put(b.entry.fb, b.x, b.y, WC.bufferTop, b.entry.yaw);
+  for (const h of S.hold) put(h.fb, h.x, h.y, h.z, 0, 0x8c3b3b);
+  for (const [id, m] of UI.meshes) if (!seen.has(id)) m.visible = false;
+  arm(...S.robot.pos);
+  const st = S.stopped() ? (S.stopReason === "classify" ? ["정지: 분류 연산", "#ffd166"] : ["정지: 적재 연산", "#ffd166"]) : ["컨베이어 가동", "#62df97"];
+  if (UI.convText !== st[0]) { convLabel.set(...st); UI.convText = st[0]; }
+  const gap = S.conv.some(b => b.gapHold), it = !S.flow.inletCamera ? ["초입 카메라 꺼짐", "#93a6b6"] : gap ? ["초입: 갭 생성 중", "#ffd166"] : ["초입 기둥 카메라 (위치 가정)", "#b69cff"];
+  if (UI.inletText !== it[0]) { inletLabel.set(...it); UI.inletText = it[0]; }
+}
+
+// ---------------- main loop ----------------
+let last = performance.now();
+function frame(now) {
+  const dt = Math.max(0, Math.min(0.1, (now - last) / 1000)); last = now;
+  if (UI.sim && UI.running && !UI.instant && !UI.sim.done) UI.sim.step(dt * UI.speed);
+  if (UI.sim) { syncScene(); refreshPanels(); }
+  renderer.render(scene, camera3);
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+// ---------------- controls ----------------
+for (const name of Object.keys(CORE.ORDERS)) $("orderSel").add(new Option(name, name));
+$("orderSel").value = "demo_original10";
+$("faultSliders").innerHTML = CORE.FAULTS.map(f => `<span>${f.name}</span><span class="v" id="fv_${f.key}">${f.p.toFixed(2)}</span>
+  <input type="range" min="0" max="0.5" step="0.01" value="${f.p}" id="f_${f.key}" style="grid-column:1/3">`).join("") +
+  `<span>깊이 잡음 σ (mm)</span><span class="v" id="fv_noise">1.5</span><input type="range" min="0" max="6" step="0.5" value="1.5" id="f_noise" style="grid-column:1/3">`;
+for (const f of CORE.FAULTS) $("f_" + f.key).oninput = e => { $("fv_" + f.key).textContent = (+e.target.value).toFixed(2); };
+$("f_noise").oninput = e => { $("fv_noise").textContent = (+e.target.value).toFixed(1); };
+$("speedSel").onchange = e => { UI.instant = e.target.value === "inf"; UI.speed = UI.instant ? 1 : +e.target.value; };
+$("tabPick").onclick = () => setTab("pick"); $("tabInlet").onclick = () => setTab("inlet");
+function setTab(t) { UI.depthTab = t; $("tabPick").classList.toggle("on", t === "pick"); $("tabInlet").classList.toggle("on", t === "inlet"); UI.drawn = { pick: null, inlet: null }; }
+
+function options(overrides = {}) {
+  const num = id => +$(id).value;
+  return {
+    order: $("orderSel").value, seed: num("seedInp") | 0, repeat: Math.max(1, Math.min(20, num("repeatInp") | 0)),
+    faultP: Object.fromEntries(CORE.FAULTS.map(f => [f.key, num("f_" + f.key)])),
+    flow: { intervalS: num("intervalInp"), intervalJitter: num("jitterInp"), beltSpeed: num("beltInp"), touchingP: num("touchInp"),
+            classifyS: num("clsInp"), planS: num("planInp"), palletChangeS: num("changeInp"), inletCamera: $("inletChk").checked,
+            computeStop: $("stopChk").checked, bufferOn: $("bufChk").checked, depthNoiseM: num("f_noise") / 1000, ...overrides },
+  };
+}
+function reset() {
+  UI.running = false; UI.sim = new CORE.Sim(options()); UI.drawn = { pick: null, inlet: null }; UI.shownPick = null; UI.logLen = -1; UI.resLen = -1;
+  for (const m of UI.meshes.values()) scene.remove(m); UI.meshes.clear();
+  const S = UI.sim;
+  $("streamInfo").textContent = `${S.o.order} × ${S.o.repeat}: 박스 ${S.stream.length}개 · 주입 이상 ${S.stream.filter(b => b.fault !== "none").length}개 · 붙어서 투입 ${S.stream.filter(b => b.touching).length}개 · 시드 ${S.o.seed}`;
+  $("runBtn").textContent = "시작"; $("compare").innerHTML = "";
+  clearCanvas($("depthCanvas")); clearCanvas($("scaleCanvas"));
+}
+function clearCanvas(c) { const g = c.getContext("2d"); g.fillStyle = "#0d151c"; g.fillRect(0, 0, c.width, c.height); }
+$("resetBtn").onclick = reset;
+$("runBtn").onclick = () => {
+  if (!UI.sim || UI.sim.done) return;
+  UI.running = !UI.running; $("runBtn").textContent = UI.running ? "일시정지" : "계속";
+  if (UI.running && UI.instant) runInstant(UI.sim).then(() => { UI.running = false; $("runBtn").textContent = "완료"; });
+};
+async function runInstant(sim) { while (!sim.done && UI.running !== false) { const t0 = performance.now(); while (!sim.done && performance.now() - t0 < 40) sim.step(0.5); await new Promise(r => setTimeout(r, 0)); } }
+$("exportBtn").onclick = exportJsonl;
+$("cmpBtn").onclick = async () => {
+  $("compare").innerHTML = `<span class="mut">같은 시드로 두 번 실행 중…</span>`;
+  await new Promise(r => setTimeout(r, 20));
+  const out = [];
+  for (const on of [true, false]) {
+    const sim = new CORE.Sim(options({ inletCamera: on }));
+    while (!sim.done && sim.t < 36000) { const t0 = performance.now(); while (!sim.done && performance.now() - t0 < 40) sim.step(1.0); await new Promise(r => setTimeout(r, 0)); }
+    out.push(sim.summary());
+  }
+  const [a, b] = out, rows = [
+    ["판정 오류 (주입 이상 기준)", "wrong", v => v], ["무게 오측정 > 5%", "weightErr", v => v], ["여러 박스가 함께 계량됨", "combinedWeigh", v => v],
+    ["갭 생성", "gapping", v => v], ["라벨을 초입에서 보완", "inletLabel", v => v], ["처리량 (박스/분)", "throughput", v => v.toFixed(2)],
+    ["전체 시간 (s)", "t", v => v.toFixed(0)], ["팔레트 수", "pallets", v => v],
+  ];
+  $("compare").innerHTML = `<table class="cmp"><tr><th>초입 카메라 비교 (시드 ${$("seedInp").value})</th><th>있음</th><th>없음</th></tr>` +
+    rows.map(([k, f, fmt]) => `<tr><td>${k}</td><td>${fmt(a[f])}</td><td class="${a[f] !== b[f] ? "warn" : ""}">${fmt(b[f])}</td></tr>`).join("") + "</table>";
+};
+
+// ---------------- panels ----------------
+const mm = v => (v * 1000).toFixed(0);
+const sizeTxt = s => (s ? `${mm(s.x)}×${mm(s.y)}×${mm(s.z)}` : "–");
+const FAULT_NAME = Object.fromEntries([["none", "없음"], ["touching", "붙어서 투입"], ...CORE.FAULTS.map(f => [f.key, f.name])]);
+const faultKey = fb => (fb.fault === "none" && fb.touching ? "touching" : fb.fault);
+const KIND_CLASS = { OK: "ok", SPEC_MISMATCH: "warn", DAMAGED: "bad", RECOGNITION_FAIL: "bad", UNKNOWN_SKU: "bad" };
+const pill = v => `<span class="pill ${KIND_CLASS[v.kind] || "mut"}">${v.kind}${v.route === "PLAN" && v.uncertain ? " δ" : ""}</span>`;
+
+function refreshPanels() {
+  const S = UI.sim, now = performance.now();
+  if (now - (UI.lastPanel || 0) < 120 && !S.done) return;
+  UI.lastPanel = now;
+  $("clockInfo").textContent = `t = ${S.t.toFixed(1)} s`;
+  const pickBox = S.conv[0], ps = S.pickState;
+  const zone = b => b.gapHold ? "초입 · 갭 생성 대기" : b.weigh === "weighing" ? "저울 · 계량 중" : b.weigh === "pending" ? (b.x < WC.scale.x - WC.scale.half ? (b.inletDone ? "저울 대기" : "초입") : "저울 진입") : (S.conv[0] === b && ps && ps.box === b ? "PICK" : "이송");
+  const stopTxt = S.stopped() ? `<span class="warn">정지 · ${S.stopReason === "classify" ? "분류 연산" : "적재 연산"} (${(S.stopUntil - S.t).toFixed(1)} s)</span>` : `<span class="ok">가동</span>`;
+  const weighing = S.conv.find(b => b.weigh === "weighing");
+  const psTxt = !ps ? "–" : { classify: "분류 연산", ready: "로봇 대기", plan: "적재 연산", acting: "로봇 작업" }[ps.phase];
+  $("status").innerHTML = `
+    <span class="k">컨베이어</span><span>${stopTxt} · 박스 ${S.conv.length}개 · 투입 ${S.spawnIdx}/${S.stream.length}</span>
+    <span class="k">저울</span><span>${weighing ? `<span class="info">계량 중 ${weighing.fb.box_id}</span>` : "대기"}</span>
+    <span class="k">초입 카메라</span><span>${!S.flow.inletCamera ? '<span class="mut">꺼짐</span>' : S.conv.some(b => b.gapHold) ? '<span class="warn">갭 생성 중</span>' : "감시"} · 갭 생성 ${S.counters.gapping}회</span>
+    <span class="k">PICK</span><span>${ps ? `${ps.box.fb.box_id} · ${psTxt}` : "비어 있음"}</span>
+    <span class="k">로봇</span><span>${S.robot.task ? `<span class="info">${S.robot.label}</span>` : "대기"}</span>
+    <span class="k">버퍼</span><span>${S.bays.map((b, i) => `${i + 1}: ${b.entry ? `<span class="vio">${b.entry.fb.box_id} ${b.entry.state.size ? sizeTxt(b.entry.state.size) : ""}</span>` : '<span class="mut">빈 칸</span>'}`).join(" · ")}</span>
+    <span class="k">팔레트</span><span>#${S.palletNo} · ${S.pallet.boxes.length}개 · 적재율 ${(S.pallet.fill() * 100).toFixed(0)}% · 마감 ${S.closed.length}</span>`;
+
+  $("queueTable").innerHTML = `<tr><th>ID</th><th>구역</th><th>초입 판독</th><th>무게</th></tr>` + S.conv.slice().reverse().map(b => {
+    const i = b.inlet, m = i && i.meas;
+    const read = !S.flow.inletCamera ? '<span class="mut">–</span>' : !i ? "…" : i.merged ? '<span class="warn">붙음 → 갭</span>'
+      : `${i.sideLabel ?? (i.sizeOnly && i.sizeOnly.sku_id ? i.sizeOnly.sku_id + "?" : "?")} ${m ? sizeTxt(m.size) : ""}${m && m.damaged ? ' <span class="bad">파손?</span>' : ""}${i.outOfSpec ? ' <span class="warn">규격 외</span>' : ""}`;
+    return `<tr><td>${b.fb.box_id}${b.linked ? ' <span class="warn">⛓</span>' : ""}</td><td>${zone(b)}</td><td>${read}</td><td>${b.weight != null ? b.weight.toFixed(2) : "–"}</td></tr>`;
+  }).join("");
+
+  const latest = S.lastPick && S.lastPick.res;
+  if (latest && UI.shownPick !== latest) { UI.shownPick = latest; showResult(latest); }
+  if (S.results.length !== UI.resLen) { UI.resLen = S.results.length; renderSummary(); renderTable(); }
+  if (ps && ps.decision && UI.shownDecision !== ps.decision) { UI.shownDecision = ps.decision; showResult(ps.box.res, ps.decision); }
+  const src = UI.depthTab === "pick" ? S.lastPick : S.lastInlet;
+  if (src && UI.drawn[UI.depthTab] !== src) { UI.drawn[UI.depthTab] = src; drawDepth(src); }
+  if (S.lastScale) drawScale(S.lastScale, Math.min(1, (S.t - S.lastScale.t0) / S.flow.weighS));
+  if (S.events.length !== UI.logLen) {
+    UI.logLen = S.events.length;
+    $("log").innerHTML = S.events.slice(-80).reverse().map(e => `<div class="${e.cls}"><span class="t">${e.t.toFixed(1)}s</span>${e.msg}</div>`).join("");
+  }
+}
+
+function showResult(res, decision) {
+  const fb = res.fb, m = res.meas, v = res.verdict, i = res.inlet, im = i && i.meas;
+  const cls = bad => (bad ? "bad" : "ok");
+  let h = `<table><tr><th></th><th>실제</th><th>초입 카메라</th><th>PICK 카메라</th></tr>
+    <tr><td>박스</td><td>${fb.box_id} · ${fb.sku}</td><td colspan="2" class="mut">주입: ${FAULT_NAME[faultKey(fb)]}</td></tr>
+    <tr><td>라벨</td><td>${fb.sku}</td><td>${!i ? "–" : i.sideLabel ?? '<span class="warn">미판독</span>'}</td><td>${fb.label ?? '<span class="warn">미판독</span>'} <span class="mut">→ ${res.labelSrc ?? "없음"}</span></td></tr>
+    <tr><td>크기 (mm)</td><td>${sizeTxt(fb.size)}</td><td>${im ? sizeTxt(im.size) : i ? `<span class="mut">${i.err ?? "–"}</span>` : "–"}</td><td>${m ? sizeTxt(m.size) : `<span class="bad">${res.err}</span>`}</td></tr>
+    <tr><td>무게 (kg)</td><td>${fb.weight_kg.toFixed(3)}</td><td class="mut">–</td><td>${res.weight != null ? res.weight.toFixed(3) : "–"}${res.scaleParts && res.scaleParts.length > 1 ? ' <span class="bad">함께 계량</span>' : ""}</td></tr>`;
+  if (m) h += `<tr><td>파손 단서</td><td>${fb.dent ? "눌림 " + mm(fb.dent) : ""}${fb.corner ? "모서리 " + mm(fb.corner) : ""}</td><td>${im ? (im.damaged ? `<span class="bad">${im.damage_reasons.join(", ")}</span>` : "없음") : "–"}</td><td class="${cls(m.damaged)}">${m.damaged ? m.damage_reasons.join(", ") : "없음"} <span class="mut">(눌림 ${(m.dent_depth_m * 1000).toFixed(1)} · 모서리 ${(m.corner_gap_m * 1000).toFixed(0)} mm)</span></td></tr>
+    <tr><td>확신도</td><td></td><td></td><td>${res.obs ? res.obs.confidence.toFixed(2) : "–"} <span class="mut">유효 ${(m.valid_ratio * 100).toFixed(0)}% · 박스 ${m.box_count}개 보임${m.gap_upstream_m != null ? " · 뒤 간격 " + mm(m.gap_upstream_m) + " mm" : ""}</span></td></tr>`;
+  if (res.resolution) h += `<tr><td>SKU 추정</td><td></td><td></td><td class="${res.resolution.sku_id ? "info" : "warn"}">${res.resolution.reason}${res.resolution.sku_id ? " → " + res.resolution.sku_id : ""}</td></tr>`;
+  h += `</table><div style="margin-top:6px">${pill(v)} → <b>${v.route}</b> ${v.codes.length ? `<span class="mut">[${v.codes.join(", ")}]</span>` : ""}${v.used_base_view ? ' <span class="pill info">Base-view</span>' : ""} <span class="mut">· 처리: ${res.disposition}</span></div>`;
+  const notes = v.notes.concat(res.notes);
+  if (notes.length) h += `<div class="notes">${notes.join(" · ")}</div>`;
+  if (decision) h += `<div style="margin-top:4px"><span class="pill vio">${decision.type}</span> <span class="notes">${decision.reason}${decision.option ? ` · 지지율 ${decision.option.support.toFixed(2)}, 윗면 ${(decision.option.top_after * 1000).toFixed(0)} mm` : ""}</span></div>`;
+  $("current").innerHTML = h;
+}
+
+function drawScale(ls, p) {
+  const c = $("scaleCanvas"), g = c.getContext("2d"), W = c.width, H = c.height, sm = ls.trace.samples;
+  g.fillStyle = "#0d151c"; g.fillRect(0, 0, W, H);
+  const tMax = sm[sm.length - 1][0], vMax = Math.max(ls.truth, ...sm.map(s => s[1])) * 1.08, pad = 34;
+  const X = t => pad + (W - pad - 8) * t / tMax, Y = v => H - 14 - (H - 26) * v / vMax;
+  g.strokeStyle = "#22313d"; g.fillStyle = "#93a6b6"; g.font = "16px sans-serif";
+  for (let k = 0; k <= 3; k++) { const v = vMax * k / 3; g.beginPath(); g.moveTo(pad, Y(v)); g.lineTo(W - 8, Y(v)); g.stroke(); g.fillText(v.toFixed(1), 0, Y(v) + 5); }
+  g.fillStyle = "rgba(98,223,151,.08)"; g.fillRect(X(tMax - 0.5), 6, X(tMax) - X(tMax - 0.5), H - 20);
+  g.strokeStyle = "#93a6b6"; g.setLineDash([6, 5]); g.beginPath(); g.moveTo(pad, Y(ls.truth)); g.lineTo(W - 8, Y(ls.truth)); g.stroke(); g.setLineDash([]);
+  g.strokeStyle = "#56d9ff"; g.lineWidth = 2; g.beginPath();
+  sm.forEach(([t, v], i) => { if (t > tMax * p) return; i ? g.lineTo(X(t), Y(v)) : g.moveTo(X(t), Y(v)); }); g.stroke(); g.lineWidth = 1;
+  const multi = ls.parts.length > 1;
+  $("scaleTitle").innerHTML = `${ls.b.fb.box_id}${multi ? ` · <span class="bad">함께 계량: ${ls.parts.map(q => q.id + " " + Math.round(q.share * 100) + "%").join(", ")}</span>` : ""}`;
+  if (p >= 1) { g.fillStyle = multi ? "#ff6b6b" : "#62df97"; g.fillText(`측정 ${ls.trace.measured.toFixed(3)} kg · 실제 ${ls.truth.toFixed(3)} kg`, W - 330, 20); }
+}
+
+function drawDepth(src) {
+  const cam = src.cam, c = $("depthCanvas"), g = c.getContext("2d"), W = cam.width, H = cam.height, img = g.createImageData(W, H), d0 = 1.2, d1 = 3.0;
+  for (let i = 0; i < W * H; i++) {
+    const z = src.depth[i], k = i * 4;
+    if (!Number.isFinite(z)) { img.data[k + 3] = 255; continue; }
+    const t = Math.max(0, Math.min(1, (z - d0) / (d1 - d0)));
+    img.data[k] = 255 * Math.min(1, Math.max(0, 1.6 - 2.2 * t)); img.data[k + 1] = 255 * Math.max(0, 1 - Math.abs(t - 0.45) * 2.1);
+    img.data[k + 2] = 255 * Math.min(1, Math.max(0, 2.2 * t - 0.5)); img.data[k + 3] = 255;
+  }
+  g.putImageData(img, 0, 0);
+  const O = src.origin, poly = (pts, color, w) => { g.strokeStyle = color; g.lineWidth = w; g.beginPath(); pts.forEach((p, i) => { const [u, v] = CORE.project(cam, p); i ? g.lineTo(u, v) : g.moveTo(u, v); }); g.closePath(); g.stroke(); };
+  const [x0, x1, y0, y1] = src.cfg.roi_xy_m;
+  poly([[x0, y0], [x1, y0], [x1, y1], [x0, y1]].map(([x, y]) => [O[0] + x, O[1] + y, O[2]]), "#56d9ff", 1.5);
+  const m = src.meas;
+  $("depthTitle").textContent = `· ${src.id}${m ? ` · 박스 ${m.box_count}개 보임` : ""}`;
+  if (!m) return;
+  for (const [lo, hi] of m.others) poly([[lo, y0], [hi, y0], [hi, y1], [lo, y1]].map(([x, y]) => [O[0] + x, O[1] + y, O[2] + 0.02]), "#ffd166", 1.5);
+  const c0 = Math.cos(m.pose.yaw), s0 = Math.sin(m.pose.yaw), hx = m.size.x / 2, hy = m.size.y / 2;
+  poly([[hx, hy], [-hx, hy], [-hx, -hy], [hx, -hy]].map(([a, b]) => [O[0] + m.pose.x + c0 * a - s0 * b, O[1] + m.pose.y + s0 * a + c0 * b, O[2] + m.size.z]), m.damaged ? "#ff6b6b" : "#62df97", 2.5);
+  g.fillStyle = "rgba(11,16,21,.78)"; g.fillRect(8, 8, 360, 28); g.fillStyle = m.damaged ? "#ff6b6b" : "#62df97"; g.font = "bold 18px sans-serif";
+  g.fillText(`${src.id} · ${sizeTxt(m.size)} mm · yaw ${(m.pose.yaw * 180 / Math.PI).toFixed(1)}°`, 16, 28);
+}
+
+function renderSummary() {
+  const S = UI.sim, s = S.summary(), R = S.results;
+  const items = [
+    ["판정", `${R.length} / ${S.stream.length}`, ""], ["팔레트 적재", s.placed, "ok"], ["Hold/NG", s.held, "bad"],
+    ["판정 오류", s.wrong, s.wrong ? "warn" : "ok"], ["함께 계량", s.combinedWeigh, s.combinedWeigh ? "bad" : "ok"], ["갭 생성", s.gapping, "info"],
+    ["버퍼 보관/인출", `${s.bufferPut}/${s.bufferGet}`, "vio"], ["팔레트 (마감)", `${s.pallets} (${s.palletChange})`, ""], ["평균 적재율", `${(s.fill * 100).toFixed(0)}%`, ""],
+    ["처리량 (박스/분)", s.throughput.toFixed(2), ""], ["정지: 분류/적재", `${(s.stopClassify * 100).toFixed(1)}% / ${(s.stopPlan * 100).toFixed(1)}%`, "warn"], ["로봇 가동률", `${(s.robotUtil * 100).toFixed(0)}%`, ""],
+  ];
+  $("metrics").innerHTML = items.map(([k, v, c]) => `<div class="metric"><b class="${c}">${v}</b><span>${k}</span></div>`).join("");
+  const kinds = ["OK", "OK δ", "SPEC_MISMATCH", "DAMAGED", "RECOGNITION_FAIL", "UNKNOWN_SKU"], short = { OK: "OK", "OK δ": "OK δ", SPEC_MISMATCH: "SPEC", DAMAGED: "DMG", RECOGNITION_FAIL: "RECOG", UNKNOWN_SKU: "UNK" };
+  const kindOf = r => (r.verdict.kind === "OK" && r.verdict.uncertain ? "OK δ" : r.verdict.kind);
+  const faults = ["none", "touching", ...CORE.FAULTS.map(f => f.key)].filter(f => R.some(r => faultKey(r.fb) === f));
+  if (!faults.length) { $("confusion").innerHTML = ""; return; }
+  let h = `<table class="conf"><tr><th>주입 \\ 판정</th>${kinds.map(k => `<th title="${k}">${short[k]}</th>`).join("")}</tr>`;
+  for (const f of faults) { const rows = R.filter(r => faultKey(r.fb) === f); h += `<tr><td>${FAULT_NAME[f]}</td>${kinds.map(k => { const n = rows.filter(r => kindOf(r) === k).length; return `<td class="${n ? "" : "mut"}">${n || "·"}</td>`; }).join("")}</tr>`; }
+  $("confusion").innerHTML = h + `</table><div class="note">SPEC = SPEC_MISMATCH, DMG = DAMAGED, RECOG = RECOGNITION_FAIL, UNK = UNKNOWN_SKU, δ = 측정 불확실성 반영. 판정 오류 = 주입 이상과 다른 판정 (붙어서 투입은 정상 박스이므로 OK가 정답).</div>`;
+}
+function renderTable() {
+  const R = UI.sim.results;
+  $("boxTable").querySelector("tbody").innerHTML = R.map((r, i) => `<tr data-i="${i}"><td>${r.fb.box_id}</td><td>${r.verdict.sku ?? "?"}<span class="mut">/${r.fb.sku}</span></td><td>${FAULT_NAME[faultKey(r.fb)]}</td><td>${pill(r.verdict)}${r.correct ? "" : ' <span class="warn">✗</span>'}</td><td>${r.disposition}</td></tr>`).reverse().join("");
+  $("boxTable").querySelectorAll("tbody tr").forEach(tr => tr.onclick = () => showResult(R[+tr.dataset.i]));
+}
+function exportJsonl() {   // common standard 21
+  const S = UI.sim, runId = `perception_flow_${S.o.order}_${S.o.seed}`;
+  const lines = S.results.map(r => JSON.stringify({
+    schema_version: 1, run_id: runId, scenario_id: S.o.order, seed: S.o.seed, timestamp: r.t, box_id: r.fb.box_id, injected_fault: faultKey(r.fb),
+    true_sku: r.fb.sku, true_size_m: r.fb.size, true_weight_kg: r.fb.weight_kg, measured_weight_kg: r.weight, scale_parts: r.scaleParts, label_source: r.labelSrc,
+    inlet: r.inlet && { side_label: r.inlet.sideLabel, size_m: r.inlet.meas && r.inlet.meas.size, damage_reasons: r.inlet.meas && r.inlet.meas.damage_reasons, merged: r.inlet.merged },
+    measurement: r.meas && { size_m: r.meas.size, pose: r.meas.pose, dent_depth_m: r.meas.dent_depth_m, corner_gap_m: r.meas.corner_gap_m, valid_ratio: r.meas.valid_ratio,
+      box_count: r.meas.box_count, gap_upstream_m: r.meas.gap_upstream_m, damage_reasons: r.meas.damage_reasons, confidence: r.meas.confidence },
+    raw_observation: r.obs, verdict: { kind: r.verdict.kind, route: r.verdict.route, uncertain: !!r.verdict.uncertain, reject_codes: r.verdict.codes, notes: r.verdict.notes.concat(r.notes) },
+    high_level_actions: r.actions, disposition: r.disposition, correct: r.correct, flow: S.flow,
+  }));
+  const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([lines.join("\n") + "\n"], { type: "application/jsonl" }));
+  a.download = `${runId}.jsonl`; a.click(); URL.revokeObjectURL(a.href);
+}
+
+// URL options: ?order=demo_original8&seed=1&repeat=2&speed=inf&autorun&tab=inlet&inlet=0
+const Q = new URLSearchParams(location.search);
+if (Q.get("order") in CORE.ORDERS) $("orderSel").value = Q.get("order");
+for (const [k, id] of [["seed", "seedInp"], ["repeat", "repeatInp"], ["interval", "intervalInp"], ["touch", "touchInp"]]) if (Q.get(k)) $(id).value = Q.get(k);
+if (Q.get("inlet") === "0") $("inletChk").checked = false;
+if (Q.get("speed")) { $("speedSel").value = Q.get("speed"); $("speedSel").onchange({ target: $("speedSel") }); }
+if (Q.get("tab") === "inlet") setTab("inlet");
+reset();
+if (Q.get("advance")) UI.sim.step(+Q.get("advance"));   // jump ahead (s of simulated time), e.g. for screenshots
+if (Q.has("autorun")) $("runBtn").click();
+if (Q.has("compare")) $("cmpBtn").click();
+</script>
+</body>
+</html>
