@@ -9,6 +9,7 @@
 - `hard_mask.py` `evaluate` (:75), `pallet_cog_limits` (:63); 하중 `loads.py` (McKee :106)
 - `backend.validate_constraints` (:198); 측정 불확실성 δ `config.py` `UncertaintyConfig` (:91)
 - 설정 `config/taehyeon/candidates.yaml`
+- 13단계 옆 가속 안정성 (동한, 기본 꺼짐): `lateral.py` `check` (기하 → 힘 평형 LP → 짧은 경사 시험 `lateral_sim.py`). 켜는 설정 `config/donghan/candidates_lateral.yaml`, 설명 `docs/donghan/lateral_stability.md`
 
 ## ③~⑥ Feature → AI Top-K → Rollout → 최종 점수 (동한, `ros2_ws/src/pac_planning/pac_planning/`)
 | 단계 | 위치 |
