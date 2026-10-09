@@ -163,6 +163,29 @@ def test_layer_placer_picks_only_valid_candidates_and_keeps_episodes_safe():
     assert out2["safety_issues"] == 0
 
 
+def test_time_budget_is_a_hard_limit():
+    """Past the limit a branch is cut inside its step (no partial score); with
+    no time at all every search is cut and the rule's action stands."""
+    from pac_highlevel import RulePolicy
+    from pac_highlevel.lookahead import SearchTimeout, WindowWorld, _DeadlineBackend
+    import time
+
+    boxes = mixed_boxes()
+    w = world(boxes)
+    guard = _DeadlineBackend(w.backend(), time.perf_counter() - 1.0)
+    with pytest.raises(SearchTimeout):
+        guard.candidate_set(boxes[0], w.state())
+    assert isinstance(window_clone(w, 3), WindowWorld)
+
+    rule = run_policy(world(boxes), RulePolicy(world(boxes).config))
+    w2 = world(boxes)
+    policy = LookaheadPolicy(w2.config, LookaheadConfig(horizon=3, time_budget_s=1e-4))
+    out = run_policy(w2, policy)
+    assert policy.stats.searched > 0 and policy.stats.aborted == policy.stats.searched
+    assert policy.stats.changed == 0
+    assert {k: out[k] for k in ("placed", "ng", "pallet_equivalents")} ==         {k: rule[k] for k in ("placed", "ng", "pallet_equivalents")}
+
+
 # ---------------------------------------------------------------- real time
 
 

@@ -23,9 +23,14 @@ Speed-ups (see docs/taehyeon/lookahead.md):
   * shared backend cache: 5-1/5-2 results are cached per pallet snapshot, so
     siblings with the same pallet (e.g. after BUFFER_CURRENT) reuse them,
   * duplicate states merged in beam mode,
-  * time budget per decision: the rule's branch is scored first; when the
-    budget runs out the running branch is scored as it is and the remaining
-    branches are skipped (only scored branches can be chosen).
+  * time budget per decision, a hard limit: the window copies check the
+    clock on every 5-1/5-2 call (candidate generation, each mask check,
+    repack search) and abort the branch at the limit, which keeps a reserve
+    (min(0.4 s, 15 %) of the budget) for the last call that cannot be cut.
+    Expansion stops a grace period earlier (min(0.5 s, 20 %) of the budget)
+    so the running branch can still be scored as it is; a branch whose score
+    is not ready at the limit is dropped. The rule's branch is scored first; without it the rule's action
+    is returned (only scored branches can be chosen).
 """
 
 from collections import Counter
@@ -93,11 +98,55 @@ def load_lookahead_config(path=None):
     return lookahead_config_from_dict(data.get("lookahead", data))
 
 
+class SearchTimeout(Exception):
+    """The decision's time budget ran out inside a simulated step."""
+
+
+class _DeadlineBackend:
+    """Candidate backend of a window copy: raises ``SearchTimeout`` past the
+    deadline on the calls that do the work (5-1 generation, 5-2 checks)."""
+
+    def __init__(self, backend, deadline):
+        self._backend = backend
+        self._deadline = deadline
+
+    def _check(self):
+        if time.perf_counter() > self._deadline:
+            raise SearchTimeout
+
+    def candidate_set(self, box, state):
+        # the backend's own loop, run with this object as ``self`` so that
+        # every candidate's mask check goes through the clock check below
+        self._check()
+        return type(self._backend).candidate_set(self, box, state)
+
+    def generate_with_report(self, *args, **kwargs):
+        self._check()
+        return self._backend.generate_with_report(*args, **kwargs)
+
+    def validate_constraints(self, *args, **kwargs):
+        self._check()
+        return self._backend.validate_constraints(*args, **kwargs)
+
+    def __getattr__(self, name):
+        return getattr(self._backend, name)
+
+
 class WindowWorld(PalletizingWorld):
     """A world copy that stops when the visible window is used up (the real
     world would pull box N+1 next, which the search must not know)."""
 
     window_end = False
+    deadline = None             # hard limit (perf_counter); None = no limit
+    _guard = None
+
+    def backend(self):
+        backend = super().backend()
+        if self.deadline is None:
+            return backend
+        if self._guard is None or self._guard._backend is not backend:
+            self._guard = _DeadlineBackend(backend, self.deadline)
+        return self._guard
 
     def _advance(self):
         if self.current is None and self.next_arrival >= len(self.arrivals):
@@ -231,7 +280,7 @@ def dead_share(node, cfg):
     state = node.state()
     backend = node.backend()
     seen, dead = {}, 0.0
-    for box, vol in probes:
+    for box, vol in probes:  # has_safe_spot goes through the (deadline-checked) backend
         key = (box.size, round(box.weight_kg, 6), tuple(box.allowed_yaws_rad), box.box_id in node.uncertain)
         if key not in seen:
             seen[key] = not has_safe_spot(backend, box, state)
@@ -246,6 +295,7 @@ class SearchStats:
     changed: int = 0            # decisions where the search overrode the rule
     expansions: int = 0         # simulated steps
     timeouts: int = 0
+    aborted: int = 0            # branches cut by the hard limit (not scored)
     seconds: list = field(default_factory=list)
 
     def summary(self):
@@ -256,6 +306,7 @@ class SearchStats:
             "changed": self.changed,
             "expansions": self.expansions,
             "timeouts": self.timeouts,
+            "aborted": self.aborted,
             "decision_s_mean": round(float(s.mean()), 3),
             "decision_s_p95": round(float(np.percentile(s, 95)), 3),
             "decision_s_max": round(float(s.max()), 3),
@@ -284,6 +335,7 @@ class LookaheadPolicy:
         return c
 
     def _pilot(self, node, root, deadline):
+        """``deadline``: stop expanding (soft); the hard limit sits in the copies."""
         while not node.leaf:
             if self._deadline_passed(deadline):
                 self.stats.timeouts += 1
@@ -321,18 +373,27 @@ class LookaheadPolicy:
         budget = cfg.time_budget_s
         if cfg.time_budget_ratio > 0:
             budget = cfg.time_budget_ratio * self.hl.timing.place_time_s
-        deadline = start + budget if budget > 0 else None
+        deadline = hard = None
+        if budget > 0:
+            hard = start + budget - min(0.4, 0.15 * budget)  # reserve: the last uncut 5-1 call
+            deadline = hard - min(0.5, 0.2 * budget)          # leave time to score the running branch
         end = world.next_arrival + cfg.horizon
         if window_end is not None:  # real time: only the boxes that have reached the camera
             end = min(end, window_end)
         root = window_clone(world, end)
+        root.deadline = hard
         run = self._pilot if cfg.mode == "pilot" else self._beam
         out = {}
         for k in self.branches(world, first):
             if out and self._deadline_passed(deadline):
                 self.stats.timeouts += 1
-                break  # the rule's branch is always scored; the rest only while time remains
-            out[k] = run(self._step(root, k), root, deadline)
+                break  # the rule's branch is always tried first; the rest only while time remains
+            try:
+                out[k] = run(self._step(root, k), root, deadline)
+            except SearchTimeout:  # hard limit inside a step or the score: branch not comparable
+                self.stats.timeouts += 1
+                self.stats.aborted += 1
+                break
         return out
 
     def __call__(self, world, window_end=None):
@@ -352,6 +413,9 @@ class LookaheadPolicy:
         self.stats.searched += 1
         scores = self.scores(world, first=to_index(rule_action), window_end=window_end)
         rule_index = to_index(rule_action)
+        if rule_index not in scores:  # not even the rule's branch finished in time
+            self.stats.seconds.append(time.perf_counter() - start)
+            return rule_action
         best = min(scores, key=lambda k: (scores[k], k != rule_index))
         self.stats.seconds.append(time.perf_counter() - start)
         if best != rule_index and scores[best] < scores[rule_index] - self.cfg.margin:
@@ -363,6 +427,7 @@ class LookaheadPolicy:
 __all__ = [
     "LookaheadConfig",
     "LookaheadPolicy",
+    "SearchTimeout",
     "WindowWorld",
     "dead_share",
     "has_safe_spot",
