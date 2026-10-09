@@ -427,6 +427,13 @@ def test_gazebo_driver_closes_the_loop_with_the_runtime_bridge():
         acts = driver.on_command(cmd)
         times = [t for _, t in acts.trajectory]
         assert times == sorted(times) and all(len(q) == 6 for q, _ in acts.trajectory)
+        if cmd["action"] in ("PLACE_CURRENT", "RETRIEVE_BUFFER"):
+            # down and up through every checked waypoint of the vertical line, not a 2-point joint move
+            path = [list(q) for q in cmd["robot"]["q_path"]]
+            assert len(path) > 2 and path[0] == list(cmd["robot"]["q_approach"])
+            assert path[-1] == list(cmd["robot"]["q_place"])
+            moved = [q for q, _ in acts.trajectory[-(2 * len(path) - 1):]]
+            assert moved == path + path[-2::-1]
         for name in acts.remove:
             removed.add(name)
             spawned.pop(name, None)

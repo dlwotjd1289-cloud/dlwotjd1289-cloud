@@ -154,9 +154,15 @@ class GazeboDriverCore:
             t = self._segment(points, up, t)
             t = self._segment(points, down, t)
             t = self._segment(points, up, t)
-        t = self._segment(points, robot_details["q_approach"], t)
-        t = self._segment(points, robot_details["q_place"], t)
-        t = self._segment(points, robot_details["q_approach"], t)
+        # down and up along the vertical line stage 6 checked: between the
+        # approach and place poses a plain joint move swings the gripper
+        # sideways into the neighbours (gaps are only a few mm)
+        path = robot_details.get("q_path") or [robot_details["q_approach"], robot_details["q_place"]]
+        t = self._segment(points, path[0], t)
+        for q in path[1:]:
+            t = self._segment(points, q, t, min_s=0.2)
+        for q in path[-2::-1]:
+            t = self._segment(points, q, t, min_s=0.2)
         return points, t
 
     def _measured(self, corner):

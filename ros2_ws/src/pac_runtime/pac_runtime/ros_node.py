@@ -50,8 +50,8 @@ def command_to_dict(cmd, box=None):
             dx, dy, dz = rotated_dims(box.size, p.yaw)
             out["target_center"] = [p.x + dx / 2, p.y + dy / 2, p.z + dz / 2, p.yaw]
     if cmd.robot:
-        out["robot"] = {k: cmd.robot[k] for k in ("gripper_yaw_rad", "q_place", "q_approach", "cycle_time_s",
-                                                  "arm_clearance_m") if k in cmd.robot}
+        out["robot"] = {k: cmd.robot[k] for k in ("gripper_yaw_rad", "q_place", "q_approach", "q_path",
+                                                  "cycle_time_s", "arm_clearance_m") if k in cmd.robot}
     if cmd.repack:
         out["repack"] = [{"box_id": b, "target_min_corner": [c.target_pose.x, c.target_pose.y, c.target_pose.z,
                                                              c.target_pose.yaw],
