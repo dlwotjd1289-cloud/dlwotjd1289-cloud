@@ -88,7 +88,7 @@ class ActionBudget:
     duration from the world clock: the time that passed since the previous
     decision (the previous action and the rule actions after it)."""
 
-    ahead_ratio: float = 0.75
+    ahead_ratio: float = 0.8
     min_budget_s: float = 0.3
     max_budget_s: float = 10.0
     wait_budget_s: float = 1.5

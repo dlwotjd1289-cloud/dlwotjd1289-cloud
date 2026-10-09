@@ -38,7 +38,8 @@ runtime:
     min_support_ratio: 0.6
     heightmap_cell_m: 0.01
   planning:                         # 4/5: look-ahead search time per decision
-    ahead_ratio: 0.75               # planned during the robot action: 75 % of its expected duration
+    ahead_ratio: 0.8                # planned during the robot action: 80 % of its expected duration
+                                    # (Gazebo-cell durations 2026-10-10: no robot wait up to ~0.85)
     max_budget_s: 10.0              #   (stage-6 cycle time / buffer travel / pallet change), capped
     min_budget_s: 0.3
     wait_budget_s: 1.5              # planned while the robot waits (first box, forecast missed)

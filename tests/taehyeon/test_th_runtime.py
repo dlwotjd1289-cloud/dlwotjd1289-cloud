@@ -626,8 +626,8 @@ def test_planning_ahead_falls_back_when_the_result_differs():
 
 
 def test_search_time_follows_the_robot_action_and_its_measured_duration():
-    """Planned during a placement: 75 % of its duration; during a buffer move:
-    75 % of the travel; while the robot waits: wait_budget_s. Measured
+    """Planned during a placement: ahead_ratio of its duration; during a buffer
+    move: ahead_ratio of the travel; while the robot waits: wait_budget_s. Measured
     durations (here twice the driver's motion) correct the next budgets."""
     from pac_runtime.config import PlanningConfig
 

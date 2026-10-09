@@ -67,7 +67,7 @@ class PlanningConfig:            # stage 4/5 search time per decision (look-ahea
     # Planned during the robot motion: budget = ahead_ratio x expected duration of
     # the action being executed (stage-6 cycle time, buffer travel, pallet change),
     # scaled by the measured / expected duration of that action type so far.
-    ahead_ratio: float = 0.75
+    ahead_ratio: float = 0.8
     max_budget_s: float = 10.0
     min_budget_s: float = 0.3
     # Planned while the robot waits (first box, forecast did not match the result).
