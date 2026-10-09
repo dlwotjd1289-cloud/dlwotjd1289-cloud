@@ -14,8 +14,11 @@ Checks (team ``RejectCode`` in brackets, detailed reason strings in details):
 10. heavy-on-light (mission requirement)                 [LOAD_VIOLATION]
 11. pallet max load                                      [LOAD_VIOLATION]
 12. pallet CoG allowed region                            [COG_VIOLATION]
+13. lateral acceleration (constraints.lateral, off by default; lateral.py)
+                                                         [COG_VIOLATION]
 
-Checks run from cheap to expensive. Runtime (``collect_all=False``) stops at
+Checks run from cheap to expensive. Step 13 runs only when 1-12 passed, also
+with ``collect_all`` (it is the most expensive check). Runtime (``collect_all=False``) stops at
 the first failing group -- the verdict (valid / codes) is identical, only the
 list of secondary reasons is shorter. ``collect_all=True`` (virtual data
 labels) evaluates every check so the rejected list carries every reason.
@@ -247,6 +250,15 @@ def evaluate(model, box, pose, *, is_uncertain=False, collect_all=True):
             )
         if not improving:
             fail(R.COG_VIOLATION, "PALLET_COG")
+
+    # 13. lateral acceleration (most expensive, last) ---------------------------
+    if cons.lateral.enabled and not codes:
+        from .lateral import check as lateral_check
+
+        lat = lateral_check(model, box, pose, rect, dz, tol, is_uncertain)
+        metrics.update(lateral_a_max_g=lat.a_max_g, lateral_stage=lat.stage)
+        if not lat.passed:
+            fail(R.COG_VIOLATION, "LATERAL_ACCEL:" + lat.stage)
 
     if codes:
         return rejected()

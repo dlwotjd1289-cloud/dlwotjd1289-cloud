@@ -198,6 +198,83 @@ class HeavyOnLightConfig:
         _number(self.min_share, "min_share", 0.0, 1.0)
 
 
+LATERAL_DECKS = ("slatted", "solid")
+LATERAL_BORDERLINE = ("simulate", "reject", "accept")
+
+
+@dataclass(frozen=True)
+class LateralConfig:
+    """Step 13: lateral-acceleration stability of the unwrapped load.
+
+    Cascade (docs/donghan/lateral_stability.md): geometric stack check ->
+    force-equilibrium LP -> short PyBullet tilt test for LP results inside
+    [band_low_g, band_high_g). Off by default; config/donghan/
+    candidates_lateral.yaml turns it on.
+    """
+
+    enabled: bool = False
+    accel_g: float = 0.25
+    # 4: +-x, +-y; 8: also the diagonals
+    directions: int = 8
+    # carton on carton: 0.4 (team value, STABILITY_0_3G_BASIS / ALGORITHM_V3_3,
+    # conservative end of 0.3-0.5). Carton on wood: CTU Code annex 7 app. 2
+    # gives the same 0.5 as carton on carton, so the same conservative 0.4.
+    mu_box_box: float = 0.4
+    mu_box_pallet: float = 0.4
+    # Deck support of boxes standing on the pallet: plywood top boards along X,
+    # as config/ahead_simulator.yaml: 5 boards of 0.13 x width = 143 mm,
+    # gaps (1.1 - 5 x 0.143) / 4 = 96 mm.
+    deck: str = "slatted"
+    deck_board_count: int = 5
+    deck_board_width_ratio: float = 0.13
+    # Neighbours closer than this may lean on each other (compression only).
+    side_contact_gap_m: float = 0.010
+    # LP result a_max (g): >= band_high pass, < band_low reject, else
+    # ``borderline``. Not calibrated yet (docs/donghan/lateral_stability.md):
+    # low = accel (no equilibrium at accel -> a rigid stack cannot hold it),
+    # high = accel x 1.17 (Jaesung's LP margin 0.35 / 0.3), rounded to 0.30.
+    band_low_g: float = 0.25
+    band_high_g: float = 0.30
+    borderline: str = "simulate"
+    # Short tilt test (borderline only): worst LP direction(s), ramp then hold.
+    # Systems larger than sim_max_bodies are rejected without simulating
+    # (bounds the decision time; conservative).
+    sim_max_bodies: int = 15
+    sim_directions: int = 1
+    sim_ramp_s: float = 0.10
+    sim_hold_s: float = 0.30
+    sim_disp_tol_m: float = 0.010
+    sim_tilt_tol_deg: float = 3.0
+    sim_speed_tol_m_s: float = 0.02
+
+    def __post_init__(self):
+        if not isinstance(self.enabled, bool):
+            raise ValueError("lateral.enabled must be a boolean")
+        _number(self.accel_g, "accel_g", 0.0, 1.0, strict_min=True)
+        if self.directions not in (4, 8):
+            raise ValueError("lateral.directions must be 4 or 8")
+        _number(self.mu_box_box, "mu_box_box", 0.0, 2.0, strict_min=True)
+        _number(self.mu_box_pallet, "mu_box_pallet", 0.0, 2.0, strict_min=True)
+        if self.deck not in LATERAL_DECKS:
+            raise ValueError(f"lateral.deck must be one of {LATERAL_DECKS}")
+        if type(self.deck_board_count) is not int or self.deck_board_count < 1:
+            raise ValueError("deck_board_count must be a positive integer")
+        _number(self.deck_board_width_ratio, "deck_board_width_ratio", 0.0, 1.0, strict_min=True)
+        _number(self.side_contact_gap_m, "side_contact_gap_m", 0.0)
+        _number(self.band_low_g, "band_low_g", 0.0)
+        _number(self.band_high_g, "band_high_g", 0.0)
+        if not self.band_low_g <= self.accel_g <= self.band_high_g:
+            raise ValueError("lateral bands must satisfy band_low_g <= accel_g <= band_high_g")
+        if self.borderline not in LATERAL_BORDERLINE:
+            raise ValueError(f"lateral.borderline must be one of {LATERAL_BORDERLINE}")
+        if type(self.sim_max_bodies) is not int or self.sim_max_bodies < 1:
+            raise ValueError("sim_max_bodies must be a positive integer")
+        if type(self.sim_directions) is not int or not 1 <= self.sim_directions <= self.directions:
+            raise ValueError("sim_directions must be an integer in [1, directions]")
+        for name in ("sim_ramp_s", "sim_hold_s", "sim_disp_tol_m", "sim_tilt_tol_deg", "sim_speed_tol_m_s"):
+            _number(getattr(self, name), name, 0.0, strict_min=True)
+
+
 @dataclass(frozen=True)
 class ConstraintConfig:
     """5-2 hard mask thresholds (never skipped by a time budget)."""
@@ -213,6 +290,7 @@ class ConstraintConfig:
     )
     load_model: LoadModelConfig = field(default_factory=LoadModelConfig)
     pallet_cog: PalletCogConfig = field(default_factory=PalletCogConfig)
+    lateral: LateralConfig = field(default_factory=LateralConfig)
     # Used only when PlanningContext is absent (standalone use).
     default_pallet_max_weight_kg: float = 1000.0
 
@@ -257,6 +335,7 @@ _NESTED = {
         "heavy_on_light": HeavyOnLightConfig,
         "load_model": LoadModelConfig,
         "pallet_cog": PalletCogConfig,
+        "lateral": LateralConfig,
     },
 }
 

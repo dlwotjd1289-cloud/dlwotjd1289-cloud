@@ -19,9 +19,11 @@ dependencies = [
 dev = ["pytest>=7.4,<9"]
 # PyBullet live pallet simulator (pac_simulation.ahead_sim, viewer/ahead_live)
 sim = ["pybullet>=3.2.6,<4", "networkx>=2.8,<4", "aiohttp>=3.8,<4", "Pillow>=10,<13"]
+# Hard-mask step 13 lateral stability LP (pac_candidates.lateral); its tilt test also needs [sim]
+stability = ["scipy>=1.9,<2"]
 # High-level PPO training (pac_highlevel); tests skip when absent
 rl = ["gymnasium>=0.29", "torch>=2.0", "stable-baselines3>=2.0", "sb3-contrib>=2.0"]
-all = ["pac2026-ahead[dev,sim]"]
+all = ["pac2026-ahead[dev,sim,stability]"]
 
 [tool.setuptools.packages.find]
 where = [
