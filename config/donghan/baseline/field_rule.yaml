@@ -1,0 +1,15 @@
+# COMPARISON BASELINE (donghan), not the AHEAD algorithm: field-practice rules, no look-ahead,
+# no search, no learning. Code: ros2_ws/src/pac_planning/pac_planning/baseline/field_rule.py
+# Doc: docs/donghan/baseline/field_rule.md
+#
+# Stage 4 has no parameters: place now > retrieve the oldest buffered box that fits
+# > buffer the box > close the pallet when the buffer is full (no partial repack).
+# Safety (5-1 candidates, 5-2 Hard Mask) comes unchanged from config/taehyeon/candidates.yaml.
+schema_version: 1
+baseline_field_rule:
+  robot_side: "-y"        # robot stands on this side of the pallet (config/taehyeon/robot_check.yaml:
+                          # base_from_pallet_center y = -1.15) -> the far row (+y) is filled first
+  level_tol_m: 0.0        # tops within this height are one level; 0 = 5-2 height tolerance (3 mm)
+  row_tol_m: 0.01         # far edges within this distance are one row
+  contact_gap_m: 0.015    # a face this close to a box side or the pallet edge counts as touching
+                          # (5-2 keeps neighbours >= 8 mm apart: 4 mm clearance + 2 x 2 mm size tolerance)
