@@ -25,6 +25,7 @@ mkdir -p "$RUN_DIR/boxes"
 if [[ -n "${RESUME_DIR:-}" ]]; then
   cp "$RESUME_DIR/planner_state.json" "$STATE" 2>/dev/null || true
   cp "$RESUME_DIR"/box_*_v43.log "$RUN_DIR/" 2>/dev/null || true
+  cp "$RESUME_DIR/buffer.json" "$RUN_DIR/buffer.json" 2>/dev/null || true
 fi
 BRIDGE_BIN="$(ros2 pkg prefix ros_gz_bridge)/lib/ros_gz_bridge/parameter_bridge"
 WORLD="ahead_workcell_v4_2_physical_scale"
@@ -62,7 +63,8 @@ echo ">>> 시나리오 $SCEN: 박스 $N개 (generator 도착 순서), 로그 $RU
 
 echo ">>> [준비] 고정 CCTV·그리퍼 카메라 영상 bridge와 박스 인식 노드 시작 중..."
 setsid "$BRIDGE_BIN" '/pac/top_camera/image@sensor_msgs/msg/Image[ignition.msgs.Image' \
-  '/pac/wrist_camera/image@sensor_msgs/msg/Image[ignition.msgs.Image' > "$RUN_DIR/camera_bridge.log" 2>&1 &
+  '/pac/wrist_camera/image@sensor_msgs/msg/Image[ignition.msgs.Image' \
+  '/pac/scale_camera/image@sensor_msgs/msg/Image[ignition.msgs.Image' > "$RUN_DIR/camera_bridge.log" 2>&1 &
 PIDS+=($!)
 setsid python3 -u "$ROOT/scripts/box_perception_v44.py" > "$RUN_DIR/perception.log" 2>&1 &
 PIDS+=($!)
@@ -97,7 +99,11 @@ spawn_at_inlet() {   # K: create arrival K at the conveyor inlet and release the
   SPAWN_Z=$(python3 "$ROOT/scripts/make_box_sdf_v44.py" --size "$SX" "$SY" "$SZ" --mass "$MASS" --out "$SDF")
   local AY AYAW
   read -r AY AYAW <<< "$(arrival_pose "$K")"
-  timeout -k 3 30 "$CREATE_BIN" -name "$BOX" -file "$SDF" -x -4.45 -y "$AY" -z "$SPAWN_Z" -Y "$AYAW" >/dev/null 2>&1 || return 1
+  # one retry: a create request under load was lost once (box_11, 2026-10-09)
+  timeout -k 3 20 "$CREATE_BIN" -name "$BOX" -file "$SDF" -x "$(python3 -c "print(-4.45 + float('${PAC_SCALE_SHIFT_M:-0}'))")" -y "$AY" -z "$SPAWN_Z" -Y "$AYAW" >/dev/null 2>&1 \
+    || { sleep 1; box_exists "$BOX" \
+         || timeout -k 3 20 "$CREATE_BIN" -name "$BOX" -file "$SDF" -x "$(python3 -c "print(-4.45 + float('${PAC_SCALE_SHIFT_M:-0}'))")" -y "$AY" -z "$SPAWN_Z" -Y "$AYAW" >/dev/null 2>&1; } \
+    || return 1
   for _ in $(seq 25); do box_exists "$BOX" && break; sleep 0.2; done
   box_exists "$BOX" || return 1
   for _ in 1 2 3; do
@@ -130,6 +136,13 @@ start_weighing() {   # K: spawn + V4.3 for arrival K in the background (setsid g
     setsid bash "$ROOT/scripts/run_auto_scale_v43.sh" > "$RUN_DIR/${BOX}_v43.log" 2>&1 < /dev/null &
   WEIGH_PID=$!
   PIDS+=("$WEIGH_PID")
+  if [[ "${PAC_LAYOUT:-}" == v46 ]]; then
+    # V4.6 camera 1 (top view of the scale): stable once the box rests on the scale.
+    rm -f "$RUN_DIR/${BOX}_perception.json"
+    setsid python3 "$ROOT/scripts/perceive_once_v44.py" --camera scale --box "$BOX" --size "$SX" "$SY" "$SZ" \
+      --timeout 120 --out "$RUN_DIR/${BOX}_perception.json" > "$RUN_DIR/${BOX}_scale_perception.log" 2>&1 < /dev/null &
+    PIDS+=($!)
+  fi
 }
 # ---- buffer table / pallet change / gripper payload (2026-10-09) ---------------------------------
 # Policy: a box without a slot on the current pallet goes to the buffer table (2 bays) while the
@@ -143,6 +156,14 @@ GRIPPER="${PAC_GRIPPER:-pad}"
 GRIPPER_CAP=$(python3 -c "import re,sys; s=open(sys.argv[1]).read(); d=eval(re.search(r'GRIPPERS = (\{[^}]*\})', s).group(1)); print(d[sys.argv[2]])" "$ROOT/scripts/moveit_pick_place_v44.py" "$GRIPPER")
 echo ">>> [준비] 그리퍼 $GRIPPER (정격 ${GRIPPER_CAP} kg), 적층 높이 기준 ${PAC_STACK_NOMINAL_M:-1.5} m / 허용 ${PAC_STACK_MAX_M:-1.6} m, 버퍼 2칸"
 SWAPS=0; BUFFERED_TOTAL=0
+
+arrive_pick() {   # V4.6: the plan was made while the box travelled; wait until it is at PICK
+  [[ -n "${TRAVEL_PID:-}" ]] || return 0
+  wait "$TRAVEL_PID" || true
+  TRAVEL_PID=""
+  grep -E 'V4.3 (PASS|FAIL)' "$RUN_DIR/${BOX}_v43.log" | tail -1
+  grep -q 'V4.3 PASS' "$RUN_DIR/${BOX}_v43.log" || { echo "CYCLE FAIL: $BOX did not reach PICK"; exit 1; }
+}
 
 hold_box() {   # BOX SZ REASON: simulated operator / reject lane (not a robot move)
   local HX HY
@@ -169,14 +190,41 @@ PYEOF
 
 plan_slot() {   # BOX SKU MASS PERCEPTION REMAINING [PICK_X PICK_Y] -> "x y z yaw" or empty
   local extra=()
-  [[ -n "${6:-}" ]] && extra=(--pick-xy "$6" "$7")
+  if [[ -n "${6:-}" ]]; then
+    extra=(--pick-xy "$6" "$7")
+  elif [[ "${PAC_LAYOUT:-}" == v46 ]]; then
+    extra=(--pick-xy -1.03 1.20)   # perception came from the scale camera; the robot picks at PICK
+  fi
+  local plan_rc=0 out="$RUN_DIR/${1}_plan.json" err="$RUN_DIR/${1}_plan.err"
+  rm -f "$out"
   python3 -I "$ROOT/scripts/ahead_planner_bridge_v44.py" plan --state "$STATE" --box-id "$1" --sku "$2" \
     --catalog "$CATALOG" --mass "$3" --perception "$4" --remaining-json "$5" "${extra[@]}" \
-    --out "$RUN_DIR/${1}_plan.json" 2> "$RUN_DIR/${1}_plan.err" | tail -1 || true
+    --out "$out" > "$RUN_DIR/${1}_plan.stdout" 2> "$err" || plan_rc=$?
+  if [[ "$plan_rc" == 20 ]] && grep -q '^PLAN FAIL: NO_SLOT (' "$err"; then
+    return 0  # Empty slot means a valid no-slot decision, never a Python failure.
+  fi
+  if [[ "$plan_rc" != 0 ]]; then
+    echo "PLANNER ERROR: $1 (exit $plan_rc); cell stops, no buffer/pallet fallback" >&2
+    tail -20 "$err" >&2
+    return "$plan_rc"
+  fi
+  # Parse the plan artifact, not arbitrary stdout; stale/malformed output is an error.
+  python3 - "$out" "$1" <<'PYPLAN'
+import json, math, sys
+try:
+    plan = json.load(open(sys.argv[1]))
+    assert plan['box_id'] == sys.argv[2]
+    values = [*plan['slot_world'], plan['yaw_rad']]
+    assert len(values) == 4 and all(math.isfinite(float(v)) for v in values)
+    print(' '.join(f'{float(v):.4f}' for v in values))
+except (OSError, ValueError, KeyError, TypeError, AssertionError) as exc:
+    print(f'PLANNER ERROR: invalid plan artifact: {exc}', file=sys.stderr)
+    sys.exit(21)
+PYPLAN
 }
 
 extra_placed() {   # boxes on the buffer table as MoveIt obstacles
-  python3 -c "import json,sys; print(json.dumps({k: v['size'] for k, v in json.load(open(sys.argv[1])).items()}))" "$BUFFER" \
+  python3 -c "import json,sys; print(json.dumps({v['box']: v['size'] for v in json.load(open(sys.argv[1])).values()}))" "$BUFFER" \
     > "$RUN_DIR/buffer_obstacles.json"
 }
 
@@ -191,7 +239,7 @@ robot_move() {   # BOX SX SY SZ MASS TAG -- extra moveit args. Pipelining only f
     fi
   fi
   SPAWN_GATE="$GATE" PERCEPTION_EXTERNAL=1 setsid bash "$ROOT/scripts/run_moveit_pick_place_v44.sh" --box "$BOX" \
-    --size "$SX" "$SY" "$SZ" --mass "$MASS" --gripper "$GRIPPER" --pose-source camera --placed-state "$STATE" \
+    --size "$SX" "$SY" "$SZ" --mass "$MASS" --gripper "$GRIPPER" --pose-source camera --placed-state "$STATE" --catalog "$CATALOG" \
     --extra-placed-json "$RUN_DIR/buffer_obstacles.json" --result-json "$RUN_DIR/${BOX}_placed_${TAG}.json" "$@" \
     > "$LOG" 2>&1 < /dev/null &
   local MOVEIT_PID=$!
@@ -239,12 +287,16 @@ import json, math, sys
 buf = json.load(open(sys.argv[1]))
 sx, sy, sz = map(float, sys.argv[2:5])
 across, along = min(sx, sy), max(sx, sy)
-if across > 0.37 or along > 0.56:        # bay: 0.38 m between posts (x), 0.58 m shelf depth (y)
+import os
+depth = float(os.environ.get("PAC_BUFFER_DEPTH", "0.58"))
+if across > 0.37 or along > depth - 0.02:   # bay: 0.38 m between posts (x), shelf depth (y; V4.6 0.66 m)
     sys.exit(0)
 yaw = math.pi / 2 if sx > sy else 0.0    # long side along the shelf depth
-for bay, bx in (("0", 1.45 - 0.215), ("1", 1.45 + 0.215)):
+import os
+cx, cy = float(os.environ.get("PAC_BUFFER_X", "1.45")), float(os.environ.get("PAC_BUFFER_Y", "-0.55"))
+for bay, bx in (("0", cx - 0.215), ("1", cx + 0.215)):
     if bay not in buf:
-        print(bay, round(bx, 4), -0.55, round(0.9425 + sz / 2, 4), round(yaw, 4))
+        print(bay, round(bx, 4), cy, round(0.9425 + sz / 2, 4), round(yaw, 4))
         break
 PYEOF
 }
@@ -270,7 +322,7 @@ try_buffered() {   # K: re-plan every buffered box on the current pallet, place 
     rec=$(python3 -c "import json,sys; b=json.load(open(sys.argv[1])).get(sys.argv[2]); print('' if b is None else ' '.join(map(str, [b['box'], b['sku'], b['mass'], *b['size'], *b['pose'], b['perception']])))" "$BUFFER" "$bay")
     [[ -n "$rec" ]] || continue
     read -r BOX SKU MASS SX SY SZ PX PY PZ PW PERC <<< "$rec"
-    SLOT=$(plan_slot "$BOX" "$SKU" "$MASS" "$PERC" "$(remaining_json "$1")" "$PX" "$PY")
+    SLOT=$(plan_slot "$BOX" "$SKU" "$MASS" "$PERC" "$(remaining_json "$1")" "$PX" "$PY") || { echo "CYCLE FAIL: planner error for buffered $BOX"; exit 1; }
     [[ -n "$SLOT" ]] || continue
     echo ">>> 버퍼 칸 $bay 의 $BOX: 이제 자리 있음 -> 버퍼에서 집어 팔레트에 적재"
     show_plan "$BOX" "$SLOT"
@@ -301,6 +353,10 @@ while IFS=$'\t' read -r -u 3 K SKU SX SY SZ MASS GEN_ID; do
     echo ">>> [$K/$N] $BOX already placed (resume)"
     continue
   fi
+  if [[ -f "$RUN_DIR/buffer.json" ]] && python3 -c "import json,sys; sys.exit(0 if any(v['box']==sys.argv[2] for v in json.load(open(sys.argv[1])).values()) else 1)" "$RUN_DIR/buffer.json" "$BOX"; then
+    echo ">>> [$K/$N] $BOX is on the buffer table (resume)"
+    continue
+  fi
   if [[ "$PREFETCH_BOX" == "$BOX" ]]; then
     :   # fed and weighed during the previous robot cycle (waited for below)
   elif box_exists "$BOX"; then
@@ -329,32 +385,54 @@ PYEOF
   # Remaining stock by SKU = boxes still to arrive after this one (counts only, no order).
   REMAINING=$(awk -F'\t' -v k="$K" '$1 > k {c[$2]++} END {printf "{"; n=0; for (s in c) {printf "%s\"%s\": %d", (n++ ? ", " : ""), s, c[s]} printf "}"}' "$RUN_DIR/arrivals.tsv")
   echo ">>> ===== [$K/$N] $BOX = $GEN_ID ($SKU ${SX}x${SY}x${SZ} m, ${MASS} kg): ① 투입·자동 계량 ====="
+  TRAVEL_PID=""
   if [[ "$PREFETCH_BOX" == "$BOX" ]]; then
-    echo "    (로봇 작업 중에 미리 투입·계량 시작됨, 완료 대기)"
-    wait "$PREFETCH_PID" || true
+    echo "    (로봇 작업 중에 미리 투입·계량 시작됨)"
+    TRAVEL_PID="$PREFETCH_PID"
     PREFETCH_BOX=""
   elif [[ "$SKIP_WEIGH" != 1 ]]; then
     start_weighing "$K"
-    wait "$WEIGH_PID" || true
+    TRAVEL_PID="$WEIGH_PID"
   fi
-  grep -E 'V4.3 (PASS|FAIL)' "$RUN_DIR/${BOX}_v43.log" || true
-  WMASS=$(grep -oE 'V4.3 PASS: [0-9.]+' "$RUN_DIR/${BOX}_v43.log" | grep -oE '[0-9.]+$' || true)
-  [[ -n "$WMASS" ]] || { echo "CYCLE FAIL: weighing failed for $BOX"; exit 1; }
-
-  echo ">>> ===== [$K/$N] $BOX: ② 고정 CCTV 박스 인식 ====="
-  python3 "$ROOT/scripts/perceive_once_v44.py" --box "$BOX" --size "$SX" "$SY" "$SZ" \
-    --out "$RUN_DIR/${BOX}_perception.json" || { echo "CYCLE FAIL: perception failed for $BOX"; exit 1; }
+  if [[ "${PAC_LAYOUT:-}" == v46 && -n "$TRAVEL_PID" ]]; then
+    # V4.6: mass right after weighing (box still travelling to PICK) -> camera 1 -> plan now.
+    for _ in $(seq 1200); do
+      grep -q 'WEIGHED [0-9.]* kg' "$RUN_DIR/${BOX}_v43.log" 2>/dev/null && break
+      kill -0 "$TRAVEL_PID" 2>/dev/null || break
+      sleep 0.2
+    done
+    WMASS=$(grep -oE 'WEIGHED [0-9.]+ kg' "$RUN_DIR/${BOX}_v43.log" | grep -oE '[0-9.]+' | head -1 || true)
+    [[ -n "$WMASS" ]] || { wait "$TRAVEL_PID"; grep -E 'V4.3 (PASS|FAIL)' "$RUN_DIR/${BOX}_v43.log"; echo "CYCLE FAIL: weighing failed for $BOX"; exit 1; }
+    echo "    계량 완료 ${WMASS} kg (박스는 PICK으로 이송 중)"
+    echo ">>> ===== [$K/$N] $BOX: ② 카메라 1 (계량 구간 탑뷰) 박스 인식 ====="
+    for _ in $(seq 150); do [[ -s "$RUN_DIR/${BOX}_perception.json" ]] && break; sleep 0.2; done
+    [[ -s "$RUN_DIR/${BOX}_perception.json" ]] || { echo "CYCLE FAIL: scale camera perception failed for $BOX"; exit 1; }
+    tail -1 "$RUN_DIR/${BOX}_scale_perception.log"
+  else
+    [[ -n "$TRAVEL_PID" ]] && { wait "$TRAVEL_PID" || true; }
+    TRAVEL_PID=""
+    grep -E 'V4.3 (PASS|FAIL)' "$RUN_DIR/${BOX}_v43.log" || true
+    WMASS=$(grep -oE 'V4.3 PASS: [0-9.]+' "$RUN_DIR/${BOX}_v43.log" | grep -oE '[0-9.]+$' || true)
+    [[ -n "$WMASS" ]] || { echo "CYCLE FAIL: weighing failed for $BOX"; exit 1; }
+    if [[ "${PAC_LAYOUT:-}" != v46 || ! -s "$RUN_DIR/${BOX}_perception.json" ]]; then
+      echo ">>> ===== [$K/$N] $BOX: ② 고정 CCTV 박스 인식 ====="
+      python3 "$ROOT/scripts/perceive_once_v44.py" --box "$BOX" --size "$SX" "$SY" "$SZ" \
+        --out "$RUN_DIR/${BOX}_perception.json" || { echo "CYCLE FAIL: perception failed for $BOX"; exit 1; }
+    fi
+  fi
 
   if python3 -c "import sys; sys.exit(0 if float(sys.argv[1]) > float(sys.argv[2]) else 1)" "$WMASS" "$GRIPPER_CAP"; then
+    arrive_pick
     hold_box "$BOX" "$SZ" "그리퍼 정격 ${GRIPPER_CAP} kg 초과 (${WMASS} kg): 흡착판 확장(pad_xl 45 kg) 또는 지지대(pad_fork 60 kg) 필요 [PAC_GRIPPER]"
     continue
   fi
 
   echo ">>> ===== [$K/$N] $BOX: ③ 적재 알고리즘 계획 (팔레트 $PALLET_NO) ====="
-  SLOT=$(plan_slot "$BOX" "$SKU" "$WMASS" "$RUN_DIR/${BOX}_perception.json" "$(remaining_json "$K")")
+  SLOT=$(plan_slot "$BOX" "$SKU" "$WMASS" "$RUN_DIR/${BOX}_perception.json" "$(remaining_json "$K")") || { echo "CYCLE FAIL: planner error for $BOX"; exit 1; }
   if [[ -z "$SLOT" ]]; then
     tail -1 "$RUN_DIR/${BOX}_plan.err" | cut -c1-240
     BAY=$(buffer_bay_slot "$SX" "$SY" "$SZ")
+    arrive_pick
     if [[ -n "$BAY" ]]; then
       echo ">>> ===== [$K/$N] $BOX: ④ 버퍼로 이동 ====="
       buffer_put "$BOX" "$SKU" "$WMASS" "$SX" "$SY" "$SZ" $BAY
@@ -364,7 +442,7 @@ PYEOF
     swap_pallet
     try_buffered "$K"
     echo ">>> ===== [$K/$N] $BOX: ③ 적재 알고리즘 계획 (새 팔레트 $PALLET_NO) ====="
-    SLOT=$(plan_slot "$BOX" "$SKU" "$WMASS" "$RUN_DIR/${BOX}_perception.json" "$(remaining_json "$K")")
+    SLOT=$(plan_slot "$BOX" "$SKU" "$WMASS" "$RUN_DIR/${BOX}_perception.json" "$(remaining_json "$K")") || { echo "CYCLE FAIL: planner error for $BOX"; exit 1; }
     if [[ -z "$SLOT" ]]; then
       tail -1 "$RUN_DIR/${BOX}_plan.err" | cut -c1-240
       hold_box "$BOX" "$SZ" "빈 팔레트에도 자리 없음(planner)"
@@ -373,6 +451,8 @@ PYEOF
   fi
   read -r PSX PSY PSZ PYAW <<< "$SLOT"
   show_plan "$BOX" "$SLOT"
+  if [[ -n "${TRAVEL_PID:-}" ]]; then echo "    (계획 완료, 박스 PICK 도착 대기)"; fi
+  arrive_pick
   echo ">>> ===== [$K/$N] $BOX: ④ MoveIt 흡착 Pick & Place (CCTV + 그리퍼 카메라) ====="
   robot_move "$BOX" "$SX" "$SY" "$SZ" "$WMASS" pallet -- --slot "$PSX" "$PSY" "$PSZ" --slot-yaw "$PYAW"
   echo ">>> ===== [$K/$N] $BOX: ⑤ 실제 적재 결과 반영(그리퍼 카메라 측정)·3D 뷰어 동기화 ====="

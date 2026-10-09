@@ -59,12 +59,14 @@ APPROACH_M, STACK_CLEAR_M = 0.20, 0.10
 PALLET_MAX_WEIGHT_KG = 250.0
 QUARTER = math.pi / 2
 
-# Robot placement clearance: the planner packs boxes flush (0 gap); a suction robot lowering a box
-# between neighbours needs a small gap, so the planner sees each box this much larger in x/y.
-# Placed boxes are committed at their true size, so the real gap to a neighbour is clearance/2:
-# 10 mm (5 mm gap) was too tight for a 13.8 kg box lowered at speed 0.2 -> 20 mm (10 mm gap).
-PLACE_CLEARANCE_M = 0.020
-PLANNED_TOL_M = 0.005             # placed within this of the plan -> committed at the planned corner
+# ReferenceBackend used by this SIMULATION bridge has no built-in gap. Inflating
+# both physical x/y lengths by 8 mm gives 8 mm between adjacent inflated plan boxes
+# when they are committed at planned corners. Team pac_candidates is unchanged.
+PLACE_CLEARANCE_M = 0.008
+# Never hide an entire 8 mm gap as measured position error. Beyond 2 mm retain the
+# measured centre with the SAME inflated footprint. Camera uncertainty still
+# needs commissioning; contradictory/overlapping state must fail planning.
+PLANNED_TOL_M = 0.002
 # SKU master data. Default: the Gazebo 5 kg test box. --catalog loads the AHEAD dataset generator
 # sku_catalog instead. Top-load capacity is NOT in the generator and NOT measured: placeholder
 # 4 kPa x footprint area (K01 ~ 167 N ... K13 ~ 1000 N) until carton strength data exist.
@@ -125,7 +127,7 @@ def scenario(st: dict, box_id: str, sku: str, mass: float, yaw_on_conveyor: floa
         "state": {"state_version": st["state_version"], "stamp_sec": st["stamp_sec"],
                   "pallet": {"pallet_id": "GZ_PALLET_MAIN",
                              "size": {"x": PALLET_SIZE[0], "y": PALLET_SIZE[1], "z": max_height},
-                             "boxes": st["placed"]},
+                             "boxes": [{k: v for k, v in b.items() if k != "physical_size"} for b in st["placed"]]},
                   "inventory": {"tracked_boxes": {box_id: current},
                                 "remaining_by_sku": (remaining if isinstance(remaining, dict)
                                                      else {sku: max(0, remaining)})}},
@@ -187,7 +189,7 @@ def cmd_plan(a) -> int:
     else:
         sku = match_sku(per["length"], per["width"])
     remaining = json.loads(a.remaining_json) if a.remaining_json else a.remaining
-    config = load_config(str(PLANNER_ROOT / "config" / "default.yaml"))
+    config = load_config(str(REPO / "config" / "default.yaml"))
     pick_xy = (per.get("x", -1.03), per.get("y", 1.20)) if a.pick_xy is None else tuple(a.pick_xy)
     true_size = CATALOG[sku]["size"]
     chosen, notes = None, []
@@ -222,7 +224,8 @@ def cmd_plan(a) -> int:
         if MAX_STACK_HEIGHT_M <= NOMINAL_STACK_HEIGHT_M:
             break
     if chosen is None:
-        raise SystemExit("PLAN FAIL: NO_SLOT (" + "; ".join(notes) + ")")
+        print("PLAN FAIL: NO_SLOT (" + "; ".join(notes) + ")", file=sys.stderr)
+        return 20  # Only a valid no-slot decision may trigger buffering.
     cand, c, world, tz, mode = chosen
     out = {"box_id": a.box_id, "sku_id": sku, "mass_kg": a.mass, "state_version": st["state_version"],
            "candidate_id": cand.candidate_id, "score": cand.score,
@@ -254,7 +257,7 @@ def cmd_commit(a) -> int:
     #   Keeps the planner model self-consistent: true sizes broke same-size stacking (reference
     #   validator needs one supporter that fully contains the box), and inflated boxes at the
     #   measured pose overlapped by the ~1-2 mm placement error ("Existing boxes overlap").
-    # - otherwise the measured pose with the true size (the deviation is not hidden).
+    # - otherwise the measured centre with the same inflated size (deviation is not hidden).
     spec = planner_catalog()[a.sku]
     true_size = CATALOG[a.sku]["size"]
     yaw_snap = (q % 2) * QUARTER        # planner geometry: upright, 0 or 90 deg
@@ -269,13 +272,13 @@ def cmd_commit(a) -> int:
         corner = tuple(plan["target_corner_pallet"])
         size_out, basis = spec["size"], f"planned corner (measured deviation {dev * 1000:.1f} mm)"
     else:
-        sx, sy, sz = true_size["x"], true_size["y"], true_size["z"]
+        sx, sy, sz = spec["size"]["x"], spec["size"]["y"], spec["size"]["z"]
         dx, dy = (sy, sx) if q % 2 else (sx, sy)
         corner = (cx - dx / 2, cy - dy / 2, max(0.0, cz - sz / 2))
-        size_out = true_size
+        size_out = spec["size"]
         basis = "measured pose" + (f" (deviation {dev * 1000:.1f} mm > tolerance)" if dev is not None else "")
     st["placed"] = [b for b in st["placed"] if b["box_id"] != a.box_id] + [{
-        "box_id": a.box_id, "sku_id": a.sku, "size": size_out, "weight_kg": a.mass,
+        "box_id": a.box_id, "sku_id": a.sku, "size": size_out, "physical_size": true_size, "weight_kg": a.mass,
         "pose": {"frame_id": "pallet", "x": round(corner[0], 4), "y": round(corner[1], 4),
                  "z": round(corner[2], 4), "roll": 0.0, "pitch": 0.0, "yaw": yaw_snap}}]
     st["state_version"] += 1

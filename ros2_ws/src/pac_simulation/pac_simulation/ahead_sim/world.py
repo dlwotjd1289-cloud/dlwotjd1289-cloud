@@ -79,19 +79,23 @@ class BulletPalletWorld:
             physicsClientId=self.client_id,
         )
 
+        self.pallet_extra_ids = []
         self.pallet_id = self._create_pallet_body()
         self._body_to_name[self.pallet_id] = "PALLET"
+        for extra in self.pallet_extra_ids:
+            self._body_to_name[extra] = "PALLET"
 
         box_friction, pallet_friction = ph.bullet_body_frictions()
-        p.changeDynamics(
-            self.pallet_id,
-            -1,
-            lateralFriction=pallet_friction,
-            spinningFriction=ph.spinning_friction,
-            rollingFriction=ph.rolling_friction,
-            restitution=ph.restitution,
-            physicsClientId=self.client_id,
-        )
+        for body in [self.pallet_id] + self.pallet_extra_ids:
+            p.changeDynamics(
+                body,
+                -1,
+                lateralFriction=pallet_friction,
+                spinningFriction=ph.spinning_friction,
+                rollingFriction=ph.rolling_friction,
+                restitution=ph.restitution,
+                physicsClientId=self.client_id,
+            )
 
     def _linspace_centers(self, count: int, span: float) -> List[float]:
         if count <= 1:
@@ -131,6 +135,8 @@ class BulletPalletWorld:
         block_h = H * cfg.support_block_height_ratio
         bottom_w = W * cfg.bottom_board_width_ratio
         bottom_h = H * cfg.bottom_board_thickness_ratio
+        stringer_w = L * cfg.stringer_board_width_ratio
+        stringer_h = H * cfg.stringer_board_thickness_ratio if cfg.stringer_board_count > 0 else 0.0
 
         shape_types: List[int] = []
         half_extents: List[List[float]] = []
@@ -147,8 +153,17 @@ class BulletPalletWorld:
             positions.append([0.0, y, -top_h / 2.0])
             orientations.append(identity)
 
+        # Cross (stringer) boards along Y under the top boards, over the block columns: every top
+        # board is supported (without them the inner top boards floated between the blocks).
+        if cfg.stringer_board_count > 0:
+            for x in self._linspace_centers(cfg.stringer_board_count, max(0.0, L - stringer_w)):
+                shape_types.append(p.GEOM_BOX)
+                half_extents.append([stringer_w / 2.0, W / 2.0, stringer_h / 2.0])
+                positions.append([x, 0.0, -top_h - stringer_h / 2.0])
+                orientations.append(identity)
+
         # Support blocks.
-        block_z = -top_h - block_h / 2.0
+        block_z = -top_h - stringer_h - block_h / 2.0
         x_span = max(0.0, L - block_l)
         y_span = max(0.0, W - block_w)
         for x in self._linspace_centers(cfg.support_block_count_x, x_span):
@@ -161,7 +176,7 @@ class BulletPalletWorld:
                 orientations.append(identity)
 
         # Bottom runner boards.
-        bottom_z = -top_h - block_h - bottom_h / 2.0
+        bottom_z = -top_h - stringer_h - block_h - bottom_h / 2.0
         bottom_span = max(0.0, W - bottom_w)
         for y in self._linspace_centers(cfg.bottom_board_count, bottom_span):
             shape_types.append(p.GEOM_BOX)
@@ -169,20 +184,26 @@ class BulletPalletWorld:
             positions.append([0.0, y, bottom_z])
             orientations.append(identity)
 
-        shape = p.createCollisionShapeArray(
-            shapeTypes=shape_types,
-            halfExtents=half_extents,
-            collisionFramePositions=positions,
-            collisionFrameOrientations=orientations,
-            physicsClientId=self.client_id,
-        )
-
-        return p.createMultiBody(
-            baseMass=0.0,
-            baseCollisionShapeIndex=shape,
-            basePosition=[0.0, 0.0, 0.0],
-            physicsClientId=self.client_id,
-        )
+        # Bullet compound shapes hold at most 16 children (the 17-part model silently lost one block
+        # and the bottom boards): one static body per chunk of 16. The first chunk (top boards, then
+        # cross boards) is the pallet body that boxes touch; the others are registered as PALLET too.
+        bodies = []
+        for i in range(0, len(shape_types), 16):
+            shape = p.createCollisionShapeArray(
+                shapeTypes=shape_types[i:i + 16],
+                halfExtents=half_extents[i:i + 16],
+                collisionFramePositions=positions[i:i + 16],
+                collisionFrameOrientations=orientations[i:i + 16],
+                physicsClientId=self.client_id,
+            )
+            bodies.append(p.createMultiBody(
+                baseMass=0.0,
+                baseCollisionShapeIndex=shape,
+                basePosition=[0.0, 0.0, 0.0],
+                physicsClientId=self.client_id,
+            ))
+        self.pallet_extra_ids = bodies[1:]
+        return bodies[0]
 
     def add_box(self, spec: BoxSpec) -> int:
         """Insert one box without allowing initial rigid-body penetration."""

@@ -26,6 +26,11 @@ class PalletConfig:
     bottom_board_count: int = 3
     bottom_board_width_ratio: float = 0.14
     bottom_board_thickness_ratio: float = 0.16
+    # Cross (stringer) boards between the top deck boards and the blocks, perpendicular to the top
+    # boards (block pallet). 0 = old model (top boards directly on the blocks).
+    stringer_board_count: int = 0
+    stringer_board_width_ratio: float = 0.1318
+    stringer_board_thickness_ratio: float = 0.1467
 
     def as_dict(self) -> Dict[str, Any]:
         return {
@@ -37,6 +42,17 @@ class PalletConfig:
             "top_board_count": self.top_board_count,
             "top_board_width_ratio": self.top_board_width_ratio,
             "top_board_thickness_ratio": self.top_board_thickness_ratio,
+            "stringer_board_count": self.stringer_board_count,
+            "stringer_board_width_ratio": self.stringer_board_width_ratio,
+            "stringer_board_thickness_ratio": self.stringer_board_thickness_ratio,
+            "support_block_count_x": self.support_block_count_x,
+            "support_block_count_y": self.support_block_count_y,
+            "support_block_length_ratio": self.support_block_length_ratio,
+            "support_block_width_ratio": self.support_block_width_ratio,
+            "support_block_height_ratio": self.support_block_height_ratio,
+            "bottom_board_count": self.bottom_board_count,
+            "bottom_board_width_ratio": self.bottom_board_width_ratio,
+            "bottom_board_thickness_ratio": self.bottom_board_thickness_ratio,
         }
 
 

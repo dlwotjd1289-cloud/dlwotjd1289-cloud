@@ -14,6 +14,8 @@ BOX_SDF="${V43_BOX_SDF:-$ROOT/test_data/scale_auto_box_5kg_v43.sdf}"
 SPAWN_Z="${V43_SPAWN_Z:-1.05}"
 # Arrival pose at the inlet (generator cycle ARRIVAL_JITTER=1: lateral offset / yaw of the arriving box).
 SPAWN_Y="${V43_SPAWN_Y:-1.20}"
+# inlet x (V4.6 world: scale moved upstream by PAC_SCALE_SHIFT_M)
+INLET_X=$(python3 -c "print(-4.45 + float('${PAC_SCALE_SHIFT_M:-0}'))")
 SPAWN_YAW="${V43_SPAWN_YAW:-0.0}"
 SPAWN_QZ=$(python3 -c "import math; print(math.sin($SPAWN_YAW / 2))")
 SPAWN_QW=$(python3 -c "import math; print(math.cos($SPAWN_YAW / 2))")
@@ -33,7 +35,10 @@ if [[ "$BOX" == "v43_scale_box_5kg" ]]; then GRIP_NS="/pac/gripper"; else GRIP_N
 CREATE_BIN="$(ros2 pkg prefix ros_gz_sim)/lib/ros_gz_sim/create"
 BRIDGE_BIN="$(ros2 pkg prefix ros_gz_bridge)/lib/ros_gz_bridge/parameter_bridge"
 echo ">>> [준비] Gazebo V4.2 실행 여부 확인 중..."
-if ! timeout 10 ign topic -l | grep -Fx "/world/$WORLD/clock" >/dev/null; then
+gz_up() { timeout 10 ign topic -l 2>/dev/null | grep -Fx "/world/$WORLD/clock" >/dev/null; }
+# retried for 30 s: the first topic listing of a heavy world (V4.6) once came back empty
+for _ in 1 2 3; do gz_up && break; sleep 2; done
+if ! gz_up; then
   echo "ERROR: Start Gazebo V4.2 in Terminal 1 and press ▶ before running." >&2
   exit 1
 fi
@@ -60,7 +65,7 @@ release_box() {
 reset_box_to_inlet() {
   timeout 10 ign service -s "/world/$WORLD/set_pose" \
     --reqtype ignition.msgs.Pose --reptype ignition.msgs.Boolean --timeout 3000 \
-    --req "name: \"$BOX\" position {x: -4.45 y: $SPAWN_Y z: $SPAWN_Z} orientation {z: $SPAWN_QZ w: $SPAWN_QW}" | grep -q "data: true"
+    --req "name: \"$BOX\" position {x: $INLET_X y: $SPAWN_Y z: $SPAWN_Z} orientation {z: $SPAWN_QZ w: $SPAWN_QW}" | grep -q "data: true"
 }
 
 BRIDGE_PID=""
@@ -147,7 +152,7 @@ if [[ "$REUSE_BOX" == 0 ]]; then
   if ! timeout -k 3 30 "$CREATE_BIN" \
     -name "$BOX" \
     -file "$BOX_SDF" \
-    -x -4.45 -y "$SPAWN_Y" -z "$SPAWN_Z" -Y "$SPAWN_YAW"; then
+    -x "$INLET_X" -y "$SPAWN_Y" -z "$SPAWN_Z" -Y "$SPAWN_YAW"; then
       echo "ERROR: Spawn failed; relaunch clean Gazebo V4.2 world." >&2
       exit 1
   fi
