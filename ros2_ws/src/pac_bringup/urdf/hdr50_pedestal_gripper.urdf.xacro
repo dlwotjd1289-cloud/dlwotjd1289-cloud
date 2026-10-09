@@ -60,6 +60,41 @@
     <origin xyz="${cup_mount_len + cup_lip_len} 0 0" rpy="0 0 0"/>
   </joint>
 
+  <!-- Gripper (wrist) camera beside the suction cup, looking along the tool direction (+x).
+       Used for close-range pose refinement just before the pick; the fixed pole CCTV
+       (camera_1_cctv_base in the world) gives the coarse pose. Camera type and model are undecided (simulated as RGB).
+       Kept as its own link (no lumping) so the sensor frame stays at the camera. -->
+  <link name="wrist_camera_link">
+    <inertial>
+      <mass value="0.1"/>
+      <inertia ixx="1e-5" ixy="0" ixz="0" iyy="1e-5" iyz="0" izz="1e-5"/>
+    </inertial>
+    <visual name="wrist_camera_visual">
+      <geometry><box size="0.03 0.05 0.04"/></geometry>
+      <material name="wrist_camera_black"><color rgba="0.08 0.08 0.1 1"/></material>
+    </visual>
+  </link>
+  <joint name="wrist_camera_joint" type="fixed">
+    <parent link="suction_cup_link"/>
+    <child link="wrist_camera_link"/>
+    <origin xyz="0.03 0.09 0" rpy="0 0 0"/>
+  </joint>
+  <gazebo reference="wrist_camera_joint">
+    <preserveFixedJoint>true</preserveFixedJoint>
+  </gazebo>
+  <gazebo reference="wrist_camera_link">
+    <sensor name="wrist_camera" type="camera">
+      <always_on>true</always_on>
+      <update_rate>15</update_rate>
+      <topic>/pac/wrist_camera/image</topic>
+      <camera>
+        <horizontal_fov>1.30</horizontal_fov>
+        <image><width>640</width><height>480</height><format>R8G8B8</format></image>
+        <clip><near>0.05</near><far>3.0</far></clip>
+      </camera>
+    </sensor>
+  </gazebo>
+
   <!-- Keep the cup as its own link (no fixed-joint lumping into flange_link)
        so the contact sensor and DetachableJoint can reference it. -->
   <gazebo reference="suction_cup_joint">
@@ -80,7 +115,8 @@
   <gazebo>
     <plugin filename="ignition-gazebo-touchplugin-system"
             name="ignition::gazebo::systems::TouchPlugin">
-      <target>$(arg gripper_child_model)</target>
+      <!-- Substring of the touched collision's scoped name; every test box uses box_link. -->
+      <target>box_link</target>
       <namespace>pac/suction</namespace>
       <time>0.1</time>
       <enabled>false</enabled>
@@ -97,5 +133,30 @@
       <suppress_child_warning>true</suppress_child_warning>
     </plugin>
   </gazebo>
+
+  <!-- Multi-box stacking (V4.4 stack): one DetachableJoint per box name box_01..box_NN,
+       topics /pac/gripper/box_NN/{attach,detach,state}. The single-box V4.3 test box keeps
+       the /pac/gripper/{attach,detach,state} plugin above. Each plugin attaches its box when
+       the box first appears; the runners release it right after spawning. -->
+  <xacro:arg name="stack_box_count" default="30"/>
+  <xacro:macro name="stack_box_grip" params="i n">
+    <xacro:if value="${n >= i}">
+      <xacro:property name="bn" value="${'box_%02d' % i}"/>
+      <gazebo>
+        <plugin filename="ignition-gazebo-detachable-joint-system"
+                name="ignition::gazebo::systems::DetachableJoint">
+          <parent_link>suction_cup_link</parent_link>
+          <child_model>${bn}</child_model>
+          <child_link>box_link</child_link>
+          <attach_topic>/pac/gripper/${bn}/attach</attach_topic>
+          <detach_topic>/pac/gripper/${bn}/detach</detach_topic>
+          <output_topic>/pac/gripper/${bn}/state</output_topic>
+          <suppress_child_warning>true</suppress_child_warning>
+        </plugin>
+      </gazebo>
+      <xacro:stack_box_grip i="${i + 1}" n="${n}"/>
+    </xacro:if>
+  </xacro:macro>
+  <xacro:stack_box_grip i="1" n="$(arg stack_box_count)"/>
 
 </robot>

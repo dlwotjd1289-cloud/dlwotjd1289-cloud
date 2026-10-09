@@ -4,7 +4,7 @@ import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts"))
-from scale_cycle_core_v43 import AutoScaleCycle, Config, G, Phase
+from scale_cycle_core_v43 import AutoScaleCycle, Config, G, Phase, config_for_box
 
 
 class TestAutoScaleCycle(unittest.TestCase):
@@ -138,6 +138,58 @@ class TestAutoScaleCycle(unittest.TestCase):
             self.assertEqual(c.tick(t), 0.0)
         self.assertEqual(c.phase, Phase.ERROR)
         self.assertIn("Tare", c.error)
+
+
+    # --- Generator SKUs: length-dependent thresholds (2026-10-09) ---
+
+    def test_config_for_default_box_matches_tuned_values(self):
+        c = config_for_box(0.40, 5.0)
+        self.assertAlmostEqual(c.unload_x_m, Config().unload_x_m, places=6)
+        self.assertAlmostEqual(c.pick_x_m, Config().pick_x_m, places=6)
+        self.assertLessEqual(c.scale_center_tolerance_m, Config().scale_center_tolerance_m)
+
+    def test_large_box_full_cycle(self):
+        cfg = config_for_box(0.52, 21.3)        # K13 length, generator mass
+        c = AutoScaleCycle(cfg, now=0.0)
+        for i in range(50):
+            c.update_wrench(7 * G, 0.01 * i); c.tick(0.01 * i)
+        c.update_pose(-4.45, 1.2, 0.5)
+        self.assertAlmostEqual(c.tick(0.5), cfg.velocity_rad_s)
+        c.update_pose(-3.85, 1.2, 0.9); c.tick(0.9)
+        for i in range(100):
+            t = 0.9 + 0.01 * (i + 1)
+            c.update_wrench((7 + 21.3) * G, t)
+            if i % 10 == 0: c.update_pose(-3.82, 1.2, t)
+            c.tick(t)
+        self.assertEqual(c.phase, Phase.TO_PICK)
+        self.assertAlmostEqual(c.measured_kg, 21.3, places=6)
+        for i in range(30):
+            t += .01
+            c.update_wrench(7 * G, t); c.update_pose(cfg.unload_x_m + 0.01, 1.2, t); c.tick(t)
+        self.assertTrue(c.unloaded)
+        stop_centre = -0.845 - 0.26             # box front touching the stopper
+        c.update_pose(stop_centre, 1.2, t + 0.1)
+        self.assertEqual(c.tick(t + 0.1), 0.0)
+        self.assertEqual(c.phase, Phase.DONE)
+
+    def test_large_box_off_centre_on_scale_fails(self):
+        cfg = config_for_box(0.52, 21.3)
+        self.assertLess(cfg.scale_center_tolerance_m, 0.10)   # 0.52 m box overhangs sooner
+
+    def test_tare_parameter_for_v44_rollers(self):
+        cfg = config_for_box(0.25, 0.9, tare_kg=10.0)
+        c = AutoScaleCycle(cfg, now=0.0)
+        for i in range(50):
+            c.update_wrench(10 * G, 0.01 * i); c.tick(0.01 * i)
+        self.assertEqual(c.phase, Phase.WAIT_BOX)
+        c2 = AutoScaleCycle(config_for_box(0.25, 0.9), now=0.0)   # 7 kg expectation: 10 kg is off
+        for i in range(50):
+            c2.update_wrench(10 * G, 0.01 * i); c2.tick(0.01 * i)
+        self.assertEqual(c2.phase, Phase.ERROR)
+
+    def test_box_too_long_for_scale_rejected(self):
+        with self.assertRaises(ValueError):
+            config_for_box(0.80, 10.0)
 
 
 if __name__ == "__main__":

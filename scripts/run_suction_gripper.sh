@@ -31,12 +31,19 @@ cleanup() {
 trap cleanup EXIT
 trap 'echo "[suction] stopping..."; exit 130' INT TERM
 
+# Per-box gripper topics for stacking boxes box_01..box_NN (see hdr50_pedestal_gripper.urdf.xacro).
+STACK_BRIDGES=()
+for i in $(seq -f "%02g" 1 "${STACK_BOX_COUNT:-30}"); do   # = stack_box_count in the gripper xacro
+  STACK_BRIDGES+=("/pac/gripper/box_$i/attach@std_msgs/msg/Empty]ignition.msgs.Empty"
+                  "/pac/gripper/box_$i/detach@std_msgs/msg/Empty]ignition.msgs.Empty")
+done
 mkdir -p "$ROOT/logs"
 echo ">>> [흡착 준비] 흡착 그리퍼 bridge·제어 노드 시작 중..."
 setsid "$BRIDGE_BIN" \
   '/pac/suction/touched@std_msgs/msg/Bool[ignition.msgs.Boolean' \
   '/pac/gripper/attach@std_msgs/msg/Empty]ignition.msgs.Empty' \
   '/pac/gripper/detach@std_msgs/msg/Empty]ignition.msgs.Empty' \
+  "${STACK_BRIDGES[@]}" \
   > "$ROOT/logs/v44_suction_bridge_$(date +%Y%m%d_%H%M%S).log" 2>&1 &
 BRIDGE_PID=$!
 setsid python3 -u "$ROOT/scripts/suction_gripper_node.py" &

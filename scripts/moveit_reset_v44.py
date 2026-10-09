@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Reset after an interrupted V4.4 MoveIt run: release the suction gripper in
+"""Reset after an interrupted V4.4 MoveIt run (single box or stacking): release the suction gripper in
 Gazebo, remove the test box from the MoveIt planning scene, plan back home.
 Requires Gazebo V4.4 and hdr50_moveit_v44.launch.py running."""
 import subprocess
@@ -14,9 +14,12 @@ from moveit_pick_place_v44 import BOX_ID, BOX_SIZE, HOME, SCENE, TCP, Failure, M
 
 def main():
     print(">>> [리셋 1/3] 흡착 그리퍼 해제 중...", flush=True)
-    for _ in range(3):
-        subprocess.run(["ign", "topic", "-t", "/pac/gripper/detach", "-m", "ignition.msgs.Empty", "-p", " "],
-                       check=False, timeout=10)
+    # Release every gripper connection (single test box + stacking boxes box_01..box_12).
+    topics = ["/pac/gripper/detach"] + [f"/pac/gripper/box_{i:02d}/detach" for i in range(1, 31)]
+    procs = [subprocess.Popen(["ign", "topic", "-t", t, "-m", "ignition.msgs.Empty", "-p", " "],
+                              stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL) for t in topics]
+    for p_ in procs:
+        p_.wait(timeout=20)
     rclpy.init(signal_handler_options=SignalHandlerOptions.NO)
     node = MoveItPickPlace()
     try:

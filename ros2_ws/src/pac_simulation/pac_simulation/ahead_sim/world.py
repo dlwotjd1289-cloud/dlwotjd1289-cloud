@@ -254,6 +254,16 @@ class BulletPalletWorld:
         self._body_to_name[body] = spec.box_id
         return body
 
+    def add_box_at(self, spec: BoxSpec, position, yaw_rad: float = 0.0) -> int:
+        """V4.4 robot cell: insert a box at `position` (e.g. the PICK station) instead of above
+        its pallet target; the same penetration check as add_box applies."""
+        from dataclasses import replace
+        tmp = replace(spec, target_position_m=(position[0], position[1], position[2] - self.config.physics.spawn_clearance_m),
+                      yaw_rad=yaw_rad)
+        body = self.add_box(tmp)
+        self.boxes[spec.box_id] = BodyRecord(body, spec)   # keep the real pallet target for metrics/viewer
+        return body
+
     def step(self, count: int = 1) -> None:
         n = max(1, count)
         for _ in range(n):

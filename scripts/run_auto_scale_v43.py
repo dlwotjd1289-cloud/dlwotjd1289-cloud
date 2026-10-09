@@ -19,7 +19,7 @@ from rclpy.signals import SignalHandlerOptions
 from std_msgs.msg import Float64
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from scale_cycle_core_v43 import AutoScaleCycle, Config, Phase
+from scale_cycle_core_v43 import AutoScaleCycle, Config, Phase, config_for_box
 
 
 # Human-readable progress shown once per phase change.
@@ -35,15 +35,16 @@ STATUS = {
 
 
 class ScaleController(Node):
-    def __init__(self) -> None:
+    def __init__(self, box: str = "v43_scale_box_5kg", cfg: Config | None = None) -> None:
         # Simulation time: timeouts must not expire when Gazebo runs slower than
         # real time (observed real-time factor ~0.2 under CPU load).
         super().__init__("pac_auto_scale_v43",
                          parameter_overrides=[Parameter("use_sim_time", Parameter.Type.BOOL, True)])
         self.core = None  # created on the first /clock time
+        self.cfg = cfg or Config()
         self.publisher = self.create_publisher(Float64, "/pac/conveyor/roller_cmd_vel", 10)
         self.create_subscription(WrenchStamped, "/pac/scale/wrench", self.on_wrench, qos_profile_sensor_data)
-        self.create_subscription(PoseStamped, "/model/v43_scale_box_5kg/pose", self.on_pose, qos_profile_sensor_data)
+        self.create_subscription(PoseStamped, f"/model/{box}/pose", self.on_pose, qos_profile_sensor_data)
         self.create_timer(0.1, self.tick)
         self.done = False
         self._last_velocity = None
@@ -72,7 +73,7 @@ class ScaleController(Node):
         if now <= 0.0:
             return  # no /clock yet
         if self.core is None:
-            self.core = AutoScaleCycle(Config(), now=now)
+            self.core = AutoScaleCycle(self.cfg, now=now)
         velocity = self.core.tick(now)
         cmd = Float64()
         cmd.data = float(velocity)
@@ -103,7 +104,11 @@ def main() -> int:
     rclpy.init(signal_handler_options=SignalHandlerOptions.NO)
     signal.signal(signal.SIGINT, _raise_interrupt)
     signal.signal(signal.SIGTERM, _raise_interrupt)
-    node = ScaleController()
+    # argv: [box_name] [length_m expected_mass_kg [tare_kg]]  (generator SKUs; default = 5 kg test box)
+    box = sys.argv[1] if len(sys.argv) > 1 else "v43_scale_box_5kg"
+    cfg = (config_for_box(float(sys.argv[2]), float(sys.argv[3]), float(sys.argv[4]) if len(sys.argv) > 4 else 7.0)
+           if len(sys.argv) > 3 else Config())
+    node = ScaleController(box, cfg)
     try:
         start = time.monotonic()
         while rclpy.ok() and not node.done:

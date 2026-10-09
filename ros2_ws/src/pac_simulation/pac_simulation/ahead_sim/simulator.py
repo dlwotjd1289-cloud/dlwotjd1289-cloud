@@ -9,6 +9,11 @@ from .models import BoxSpec, SimulatorConfig
 from .strength import evaluate_box_compression
 from .world import BulletPalletWorld
 
+try:  # V4.4 robot cell (HDR50-22 + PICK station); the original simulator works without it
+    from .robot_cell import RobotCell
+except Exception:  # pragma: no cover - missing URDF / meshes
+    RobotCell = None
+
 
 class AheadLiveSimulator:
     """Always-on rigid-body execution world for selected AHEAD placements."""
@@ -21,14 +26,33 @@ class AheadLiveSimulator:
         )
         self.sequence_index = 0
         self.demo_sequence = self._build_demo_sequence()
+        self.robot = None
+        if RobotCell is not None:
+            try:
+                self.robot = RobotCell(self.world)
+            except Exception as exc:  # keep the pallet simulator usable without the robot
+                print(f"[robot cell disabled] {exc}")
 
     def reset(self) -> None:
         self.world.reset()
         self.force_averager.clear()
         self.sequence_index = 0
+        if self.robot is not None:
+            self.robot.reload()
 
     def step(self, count: int = 1) -> None:
-        self.world.step(count)
+        if self.robot is None:
+            self.world.step(count)
+            return
+        dt = 1.0 / float(self.config.physics.physics_hz)
+        for _ in range(max(1, count)):
+            self.robot.update(dt)
+            self.world.step(1)
+
+    def robot_place(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        if self.robot is None:
+            raise RuntimeError("robot cell not available")
+        return self.robot.request_place(BoxSpec.from_mapping(data))
 
     def place_box(self, spec: BoxSpec) -> int:
         return self.world.add_box(spec)
@@ -45,7 +69,12 @@ class AheadLiveSimulator:
         return spec
 
     def snapshot(self) -> Dict[str, Any]:
-        boxes = self.world.snapshot_boxes()
+        all_boxes = self.world.snapshot_boxes()
+        transit = self.robot.in_transit if self.robot is not None else set()
+        for b in all_boxes:
+            b["in_transit"] = b["id"] in transit
+        # Pallet metrics / contacts / strength only for boxes the robot has released and settled.
+        boxes = [b for b in all_boxes if not b["in_transit"]]
         box_map = {str(b["id"]): b for b in boxes}
         contacts = self.world.contacts()
         pallet_contacts = self.world.pallet_contacts()
@@ -115,7 +144,10 @@ class AheadLiveSimulator:
                 "bullet_box_body_friction": box_body_friction,
                 "bullet_pallet_body_friction": pallet_body_friction,
             },
-            "boxes": boxes,
+            "boxes": boxes + [dict(b, strength={"status": "IN_TRANSIT", "load_from_above_n_avg": 0.0,
+                                                "max_top_load_n": None, "utilization": None})
+                              for b in all_boxes if b["in_transit"]],
+            "robot": self.robot.snapshot() if self.robot is not None else None,
             "metrics": metrics,
             "contact_graph": graph,
             "strength": strength,

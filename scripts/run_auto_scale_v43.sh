@@ -7,7 +7,27 @@ source "$ROOT/ros2_ws/install/setup.bash"
 set -u
 
 WORLD="ahead_workcell_v4_2_physical_scale"
-BOX="v43_scale_box_5kg"
+# Box model name: V43_BOX=box_03 bash scripts/run_auto_scale_v43.sh (stacking runs).
+BOX="${V43_BOX:-v43_scale_box_5kg}"
+# Generator boxes: V43_BOX_SDF (model file), V43_BOX_LENGTH [m], V43_EXPECTED_MASS [kg], V43_SPAWN_Z [m].
+BOX_SDF="${V43_BOX_SDF:-$ROOT/test_data/scale_auto_box_5kg_v43.sdf}"
+SPAWN_Z="${V43_SPAWN_Z:-1.05}"
+# Arrival pose at the inlet (generator cycle ARRIVAL_JITTER=1: lateral offset / yaw of the arriving box).
+SPAWN_Y="${V43_SPAWN_Y:-1.20}"
+SPAWN_YAW="${V43_SPAWN_YAW:-0.0}"
+SPAWN_QZ=$(python3 -c "import math; print(math.sin($SPAWN_YAW / 2))")
+SPAWN_QW=$(python3 -c "import math; print(math.cos($SPAWN_YAW / 2))")
+NODE_ARGS=("$BOX")
+# V43_TARE_KG: empty scale platform incl. rollers (7 in the V4.2 world, 10 in the V4.4 world,
+# which has 3 extra intermediate rollers on the platform). Auto-detect V4.4 by its gripper topic.
+if [[ -z "${V43_TARE_KG:-}" ]] && timeout 10 ign topic -l | grep -Fx /pac/gripper/state >/dev/null; then
+  V43_TARE_KG=10.0
+  : "${V43_BOX_LENGTH:=0.40}" "${V43_EXPECTED_MASS:=5.0}"
+fi
+if [[ -n "${V43_BOX_LENGTH:-}" && -n "${V43_EXPECTED_MASS:-}" ]]; then
+  NODE_ARGS+=("$V43_BOX_LENGTH" "$V43_EXPECTED_MASS" "${V43_TARE_KG:-7.0}")
+fi
+if [[ "$BOX" == "v43_scale_box_5kg" ]]; then GRIP_NS="/pac/gripper"; else GRIP_NS="/pac/gripper/$BOX"; fi
 # Call executables directly (no `ros2 run` wrapper): a killed wrapper leaves
 # its child running, which left an orphan bridge after the 17:30 run.
 CREATE_BIN="$(ros2 pkg prefix ros_gz_sim)/lib/ros_gz_sim/create"
@@ -19,22 +39,28 @@ if ! timeout 10 ign topic -l | grep -Fx "/world/$WORLD/clock" >/dev/null; then
 fi
 
 box_exists() {
-  # Capture first: `| grep -q` under pipefail can report false on SIGPIPE.
+  # Capture first: `| grep -q` under pipefail can report false on SIGPIPE. Retry: with many
+  # models in the world, `ign model` occasionally times out (box_23 run, 2026-10-09).
   local out
-  out="$(timeout 10 ign model -m "$BOX" 2>/dev/null || true)"
-  [[ "$out" == *"Name: $BOX"* ]]
+  for _ in 1 2 3; do
+    out="$(timeout 10 ign model -m "$BOX" 2>/dev/null || true)"
+    [[ "$out" == *"Name: $BOX"* ]] && return 0
+    [[ "$out" == *"No model named"* ]] && return 1
+    sleep 1
+  done
+  return 1
 }
 
 release_box() {
   # V4.4 gripper (DetachableJoint) attaches when the box first appears; release it.
   # Harmless in the plain V4.2 world (no subscriber).
-  timeout 5 ign topic -t /pac/gripper/detach -m ignition.msgs.Empty -p ' ' >/dev/null 2>&1 || true
+  timeout 5 ign topic -t "$GRIP_NS/detach" -m ignition.msgs.Empty -p ' ' >/dev/null 2>&1 || true
 }
 
 reset_box_to_inlet() {
   timeout 10 ign service -s "/world/$WORLD/set_pose" \
     --reqtype ignition.msgs.Pose --reptype ignition.msgs.Boolean --timeout 3000 \
-    --req "name: \"$BOX\" position {x: -4.45 y: 1.20 z: 1.05} orientation {w: 1}" | grep -q "data: true"
+    --req "name: \"$BOX\" position {x: -4.45 y: $SPAWN_Y z: $SPAWN_Z} orientation {z: $SPAWN_QZ w: $SPAWN_QW}" | grep -q "data: true"
 }
 
 BRIDGE_PID=""
@@ -70,7 +96,13 @@ trap 'echo "[V4.3] Interrupted; stopping rollers and child processes..."; exit 1
 # once, and the V4.4 gripper binds to the first box entity it sees).
 echo ">>> [준비] 이전 테스트 박스 확인 중..."
 REUSE_BOX=0
-if box_exists; then
+if [[ "${V43_BOX_AT_INLET:-0}" == 1 ]] && box_exists; then
+  # Created at the inlet (and released) by the V4.4 cycle runner while the arm stood still: use it
+  # as is. A teleport (set_pose) after the spawn-time attach/detach left the later suction joint
+  # without effect in Fortress (box did not follow the cup; 2026-10-09).
+  REUSE_BOX=1
+  echo ">>> [준비] 컨베이어 입구에 미리 생성된 박스 사용 ($BOX)"
+elif box_exists; then
   REUSE_BOX=1
   # Move it before the empty-scale tare (it may have stopped on the scale).
   echo ">>> [준비] 기존 5kg 테스트 박스를 컨베이어 입구로 되돌리는 중..."
@@ -102,7 +134,7 @@ if ! kill -0 "$BRIDGE_PID" 2>/dev/null; then
 fi
 
 echo ">>> [준비] 자동 계량 제어 노드 시작 중..."
-setsid python3 -u "$ROOT/scripts/run_auto_scale_v43.py" &
+setsid python3 -u "$ROOT/scripts/run_auto_scale_v43.py" "${NODE_ARGS[@]}" &
 NODE_PID=$!
 sleep 2
 if ! kill -0 "$NODE_PID" 2>/dev/null; then
@@ -114,8 +146,8 @@ if [[ "$REUSE_BOX" == 0 ]]; then
   echo ">>> [준비] 5kg 테스트 박스를 컨베이어 입구에 투입 중..."
   if ! timeout -k 3 30 "$CREATE_BIN" \
     -name "$BOX" \
-    -file "$ROOT/test_data/scale_auto_box_5kg_v43.sdf" \
-    -x -4.45 -y 1.20 -z 1.05; then
+    -file "$BOX_SDF" \
+    -x -4.45 -y "$SPAWN_Y" -z "$SPAWN_Z" -Y "$SPAWN_YAW"; then
       echo "ERROR: Spawn failed; relaunch clean Gazebo V4.2 world." >&2
       exit 1
   fi

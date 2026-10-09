@@ -40,7 +40,7 @@
   );
   // Simulation/world convention: Z-up
   camera.up.set(0, 0, 1);
-  camera.position.set(2.25, -2.25, 1.75);
+  camera.position.set(2.6, -3.4, 2.5);
 
   const renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
@@ -53,13 +53,13 @@
   viewport.appendChild(renderer.domElement);
 
   const controls = new THREE.OrbitControls(camera, renderer.domElement);
-  controls.target.set(0, 0, 0.28);
+  controls.target.set(-0.35, -0.45, 0.45);
   controls.enableDamping = true;
   controls.dampingFactor = 0.07;
   controls.screenSpacePanning = true;
   controls.maxPolarAngle = Math.PI * 0.49;
   controls.minDistance = 0.5;
-  controls.maxDistance = 7.0;
+  controls.maxDistance = 10.0;
 
   scene.add(new THREE.HemisphereLight(0xd9eeff, 0x26313b, 1.25));
 
@@ -79,6 +79,136 @@
 
   const root = new THREE.Group();
   scene.add(root);
+
+  // ---------------------------------------------------------------- V4.4 robot cell
+  // HDR50-22 (STL meshes served by /mesh/<file>), PICK station and pedestal, driven by s.robot.
+  const robotLinks = new Map();
+  const robotInfoEl = document.getElementById("robotInfo");
+  const stlLoader = window.THREE.STLLoader ? new THREE.STLLoader() : null;
+  const stlCache = new Map();
+
+  function loadStl(file, cb) {
+    if (!stlLoader) return;
+    if (stlCache.has(file)) {
+      const c = stlCache.get(file);
+      if (c.geometry) cb(c.geometry); else c.waiting.push(cb);
+      return;
+    }
+    const entry = { geometry: null, waiting: [cb] };
+    stlCache.set(file, entry);
+    stlLoader.load(`/mesh/${encodeURIComponent(file)}`, geom => {
+      geom.computeVertexNormals();
+      entry.geometry = geom;
+      entry.waiting.forEach(f => f(geom));
+      entry.waiting = [];
+    });
+  }
+
+  function stdMat(rgba) {
+    return new THREE.MeshStandardMaterial({
+      color: new THREE.Color(rgba[0], rgba[1], rgba[2]),
+      roughness: 0.55, metalness: 0.15,
+      transparent: rgba[3] < 1, opacity: rgba[3],
+    });
+  }
+
+  function addStaticBox(group, center, size, color) {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(size[0], size[1], size[2]),
+      new THREE.MeshStandardMaterial({ color, roughness: 0.8 }));
+    m.position.set(center[0], center[1], center[2]);
+    m.castShadow = true; m.receiveShadow = true;
+    group.add(m);
+    return m;
+  }
+
+  function buildRobotCell(sceneData) {
+    const cell = new THREE.Group();
+    // Infeed: frame + rollers at the 0.095 m pitch of the V4.4 Gazebo conveyor
+    const inf = sceneData.infeed;
+    const cx = (inf.x[0] + inf.x[1]) / 2, len = inf.x[1] - inf.x[0], wid = inf.y[1] - inf.y[0];
+    addStaticBox(cell, [cx, 0, (inf.top - 0.17 - 0.035) / 2], [len, wid, inf.top + 0.17 - 0.035], 0x1b1f24);
+    const rollerMat = new THREE.MeshStandardMaterial({ color: 0xa7adb3, metalness: 0.6, roughness: 0.35 });
+    for (let x = inf.x[1] - 0.05; x > inf.x[0]; x -= 0.095) {
+      const r = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, wid - 0.04, 20), rollerMat);
+      r.position.set(x, 0, inf.top - 0.035);   // cylinder axis = y
+      r.castShadow = true;
+      cell.add(r);
+    }
+    const st = sceneData.stopper;
+    addStaticBox(cell, st.center, st.size, 0xe8901e);
+    const ped = sceneData.pedestal;
+    addStaticBox(cell, ped.center, ped.size, 0x5b6470);
+    // Fixed pole CCTV: pole, housing and view frustum (camera looks along its +x axis)
+    if (sceneData.cctv) {
+      const cc = sceneData.cctv;
+      const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, cc.pos[2] + 0.17, 12),
+        new THREE.MeshStandardMaterial({ color: 0x3a4048 }));
+      pole.rotation.x = Math.PI / 2;
+      pole.position.set(cc.pole_xy[0], cc.pole_xy[1], (cc.pos[2] - 0.17) / 2);
+      cell.add(pole);
+      const cam = new THREE.Group();
+      cam.position.fromArray(cc.pos);
+      cam.quaternion.set(cc.quat[0], cc.quat[1], cc.quat[2], cc.quat[3]);
+      cam.add(new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.11, 0.095),
+        new THREE.MeshStandardMaterial({ color: 0x20252b })));
+      const d = 1.6, hw = d * Math.tan(cc.hfov / 2), hh = hw / cc.aspect;
+      const pts = [[0, 0, 0], [d, hw, hh], [0, 0, 0], [d, -hw, hh], [0, 0, 0], [d, hw, -hh], [0, 0, 0], [d, -hw, -hh],
+        [d, hw, hh], [d, -hw, hh], [d, -hw, hh], [d, -hw, -hh], [d, -hw, -hh], [d, hw, -hh], [d, hw, -hh], [d, hw, hh]];
+      const geo = new THREE.BufferGeometry().setFromPoints(pts.map(q => new THREE.Vector3(q[0], q[1], q[2])));
+      cam.add(new THREE.LineSegments(geo, new THREE.LineBasicMaterial({ color: 0x55c8ff, transparent: true, opacity: 0.55 })));
+      cell.add(cam);
+    }
+    root.add(cell);
+    // Robot links
+    Object.entries(sceneData.visuals).forEach(([name, items]) => {
+      const g = new THREE.Group();
+      items.forEach(v => {
+        const holder = new THREE.Group();
+        holder.position.fromArray(v.xyz);
+        holder.quaternion.set(v.quat[0], v.quat[1], v.quat[2], v.quat[3]);
+        if (v.type === "mesh") {
+          loadStl(v.file, geom => {
+            const m = new THREE.Mesh(geom, stdMat(v.rgba));
+            m.scale.fromArray(v.scale);
+            m.castShadow = true;
+            holder.add(m);
+          });
+        } else if (v.type === "cylinder") {
+          const m = new THREE.Mesh(new THREE.CylinderGeometry(v.radius, v.radius, v.length, 24), stdMat(v.rgba));
+          m.rotation.x = Math.PI / 2;     // URDF cylinder axis z -> three.js cylinder axis y
+          holder.add(m);
+        } else if (v.type === "box") {
+          holder.add(new THREE.Mesh(new THREE.BoxGeometry(v.size[0], v.size[1], v.size[2]), stdMat(v.rgba)));
+        }
+        g.add(holder);
+      });
+      g.visible = false;
+      root.add(g);
+      robotLinks.set(name, g);
+    });
+  }
+
+  fetch("/api/robot_scene").then(r => r.ok ? r.json() : null).then(d => { if (d && d.ok) buildRobotCell(d); })
+    .catch(() => {});
+
+  function updateRobot(r) {
+    if (!r) return;
+    r.links.forEach(l => {
+      const g = robotLinks.get(l.name);
+      if (!g) return;
+      g.visible = true;
+      g.position.fromArray(l.pos);
+      g.quaternion.set(l.quat[0], l.quat[1], l.quat[2], l.quat[3]);
+    });
+    if (!robotInfoEl) return;
+    const done = (r.completed || []).slice(-8).reverse().map(c =>
+      `<tr><td>${c.id}</td><td>xy ${c.xy_error_mm} mm</td><td>z ${c.z_error_mm} mm</td><td>tilt ${c.tilt_deg}°</td></tr>`).join("");
+    robotInfoEl.innerHTML =
+      `<div>상태: <span class="state">${r.state}</span>${r.current_box ? ` · 작업 박스 <b>${r.current_box}</b>` : ""}</div>` +
+      `<div>대기열: ${(r.queue || []).join(", ") || "없음"}</div>` +
+      (done ? `<table>${done}</table>` : "") +
+      `<div class="log">${(r.log || []).slice(-6).map(x => `<div>${x}</div>`).join("")}</div>`;
+  }
 
   const boxMeshes = new Map();
   const clickable = [];
@@ -536,6 +666,13 @@
       }
     }
 
+    updateRobot(s.robot);
+    boxMeshes.forEach((mesh, id) => {
+      const b = s.boxes.find(x => x.id === id);
+      if (b && mesh.material && mesh.material.emissive) {
+        mesh.material.emissive.setHex(b.in_transit ? 0x1f4f7a : 0x000000);
+      }
+    });
     updateMarkers(s);
     updatePanels(s);
     drawHeatmap(s.metrics.load_map);
