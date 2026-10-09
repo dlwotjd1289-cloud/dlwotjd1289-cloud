@@ -110,11 +110,26 @@ def test_layer_placer_continues_a_level_surface():
     grid[0:20, :] = 0.2  # a 0.4 m wide strip of 0.2 m boxes along x = 0..0.4
     args = (grid, 0.4, 0.0, 0.0, 0.2, 0.4)
     # 0.2 m box on the floor right next to the strip: level with its top
-    level_a, step_a, flush_a = ring_metrics(*args, 0.2, 0.02, 0.003, 0.15)
+    level_a, step_a, flush_a, _ = ring_metrics(*args, 0.2, 0.02, 0.003, 0.15)
     # 0.1 m box there: leaves a 0.1 m step
-    level_b, step_b, flush_b = ring_metrics(*args, 0.1, 0.02, 0.003, 0.15)
+    level_b, step_b, flush_b, _ = ring_metrics(*args, 0.1, 0.02, 0.003, 0.15)
     assert level_a == 0.0 and level_b == 1.0
     assert step_a < step_b and flush_a > flush_b
+
+
+def test_layer_placer_prefers_touching_boxes_over_the_pallet_edge():
+    """No edge-first rule: the pallet edge gives no credit, a neighbour's side does."""
+    from pac_highlevel.placement import ring_metrics
+    import numpy as np
+
+    grid = np.zeros((60, 50))
+    grid[20:40, 15:35] = 0.2  # one 0.4 x 0.4 m box in the middle
+    # 0.2 m box in the pallet corner: two sides on the pallet edge, no neighbour
+    corner = ring_metrics(grid, 0.0, 0.0, 0.0, 0.2, 0.2, 0.2, 0.02, 0.003, 0.15)
+    # same box right next to the middle box
+    beside = ring_metrics(grid, 0.8, 0.3, 0.0, 0.2, 0.2, 0.2, 0.02, 0.003, 0.15)
+    assert corner[2] == corner[3] == 0.0
+    assert beside[3] > 0.0 and beside[2] == beside[3]
 
 
 def test_any_step_breaks_the_level_whatever_the_box_size():
@@ -146,6 +161,49 @@ def test_layer_placer_picks_only_valid_candidates_and_keeps_episodes_safe():
     w2.placer = LayerPlacer()
     out2 = run_policy(w2, LookaheadPolicy(w2.config, LookaheadConfig(horizon=3)))
     assert out2["safety_issues"] == 0
+
+
+def test_time_budget_is_a_hard_limit():
+    """Past the limit a branch is cut inside its step (no partial score); with
+    no time at all every search is cut and the rule's action stands."""
+    from pac_highlevel import RulePolicy
+    from pac_highlevel.lookahead import SearchTimeout, WindowWorld, _DeadlineBackend
+    import time
+
+    boxes = mixed_boxes()
+    w = world(boxes)
+    guard = _DeadlineBackend(w.backend(), time.perf_counter() - 1.0)
+    with pytest.raises(SearchTimeout):
+        guard.candidate_set(boxes[0], w.state())
+    assert isinstance(window_clone(w, 3), WindowWorld)
+
+    rule = run_policy(world(boxes), RulePolicy(world(boxes).config))
+    w2 = world(boxes)
+    policy = LookaheadPolicy(w2.config, LookaheadConfig(horizon=3, time_budget_s=1e-4))
+    out = run_policy(w2, policy)
+    assert policy.stats.searched > 0 and policy.stats.aborted == policy.stats.searched
+    assert policy.stats.changed == 0
+    assert {k: out[k] for k in ("placed", "ng", "pallet_equivalents")} ==         {k: rule[k] for k in ("placed", "ng", "pallet_equivalents")}
+
+
+def test_action_budget_follows_the_world_clock():
+    """Simulated worlds get the runtime's search time: a share of the action
+    that ran since the previous decision, the wait budget at the start."""
+    from pac_highlevel import ActionBudget
+
+    budget = ActionBudget(ahead_ratio=0.75, min_budget_s=0.3, max_budget_s=10.0, wait_budget_s=1.5)
+    assert budget.ahead(8.0) == 6.0 and budget.ahead(100.0) == 10.0 and budget.ahead(0.1) == 0.3
+    assert budget.ahead(0.0) == 1.5
+    w = world(mixed_boxes())
+    assert budget(w) == 1.5                       # first decision: the robot waits
+    w.time_s += 8.0                               # a placement cycle ran meanwhile
+    assert budget(w) == 6.0
+    w.time_s += 4.0                               # a buffer move
+    assert budget(w) == 3.0
+    seen = []
+    policy = LookaheadPolicy(w.config, LookaheadConfig(horizon=3), budget=lambda world: seen.append(1) or 5.0)
+    run_policy(world(mixed_boxes(6)), policy)
+    assert seen and policy.stats.decisions == len(seen)
 
 
 # ---------------------------------------------------------------- real time

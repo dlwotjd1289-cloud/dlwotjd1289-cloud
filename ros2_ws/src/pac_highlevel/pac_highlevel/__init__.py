@@ -10,7 +10,7 @@ PARTIAL_REPACK stay rules; infeasible actions are masked using stages
 from .actions import ActionType, HighLevelAction, action_count, from_index, to_index
 from .config import HighLevelConfig, config_from_dict, load_highlevel_config
 from .features import feature_names, observe
-from .lookahead import LookaheadConfig, LookaheadPolicy, load_lookahead_config
+from .lookahead import ActionBudget, LookaheadConfig, LookaheadPolicy, load_lookahead_config
 from .placement import LayerConfig, LayerPlacer
 from .ppo import MaskablePPO
 from .rules import GreedyPolicy, RulePolicy
@@ -20,6 +20,7 @@ from .value import make_value_provider
 from .world import Arrival, PalletizingWorld
 
 __all__ = [
+    "ActionBudget",
     "ActionType",
     "Arrival",
     "GreedyPolicy",

@@ -22,10 +22,10 @@
 | ROS 서비스 | `planning_service.py` (`/pac/plan_placement`, srv `ros2_ws/src/pac_planning_interfaces/srv/PlanPlacement.srv`), launch `ros2_ws/src/pac_planning/launch/placement_planner.launch.py` |
 | 학습·평가 | `model_pipeline.py`, `training.py`, `training_data.py`, `evaluation.py`, `team_training.py`; 스크립트 `scripts/donghan/model_pipeline.py`; 설정 `config/donghan/model_*.yaml`, `candidate_runtime_v2.yaml` |
 
-- **런타임 연결**: `ros2_ws/src/pac_runtime/pac_runtime/placer.py` `RobotAwarePlacer` (:22, DBLF 또는 동한 순위 → 6단계 검사), `donghan_ranker` (:48, `TeamRuntimeRanker`로 위임). ROS: `ros_node.make_runtime_ranker` (`ranker:=dblf|donghan`)
+- **런타임 연결**: `ros2_ws/src/pac_runtime/pac_runtime/placer.py` `RobotAwarePlacer` (평평한 층·옆면 밀착 `layer_ranker`(기본), DBLF 또는 동한 순위 → 6단계 검사), `donghan_ranker` (`TeamRuntimeRanker`로 위임). ROS: `ros_node.make_runtime_ranker` (`ranker:=layer|dblf|donghan`)
 - **테스트**: 태현 `test_th_candidates.py`, `test_th_hard_mask.py`, `test_th_geometry.py`, `test_th_planner_integration.py`, `test_th_strength.py` / 동한 `test_planning.py`, `test_learning.py`, `test_rollout.py`, `test_scalable_training.py`, `test_team_bridge.py`, `test_team_load_regression.py`, `test_regressions.py`, `test_contracts.py`, `test_team_physics.py`, `test_runtime_teacher.py`
 - **문서**: `docs/donghan/low_level_planner.md`, `integration.md`, `model_14400_v3_ko.md` / `docs/taehyeon/algorithms.md`, `interface.md`, `virtual_data.md`
 - **주의**:
-  - ROS `runtime_node`의 기본값은 여전히 `ranker:=dblf`입니다. ③~⑥을 쓰려면 `ranker:=donghan`을 지정하세요.
+  - ROS `runtime_node`의 기본값은 `ranker:=layer`(N개 탐색과 같은 자리 규칙)입니다. ③~⑥을 쓰려면 `ranker:=donghan`을 지정하세요.
   - 학습 모델은 학습 때의 플래너 설정(`ranker_config`)과 함께 써야 합니다. 다르면 시작할 때 오류가 납니다.
   - 순위 어댑터는 `pac_planning.team_bridge` 하나로 정리했습니다(`TeamRuntimeRanker` / `TeamPlacer`).

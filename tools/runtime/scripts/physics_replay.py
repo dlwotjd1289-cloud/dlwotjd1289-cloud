@@ -23,7 +23,7 @@ import time
 import urllib.request
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "highlevel" / "scripts"))
-from _common import REPO, add_common_args, load_all  # noqa: E402
+from _common import REPO, add_common_args, load_all, load_lookahead  # noqa: E402
 import team_paths  # noqa: E402
 
 from pac_common import Size3D  # noqa: E402
@@ -99,6 +99,7 @@ def main():
     args = parser.parse_args()
     dataset, cand, vcfg, hl = load_all(args)
     rt = load_runtime_config(REPO / "config/taehyeon/runtime.yaml")
+    la = load_lookahead(args)
     robot = RobotFeasibility(load_robot_check_config(REPO / "config/taehyeon/robot_check.yaml"))
     specs = split_ids(dataset, args.split)
     if args.scenarios:
@@ -109,7 +110,7 @@ def main():
     for spec in specs:
         cell = runtime_cell(spec, dataset, cand, vcfg, family_index=fam[spec.scenario_id],
                             scenario_index=pos[spec.scenario_id])
-        out = RuntimeLoop(cell, cand, hl, rt, robot, load_policy("rule", config=hl), log_events=False).run()
+        out = RuntimeLoop(cell, cand, hl, rt, robot, load_policy("lookahead", la, config=hl), log_events=False).run()
         for p in out["pallet_list"]:
             pallets.append({"scenario": spec.scenario_id, **p})
     if args.live:

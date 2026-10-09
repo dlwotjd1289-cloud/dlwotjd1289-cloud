@@ -9,7 +9,9 @@ then (this workspace):
 
 Both nodes use config/taehyeon/robot_check_gazebo.yaml (robot base at world
 (1.35, 0.15, 0.5), pallet centre (1.35, -1.0)), so the joint values match the
-robot in Gazebo. ``ranker:=dblf`` remains the compatibility default. The
+robot in Gazebo. Stage 4 always decides with the look-ahead search over the
+boxes the cell driver publishes on /pac/conveyor_preview; ``ranker:=layer``
+(flat layers / side contact) is the default low-level order. The
 Donghan ranker uses its deterministic EMS-backed heuristic when
 ``ranker_model_path`` is empty. Learned models require their matching
 ``ranker_config`` to preserve the rollout horizon/scenario contract.
@@ -31,8 +33,10 @@ def generate_launch_description():
             [LaunchConfiguration("repo"), "config", "taehyeon", "example_order.json"])),
         DeclareLaunchArgument("speed_scale", default_value="0.3"),
         DeclareLaunchArgument("seed", default_value="0"),
-        DeclareLaunchArgument("ranker", default_value="dblf",
-                              description="low-level ordering: dblf or donghan"),
+        DeclareLaunchArgument("visible_boxes", default_value="5",
+                              description="boxes after the current one the conveyor camera sees"),
+        DeclareLaunchArgument("ranker", default_value="layer",
+                              description="low-level ordering: layer, dblf or donghan"),
         DeclareLaunchArgument("ranker_model_path", default_value="",
                               description="optional validated donghan model; empty uses deterministic heuristic"),
         DeclareLaunchArgument("ranker_config", default_value="",
@@ -42,9 +46,9 @@ def generate_launch_description():
             "order_file": order,
             "candidates_config": cfg("candidates.yaml"),
             "highlevel_config": cfg("highlevel.yaml"),
+            "lookahead_config": cfg("lookahead.yaml"),
             "runtime_config": cfg("runtime.yaml"),
             "robot_config": cfg("robot_check_gazebo.yaml"),
-            "policy": "rule",
             "ranker": LaunchConfiguration("ranker"),
             "ranker_model_path": LaunchConfiguration("ranker_model_path"),
             "ranker_config": LaunchConfiguration("ranker_config"),
@@ -55,5 +59,6 @@ def generate_launch_description():
             "robot_config": cfg("robot_check_gazebo.yaml"),
             "speed_scale": LaunchConfiguration("speed_scale"),
             "seed": LaunchConfiguration("seed"),
+            "visible_boxes": LaunchConfiguration("visible_boxes"),
         }]),
     ])

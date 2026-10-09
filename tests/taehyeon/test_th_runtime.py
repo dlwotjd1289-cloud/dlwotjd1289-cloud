@@ -296,7 +296,8 @@ def test_runtime_ranker_selection_and_status_provenance(tmp_path):
     from pac_runtime.order import cell_from_order
     from pac_runtime.ros_node import CoreBridge, make_runtime_ranker
 
-    assert make_runtime_ranker("dblf") is None
+    assert make_runtime_ranker("dblf").name == "dblf"
+    assert make_runtime_ranker().name == "layer"  # runtime default: same rule as the look-ahead search
     with pytest.raises(ValueError, match="unknown runtime ranker"):
         make_runtime_ranker("unvalidated")
 
@@ -401,14 +402,19 @@ def test_gazebo_driver_closes_the_loop_with_the_runtime_bridge():
     hl = replace(HighLevelConfig(), buffer=replace(HighLevelConfig().buffer, slots=2))
     robot = RobotFeasibility(load_robot_check_config(REPO / "config/taehyeon/robot_check_gazebo.yaml"))
     bridge = CoreBridge(RuntimeCore(cell_from_order(order, CandidateConfig()), CandidateConfig(), hl,
-                                    RuntimeConfig(), robot, load_policy("rule", config=hl)))
-    driver = GazeboDriverCore(boxes_from_order(order, seed=1), robot, GazeboCell())
-    queue = [("obs", driver.first_observation())]
+                                    RuntimeConfig(), robot, load_policy("lookahead", config=hl)))
+    driver = GazeboDriverCore(boxes_from_order(order, seed=1), robot, GazeboCell(), visible_boxes=3)
+    first = driver.first_observation()
+    queue = [("preview", driver.preview()), ("obs", first)]
     spawned, removed, actions = {}, set(), Counter()
     for _ in range(200):
         if not queue:
             break
         kind, payload = queue.pop(0)
+        if kind == "preview":
+            bridge.on_preview(json.dumps(payload))
+            assert len(payload["boxes"]) <= 3
+            continue
         if kind == "obs":
             _, cmd = bridge.on_observation(json.dumps(payload))
         elif kind == "idle":
@@ -421,6 +427,13 @@ def test_gazebo_driver_closes_the_loop_with_the_runtime_bridge():
         acts = driver.on_command(cmd)
         times = [t for _, t in acts.trajectory]
         assert times == sorted(times) and all(len(q) == 6 for q, _ in acts.trajectory)
+        if cmd["action"] in ("PLACE_CURRENT", "RETRIEVE_BUFFER"):
+            # down and up through every checked waypoint of the vertical line, not a 2-point joint move
+            path = [list(q) for q in cmd["robot"]["q_path"]]
+            assert len(path) > 2 and path[0] == list(cmd["robot"]["q_approach"])
+            assert path[-1] == list(cmd["robot"]["q_place"])
+            moved = [q for q, _ in acts.trajectory[-(2 * len(path) - 1):]]
+            assert moved == path + path[-2::-1]
         for name in acts.remove:
             removed.add(name)
             spawned.pop(name, None)
@@ -430,6 +443,8 @@ def test_gazebo_driver_closes_the_loop_with_the_runtime_bridge():
             assert 0.75 <= x <= 1.95 and -1.5 <= y <= -0.5 and z > 0.15
             spawned[name] = (x, y, z)
         queue.append(("res", acts.result))
+        if acts.preview is not None:
+            queue.append(("preview", acts.preview))
         if acts.observation is not None:
             queue.append(("obs", acts.observation))
         if acts.idle is not None:
@@ -439,6 +454,34 @@ def test_gazebo_driver_closes_the_loop_with_the_runtime_bridge():
     assert placed_total + len(core.inspection) == 11 and not core.has_work()
     assert actions["PLACE_CURRENT"] + actions["RETRIEVE_BUFFER"] == placed_total
     assert set(spawned) == {p.box_id for p in core.sm.placed}
+    assert core.decider.policy.name == "lookahead" and core.decider.policy.choose.stats.searched > 0
+
+
+def test_runtime_always_decides_with_the_lookahead_over_the_conveyor_preview():
+    import json
+
+    from pac_highlevel import HighLevelDecider
+    from pac_runtime import RuntimeCore
+    from pac_runtime.order import cell_from_order
+    from pac_runtime.ros_node import CoreBridge
+
+    assert HighLevelDecider(None).policy.name == "lookahead"
+    order = {"pallet": {"size_m": [1.2, 1.0, 1.35]},
+             "skus": {"K": {"size_m": [0.4, 0.3, 0.2], "weight_kg": [2.0, 6.0], "count": 4}}}
+    hl = replace(HighLevelConfig(), buffer=replace(HighLevelConfig().buffer, slots=2))
+    core = RuntimeCore(cell_from_order(order, CandidateConfig()), CandidateConfig(), hl, RuntimeConfig(),
+                       RobotFeasibility(), load_policy(config=hl))
+    bridge = CoreBridge(core)
+    obs = lambda i, sku="K": {"box_id": i, "label_sku": sku, "weight_kg": 4.0, "size_m": [0.4, 0.3, 0.2]}  # noqa: E731
+    # an unreadable label cannot be planned: left out of the window
+    bridge.on_preview(json.dumps({"boxes": [obs("B"), obs("C", None), obs("D")]}))
+    assert [b.box_id for b in core.preview] == ["B", "D"]
+    assert bridge.status()["policy"] == "lookahead" and bridge.status()["visible_boxes"] == 2
+    version = core.sm.version
+    _, cmd = bridge.on_observation(json.dumps(obs("A")))
+    assert cmd["action"] in ("PLACE_CURRENT", "BUFFER_CURRENT") and cmd["decided_by"] == "policy:lookahead"
+    assert core.decider.policy.choose.stats.searched == 1  # window B, D searched
+    assert core.sm.version == version + 1                  # the preview itself changes no state
 
 
 def _k_bridge(count):
@@ -509,3 +552,99 @@ def json_ok(cmd):
     import json
 
     return json.dumps({"state_version": cmd["state_version"], "ok": True})
+
+
+def _gazebo_run(plan_ahead, noise=0.0, rt=None, clock=None):
+    import json
+
+    from pac_robot_check import load_robot_check_config
+    from pac_runtime import RuntimeCore
+    from pac_runtime.gazebo_driver import GazeboCell, GazeboDriverCore, boxes_from_order
+    from pac_runtime.order import cell_from_order
+    from pac_runtime.ros_node import CoreBridge
+
+    order = {"pallet": {"size_m": [1.2, 1.0, 1.35]},
+             "skus": {"K": {"size_m": [0.4, 0.3, 0.2], "weight_kg": [2.0, 6.0], "count": 6},
+                      "S": {"size_m": [0.25, 0.2, 0.15], "weight_kg": [2.0, 4.0], "count": 6}}}
+    hl = replace(HighLevelConfig(), buffer=replace(HighLevelConfig().buffer, slots=2))
+    robot = RobotFeasibility(load_robot_check_config(REPO / "config/taehyeon/robot_check_gazebo.yaml"))
+    if rt is None:  # budgets large enough that the search never stops early: deterministic commands
+        from pac_runtime.config import PlanningConfig
+
+        rt = RuntimeConfig(planning=PlanningConfig(ahead_ratio=1.0, max_budget_s=600.0, wait_budget_s=600.0))
+    now = [0.0]
+    bridge = CoreBridge(RuntimeCore(cell_from_order(order, CandidateConfig()), CandidateConfig(), hl,
+                                    rt, robot, load_policy("lookahead", config=hl)),
+                        plan_ahead=plan_ahead, clock=(lambda: now[0]) if clock else __import__("time").monotonic)
+    driver = GazeboDriverCore(boxes_from_order(order, seed=2), robot, GazeboCell(), visible_boxes=3,
+                              place_noise_m=noise, seed=5)
+    queue = [("preview", driver.preview()), ("obs", driver.first_observation())]
+    commands = []
+    while queue:
+        kind, payload = queue.pop(0)
+        if kind == "preview":
+            bridge.on_preview(json.dumps(payload))
+            continue
+        call = {"obs": bridge.on_observation, "idle": bridge.on_idle, "res": bridge.on_result}[kind]
+        _, cmd = call(json.dumps(payload))
+        if cmd is None:
+            continue
+        commands.append((cmd["action"], cmd["box_id"], cmd.get("target_min_corner")))
+        acts = driver.on_command(cmd)
+        now[0] += acts.duration_s * (clock or 1.0)  # the robot motion (simulated clock)
+        queue.append(("res", acts.result))
+        if acts.preview is not None:
+            queue.append(("preview", acts.preview))
+        if acts.observation is not None:
+            queue.append(("obs", acts.observation))
+        if acts.idle is not None:
+            queue.append(("idle", acts.idle))
+    return commands, bridge
+
+
+def test_planning_during_the_motion_gives_the_same_commands():
+    """The command planned on the forecast while the robot moves is the one
+    the cell would have planned after the result (exact execution)."""
+    plain, _ = _gazebo_run(plan_ahead=False)
+    ahead, bridge = _gazebo_run(plan_ahead=True)
+    assert ahead == plain
+    status = bridge.status()
+    assert status["planned_ahead"] > 0.5 * len(ahead)
+    placed = sum(1 for a, _, _ in ahead if a in ("PLACE_CURRENT", "RETRIEVE_BUFFER"))
+    assert placed + len(bridge.core.inspection) == 12
+
+
+def test_planning_ahead_falls_back_when_the_result_differs():
+    """Placement error beyond the L0 band: the forecast is dropped and the
+    next command is planned on the real (measured) state."""
+    ahead, bridge = _gazebo_run(plan_ahead=True, noise=0.02)
+    core = bridge.core
+    assert core.counts["ahead_replanned"] > 0
+    assert len(core.sm.placed) + sum(len(b) for _, b in core.closed) + len(core.inspection) == 12
+    for action, box_id, corner in ahead:
+        assert action != "WAIT"
+
+
+def test_search_time_follows_the_robot_action_and_its_measured_duration():
+    """Planned during a placement: ahead_ratio of its duration; during a buffer
+    move: ahead_ratio of the travel; while the robot waits: wait_budget_s. Measured
+    durations (here twice the driver's motion) correct the next budgets."""
+    from pac_runtime.config import PlanningConfig
+
+    rt = RuntimeConfig(planning=PlanningConfig(max_budget_s=600.0))  # no cap: see the correction
+    _, bridge = _gazebo_run(plan_ahead=True, rt=rt, clock=2.0)
+    core, pl = bridge.core, rt.planning
+    by_action = {}
+    for action, budget in bridge.budgets:
+        by_action.setdefault(action, []).append(budget)
+    assert by_action["WAIT"][0] == pl.wait_budget_s          # the first box: nothing to plan during
+    place = by_action["PLACE_CURRENT"]
+    assert all(pl.min_budget_s <= b <= pl.max_budget_s for b in place)
+    first_place = next(b for a, b in bridge.budgets if a == "PLACE_CURRENT")
+    assert place[-1] > first_place                           # learned: the robot is slower than expected
+    scale = core.duration_scale["PLACE_CURRENT"]
+    assert scale > 1.2
+    if "BUFFER_CURRENT" in by_action:
+        assert max(by_action["BUFFER_CURRENT"]) < max(place)  # a buffer move leaves less time
+    status = bridge.status()
+    assert status["last_budget_s"] is not None and "PLACE_CURRENT" in status["duration_scale"]

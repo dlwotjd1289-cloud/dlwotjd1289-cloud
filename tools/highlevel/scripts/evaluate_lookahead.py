@@ -1,4 +1,5 @@
-"""Paired comparison: Rule vs look-ahead search over the next N boxes.
+"""Paired evaluation of the look-ahead search (the runtime policy) against
+the Rule baseline (what the search plays after its first action).
 
 Both policies play the SAME box streams (same pallets, noise and order) of a
 dataset split; reported per variant: pallets (pallet equivalents), fill,
@@ -19,7 +20,7 @@ from pathlib import Path
 import statistics
 import time
 
-from _common import add_common_args, load_all, load_lookahead
+from _common import add_budget_args, add_common_args, load_all, load_budget, load_lookahead
 
 from pac_highlevel import RulePolicy, run_policy
 from pac_highlevel.lookahead import LookaheadPolicy, lookahead_config_from_dict
@@ -33,7 +34,8 @@ KEEP = ("pallet_equivalents", "fill_per_pallet_used", "time_s", "ng", "safety_is
 
 
 def _parse_variant(text):
-    """NAME=key=value,...: LookaheadConfig fields, ``policy=rule|lookahead``,
+    """NAME=key=value,...: LookaheadConfig fields, ``policy=rule|lookahead``
+    (``rule`` = research baseline, the runtime always uses the search),
     ``placer=dblf|layer`` and ``layer_<LayerConfig field>``."""
     name, _, body = text.partition("=")
     params = {}
@@ -61,14 +63,14 @@ def _variant_parts(params):
 
 
 def _episode(i):
-    make, hl, variants = _JOB
+    make, hl, variants, budget = _JOB
     row = {"episode": i}
     t = time.perf_counter()
     out = run_policy(make(None)(i), RulePolicy(hl))
     row["rule"] = {k: out[k] for k in KEEP} | {"wall_s": round(time.perf_counter() - t, 1)}
     for name, params in variants:
         kind, placer, cfg = _variant_parts(params)
-        policy = RulePolicy(hl) if kind == "rule" else LookaheadPolicy(hl, replace(_BASE_LA, **cfg))
+        policy = RulePolicy(hl) if kind == "rule" else LookaheadPolicy(hl, replace(_BASE_LA, **cfg), budget=budget)
         t = time.perf_counter()
         out = run_policy(make(placer)(i), policy)
         row[name] = {k: out[k] for k in KEEP} | {"wall_s": round(time.perf_counter() - t, 1)}
@@ -129,6 +131,7 @@ def summarize(rows, name):
 def main():
     parser = argparse.ArgumentParser()
     add_common_args(parser)
+    add_budget_args(parser)
     parser.add_argument("--split", default="val")
     parser.add_argument("--passes", type=int, default=1)
     parser.add_argument("--limit", type=int, default=0, help="first N episodes only")
@@ -150,7 +153,7 @@ def main():
     def make(placer):
         return world_factory(dataset, specs, cand, vcfg, hl, shuffle_seed=args.seed, placer=placer)
 
-    _JOB = (make, hl, variants)
+    _JOB = (make, hl, variants, load_budget(args))
     rows = []
     with mp.get_context("fork").Pool(args.workers) as pool:
         for row in pool.imap_unordered(_episode, range(n)):

@@ -63,12 +63,26 @@ from pac_runtime import RuntimeCore, ExecutionReport, load_runtime_config
 from pac_runtime.order import load_order
 
 core = RuntimeCore(load_order("order.json", cand_cfg), cand_cfg, hl_cfg, load_runtime_config(...),
-                   RobotFeasibility(...), load_policy("rule", config=hl_cfg))
+                   RobotFeasibility(...), load_policy("lookahead", "config/taehyeon/lookahead.yaml", config=hl_cfg))
 verdict = core.on_observation(raw_obs, base_view=camera.base_view)  # 1 → 2 → 8
+core.on_preview(next_obs)        # 컨베이어 카메라에 보이는 다음 박스들 (N개 탐색 창)
 cmd = core.next_command()        # 3 → 4 → 5 → 6: PLACE_CURRENT / RETRIEVE_BUFFER / BUFFER_CURRENT / PALLET_CLOSE / PARTIAL_REPACK / REJECT_NG / WAIT
 level = core.on_result(cmd, ExecutionReport(measured_pose=top_view_pose))   # 7 → 8
 core.on_conveyor_idle(idle_s)    # 3: MISSING 확정
 ```
+
+로봇이 명령을 실행하는 동안 `CoreBridge`가 다음 명령을 별도 스레드에서 미리 계산합니다(`RuntimeCore.forecast`: 계획한 위치에 놓였고 컨베이어에 보이던 다음 박스가 왔다고 가정). 결과가 오면 실제 상태가 예상과 같은지(놓인 위치 L0 범위, 무게 검증 범위, 보이는 박스) 보고, 같으면 고른 자리를 실제 상태로 Hard Mask·6단계 검사만 다시 해서 바로 보냅니다. 다르면 처음부터 다시 계산합니다. `status`의 `planned_ahead` / `replanned`가 사용 횟수입니다.
+
+탐색 시간은 지금 실행 중인 동작에 맞춥니다(`runtime.yaml` → `planning`).
+
+| 상황 | 탐색 시간 |
+|---|---|
+| 놓기 / 버퍼에서 꺼내 놓기 / 버퍼에 두기 / 팔레트 교체 중에 미리 계산 | 예상 동작 시간(6단계 사이클 시간, 버퍼 이동 시간, 팔레트 교체 시간) × 보정값 × `ahead_ratio` 0.8, `min_budget_s` 0.3 ~ `max_budget_s` 10 s |
+| 로봇이 기다리는 중 계산 (첫 박스, 예상과 다른 결과) | `wait_budget_s` 1.5 s |
+
+`ahead_ratio` 0.8의 근거(2026-10-10, Gazebo 셀 동작 시간 모델, 놓기 200회): 보정 후 실제/예상 시간은 0.855~1.30배라, 0.85까지는 로봇이 기다린 경우가 없었고 0.9부터 생겼습니다. 0.75 → 0.85로 올리면 남는 시간이 결정당 0.09 → 0.04 s로 줄어서, 경계와 여유를 두고 0.8로 정했습니다. 실제 로봇 기록이 생기면 다시 맞춥니다.
+
+보정값은 동작 종류별로 "실제 걸린 시간(명령 발행 → 결과) ÷ 예상 시간"의 이동평균입니다(`duration_smoothing` 0.3). 로봇이 예상보다 느리면 탐색 시간이 늘고, 빠르면 줄어듭니다. `status`의 `last_budget_s`, `duration_scale`로 볼 수 있습니다. 탐색 시간은 상한입니다(시간 안에 끝나면 바로 결과를 냅니다).
 
 주문 목록 형식은 `pac_runtime/order.py`, 예시는 `config/taehyeon/example_order.json`(생성기 시나리오 1개)입니다.
 

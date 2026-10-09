@@ -63,12 +63,27 @@ class VerifyConfig:              # stage 7 post check (top view heightmap)
 
 
 @dataclass(frozen=True)
+class PlanningConfig:            # stage 4/5 search time per decision (look-ahead)
+    # Planned during the robot motion: budget = ahead_ratio x expected duration of
+    # the action being executed (stage-6 cycle time, buffer travel, pallet change),
+    # scaled by the measured / expected duration of that action type so far.
+    ahead_ratio: float = 0.8
+    max_budget_s: float = 10.0
+    min_budget_s: float = 0.3
+    # Planned while the robot waits (first box, forecast did not match the result).
+    wait_budget_s: float = 1.5
+    # Weight of the newest measured / expected duration in the running correction.
+    duration_smoothing: float = 0.3
+
+
+@dataclass(frozen=True)
 class RuntimeConfig:
     perception: PerceptionConfig = field(default_factory=PerceptionConfig)
     validator: ValidatorConfig = field(default_factory=ValidatorConfig)
     supervisor: SupervisorConfig = field(default_factory=SupervisorConfig)
     execution: ExecutionConfig = field(default_factory=ExecutionConfig)
     verify: VerifyConfig = field(default_factory=VerifyConfig)
+    planning: PlanningConfig = field(default_factory=PlanningConfig)
     robot_checks_per_option: int = 12         # stage 6 tries the first N ranked candidates
     seed: int = 0
 
@@ -99,6 +114,11 @@ def config_from_dict(data):
         raise ValueError("execution.grip_fail_probability must be a probability")
     if cfg.robot_checks_per_option < 1:
         raise ValueError("robot_checks_per_option must be >= 1")
+    pl = cfg.planning
+    if not 0.0 < pl.ahead_ratio <= 1.0 or not 0.0 < pl.duration_smoothing <= 1.0:
+        raise ValueError("planning.ahead_ratio and planning.duration_smoothing must be in (0, 1]")
+    if not 0.0 < pl.min_budget_s <= pl.max_budget_s or pl.wait_budget_s <= 0.0:
+        raise ValueError("planning budgets must be positive and min_budget_s <= max_budget_s")
     return cfg
 
 

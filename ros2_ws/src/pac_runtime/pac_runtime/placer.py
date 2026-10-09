@@ -1,7 +1,9 @@
 """Stages 5 + 6 together: the low-level choice only returns candidates the
 robot can execute ("실패 시 다음 후보").
 
-Ranking: DBLF (default) or donghan's planner (``pac_planning``). The first
+Ranking: the flat-layer / side-contact score (``layer_ranker``, the
+runtime default, same rule as the look-ahead search), DBLF, or donghan's
+planner (``pac_planning``). The first
 ``max_checks`` ranked candidates go through stage 6; when none passes, the
 option counts as infeasible for stage 4 (its action is masked).
 """
@@ -43,6 +45,19 @@ class RobotAwarePlacer:
         elif rejected:
             self.stats["fell_back"] += 1
         return chosen
+
+
+def layer_ranker(config=None):
+    """Order by the 5-3 flat-layer / side-contact score (``LayerPlacer``)."""
+    from pac_highlevel.placement import LayerPlacer
+
+    placer = LayerPlacer(config)
+
+    def rank(valid, box, state, backend):
+        return [t[-1] for t in sorted(placer.scores(valid, box, state, backend), key=lambda t: t[:5])]
+
+    rank.name = "layer"
+    return rank
 
 
 def donghan_ranker(model_path=None, planner_config=None, seed=7):

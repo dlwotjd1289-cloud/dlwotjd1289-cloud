@@ -259,6 +259,9 @@ class RobotFeasibility:
                 "gripper_yaw_rad": round(yaw, 6),
                 "q_place": [round(float(v), 5) for v in qs[-1]],
                 "q_approach": [round(float(v), 5) for v in qs[0]],
+                # the checked vertical line, approach -> place (path_step_m apart): execute
+                # through these, a two-point joint move does not stay on the vertical
+                "q_path": [[round(float(v), 5) for v in q] for q in qs],
                 "arm_clearance_m": round(clearance, 4), "closest_obstacle": who,
                 "cycle_time_s": round(cycle, 3),
                 "retreat": "same vertical path as the approach",

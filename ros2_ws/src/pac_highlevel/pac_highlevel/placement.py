@@ -14,10 +14,17 @@ or box catalogue:
           + w_level  * share of the ring around the footprint (cells above the
                        box base) whose height is NOT level with the box top
           + w_step   * mean step / h_ref               (step size, capped at h_ref)
-          + w_flush  * (1 - share of the ring that is a pallet edge or level
-                       with the box top)
+          + w_flush  * (1 - share of the ring that is level with the box top)
+          + w_contact* (1 - share of the ring that is a neighbour box side)
           + w_support* (1 - support ratio)
           + w_corner * (x + y) / (X + Y)                (DBLF-like tie-break)
+
+No edge-first rule: a pallet edge is open space in the ring (it gives neither
+flush nor contact credit). The load is kept as one tight block instead, so
+boxes lean on each other and the stretch wrap holds them together: w_contact
+rewards side contact with boxes already placed. The tiny corner tie-break only
+anchors where the block starts; starting it at the pallet centre instead left
+strips too narrow to fill around it (less contact, more pallets).
 
 "Level" uses the same height tolerance as the 5-2 support test (a supporter
 counts only if its top is within that tolerance of the box base), because ANY
@@ -43,6 +50,7 @@ class LayerConfig:
     w_level: float = 0.3
     w_step: float = 0.1
     w_flush: float = 0.05
+    w_contact: float = 0.5
     w_support: float = 0.1
     w_corner: float = 0.01
     level_tol_m: float = 0.0    # 0 = the 5-2 support height tolerance
@@ -67,8 +75,9 @@ def heightmap(pallet, cell):
 
 
 def ring_metrics(grid, x, y, z, dx, dy, top, cell, tol, ref):
-    """(non-level share, mean step / ref, flush share) on the 1-cell ring
-    around a footprint; cells at or below the box base are open space."""
+    """(non-level share, mean step / ref, flush share, contact share) on the
+    1-cell ring around a footprint; cells at or below the box base and the
+    pallet edge are open space (no flush or contact credit)."""
     nx, ny = grid.shape
     i0, j0 = int(round(x / cell)), int(round(y / cell))
     i1, j1 = int(round((x + dx) / cell)), int(round((y + dy) / cell))
@@ -78,16 +87,16 @@ def ring_metrics(grid, x, y, z, dx, dy, top, cell, tol, ref):
         (grid[i0 - 1, j0:j1] if i0 - 1 >= 0 else None, j1 - j0),
         (grid[i1, j0:j1] if i1 < nx else None, j1 - j0),
     )
-    total = flush = 0
+    total = flush = contact = 0
     steps = []
     for line, n in sides:
         total += n
-        if line is None:  # pallet edge
-            flush += n
+        if line is None:  # pallet edge: open space, not a neighbour
             continue
         h = np.asarray(line)
         flush += int(np.count_nonzero(np.abs(h - top) <= tol))
         above = h[h > z + tol]
+        contact += int(above.size)
         if above.size:
             steps.append(np.abs(above - top))
     if steps:
@@ -96,7 +105,9 @@ def ring_metrics(grid, x, y, z, dx, dy, top, cell, tol, ref):
         step = float(np.minimum(d / ref, 1.0).mean())
     else:
         non_level = step = 0.0
-    return non_level, step, (flush / total if total else 1.0)
+    if not total:
+        return non_level, step, 0.0, 0.0
+    return non_level, step, flush / total, contact / total
 
 
 class LayerPlacer:
@@ -133,11 +144,12 @@ class LayerPlacer:
             p = c.target_pose
             dx, dy, dz = rotated_dims(box.size, p.yaw)
             top = p.z + dz
-            non_level, step, flush = ring_metrics(grid, p.x, p.y, p.z, dx, dy, top, cfg.cell_m, tol, ref)
+            non_level, step, flush, contact = ring_metrics(grid, p.x, p.y, p.z, dx, dy, top, cfg.cell_m, tol, ref)
             verdict = backend.validate_constraints(box, c, state)
             support = float(verdict.details.get("metrics", {}).get("support_ratio", 1.0))
             score = (cfg.w_z * p.z / H + cfg.w_level * non_level + cfg.w_step * step
-                     + cfg.w_flush * (1.0 - flush) + cfg.w_support * (1.0 - support)
+                     + cfg.w_flush * (1.0 - flush) + cfg.w_contact * (1.0 - contact)
+                     + cfg.w_support * (1.0 - support)
                      + cfg.w_corner * (p.x + p.y) / (X + Y))
             out.append((score, round(p.z, 6), round(p.y, 6), round(p.x, 6), c.candidate_id, c))
         return out

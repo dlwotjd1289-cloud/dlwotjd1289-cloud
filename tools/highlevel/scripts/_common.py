@@ -40,6 +40,25 @@ def add_common_args(parser):
         parser.add_argument("--" + key.replace("_", "-"), type=Path, default=path)
 
 
+def add_budget_args(parser):
+    """Search time per decision: the ROS runtime's rule by default."""
+    parser.add_argument("--planning-config", type=Path, default=REPO / "config/taehyeon/runtime.yaml",
+                        help="runtime.yaml whose planning block sets the search time (as in the ROS runtime)")
+    parser.add_argument("--fixed-budget", action="store_true",
+                        help="use the fixed budget of lookahead.yaml / environment.yaml instead")
+
+
+def load_budget(args):
+    """``ActionBudget`` from ``runtime.yaml`` -> ``planning`` (None with --fixed-budget)."""
+    if args.fixed_budget:
+        return None
+    team_paths.add_optional("pac_runtime")
+    from pac_highlevel import ActionBudget
+    from pac_runtime import load_runtime_config
+
+    return ActionBudget.from_planning(load_runtime_config(args.planning_config).planning)
+
+
 def load_all(args):
     dataset_dir = args.dataset
     if args.run_generator:

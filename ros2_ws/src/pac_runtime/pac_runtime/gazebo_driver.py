@@ -14,6 +14,9 @@ pac2026-ahead workcell (``hdr50_workcell.launch.py``).
         PARTIAL_REPACK: moved boxes are re-spawned at their new poses
     this driver --/pac/execution_result--> runtime_node (measured pose = commanded
         pose + optional noise), then the next box arrives
+    conveyor camera --/pac/conveyor_preview--> runtime_node: the next
+        ``visible_boxes`` boxes after the current one (look-ahead window), sent
+        right before each /pac/observation
 
 ``GazeboDriverCore`` holds the logic (unit-tested without ROS); ``main``
 is the rclpy node. Joint values come from stage 6 (``cmd["robot"]``) and
@@ -86,13 +89,15 @@ class Actions:
     spawn: list = field(default_factory=list)        # [(name, sdf, (x, y, z, yaw))]
     remove: list = field(default_factory=list)       # [model name]
     result: dict | None = None                       # -> /pac/execution_result (after the motion)
+    preview: dict | None = None                      # -> /pac/conveyor_preview (before the observation)
     observation: dict | None = None                  # -> /pac/observation (after the result)
     idle: dict | None = None                         # -> /pac/conveyor_idle
     duration_s: float = 0.0
 
 
 class GazeboDriverCore:
-    def __init__(self, boxes, robot, cell=None, speed_scale=0.3, settle_s=1.0, place_noise_m=0.0, seed=0):
+    def __init__(self, boxes, robot, cell=None, speed_scale=0.3, settle_s=1.0, place_noise_m=0.0, seed=0,
+                 visible_boxes=5):
         self.boxes = list(boxes)
         self.by_id = {b["box_id"]: b for b in self.boxes}
         self.robot = robot
@@ -102,23 +107,34 @@ class GazeboDriverCore:
         self.noise = place_noise_m
         self.rng = random.Random(seed)
         self.next_index = 0
+        self.visible_boxes = int(visible_boxes)
         self.q = HOME.copy()
         self.on_pallet = []
         self.poses = {}
 
     # -- conveyor -------------------------------------------------------
+    @staticmethod
+    def _message(b):
+        return {"box_id": b["box_id"], "label_sku": b["sku"], "weight_kg": b["weight_kg"], "size_m": b["size_m"]}
+
     def _observation(self):
         if self.next_index >= len(self.boxes):
             return None
         b = self.boxes[self.next_index]
         self.next_index += 1
-        return {"box_id": b["box_id"], "label_sku": b["sku"], "weight_kg": b["weight_kg"], "size_m": b["size_m"]}
+        return self._message(b)
+
+    def preview(self):
+        """Boxes behind the one at the pick point (what the camera sees)."""
+        ahead = self.boxes[self.next_index: self.next_index + self.visible_boxes]
+        return {"boxes": [self._message(b) for b in ahead]}
 
     def first_observation(self):
         return self._observation()
 
     def _after_conveyor_box_left(self, actions):
         actions.observation = self._observation()
+        actions.preview = self.preview()
         if actions.observation is None:
             actions.idle = {"idle_s": 60.0}
 
@@ -138,9 +154,15 @@ class GazeboDriverCore:
             t = self._segment(points, up, t)
             t = self._segment(points, down, t)
             t = self._segment(points, up, t)
-        t = self._segment(points, robot_details["q_approach"], t)
-        t = self._segment(points, robot_details["q_place"], t)
-        t = self._segment(points, robot_details["q_approach"], t)
+        # down and up along the vertical line stage 6 checked: between the
+        # approach and place poses a plain joint move swings the gripper
+        # sideways into the neighbours (gaps are only a few mm)
+        path = robot_details.get("q_path") or [robot_details["q_approach"], robot_details["q_place"]]
+        t = self._segment(points, path[0], t)
+        for q in path[1:]:
+            t = self._segment(points, q, t, min_s=0.2)
+        for q in path[-2::-1]:
+            t = self._segment(points, q, t, min_s=0.2)
         return points, t
 
     def _measured(self, corner):
@@ -209,7 +231,8 @@ def main(args=None):  # pragma: no cover - needs ROS 2 + Gazebo
             p = {n: self.declare_parameter(n, d).value for n, d in (
                 ("order_file", ""), ("robot_config", ""), ("world", "ahead_workcell_v2"),
                 ("trajectory_topic", "/joint_trajectory_controller/joint_trajectory"),
-                ("speed_scale", 0.3), ("place_noise_m", 0.0), ("seed", 0), ("start_delay_s", 3.0))}
+                ("speed_scale", 0.3), ("place_noise_m", 0.0), ("seed", 0), ("start_delay_s", 3.0),
+                ("visible_boxes", 5))}
             order = json.loads(open(p["order_file"], encoding="utf-8").read())
             pallet = order["pallet"]["size_m"]
             self.world = p["world"]
@@ -217,11 +240,13 @@ def main(args=None):  # pragma: no cover - needs ROS 2 + Gazebo
                 boxes_from_order(order, int(p["seed"])),
                 RobotFeasibility(load_robot_check_config(p["robot_config"])),
                 GazeboCell(pallet_size_xy=(pallet[0], pallet[1]), world=self.world),
-                speed_scale=float(p["speed_scale"]), place_noise_m=float(p["place_noise_m"]), seed=int(p["seed"]))
+                speed_scale=float(p["speed_scale"]), place_noise_m=float(p["place_noise_m"]), seed=int(p["seed"]),
+                visible_boxes=int(p["visible_boxes"]))
             self.traj_pub = self.create_publisher(JointTrajectory, p["trajectory_topic"], 10)
             self.obs_pub = self.create_publisher(String, "/pac/observation", 10)
             self.res_pub = self.create_publisher(String, "/pac/execution_result", 10)
             self.idle_pub = self.create_publisher(String, "/pac/conveyor_idle", 10)
+            self.preview_pub = self.create_publisher(String, "/pac/conveyor_preview", 10)
             self.create_subscription(String, "/pac/command", self._command, 10)
             self.busy = False
             self.start = self.create_timer(float(p["start_delay_s"]), self._first)
@@ -232,6 +257,7 @@ def main(args=None):  # pragma: no cover - needs ROS 2 + Gazebo
         def _first(self):
             self.start.cancel()
             obs = self.core.first_observation()
+            self._send(self.preview_pub, self.core.preview())
             if obs:
                 self.get_logger().info(f"box {obs['box_id']} arrives")
                 self._send(self.obs_pub, obs)
@@ -273,6 +299,8 @@ def main(args=None):  # pragma: no cover - needs ROS 2 + Gazebo
                     self._spawn(name, sdf, pose)
                 if acts.result is not None:
                     self._send(self.res_pub, acts.result)
+                if acts.preview is not None:
+                    self._send(self.preview_pub, acts.preview)
                 if acts.observation is not None:
                     self.get_logger().info(f"box {acts.observation['box_id']} arrives")
                     self._send(self.obs_pub, acts.observation)
