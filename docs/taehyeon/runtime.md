@@ -63,8 +63,9 @@ from pac_runtime import RuntimeCore, ExecutionReport, load_runtime_config
 from pac_runtime.order import load_order
 
 core = RuntimeCore(load_order("order.json", cand_cfg), cand_cfg, hl_cfg, load_runtime_config(...),
-                   RobotFeasibility(...), load_policy("rule", config=hl_cfg))
+                   RobotFeasibility(...), load_policy("lookahead", "config/taehyeon/lookahead.yaml", config=hl_cfg))
 verdict = core.on_observation(raw_obs, base_view=camera.base_view)  # 1 → 2 → 8
+core.on_preview(next_obs)        # 컨베이어 카메라에 보이는 다음 박스들 (N개 탐색 창)
 cmd = core.next_command()        # 3 → 4 → 5 → 6: PLACE_CURRENT / RETRIEVE_BUFFER / BUFFER_CURRENT / PALLET_CLOSE / PARTIAL_REPACK / REJECT_NG / WAIT
 level = core.on_result(cmd, ExecutionReport(measured_pose=top_view_pose))   # 7 → 8
 core.on_conveyor_idle(idle_s)    # 3: MISSING 확정

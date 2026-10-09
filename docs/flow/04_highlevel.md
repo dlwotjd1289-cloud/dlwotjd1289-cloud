@@ -15,4 +15,4 @@
 
 - **테스트**: `tests/taehyeon/test_th_highlevel.py`, `test_th_highlevel_runtime.py`, `tests/donghan/test_highlevel_handoff.py`, `test_team_order_visibility.py`
 - **문서**: `docs/taehyeon/highlevel.md`
-- **현황**: 기본값은 Rule입니다. PPO는 Rule과 유의차가 없습니다(감사 보고서 `docs/jaesung/audit_20261009/AUDIT_REPORT.md`).
+- **현황**: 런타임 결정은 항상 N개 탐색(`lookahead.py` `LookaheadPolicy`)입니다. 컨베이어 카메라에 보이는 다음 박스(`/pac/conveyor_preview`)까지 시뮬레이션해서 고릅니다. Rule은 탐색 안에서 쓰는 규칙이자 비교 기준이고, PPO는 Rule과 유의차가 없어 연구용으로만 남깁니다(감사 보고서 `docs/jaesung/audit_20261009/AUDIT_REPORT.md`).

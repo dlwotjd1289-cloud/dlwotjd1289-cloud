@@ -3,6 +3,7 @@ or a ROS 2 node drives.
 
     core = RuntimeCore(cell_info, cand_config, hl_config, rt_config, robot, policy)
     verdict = core.on_observation(raw_obs, base_view=camera.base_view)   # 1 -> 2 -> 8
+    core.on_preview(next_obs)                    # boxes the conveyor camera sees after the current one
     cmd = core.next_command()                                           # 3 -> 4 -> 5 -> 6
     ... robot executes cmd ...
     level = core.on_result(cmd, ExecutionReport(...))                   # 7 -> 8
@@ -19,7 +20,8 @@ from pac_candidates.geometry import rotated_dims
 from pac_highlevel import ActionType, HighLevelDecider
 
 from .executor import ExecutorSim, TrueBox
-from .placer import RobotAwarePlacer
+from .perception import to_box_state
+from .placer import RobotAwarePlacer, layer_ranker
 from .state_manager import StateManager
 from .state_validator import StateValidator
 from .supervisor import Supervisor
@@ -62,7 +64,7 @@ class RuntimeCore:
         self.sm = StateManager(cell.pallet_size, cell.catalog, cell.expected_by_sku,
                                pallet_max_weight_kg=cell.pallet_max_weight_kg, pallet_prefix=cell.pallet_prefix,
                                buffer_slots=hl_config.buffer.slots)
-        self.placer = RobotAwarePlacer(robot, rt_config.robot_checks_per_option, ranker)
+        self.placer = RobotAwarePlacer(robot, rt_config.robot_checks_per_option, ranker or layer_ranker())
         self.decider = HighLevelDecider(self.sm.context(), cand_config, hl_config, policy=policy,
                                         placer=self.placer)
         self._checker = ExecutorSim(rt_config.execution, rt_config.verify, None)  # geometry checks only
@@ -72,6 +74,7 @@ class RuntimeCore:
         self.repacks_for_current = 0
         self.closed = []
         self.last_check = {}
+        self.preview = ()       # look-ahead window: boxes seen on the conveyor after the current one
 
     # ---------------------------------------------------------------- 1, 2
     def on_observation(self, obs, base_view=None):
@@ -95,6 +98,15 @@ class RuntimeCore:
         self.repacks_for_current = 0
         return verdict
 
+    def on_preview(self, observations):
+        """Boxes the conveyor camera sees after the current one, in arrival
+        order. Search input only: the state is not changed (they enter the
+        State Manager through ``on_observation`` when they reach the pick
+        point). Unlabelled or unknown boxes cannot be planned and are left out."""
+        catalog = self.cell.catalog
+        self.preview = tuple(to_box_state(o, catalog[o.label_sku], size=catalog[o.label_sku].size)
+                             for o in observations if o.label_sku in catalog)
+
     # ---------------------------------------------------------------- 3
     def on_conveyor_idle(self, idle_s):
         """Stage 3: confirm MISSING once the conveyor has been idle long enough."""
@@ -113,7 +125,8 @@ class RuntimeCore:
         self.decider.context = sm.context()
         state = sm.snapshot()
         d = self.decider.decide(state, current_box_id=sm.current_id(), buffer_slots=sm.buffer_slots(),
-                                buffer_age=sm.buffer_age(), repack_attempts=self.repacks_for_current)
+                                buffer_age=sm.buffer_age(), repack_attempts=self.repacks_for_current,
+                                visible_boxes=self.preview)
         sm.decisions += 1
         if d.action is None:
             return Command("WAIT", state.state_version, reason=d.reason)

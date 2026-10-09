@@ -296,7 +296,8 @@ def test_runtime_ranker_selection_and_status_provenance(tmp_path):
     from pac_runtime.order import cell_from_order
     from pac_runtime.ros_node import CoreBridge, make_runtime_ranker
 
-    assert make_runtime_ranker("dblf") is None
+    assert make_runtime_ranker("dblf").name == "dblf"
+    assert make_runtime_ranker().name == "layer"  # runtime default: same rule as the look-ahead search
     with pytest.raises(ValueError, match="unknown runtime ranker"):
         make_runtime_ranker("unvalidated")
 
@@ -401,14 +402,19 @@ def test_gazebo_driver_closes_the_loop_with_the_runtime_bridge():
     hl = replace(HighLevelConfig(), buffer=replace(HighLevelConfig().buffer, slots=2))
     robot = RobotFeasibility(load_robot_check_config(REPO / "config/taehyeon/robot_check_gazebo.yaml"))
     bridge = CoreBridge(RuntimeCore(cell_from_order(order, CandidateConfig()), CandidateConfig(), hl,
-                                    RuntimeConfig(), robot, load_policy("rule", config=hl)))
-    driver = GazeboDriverCore(boxes_from_order(order, seed=1), robot, GazeboCell())
-    queue = [("obs", driver.first_observation())]
+                                    RuntimeConfig(), robot, load_policy("lookahead", config=hl)))
+    driver = GazeboDriverCore(boxes_from_order(order, seed=1), robot, GazeboCell(), visible_boxes=3)
+    first = driver.first_observation()
+    queue = [("preview", driver.preview()), ("obs", first)]
     spawned, removed, actions = {}, set(), Counter()
     for _ in range(200):
         if not queue:
             break
         kind, payload = queue.pop(0)
+        if kind == "preview":
+            bridge.on_preview(json.dumps(payload))
+            assert len(payload["boxes"]) <= 3
+            continue
         if kind == "obs":
             _, cmd = bridge.on_observation(json.dumps(payload))
         elif kind == "idle":
@@ -430,6 +436,8 @@ def test_gazebo_driver_closes_the_loop_with_the_runtime_bridge():
             assert 0.75 <= x <= 1.95 and -1.5 <= y <= -0.5 and z > 0.15
             spawned[name] = (x, y, z)
         queue.append(("res", acts.result))
+        if acts.preview is not None:
+            queue.append(("preview", acts.preview))
         if acts.observation is not None:
             queue.append(("obs", acts.observation))
         if acts.idle is not None:
@@ -439,6 +447,34 @@ def test_gazebo_driver_closes_the_loop_with_the_runtime_bridge():
     assert placed_total + len(core.inspection) == 11 and not core.has_work()
     assert actions["PLACE_CURRENT"] + actions["RETRIEVE_BUFFER"] == placed_total
     assert set(spawned) == {p.box_id for p in core.sm.placed}
+    assert core.decider.policy.name == "lookahead" and core.decider.policy.choose.stats.searched > 0
+
+
+def test_runtime_always_decides_with_the_lookahead_over_the_conveyor_preview():
+    import json
+
+    from pac_highlevel import HighLevelDecider
+    from pac_runtime import RuntimeCore
+    from pac_runtime.order import cell_from_order
+    from pac_runtime.ros_node import CoreBridge
+
+    assert HighLevelDecider(None).policy.name == "lookahead"
+    order = {"pallet": {"size_m": [1.2, 1.0, 1.35]},
+             "skus": {"K": {"size_m": [0.4, 0.3, 0.2], "weight_kg": [2.0, 6.0], "count": 4}}}
+    hl = replace(HighLevelConfig(), buffer=replace(HighLevelConfig().buffer, slots=2))
+    core = RuntimeCore(cell_from_order(order, CandidateConfig()), CandidateConfig(), hl, RuntimeConfig(),
+                       RobotFeasibility(), load_policy(config=hl))
+    bridge = CoreBridge(core)
+    obs = lambda i, sku="K": {"box_id": i, "label_sku": sku, "weight_kg": 4.0, "size_m": [0.4, 0.3, 0.2]}  # noqa: E731
+    # an unreadable label cannot be planned: left out of the window
+    bridge.on_preview(json.dumps({"boxes": [obs("B"), obs("C", None), obs("D")]}))
+    assert [b.box_id for b in core.preview] == ["B", "D"]
+    assert bridge.status()["policy"] == "lookahead" and bridge.status()["visible_boxes"] == 2
+    version = core.sm.version
+    _, cmd = bridge.on_observation(json.dumps(obs("A")))
+    assert cmd["action"] in ("PLACE_CURRENT", "BUFFER_CURRENT") and cmd["decided_by"] == "policy:lookahead"
+    assert core.decider.policy.choose.stats.searched == 1  # window B, D searched
+    assert core.sm.version == version + 1                  # the preview itself changes no state
 
 
 def _k_bridge(count):

@@ -7,14 +7,18 @@ Topics (all JSON):
                               "measured_pose": [x, y, z, yaw] (pallet frame, min corner),
                               "issues": [..] | null, "repack_poses": {box_id: [x, y, z, yaw]}}
   in  /pac/conveyor_idle     {"idle_s"}
+  in  /pac/conveyor_preview  {"boxes": [observation, ...]}: the boxes the conveyor camera sees
+                              after the current one, in arrival order (look-ahead window;
+                              each item has the /pac/observation fields)
   out /pac/command           ``command_to_dict`` (action, box, slot, target pose as min corner
                               and as box centre, stage-6 joints / gripper yaw / cycle time)
   out /pac/status            state version, pallet, mode, counts
 
 Parameters: ``order_file`` (see ``order.py``), ``candidates_config``,
-``highlevel_config``, ``runtime_config``, ``robot_config``, ``policy``
-(rule | numpy | sb3), ``policy_file``, ``ranker`` (dblf | donghan),
-``ranker_model_path``, ``ranker_config`` and ``ranker_seed``.
+``highlevel_config``, ``lookahead_config``, ``runtime_config``,
+``robot_config``, ``ranker`` (layer | dblf | donghan), ``ranker_model_path``,
+``ranker_config`` and ``ranker_seed``. Stage 4 always decides with the
+look-ahead search over the boxes on ``/pac/conveyor_preview``.
 
 Run (after ``colcon build``)::
 
@@ -74,25 +78,35 @@ def report_from_dict(d):
                            repack_poses={k: pose(v) for k, v in (d.get("repack_poses") or {}).items()})
 
 
-def make_runtime_ranker(name="dblf", model_path="", seed=7, config_path=""):
-    """Build the optional stage-5 ranker without changing the PPO contract.
+def make_runtime_ranker(name="layer", model_path="", seed=7, config_path=""):
+    """Build the stage-5 ranker without changing the PPO contract.
 
-    ``dblf`` keeps the existing runtime behaviour.  ``donghan`` only replaces
+    ``layer`` (default) orders by the flat-layer / side-contact score, the
+    same rule the look-ahead search uses. ``dblf`` is the old
+    deepest-bottom-left order.  ``donghan`` only replaces
     the low-level ordering inside :class:`RobotAwarePlacer`; stage 4 still uses
     its declared proxy + DBLF value-provider contract.  An empty model path is
     intentional: no learned model is assumed compatible with the live EMS
     backend until its saved backend fingerprint has been checked.
     """
     selected = str(name).strip().lower()
-    if selected in ("", "dblf"):
-        return None
+    if selected in ("", "layer"):
+        from .placer import layer_ranker
+
+        return layer_ranker()
+    if selected == "dblf":
+        from .placer import dblf_order
+
+        rank = lambda valid, box, state, backend: dblf_order(valid)  # noqa: E731
+        rank.name = "dblf"
+        return rank
     if selected == "donghan":
         from .placer import donghan_ranker
         from pac_planning.config import load_config
 
         config = load_config(config_path) if config_path else None
         return donghan_ranker(model_path or None, planner_config=config, seed=int(seed))
-    raise ValueError(f"unknown runtime ranker: {name!r} (expected dblf or donghan)")
+    raise ValueError(f"unknown runtime ranker: {name!r} (expected layer, dblf or donghan)")
 
 
 class CoreBridge:
@@ -128,6 +142,12 @@ class CoreBridge:
         verdict = self.core.on_observation(obs)  # None: duplicate
         out = self._next()
         return verdict, out
+
+    def on_preview(self, text):
+        """Look-ahead window update. It is search input only (no state
+        change), so it is applied at once, even with a command outstanding."""
+        boxes = json.loads(text).get("boxes", [])
+        self.core.on_preview([observation_from_dict(b) for b in boxes])
 
     def on_result(self, text):
         d = json.loads(text)
@@ -167,7 +187,8 @@ class CoreBridge:
         out = {"state_version": sm.version, "pallet_id": sm.pallet_id, "placed": len(sm.placed),
                "buffer": sm.buffer_slots(), "mode": self.core.supervisor.mode.value,
                "inspection": len(self.core.inspection), "counts": dict(self.core.counts),
-               "ranker": getattr(ranker, "name", "dblf") if ranker is not None else "dblf",
+               "policy": "lookahead", "visible_boxes": len(self.core.preview),
+               "ranker": getattr(ranker, "name", "custom"),
                "deferred": len(self.deferred)}
         if ranker is not None and hasattr(ranker, "provenance"):
             out["ranker_provenance"] = ranker.provenance()
@@ -192,11 +213,11 @@ def main(args=None):  # pragma: no cover - needs ROS 2
             super().__init__("pac_runtime")
             p = {n: self.declare_parameter(n, d).value for n, d in (
                 ("order_file", ""), ("candidates_config", ""), ("highlevel_config", ""),
-                ("runtime_config", ""), ("robot_config", ""), ("policy", "rule"), ("policy_file", ""),
-                ("ranker", "dblf"), ("ranker_model_path", ""), ("ranker_config", ""), ("ranker_seed", 7))}
+                ("lookahead_config", ""), ("runtime_config", ""), ("robot_config", ""),
+                ("ranker", "layer"), ("ranker_model_path", ""), ("ranker_config", ""), ("ranker_seed", 7))}
             cand = load_candidate_config(p["candidates_config"])
             hl = load_highlevel_config(p["highlevel_config"])
-            policy = load_policy(p["policy"], p["policy_file"] or None, config=hl)
+            policy = load_policy("lookahead", p["lookahead_config"] or None, config=hl)
             ranker = make_runtime_ranker(p["ranker"], p["ranker_model_path"], p["ranker_seed"], p["ranker_config"])
             core = RuntimeCore(load_order(p["order_file"], cand), cand, hl, load_runtime_config(p["runtime_config"]),
                                RobotFeasibility(load_robot_check_config(p["robot_config"])), policy, ranker=ranker)
@@ -206,6 +227,7 @@ def main(args=None):  # pragma: no cover - needs ROS 2
             self.create_subscription(String, "/pac/observation", self._obs, 10)
             self.create_subscription(String, "/pac/execution_result", self._result, 10)
             self.create_subscription(String, "/pac/conveyor_idle", self._idle, 10)
+            self.create_subscription(String, "/pac/conveyor_preview", self._preview, 10)
 
         def _publish(self, cmd):
             if cmd is not None:
@@ -223,6 +245,12 @@ def main(args=None):  # pragma: no cover - needs ROS 2
             else:
                 self.get_logger().info("observation -> " + (verdict.kind.value if verdict else "duplicate, ignored"))
             self._publish(cmd)
+
+        def _preview(self, msg):
+            try:
+                self.bridge.on_preview(msg.data)
+            except (ValueError, KeyError, TypeError) as error:
+                self.get_logger().error(f"conveyor_preview rejected: {error}")
 
         def _result(self, msg):
             try:

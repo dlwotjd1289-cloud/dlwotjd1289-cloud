@@ -1,12 +1,10 @@
 """Stage-4 entry point on a real snapshot: ``SystemState`` -> one decision.
 
 ```python
-decider = HighLevelDecider(
-    context,                                   # PlanningContext of this cycle
-    policy=load_policy("numpy", "models/highlevel_ppo.json"),
-)
+decider = HighLevelDecider(context)            # PlanningContext of this cycle
 decision = decider.decide(state, current_box_id="B0123",
-                          buffer_slots={0: "B0101", 2: "B0117"})
+                          buffer_slots={0: "B0101", 2: "B0117"},
+                          visible_boxes=next_boxes)  # BoxStates the conveyor camera sees
 if decision.requires_low_level:                # PLACE_CURRENT / RETRIEVE_BUFFER
     result = planner.plan(decision.box, state)  # stage 5 (donghan) picks the pose
 ```
@@ -22,7 +20,8 @@ Priority (identical to the training world):
 3. some learned action feasible:
    pallet filled >= close.fill_before_buffer and neither the current nor a
    buffered box fits                             -> PALLET_CLOSE (rule)
-   otherwise                                     -> policy picks among the mask
+   otherwise                                     -> look-ahead search over the
+                                                    visible boxes picks among the mask
 4. nothing feasible: PARTIAL_REPACK if a plan exists, else PALLET_CLOSE;
    on an empty pallet the unplaceable boxes go to NG.
 """
@@ -34,6 +33,7 @@ from pac_common import BoxState, BoxStatus
 from .actions import ActionType, HighLevelAction, action_count
 from .config import HighLevelConfig
 from .features import feature_names, observe
+from .lookahead import LookaheadConfig, LookaheadPolicy, load_lookahead_config
 from .repack import plan_repack
 from .rules import GreedyPolicy, RulePolicy
 from .trainer import policy_contract
@@ -83,13 +83,20 @@ class LoadedPolicy:
         self.probs = probs
 
 
-def load_policy(kind="numpy", path=None, *, config=None, candidate_config_name="candidates.yaml"):
-    """``rule`` | ``greedy`` | ``numpy`` (MaskablePPO json) | ``sb3`` (zip).
+def load_policy(kind="lookahead", path=None, *, config=None, candidate_config_name="candidates.yaml"):
+    """``lookahead`` (the runtime policy; ``path`` = lookahead.yaml or a
+    ``LookaheadConfig``) |
+    ``rule`` | ``greedy`` | ``numpy`` (MaskablePPO json) | ``sb3`` (zip).
 
-    Learned policies are checked against the feature layout and the
-    contract (buffer slots, value provider, placer, candidate config).
+    The runtime always decides with the look-ahead search; the other kinds
+    are research baselines for the evaluation tools and tests. Learned
+    policies are checked against the feature layout and the contract
+    (buffer slots, value provider, placer, candidate config).
     """
     config = config or HighLevelConfig()
+    if kind == "lookahead":
+        la = path if isinstance(path, LookaheadConfig) else load_lookahead_config(path)
+        return LoadedPolicy("lookahead", LookaheadPolicy(config, la))
     if kind == "rule":
         return LoadedPolicy("rule", RulePolicy(config))
     if kind == "greedy":
@@ -125,19 +132,23 @@ class HighLevelDecider:
         self.context = context
         self.cand_config = cand_config or CandidateConfig()
         self.config = config or HighLevelConfig()
-        self.policy = policy or load_policy("rule", config=self.config)
+        self.policy = policy or load_policy("lookahead", config=self.config)
         self.value_provider = value_provider
         self.placer = placer
 
     # ------------------------------------------------------------------
-    def snapshot_world(self, state, current_box_id=None, buffer_slots=None, buffer_age=None):
-        """Private world built from a real snapshot (inputs untouched)."""
+    def snapshot_world(self, state, current_box_id=None, buffer_slots=None, buffer_age=None, visible_boxes=()):
+        """Private world built from a real snapshot (inputs untouched).
+        ``visible_boxes``: the boxes after the current one that the conveyor
+        camera sees, in arrival order (the look-ahead window)."""
         tracked = dict(state.inventory.tracked_boxes)
         current_id = self._current_id(state, tracked, current_box_id)
         slots = self._slots(state, tracked, buffer_slots, current_id)
         ctx = self.context
+        known = set(tracked) | {b.box_id for b in state.pallet.boxes}
+        visible = [Arrival(b) for b in visible_boxes if b.box_id not in known]
         world = PalletizingWorld(
-            [],
+            visible,
             state.pallet.size,
             ctx.catalog,
             self.cand_config,
@@ -168,8 +179,9 @@ class HighLevelDecider:
             world.current = Arrival(box, None, current_id in ctx.uncertain_box_ids)
         return world
 
-    def decide(self, state, current_box_id=None, buffer_slots=None, buffer_age=None, repack_attempts=0):
-        world = self.snapshot_world(state, current_box_id, buffer_slots, buffer_age)
+    def decide(self, state, current_box_id=None, buffer_slots=None, buffer_age=None, repack_attempts=0,
+               visible_boxes=()):
+        world = self.snapshot_world(state, current_box_id, buffer_slots, buffer_age, visible_boxes)
         version = state.state_version
         n_actions = action_count(world.slots)
         diag = {

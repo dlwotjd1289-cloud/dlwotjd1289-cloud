@@ -9,6 +9,9 @@ state) -> next box.
 The decisions are made by ``RuntimeCore`` (the same object a real cell or
 the ROS 2 node drives); this module only simulates the plant around it
 (``FieldBox`` truth, ``PerceptionSim``, ``ExecutorSim``, the clock).
+The conveyor camera sees the next ``hl_config.close.visible_boxes`` boxes of
+the stream (environment ``conveyor.visible_boxes``); they are handed to the
+core as the look-ahead window before every decision.
 """
 
 from dataclasses import dataclass, field
@@ -50,6 +53,9 @@ class RuntimeLoop:
         # separate streams: every variant sees the same observations of the
         # same boxes, whatever the decisions and executions in between
         perception = PerceptionSim(cfg.perception, random.Random(f"{cfg.seed}:perception"))
+        preview_cam = PerceptionSim(cfg.perception, random.Random(f"{cfg.seed}:preview"))
+        visible_n = self.hl.close.visible_boxes
+        previews = {}  # box id -> conveyor-camera observation (taken once per box)
         executor = ExecutorSim(cfg.execution, cfg.verify, random.Random(f"{cfg.seed}:execution"))
         core = RuntimeCore(cell, self.cand_config, self.hl, cfg, self.robot, self.policy, self.ranker)
         sm, supervisor = core.sm, core.supervisor
@@ -98,6 +104,9 @@ class RuntimeLoop:
                 if out:
                     log("MISSING", by_sku=dict(out))
             # 4 + 5 + 6
+            ahead = cell.stream[idx: idx + visible_n]
+            core.on_preview([previews.setdefault(fb.truth.box_id, preview_cam.observe(fb, sm.t))
+                             for fb in ahead])
             cmd = core.next_command()
             a = cmd.action
             if a == "WAIT":

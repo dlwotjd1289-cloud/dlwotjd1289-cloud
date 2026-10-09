@@ -1,4 +1,5 @@
-"""Paired comparison: Rule vs look-ahead search over the next N boxes.
+"""Paired evaluation of the look-ahead search (the runtime policy) against
+the Rule baseline (what the search plays after its first action).
 
 Both policies play the SAME box streams (same pallets, noise and order) of a
 dataset split; reported per variant: pallets (pallet equivalents), fill,
@@ -33,7 +34,8 @@ KEEP = ("pallet_equivalents", "fill_per_pallet_used", "time_s", "ng", "safety_is
 
 
 def _parse_variant(text):
-    """NAME=key=value,...: LookaheadConfig fields, ``policy=rule|lookahead``,
+    """NAME=key=value,...: LookaheadConfig fields, ``policy=rule|lookahead``
+    (``rule`` = research baseline, the runtime always uses the search),
     ``placer=dblf|layer`` and ``layer_<LayerConfig field>``."""
     name, _, body = text.partition("=")
     params = {}

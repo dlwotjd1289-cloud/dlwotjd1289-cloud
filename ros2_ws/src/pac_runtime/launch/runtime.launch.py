@@ -2,6 +2,9 @@
 
     ros2 launch pac_runtime runtime.launch.py repo:=/path/to/pac-mission1-shared \
       order_file:=/path/order.json ranker:=donghan
+
+Stage 4 always decides with the look-ahead search (config/taehyeon/lookahead.yaml)
+over the boxes the plant publishes on /pac/conveyor_preview.
 """
 
 from launch import LaunchDescription
@@ -16,10 +19,8 @@ def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument("repo", description="pac-mission1-shared checkout (for config/taehyeon)"),
         DeclareLaunchArgument("order_file", description="order list JSON (see pac_runtime/order.py)"),
-        DeclareLaunchArgument("policy", default_value="rule"),
-        DeclareLaunchArgument("policy_file", default_value=""),
-        DeclareLaunchArgument("ranker", default_value="dblf",
-                              description="low-level ordering: dblf or donghan"),
+        DeclareLaunchArgument("ranker", default_value="layer",
+                              description="low-level ordering: layer, dblf or donghan"),
         DeclareLaunchArgument("ranker_model_path", default_value="",
                               description="optional validated donghan model; empty uses deterministic heuristic"),
         DeclareLaunchArgument("ranker_config", default_value="",
@@ -33,10 +34,9 @@ def generate_launch_description():
                 "order_file": LaunchConfiguration("order_file"),
                 "candidates_config": cfg("candidates.yaml"),
                 "highlevel_config": cfg("highlevel.yaml"),
+                "lookahead_config": cfg("lookahead.yaml"),
                 "runtime_config": cfg("runtime.yaml"),
                 "robot_config": cfg("robot_check.yaml"),
-                "policy": LaunchConfiguration("policy"),
-                "policy_file": LaunchConfiguration("policy_file"),
                 "ranker": LaunchConfiguration("ranker"),
                 "ranker_model_path": LaunchConfiguration("ranker_model_path"),
                 "ranker_config": LaunchConfiguration("ranker_config"),

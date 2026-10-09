@@ -340,7 +340,13 @@ class LookaheadPolicy:
         rule_action = self.rule(world)
         self.stats.decisions += 1
         mask = world.action_mask()
-        if mask.sum() <= 1:
+        end = world.next_arrival + self.cfg.horizon
+        if window_end is not None:
+            end = min(end, window_end)
+        # nothing visible after the current box: the window ends right after
+        # the first action, so its score cannot see what a buffered box costs
+        # (it would prefer parking a placeable box); there is nothing to search
+        if mask.sum() <= 1 or min(end, len(world.arrivals)) <= world.next_arrival:
             self.stats.seconds.append(time.perf_counter() - start)
             return rule_action
         self.stats.searched += 1
