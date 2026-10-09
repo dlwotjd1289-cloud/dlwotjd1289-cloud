@@ -1,18 +1,20 @@
 schema_version: 1
 # Stage 6 robot feasibility (taehyeon). Kinematics: official hdr_description URDF.
-# Values marked ASSUMPTION must be replaced when the real cell / gripper is known.
+# Cell = the team workcell (config/workcell.yaml, Gazebo V4.2-V4.5); the values must
+# agree with it (tests/test_config_consistency.py). ASSUMPTION = replace when the real
+# cell / gripper is known.
 robot_check:
   robot_model: hdr50_22
   rated_payload_kg: 50.0          # HDR50-22 (HH050) nominal payload
-  gripper:
-    footprint_m: [0.34, 0.26]     # pac2026-ahead pac_eoat vacuum_gripper_v1 tool base
-    tcp_offset_m: 0.22            # flange -> suction face (same xacro)
-    mass_kg: 15.0                 # ASSUMPTION
+  gripper:                        # V4.4 suction cup (pac_bringup hdr50_pedestal_gripper.urdf.xacro)
+    footprint_m: [0.08, 0.08]     # cup diameter 0.08 m
+    tcp_offset_m: 0.06            # flange -> suction face
+    mass_kg: 15.0                 # ASSUMPTION (EOAT not selected; conservative)
     clearance_m: 0.01
   cell:
-    base_from_pallet_center: [0.0, -1.15, 0.35, 0.0]   # ASSUMPTION (reach sweep, robot_check.md)
+    base_from_pallet_center: [0.0, -1.20, 0.25, 0.0]   # base_link (0, 0, 0.40) - deck centre (0, 1.20, 0.15)
     deck_height_m: 0.15
-    pick_point_base_m: [1.3, 0.0, 0.4]                 # ASSUMPTION (conveyor surface)
+    pick_point_base_m: [-1.08, 1.20, 0.495]            # pick stop (-1.08, 1.20, 0.895) - base_link
   motion:
     approach_clearance_m: 0.30
     path_step_m: 0.05

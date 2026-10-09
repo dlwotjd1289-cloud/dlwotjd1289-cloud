@@ -386,62 +386,6 @@ def test_missing_confirmed_when_last_box_goes_to_inspection():
     assert out["placed"] == 3 and out["missing"] == {"K": 2}
 
 
-def test_gazebo_driver_closes_the_loop_with_the_runtime_bridge():
-    """runtime CoreBridge <-> GazeboDriverCore exchanging the JSON messages of the topics."""
-    import json
-
-    from pac_robot_check import load_robot_check_config
-    from pac_runtime import RuntimeCore
-    from pac_runtime.gazebo_driver import GazeboCell, GazeboDriverCore, boxes_from_order
-    from pac_runtime.order import cell_from_order
-    from pac_runtime.ros_node import CoreBridge
-
-    order = {"pallet": {"size_m": [1.2, 1.0, 1.35]},
-             "skus": {"K": {"size_m": [0.4, 0.3, 0.2], "weight_kg": [2.0, 6.0], "count": 8},
-                      "H": {"size_m": [0.6, 0.4, 0.3], "weight_kg": [12.0, 20.0], "count": 3}}}
-    hl = replace(HighLevelConfig(), buffer=replace(HighLevelConfig().buffer, slots=2))
-    robot = RobotFeasibility(load_robot_check_config(REPO / "config/taehyeon/robot_check_gazebo.yaml"))
-    bridge = CoreBridge(RuntimeCore(cell_from_order(order, CandidateConfig()), CandidateConfig(), hl,
-                                    RuntimeConfig(), robot, load_policy("rule", config=hl)))
-    driver = GazeboDriverCore(boxes_from_order(order, seed=1), robot, GazeboCell())
-    queue = [("obs", driver.first_observation())]
-    spawned, removed, actions = {}, set(), Counter()
-    for _ in range(200):
-        if not queue:
-            break
-        kind, payload = queue.pop(0)
-        if kind == "obs":
-            _, cmd = bridge.on_observation(json.dumps(payload))
-        elif kind == "idle":
-            _, cmd = bridge.on_idle(json.dumps(payload))
-        else:
-            _, cmd = bridge.on_result(json.dumps(payload))
-        if cmd is None:
-            continue
-        actions[cmd["action"]] += 1
-        acts = driver.on_command(cmd)
-        times = [t for _, t in acts.trajectory]
-        assert times == sorted(times) and all(len(q) == 6 for q, _ in acts.trajectory)
-        for name in acts.remove:
-            removed.add(name)
-            spawned.pop(name, None)
-        for name, sdf, (x, y, z, yaw) in acts.spawn:
-            assert "<mass>" in sdf
-            # inside the Gazebo pallet (centre 1.35, -1.0; 1.2 x 1.0; deck top 0.15)
-            assert 0.75 <= x <= 1.95 and -1.5 <= y <= -0.5 and z > 0.15
-            spawned[name] = (x, y, z)
-        queue.append(("res", acts.result))
-        if acts.observation is not None:
-            queue.append(("obs", acts.observation))
-        if acts.idle is not None:
-            queue.append(("idle", acts.idle))
-    core = bridge.core
-    placed_total = len(core.sm.placed) + sum(len(b) for _, b in core.closed)
-    assert placed_total + len(core.inspection) == 11 and not core.has_work()
-    assert actions["PLACE_CURRENT"] + actions["RETRIEVE_BUFFER"] == placed_total
-    assert set(spawned) == {p.box_id for p in core.sm.placed}
-
-
 def _k_bridge(count):
     from pac_runtime import RuntimeCore
     from pac_runtime.order import cell_from_order

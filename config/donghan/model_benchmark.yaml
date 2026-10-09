@@ -17,7 +17,7 @@ training:
   patience: 30
   learning_rate: 0.001
 evaluation:
-  robot_config: robot_check_gazebo.yaml
+  robot_config: robot_check.yaml
   episode_seeds: [101, 102, 103]
   variants: [clean, nominal, noisy3mm]
 planning:

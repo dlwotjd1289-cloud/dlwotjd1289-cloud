@@ -1,7 +1,6 @@
-"""Real-time demo connectors (tools/realtime): timeline helpers, live
-simulator bridge and Gazebo replay core, without ROS / PyBullet / network."""
+"""Real-time demo connectors (tools/realtime): timeline helpers and the live
+simulator bridge, without ROS / PyBullet / network."""
 
-import copy
 import json
 import math
 from pathlib import Path
@@ -13,7 +12,6 @@ REPO = Path(__file__).resolve().parents[2]
 RT = REPO / "tools" / "realtime"
 sys.path.insert(0, str(RT))
 
-import gazebo_replay as gzr  # noqa: E402
 import live_sim_bridge as lsb  # noqa: E402
 import rt_timeline as tl  # noqa: E402
 
@@ -209,92 +207,7 @@ def test_bridge_dry_run_cli(capsys):
     assert out.count("POST /api/robot_place") == 3 and "[  3/3]" in out
 
 
-# ---------------------------------------------------------------------- Gazebo replay core
-@pytest.fixture(scope="module")
-def team():
-    try:
-        gd = gzr.load_team()
-        config = gzr.default_robot_config()
-    except Exception as exc:  # pragma: no cover - team checkout missing
-        pytest.skip(f"team packages not available: {exc}")
-    if config is None:  # pragma: no cover
-        pytest.skip("robot_check_gazebo.yaml not found")
-    return gd, gzr.make_robot(config)
 
-
-def test_conveyor_layout_upstream():
-    rows = [{"box_id": "A", "size": [0.4, 0.3, 0.2]}, {"box_id": "B", "size": [0.2, 0.2, 0.1]}]
-    out = gzr.conveyor_layout(rows, (0.0, 1.2, 0.9), gap=0.1)
-    (sa, pa, _), (sb, pb, _) = out["conv_A"], out["conv_B"]
-    assert pa == (0.0, 1.2, 1.0, 0.0)
-    assert pb[0] == pytest.approx(-0.2 - 0.1 - 0.1) and pb[2] == pytest.approx(0.95)
-
-
-def test_deck_warning():
-    assert gzr.deck_warning((1.2, 1.0, 1.5)) is None
-    assert "overhang" not in gzr.deck_warning((1.2, 0.8, 1.35))
-    assert "overhang" in gzr.deck_warning((1.1, 1.1, 1.5))
-
-
-def test_gazebo_core_reachable_placement_has_joints(team):
-    gd, robot = team
-    ev = event(size=(0.2206, 0.1894, 0.0891), weight=0.345, target=((0.002, 0.002, 0.0), 0.0))
-    core = gzr.GazeboReplayCore(gd, robot, ev["pallet_size"])
-    plan = core.step(ev)
-    cmd = plan.commands[0]
-    assert cmd["action"] == "PLACE_CURRENT" and cmd["box_id"] == "B1"
-    assert cmd["target_min_corner"] == [0.002, 0.002, 0.0, 0.0]
-    assert len(cmd["robot"]["q_place"]) == 6 and len(cmd["robot"]["q_approach"]) == 6
-    acts = plan.actions[0]
-    assert acts.trajectory and acts.trajectory[-1][0] == pytest.approx(cmd["robot"]["q_approach"])
-    name, sdf, pose = acts.spawn[0]
-    # pallet 1.2 x 0.8 centred at (1.35, -1.0), deck top 0.15
-    assert pose == pytest.approx((1.35 - 0.6 + 0.002 + 0.1103, -1.0 - 0.4 + 0.002 + 0.0947, 0.15 + 0.04455, 0.0))
-    assert name == "B1" and "<box><size>" in sdf
-    assert plan.conveyor_spawn[0][0] == "conv_B1" and plan.picked == ["conv_B1"]
-
-
-def test_gazebo_core_unreachable_spawns_without_motion(team):
-    gd, _ = team
-    core = gzr.GazeboReplayCore(gd, None, (1.2, 0.8, 1.35), conveyor=False)
-    plan = core.step(event())
-    assert plan.commands[0]["robot"] is None and plan.commands[0]["robot_reject"] == ["NO_ROBOT_CHECK"]
-    assert not plan.actions[0].trajectory and plan.actions[0].spawn[0][0] == "B1"
-    assert core.unreachable == ["B1"] and "spawned without motion" in plan.notes[0]
-
-
-def test_gazebo_core_repack_and_close(team):
-    gd, _ = team
-    core = gzr.GazeboReplayCore(gd, None, (1.2, 0.8, 1.35), conveyor=False)
-    first = event(box_id="A", pallet=[row("A", (0, 0, 0), (0.4, 0.3, 0.2))])
-    core.step(first)
-    second = event(box_id="B", target=((0.4, 0.0, 0.0), 0.0), moved=["A"],
-                   pallet=[row("A", (0.0, 0.3, 0.0), (0.4, 0.3, 0.2)), row("B", (0.4, 0, 0), (0.4, 0.3, 0.2))])
-    plan = core.step(second)
-    assert [c["action"] for c in plan.commands] == ["PLACE_CURRENT", "PARTIAL_REPACK"]
-    assert plan.commands[1]["repack"][0]["target_min_corner"] == [0.0, 0.3, 0.0, 0.0]
-    assert plan.actions[1].remove == ["A"] and plan.actions[1].spawn[0][0] == "A"
-    closing = event(box_id="C", target=None, closed=True, pallet=[])
-    plan = core.step(closing)
-    assert [c["action"] for c in plan.commands] == ["PALLET_CLOSE"]
-    assert sorted(plan.actions[0].remove) == ["A", "B"] and core.driver.on_pallet == []
-    assert "pose not in timeline" in plan.notes[0]
-
-
-def test_gazebo_core_fixture_dry_run(team):
-    gd, robot = team
-    data = sample()
-    core = gzr.GazeboReplayCore(gd, robot, data["events"][0]["pallet_size"])
-    io = gzr.PrintIO(out=lambda s: None)
-    lines = []
-    gzr.play(core, copy.deepcopy(data), io, tl.Pacer(speed=0), out=lines.append, motion_wait=False)
-    assert len(lines) == 13 and lines[-1].startswith("done")
-    # after the close only the boxes of the new pallet are on it
-    last = tl.ordered_events(data)[-1]
-    assert sorted(core.driver.on_pallet) == sorted(r["box_id"] for r in last["pallet"])
-
-
-# ---------------------------------------------------------------------- HTML viewer
 def test_export_viewer_html(tmp_path):
     import export_viewer as ev
 

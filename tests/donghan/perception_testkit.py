@@ -2,7 +2,7 @@
 
 - ``camera`` / ``render`` / ``render_scene``: boxes seen by a straight-down depth
   camera (top faces and rollers only)
-- ``CATALOG`` / ``WEIGHT_RANGES``: SKU catalog of config/donghan/demo_original6/order.json,
+- ``CATALOG`` / ``WEIGHT_RANGES``: SKU catalog of the original-box demo order (inlined here),
   as ``pac_runtime.order.cell_from_order`` builds it (nominal weight = range max)
 """
 import math

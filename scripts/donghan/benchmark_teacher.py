@@ -53,7 +53,7 @@ def main():
     virtual = load_virtual_config(team / 'config/taehyeon/virtual_data.yaml')
     high = load_highlevel_config(team / 'config/taehyeon/highlevel.yaml')
     rt = replace(load_runtime_config(team / 'config/taehyeon/runtime.yaml'), seed=7)
-    robot = RobotFeasibility(load_robot_check_config(team / 'config/taehyeon/robot_check_gazebo.yaml'))
+    robot = RobotFeasibility(load_robot_check_config(team / 'config/taehyeon/robot_check.yaml'))
     cell = runtime_cell(spec, dataset, cand, virtual, seed=7,
                         family_index=family_indices(dataset)[spec.scenario_id],
                         scenario_index=dataset.scenarios.index(original),

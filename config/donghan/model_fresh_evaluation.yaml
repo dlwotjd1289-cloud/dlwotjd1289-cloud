@@ -19,7 +19,7 @@ training:
   patience: 20
   learning_rate: 0.002
 evaluation:
-  robot_config: robot_check_gazebo.yaml
+  robot_config: robot_check.yaml
   episode_seeds: [201, 202, 203]
   variants: [nominal]
 planning:

@@ -109,7 +109,7 @@ def main():
     virtual = load_virtual_config(team / "config/taehyeon/virtual_data.yaml")
     high = load_highlevel_config(team / "config/taehyeon/highlevel.yaml")
     runtime = load_runtime_config(team / "config/taehyeon/runtime.yaml")
-    robot_name = config["evaluation"].get("robot_config", "robot_check_gazebo.yaml")
+    robot_name = config["evaluation"].get("robot_config", "robot_check.yaml")
     robot_path = (args.robot_config or team / "config/taehyeon" / robot_name).resolve()
     robot = load_robot_check_config(robot_path)
     if high.features.value_provider != "proxy" or high.buffer.slots != 4:

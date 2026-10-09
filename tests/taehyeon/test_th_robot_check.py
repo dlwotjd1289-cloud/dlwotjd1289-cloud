@@ -75,7 +75,9 @@ def test_payload_stale_and_frame_codes():
 
 
 def test_gripper_hits_a_taller_neighbour_during_descent():
-    robot = RobotFeasibility()
+    cfg = RobotCheckConfig()
+    # a wide vacuum tool base (pac_eoat vacuum_gripper_v1 size, TCP 0.22 m)
+    robot = RobotFeasibility(replace(cfg, gripper=replace(cfg.gripper, footprint_m=(0.34, 0.26), tcp_offset_m=0.22)))
     # 0.2 m wide box between two 0.5 m tall columns 0.2 m apart: the box
     # fits (5-2 passes) but the 0.34 x 0.26 gripper does not
     walls = [placed("W1", 0.2, 0.3, 0.0, size=(0.2, 0.4, 0.5)), placed("W2", 0.6, 0.3, 0.0, size=(0.2, 0.4, 0.5))]

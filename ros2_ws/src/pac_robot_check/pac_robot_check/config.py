@@ -12,28 +12,27 @@ import yaml
 
 @dataclass(frozen=True)
 class GripperConfig:
-    # vacuum gripper v1 geometry from pac2026-ahead ``pac_eoat`` (tool base
-    # 0.34 x 0.26, TCP 0.22 m below the mount); mass is an ASSUMPTION
-    footprint_m: tuple = (0.34, 0.26)
-    tcp_offset_m: float = 0.22
+    # V4.4 suction cup (pac_bringup/urdf/hdr50_pedestal_gripper.urdf.xacro):
+    # cup radius 0.04 m, suction face 0.06 m from the flange. The EOAT is not
+    # selected yet; mass is an ASSUMPTION (conservative, the cup itself is 0.4 kg)
+    footprint_m: tuple = (0.08, 0.08)
+    tcp_offset_m: float = 0.06
     mass_kg: float = 15.0
     clearance_m: float = 0.01      # side margin of the gripper body during descent
 
 
 @dataclass(frozen=True)
 class CellConfig:
-    # robot base relative to the pallet deck centre (x, y, z, yaw): beside the
-    # pallet on a 0.5 m pedestal (deck 0.15 m + 0.35 m), 1.15 m from the deck
-    # centre. ASSUMPTION chosen by a reach sweep (docs/taehyeon/robot_check.md):
-    # it reaches every tested spot of the three pallet sizes up to 1.35 m.
-    # A robot on the floor cannot point the gripper down near the top layer
-    # (j5 limit), and the pac2026-ahead workcell v2 layout (base 1.68 m from
-    # the pallet corner) leaves the far half of a 1.2 x 1.0 pallet out of reach.
-    base_from_pallet_center: tuple = (0.0, -1.15, 0.35, 0.0)
+    # Team workcell (config/workcell.yaml, Gazebo V4.2-V4.5): robot base_link
+    # at world (0, 0, 0.40) on the 0.40 m pedestal, pallet deck centre at
+    # world (0, 1.20, 0.15). Robot base relative to the deck centre
+    # (x, y, z, yaw), world-aligned axes. tests/test_config_consistency.py
+    # checks these against workcell.yaml and the pedestal URDF.
+    base_from_pallet_center: tuple = (0.0, -1.20, 0.25, 0.0)
     deck_height_m: float = 0.15
-    # conveyor surface point under the picked box, relative to the robot base
-    # (conveyor top 0.9 m above the floor, 1.3 m to the robot's side, 90 deg from the pallet; ASSUMPTION)
-    pick_point_base_m: tuple = (1.3, 0.0, 0.4)
+    # conveyor surface point under the picked box, relative to the robot base:
+    # V4.3 pick stop (-1.08, 1.20) on the roller top 0.895 m
+    pick_point_base_m: tuple = (-1.08, 1.20, 0.495)
 
 
 @dataclass(frozen=True)
