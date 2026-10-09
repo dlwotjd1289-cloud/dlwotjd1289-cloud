@@ -1,5 +1,22 @@
 # 대회 전 회의 자료: 이동한 5-③~⑥과 팀 통합
 
+## 2026-10-08 23:40 최신 연결
+
+태현 `e8674da4`에 1~8 runtime과 HDR50-22 해석 기반 6단계가 추가됐다.
+동한 쪽에는 실제 EMS와 모델 fingerprint를 유지하는 `TeamRuntimeRanker`와 7개 패키지
+workspace 구성을 추가했다. 단일 박스 Python chain까지 통과했지만 ROS2/MoveIt/실제 실행은 아니다.
+팀 runtime의 기존 donghan 경로 EMS 우회와 stale 실행 결과 적용 문제는 별도 소형 upstream 패치로 제공한다.
+세부 결과는 `integration_check_20261008_2340.md`를 따른다.
+
+## 최신 상태 — 2026-10-08 후속 점검
+
+- 동한 원격 `7860043`에 실제 EMS teacher 기반 학습 연결·실험 모델이 게시됐다. 새 모델을 기본값으로 채택하지 않았다.
+- 태현 최신 `e75e274`에 PyTorch/sb3 MaskablePPO 모델과 정규화 sidecar가 게시됐다. test 27회에서 Rule 4.09, sb3 4.23 팔레트 상당량(낮을수록 좋음)으로 보고하여 Rule 기본값을 유지한다.
+- 이번 로컬 NumPy 정책 snapshot 인계 검사와 실제 후보/backend 모델 계약은 통과했다. sb3는 metadata 정적 검사만 실행했고, PyTorch 추론은 이 환경에서 실행하지 않았다.
+- 동한 Python 패키지 두 곳의 잘못된 ament_python buildtool_depend를 제거했다. build_type은 유지한다. ROS2에서 rosdep/build/launch를 실행한 것은 아니다.
+- 자세한 변경·실행 명령·검증 한계는 integration_check_20261008_2118.md를 참조한다. 아래 설명·표는 당시 회의/개발 기록이며 원격 최신 상태와 구분한다.
+
+
 ## 1분 설명 대본
 
 제가 맡은 부분은 후보 위치를 새로 만드는 것이 아니라, 태현님이 만든 후보와 유효성
@@ -184,15 +201,22 @@ place 성공과 실제 pose 확인 후 planning scene과 State Manager를 갱신
 우선 Rule + 실제 후보/검사 + 휴리스틱/rollout으로 전체 실행을 확보한다.
 기존 저수준 모델 없이도 동한 평가기가 동작한다. 새로운 RL 알고리즘 추가는 우선순위가 낮다.
 
-태현의 PPO는 proxy+DBLF로 학습됐고, 수정 전 환경의 모델이다. 현재 태현 기록에는
-재학습이 요청으로 중단됐다고 나온다. 팀에서 재개 여부를 정하고 태현 담당으로 진행한다.
+태현의 PPO는 proxy+DBLF로 학습됐다. 2026-10-08 19:13:07 KST의 c6440576에서
+수정된 환경의 NumPy PPO 재학습 모델과 평가가 게시됐다(최신 문서 HEAD 098251f9).
+팀 보고서에서 Rule이 PPO보다 좋은 결과를 보였으므로 기본 운영은 Rule을 유지한다.
+현재 게시 PPO는 77개 특징, 버퍼 4칸, proxy+DBLF 계약을 유지한다.
 TeamPlacer를 실제 운영에 사용하면 DBLF와 placement·관측·전이가 달라진다.
 기존 메타데이터만 고쳐 호환시키지 말고 Rule/PPO × DBLF/TeamPlacer를 분리 평가한다.
+팀의 새 TeamPlacer 평가에 사용한 dual_head_ranker.json과 동한의 생성기 기반
+team_fd683e56_smoke.json은 같은 모델이라고 가정하지 않는다. 후자의 새 PPO 연결 검사는
+현재/버퍼 박스의 Python snapshot 전달만 검증했고, 여러 박스 정책 성능은 검증하지 않았다.
 
 동한 저수준 AI는 실제 CandidateBackend와 동일 context/config로 teacher 라벨을 새로 수집한다.
 실제 EMS를 공급하고 seed/horizon/scenario_count/가중치/feature schema/backend SHA를 기록한다.
 기본 experiment.py는 ReferenceBackend를 사용하므로 기존 재학습 명령을 그대로 실행해도
-팀 EMS용 모델이 되지 않는다. 이 데이터 수집 adapter를 먼저 연결해야 한다.
+팀 EMS용 모델이 되지 않는다. 현재 train_team_model.py에 실제 backend 수집 adapter가
+연결됐고 team_fd683e56_smoke.json으로 소규모 실험을 실행했다. 이 후속 패치는 아직 원격
+146797e에 반영되지 않았다. 자세한 실행/평가는 generator_model_training_20261008.md를 따른다.
 박스 구성/시나리오 단위로 train/validation/holdout을 나누고 같은 구성의 순서만 바꿔 양쪽에 넣지 않는다.
 학생 모델은 후보 선택 속도·실제 적재 성과를 휴리스틱 및 teacher와 비교하고 이득이 확인되면 쓴다.
 차원이 같은 45개라고 해서 학습 분포나 안전성이 같다고 판단하지 않는다.

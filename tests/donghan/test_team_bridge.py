@@ -9,7 +9,7 @@ pytest.importorskip("pac_candidates")
 from pac_candidates import CandidateBackend
 from pac_common import BoxStatus, InventoryState, Pose3D, Size3D, plain
 from pac_planning import PlannerConfig
-from pac_planning.team_bridge import TeamPlacer, plan_with_backend
+from pac_planning.team_bridge import TeamPlacer, TeamRuntimeRanker, plan_with_backend
 from pac_planning.planning_service import plan_request
 from pac_planning.scene_bridge import PalletFrame, bullet_payload
 from pac_planning.team_bridge import check_policy_contract
@@ -48,6 +48,32 @@ def test_buffered_snapshot_and_four_slot_context(scene):
     assert placer(backend.generate_candidates(boxes[0], state), old, state, backend)
     assert placer.last_result.requires_robot_validation
     assert state.inventory.tracked_boxes[old.box_id].status == BoxStatus.BUFFERED
+
+
+def test_runtime_ranker_preserves_real_ems_and_does_not_commit(scene):
+    _, box, state, context = scene
+    backend = CandidateBackend(context)
+    valid = [c for c in backend.generate_candidates(box, state)
+             if backend.validate_constraints(box, c, state).success]
+    before = plain(state)
+    ranker = TeamRuntimeRanker(FAST, use_time_budget=False)
+    ordered = ranker(valid, box, state, backend)
+    assert ordered == list(ranker.last_result.ranked)
+    assert ordered
+    assert all(e.features.geometry_source == "EMS_SUPPLIED"
+               for e in ranker.last_result.evaluations)
+    assert ranker.last_result.requires_robot_validation
+    provenance = ranker.provenance()
+    assert provenance["calls"] == 1
+    assert provenance["candidate_evaluations"] == len(ranker.last_result.evaluations)
+    assert provenance["geometry_sources"] == {
+        "EMS_SUPPLIED": len(ranker.last_result.evaluations)
+    }
+    assert provenance["ems_verified"]
+    assert provenance["model_statuses"] == {"NO_MODEL_HEURISTIC": 1}
+    assert provenance["robot_validation_required_calls"] == 1
+    assert len(provenance["backend_contract_sha256"]) == 64
+    assert plain(state) == before
 
 
 @pytest.mark.parametrize("change", ["version", "pose", "id"])
@@ -117,3 +143,26 @@ def test_ppo_dblf_contract_cannot_be_relabelled_as_new_placer():
                               placer_name=TeamPlacer.name, value_provider="donghan")
     check_policy_contract({"placer":TeamPlacer.name, "value_provider":"proxy"},
                           placer_name=TeamPlacer.name, value_provider="proxy")
+
+
+@pytest.mark.parametrize('uncertain', [False, True])
+@pytest.mark.parametrize('dedup_mode', ['off', 'support_aware', 'mask_aware'])
+def test_pose_only_generator_matches_real_ems_report_for_post_placement(scene, uncertain, dedup_mode):
+    from pac_planning.features import sku_box
+    from pac_planning.geometry import simulate_placement
+    _, box, state, context = scene
+    if uncertain:
+        context = replace(context, uncertain_box_ids=(box.box_id,))
+    base = CandidateBackend(context)
+    cfg = replace(base.config, generation=replace(base.config.generation, dedup_mode=dedup_mode))
+    backend = CandidateBackend(context, cfg)
+    assert backend.generate_candidates(box, state) == list(backend.generate_with_report(box, state).candidates)
+    for root in backend.candidate_set(box, state).valid[:3]:
+        post = simulate_placement(state, box, root).state
+        for sku, spec in context.catalog.items():
+            probe = sku_box(spec, '__probe__' + sku, state.stamp_sec)
+            fast = backend.generate_candidates(probe, post)
+            full = list(backend.generate_with_report(probe, post).candidates)
+            assert fast == full
+            assert [backend.validate_constraints(probe, c, post) for c in fast] == [
+                backend.validate_constraints(probe, c, post) for c in full]

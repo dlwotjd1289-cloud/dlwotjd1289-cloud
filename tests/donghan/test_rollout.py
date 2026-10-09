@@ -79,3 +79,51 @@ def test_zero_inventory_has_zero_additional_value(scene, planner):
         assert e.future.mean == 0
         assert e.future.blocking_rate == 0
         assert e.future.failure_rate == 0
+
+
+def test_sorted_rollout_stops_at_first_valid_without_changing_selected_pose(scene, planner):
+    from pac_common import RejectCode, ValidationResult
+    from pac_planning.rollout import run_scenario, greedy_key
+    from pac_planning.geometry import simulate_placement
+    box, state, context = scene[1:]
+    root = next(c for c in planner.generate_candidates(box, state)
+                if planner.validate_constraints(box, c, state).success)
+    scenario = sample_scenarios(box, state, context, 1, 1, 1)[0]
+    after = simulate_placement(state, box, root).state
+    future = scenario.items[0].box
+    proposals = sorted(planner.generate_candidates(future, after),
+                       key=lambda c: greedy_key(future, c, after))
+    assert len(proposals) >= 3
+    calls = []
+    def validator(b, c, s):
+        calls.append(c.candidate_id)
+        if c.candidate_id == proposals[0].candidate_id:
+            return ValidationResult(False, (RejectCode.BOX_COLLISION,))
+        return ValidationResult(True)
+    selected = []
+    def apply(s, b, c, **kwargs):
+        selected.append(c.candidate_id)
+        return simulate_placement(s, b, c, **kwargs)
+    import unittest.mock
+    with unittest.mock.patch('pac_planning.rollout.simulate_placement', apply):
+        result = run_scenario(box, root, state, scenario, planner.generate_candidates,
+                              validator, replace(planner.config, rollout_candidate_limit=16))
+    assert result.placed_count == 1
+    assert calls == [c.candidate_id for c in proposals[:2]]
+    assert selected[-1] == proposals[1].candidate_id
+
+
+def test_short_circuit_rollout_still_rejects_stale_later_proposals(scene, planner):
+    from pac_common import ValidationResult
+    from pac_planning.rollout import run_scenario
+    box, state, context = scene[1:]
+    root = next(c for c in planner.generate_candidates(box, state)
+                if planner.validate_constraints(box, c, state).success)
+    scenario = sample_scenarios(box, state, context, 1, 1, 8)[0]
+    def generator(b, s):
+        candidates = planner.generate_candidates(b, s)
+        candidates[-1] = replace(candidates[-1], base_state_version=s.state_version + 1)
+        return candidates
+    with pytest.raises(ValueError, match='generator contract'):
+        run_scenario(box, root, state, scenario, generator,
+                     lambda *a: ValidationResult(True), planner.config)

@@ -7,12 +7,13 @@ import pytest
 
 pytest.importorskip("pac_candidates")
 from pac_candidates import CandidateBackend
-from pac_common import plain
+from pac_common import InventoryState, Size3D, plain
 from pac_planning import PlannerConfig
 from pac_planning.model import train_model
 from pac_planning.planning_service import plan_request
 from pac_planning.team_bridge import backend_contract, plan_with_backend
-from pac_planning.team_training import TeacherPlacer, inventory_group, training_splits
+from pac_planning.team_training import (TeacherPlacer, inventory_group, training_splits,
+                                        measurement_xy_assessment)
 
 
 def test_same_inventory_different_order_cannot_cross_training_split(scene):
@@ -71,3 +72,32 @@ def test_split_with_missing_or_duplicated_scenario_is_rejected(scene):
                               splits={"train": ["A"], "val": ["A"], "test": ["A"]})
     with pytest.raises(ValueError, match="exactly once"):
         training_splits(dataset)
+
+
+def test_uncertain_measurement_can_pass_mask_and_protrude_at_true_size(scene):
+    _, box, state, context = scene
+    box = replace(box, size=Size3D(.388, .3, .2))
+    state = replace(state, inventory=InventoryState({box.box_id: box}, {}),
+                    pallet=replace(state.pallet, boxes=()))
+    context = replace(context, observed_preview=(), uncertain_box_ids=(box.box_id,))
+    backend = CandidateBackend(context)
+    valid = backend.candidate_set(box, state).valid
+    chosen = min((c for c in valid if abs(c.target_pose.yaw) < 1e-8), key=lambda c: c.target_pose.x)
+    # A reproducible contract counterexample, not the unidentified report case.
+    assert backend.validate_constraints(box, chosen, state).success
+    assert chosen.target_pose.x + box.size.x / 2 - .4 / 2 < 0
+    observer = SimpleNamespace(dimension_noise_std_m=.001, dimension_noise_clip_m=.003,
+                               uncertain_dimension_noise_std_m=.004, uncertain_probability=.05)
+    diag = measurement_xy_assessment(backend.config, SimpleNamespace(observation=observer))
+    assert diag["status"] == "XY_MARGIN_NOT_COVERED"
+    assert not next(c for c in diag["cases"] if c["box_class"] == "uncertain")["bound_covered"]
+
+
+def test_xy_diagnostic_covers_bound_without_claiming_physical_safety():
+    observer = SimpleNamespace(dimension_noise_std_m=.001, dimension_noise_clip_m=.003,
+                               uncertain_dimension_noise_std_m=.004, uncertain_probability=.05)
+    unc = SimpleNamespace(size_tolerance_m=.0061, uncertain_multiplier=2., uncertain_policy="robust")
+    diag = measurement_xy_assessment(SimpleNamespace(uncertainty=unc),
+                                      SimpleNamespace(observation=observer))
+    assert diag["status"] == "COVERED"
+    assert diag["physical_safety_verified"] is False

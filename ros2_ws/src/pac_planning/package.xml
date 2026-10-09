@@ -4,7 +4,6 @@
   <description>AHEAD mixed palletizing module</description>
   <maintainer email="maintainers@example.invalid">AHEAD team</maintainer>
   <license>LicenseRef-All-Rights-Reserved</license>
-  <buildtool_depend>ament_python</buildtool_depend>
   <exec_depend>pac_common</exec_depend>
   <exec_depend>pac_candidates</exec_depend>
   <exec_depend>pac_planning_interfaces</exec_depend>

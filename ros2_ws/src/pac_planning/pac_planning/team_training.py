@@ -26,6 +26,34 @@ def digest(value):
     return hashlib.sha256(raw.encode()).hexdigest()
 
 
+def measurement_xy_assessment(candidate_config, virtual_config):
+    """Check declared measurement error against the mask's XY size margin.
+
+    The virtual observer rounds to 0.1 mm. With centre-based placement, an
+    underestimated dimension moves each true edge by half that error. This
+    is a bound diagnostic, not a physical safety certificate or auto tuning.
+    """
+    obs, unc = virtual_config.observation, candidate_config.uncertainty
+    normal = (0.0 if obs.dimension_noise_std_m <= 0 else
+              obs.dimension_noise_clip_m + 0.00005 if obs.dimension_noise_clip_m > 0 else None)
+    uncertain = (3.0 * obs.uncertain_dimension_noise_std_m + 0.00005
+                 if obs.uncertain_dimension_noise_std_m > 0 else 0.0)
+    cases = []
+    for name, bound, margin, enabled in (
+        ("normal", normal, unc.size_tolerance_m, True),
+        ("uncertain", uncertain, unc.size_tolerance_m * unc.uncertain_multiplier,
+         obs.uncertain_probability > 0 and unc.uncertain_policy != "reject"),
+    ):
+        if enabled:
+            cases.append({"box_class": name, "max_dimension_error_m": bound,
+                          "required_edge_margin_m": bound / 2 if bound is not None else None,
+                          "configured_edge_margin_m": margin,
+                          "bound_covered": bound is not None and margin + 1e-12 >= bound / 2})
+    return {"scope": "DECLARED_XY_ERROR_BOUND_ONLY", "cases": cases,
+            "status": "COVERED" if all(c["bound_covered"] for c in cases) else "XY_MARGIN_NOT_COVERED",
+            "physical_safety_verified": False}
+
+
 def inventory_group(spec):
     """Group by SKU/geometry counts, ignoring order, weight draws and noise."""
     counts = Counter((b.sku_id, b.size.x, b.size.y, b.size.z) for b in spec.arrivals)
@@ -104,12 +132,12 @@ class TeacherPlacer:
         key = digest({"box": plain(box), "state": plain(state),
                       "context": plain(backend.context),
                       "candidates": plain(tuple(valid))})
-        if key in self.cache:
-            return self.cache[key]
         contract = backend_contract(backend)
         if self.contract is not None and self.contract != contract:
             raise ValueError("Candidate backend changed while collecting labels")
         self.contract = contract
+        if key in self.cache:
+            return self.cache[key]
         result = plan_with_backend(box, state, backend, candidates=valid, config=self.config,
                                    mode="teacher", seed=self.seed, use_time_budget=False)
         for verdict in result.rejected.values():
@@ -130,7 +158,7 @@ class TeacherPlacer:
         return chosen
 
 
-def run_scenario(spec, dataset, cand, virtual, high, placer):
+def run_scenario(spec, dataset, cand, virtual, high, placer, *, episode_seed=0, pallet_xy=None):
     from pac_highlevel import RulePolicy, run_policy
     from virtual_data.highlevel import family_indices, world_from_spec
 
@@ -140,12 +168,64 @@ def run_scenario(spec, dataset, cand, virtual, high, placer):
     started = time.perf_counter()
     world = world_from_spec(spec, dataset, cand, virtual, high, placer=placer,
                             family_index=family_indices(dataset)[spec.scenario_id],
-                            scenario_index=position, episode_seed=0)
+                            scenario_index=position, episode_seed=episode_seed, pallet_xy=pallet_xy)
     summary = run_policy(world, RulePolicy(high))
     summary.update(scenario_id=spec.scenario_id, wall_time_sec=time.perf_counter() - started,
                    scope="OFFLINE_SIMULATION", robot_execution="NOT_RUN",
                    time_s_is_assumed_cost=True)
     return summary
+
+
+class RuntimeTeacherRanker:
+    """Collect EMS labels from states visited by the SAME measured RuntimeCore.
+
+    Geometry/future labels stay in Donghan's scope. Stage 6 still filters the
+    full ordered list. Training can alternate teacher and DBLF behaviour to
+    cover more states; labels always come from the deterministic full teacher.
+    """
+
+    def __init__(self, config, scenario_id, base_group, *, seed=7, behaviour="teacher"):
+        if behaviour not in ("teacher", "dblf"):
+            raise ValueError("Unknown teacher collection behaviour")
+        self.config, self.scenario_id, self.base_group = config, scenario_id, base_group
+        self.seed, self.behaviour = seed, behaviour
+        self.groups, self.cache = [], {}
+        self.contract = None
+        self.rejected, self.empty_queries = Counter(), 0
+
+    def __call__(self, valid, box, state, backend):
+        from pac_runtime.placer import dblf_order
+
+        box = state.inventory.tracked_boxes[box.box_id]
+        key = digest({"box": plain(box), "state": plain(state),
+                      "context": plain(backend.context), "candidates": plain(tuple(valid))})
+        contract = backend_contract(backend)
+        if self.contract is not None and self.contract != contract:
+            raise ValueError("Candidate backend changed while collecting labels")
+        self.contract = contract
+        if key in self.cache:
+            return self.cache[key]
+        result = plan_with_backend(box, state, backend, candidates=valid, config=self.config,
+                                   mode="teacher", seed=self.seed, use_time_budget=False)
+        for verdict in result.rejected.values():
+            self.rejected.update(str(c.value) for c in verdict.codes)
+        if result.evaluations:
+            rows = rows_from_teacher(result)
+            if (any(r["geometry_source"] != "EMS_SUPPLIED" for r in rows)
+                    or result.diagnostics["completed_scenarios"] != self.config.scenario_count):
+                raise ValueError("Runtime teacher requires complete rollout and real EMS evidence")
+            self.groups.append(dict(base_group=self.base_group, group_id=key,
+                                    scenario_id=self.scenario_id, box_id=box.box_id,
+                                    state_version=state.state_version, rows=rows))
+        else:
+            self.empty_queries += 1
+        if self.behaviour == "dblf":
+            # Excluded feature-invalid candidates are never revived.
+            ordered = dblf_order(list(result.ranked))
+        else:
+            ordered = list(result.ranked)
+        self.cache[key] = ordered
+        return ordered
 
 
 def collect_teacher(dataset, splits, cand, virtual, high, config, *, seed=7, log=print):

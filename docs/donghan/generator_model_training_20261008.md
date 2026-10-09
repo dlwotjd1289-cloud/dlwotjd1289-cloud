@@ -1,6 +1,14 @@
 # 생성기 기반 동한 모델 학습 연결 — 2026-10-08
 
-## 연결한 버전과 범위
+## 현재 게시 상태 — 2026-10-08 후속 점검
+
+동한 `7860043228c81aec517c5a1966d475d36e12f68a`에 아래 학습 코드·실험 모델·보고서가 게시됐다.
+원격 변경 프로젝트 파일 17개는 실제 학습 제공본과 blob SHA가 일치한다. 원격 `146797e` 기준 패치를 다시 적용하지 않는다.
+팀장 최신 `e75e2744510e9e3c85af58fc8d5ac2c99c19df59`의 후보 backend/설정은 학습 출처와 같아 Python snapshot 검사를 통과했다.
+아래 fd683e56/146797e와 학습 수치는 원래 개발·학습의 기록이다. 최신 버전에서 학습을 다시 실행하지 않았다.
+1905/2004 진단·handoff와 이번 의존성 수정은 `after_remote_786004.patch`로 제공하며 아직 원격 미반영이다.
+
+## 연결한 버전과 범위 (원래 학습 기록)
 
 - 팀장 브랜치: claude/pensive-pasteur-dwbu3g, fd683e56e67af8e2de743b80456f9fd2177a3eef
 - 공유 생성기: feature/jaesung-dataset-generator, cc4c075daa3dd4c7f80510042732763fc9502933
@@ -110,7 +118,7 @@ python scripts/donghan/train_team_model.py \
 
 ## 제공 모델 위치
 
-ZIP의 training_result는 실행 당시 생성기 데이터와 teacher 라벨·보고서 전체다. 코드에도 models/team_fd683e56_smoke.json과 config/team_fd683e56_smoke.yaml, reports/team_generator_training_20261008.json을 추가했다. 제공 모델은 실험용이며 기존 기본 모델을 교체하지 않았다. 아래 예제는 직접 학습한 runs/team_training_smoke 결과 경로다. 제공 모델을 쓸 때에는 위 models/config 경로로 바꾼다.
+최초 학습 제공 ZIP의 training_result는 실행 당시 생성기 데이터와 teacher 라벨·보고서 전체다. GitHub 게시본과 이번 후속 ZIP에는 해당 폴더 전체가 포함되지 않는다. 코드에도 models/team_fd683e56_smoke.json과 config/team_fd683e56_smoke.yaml, reports/team_generator_training_20261008.json을 추가했다. 제공 모델은 실험용이며 기존 기본 모델을 교체하지 않았다. 아래 예제는 직접 학습한 runs/team_training_smoke 결과 경로다. 제공 모델을 쓸 때에는 위 models/config 경로로 바꾼다.
 
 ## 계획에 모델 사용
 
@@ -150,4 +158,26 @@ cd "$PAC_PLANNER_ROOT"
 python -m pytest tests/test_team_training.py tests/test_team_bridge.py -q
 ```
 
-정상 기대값은 17 passed다. 전체/물리 검사 환경은 team_integration_20261008.md를 따른다. 새 모델 채택 전 큰 holdout과 Humble 실행을 각각 확인한다.
+정상 기대값은 19 passed다. 전체/물리 검사 환경은 team_integration_20261008.md를 따른다. 새 모델 채택 전 큰 holdout과 Humble 실행을 각각 확인한다.
+
+## 2026-10-08 후속 점검
+
+팀장 최신 1782d631은 fd683e56 이후 검증 문서/보고서 9개만 변경했다.
+후보 backend와 설정이 같으므로 제공 모델의 backend 계약도 일치한다.
+원래 학습 출처(fd683e56)를 새 커밋으로 바꿔 적지 않았고, 모델을 재학습하지 않았다.
+
+최신 80박스 보고서에는 실제 크기 기준 XY 돌출 1건이 있다. 별도 Python 반례에서
+실제 폭 400 mm를 388 mm로 관측한 불확실 박스가 모서리 x=4 mm 위치에서 mask를
+통과하고, 중심 기준 실제 폭으로 환산하면 x=-2 mm가 되는 것을 재현했다.
+이 반례가 보고서의 정확한 그 1건이라고 확인한 것은 아니다.
+
+후속 수정에서는 measurement_xy_assessment 진단을 추가해 학습 출처/보고서에 기록한다.
+일반 측정 오차 상한은 반올림 포함 3.05 mm, 불확실 박스는 12.05 mm다.
+중심 기준 경계에는 각각 절반이 필요하다. 현재 불확실 경계 여유 4 mm는 필요한
+6.025 mm보다 작아 XY_MARGIN_NOT_COVERED로 나온다.
+이 검사는 기본 설정을 자동 변경하거나 학습을 차단하지 않는 진단이며 물리 안전 인증이 아니다.
+지지/하중/수직 오차까지 안전하다는 뜻도 아니다.
+
+팀원 관측 오차·경계 여유 계약을 맞춘 뒤 새 candidate config로 학습/평가해야 한다.
+이번에는 팀원 설정, 이전 학습 모델과 정답 데이터를 바꾸지 않았다.
+추가 회귀 검사와 연결 검사는 21 passed. ROS2/MoveIt/로봇 실행은 여전히 미검증이다.
