@@ -50,7 +50,7 @@ class LayerConfig:
     w_level: float = 0.3
     w_step: float = 0.1
     w_flush: float = 0.05
-    w_contact: float = 0.1
+    w_contact: float = 0.5
     w_support: float = 0.1
     w_corner: float = 0.01
     level_tol_m: float = 0.0    # 0 = the 5-2 support height tolerance
