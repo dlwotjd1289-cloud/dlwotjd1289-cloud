@@ -153,7 +153,7 @@ python3 scripts/verify_stack_bullet_v45.py --scenario S0001 --skip-unplaceable
 
 1. **공통 기준 v0.3.1 팀 확인** (기준서 26장), 특히 [결정사항 충돌 검토](docs/flow/DECISION_REVIEW.md) 3장: 적재 1.5 m vs V4.4 주석의 1.6 m, 팔레트 frame 원점(먼 모서리), 내려놓기 간격 20 mm vs 4 mm, EOAT 미선정
 2. **State Manager 운영 담당** 확정 (구현은 `pac_common.StateManager` 하나)
-3. Gazebo 사이클의 4단계 결정이 `pac_highlevel`과 다름 (버퍼 2칸, 자체 교체 규칙) 등 구현 간 충돌 15건 → [IMPLEMENTATION_CONFLICTS](docs/flow/IMPLEMENTATION_CONFLICTS.md)
+3. Gazebo 사이클의 4단계 결정이 `pac_highlevel`과 다름 (버퍼 2칸, 자체 교체 규칙) 등 구현 간 충돌 26건 → [IMPLEMENTATION_CONFLICTS](docs/flow/IMPLEMENTATION_CONFLICTS.md)
 4. 큰 박스가 늦게 오면 지지면 부족(`LOW_SUPPORT`)으로 놓을 곳이 없음 → High-level 버퍼/NG와 평탄 적재 점수 조정
 5. ALGORITHM_V3 결정 중 미구현: 0.3 g 충격 내성, 닫기 vs 재적재 비용 비교, 버퍼 비상칸 예약
 6. `main` 보호 규칙 설정 (기준서 23장: 직접 push 금지, PR + 1명 확인)
