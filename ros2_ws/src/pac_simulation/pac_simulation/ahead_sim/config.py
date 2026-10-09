@@ -64,6 +64,9 @@ def load_config(path: Path) -> Tuple[SimulatorConfig, Dict[str, Any]]:
         bottom_board_thickness_ratio=float(
             p.get("bottom_board_thickness_ratio", 0.16)
         ),
+        stringer_board_count=int(p.get("stringer_board_count", 0)),
+        stringer_board_width_ratio=float(p.get("stringer_board_width_ratio", 0.1318)),
+        stringer_board_thickness_ratio=float(p.get("stringer_board_thickness_ratio", 0.1467)),
     )
 
     # Backward compatibility:

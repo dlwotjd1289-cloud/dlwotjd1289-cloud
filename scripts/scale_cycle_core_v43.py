@@ -8,6 +8,7 @@ from __future__ import annotations
 import math
 import statistics
 from collections import deque
+import os
 from dataclasses import dataclass
 from enum import Enum
 from typing import Deque, Optional
@@ -25,13 +26,18 @@ class Phase(str, Enum):
     ERROR = "ERROR"
 
 
+# Layout shift of the infeed + scale along the conveyor (V4.6 world: -2.185 m, scale at the conveyor
+# start); 0 = V4.2 / V4.4 layout. Everything downstream of the scale (PICK) is unchanged.
+LAYOUT_SHIFT_M = float(os.environ.get("PAC_SCALE_SHIFT_M", "0"))
+
+
 @dataclass(frozen=True)
 class Config:
     velocity_rad_s: float = 8.57
-    scale_stop_x_m: float = -3.86
-    scale_center_x_m: float = -3.80
+    scale_stop_x_m: float = -3.86 + LAYOUT_SHIFT_M
+    scale_center_x_m: float = -3.80 + LAYOUT_SHIFT_M
     scale_center_tolerance_m: float = 0.16
-    unload_x_m: float = -3.18
+    unload_x_m: float = -3.18 + LAYOUT_SHIFT_M
     pick_x_m: float = -1.08
     scale_y_m: float = 1.20
     max_y_error_m: float = 0.18
@@ -50,7 +56,7 @@ class Config:
 
 
 # Workcell geometry behind the length-dependent thresholds (V4.2 world).
-SCALE_CENTER_X_M = -3.80          # weigh platform 0.70 x 0.70 m
+SCALE_CENTER_X_M = -3.80 + LAYOUT_SHIFT_M   # weigh platform 0.70 x 0.70 m
 SCALE_HALF_LEN_M = 0.35
 PICK_STOPPER_FACE_X_M = -0.845    # upstream face of the pick stopper
 
@@ -167,7 +173,7 @@ class AutoScaleCycle:
         if self.phase == Phase.WAIT_BOX:
             # No pose yet is a normal wait (box not spawned); a stale pose must not start rollers.
             pose_fresh = self.last_pose_at is not None and now - self.last_pose_at <= c.start_pose_max_age_s
-            if pose_fresh and self.pose_x_m is not None and -4.80 < self.pose_x_m < -4.10:
+            if pose_fresh and self.pose_x_m is not None and -4.80 + LAYOUT_SHIFT_M < self.pose_x_m < -4.10 + LAYOUT_SHIFT_M:
                 if abs((self.pose_y_m or 0) - c.scale_y_m) > c.max_y_error_m:
                     self._fail(now, "Box is not on the conveyor centerline.")
                 else:

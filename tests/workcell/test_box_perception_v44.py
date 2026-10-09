@@ -111,6 +111,6 @@ def test_known_size_fit_with_touching_neighbour():
     m = tgt | nb
     fit = fit_known_rect(X[m], Y[m], (L, W, 0.28), (0.0, 0.0), 0.0)
     assert fit is not None
-    x, y, yaw, inside, ring = fit
+    x, y, yaw, inside, ring = fit[:5]
     assert abs(x - tx) < 0.006 and abs(y - ty) < 0.006 and abs(yaw) < 0.02
     assert inside > 0.95 and ring < 0.45

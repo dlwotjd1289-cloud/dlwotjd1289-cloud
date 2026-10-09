@@ -231,43 +231,34 @@
       color: 0x6f472a, roughness: 0.92
     });
 
+    // Same geometry as the Bullet pallet (ahead_sim/world.py) and the Gazebo V4.4 world: top boards
+    // on cross (stringer) boards on 9 blocks on bottom boards; ratios from config/ahead_simulator.yaml.
     const L = p.length_m, W = p.width_m, H = p.deck_height_m;
-    const topH = H * 0.22;
-    const blockH = H * 0.50;
-    const bottomH = H * 0.16;
-
-    [-0.38, -0.19, 0, 0.19, 0.38].forEach(frac => {
-      const board = new THREE.Mesh(
-        new THREE.BoxGeometry(L, W * 0.13, topH), wood
-      );
-      board.position.set(0, frac * W, -topH / 2);
-      board.castShadow = board.receiveShadow = true;
-      palletGroup.add(board);
+    const r = (k, d) => (p[k] === undefined || p[k] === null ? d : Number(p[k]));
+    const centers = (n, span) => n <= 1 ? [0] : Array.from({length: n}, (_, i) => -span / 2 + i * span / (n - 1));
+    const topW = W * r("top_board_width_ratio", 0.13), topH = H * r("top_board_thickness_ratio", 0.22);
+    const nStr = r("stringer_board_count", 0);
+    const strW = L * r("stringer_board_width_ratio", 0.1318);
+    const strH = nStr > 0 ? H * r("stringer_board_thickness_ratio", 0.1467) : 0;
+    const blkL = L * r("support_block_length_ratio", 0.14), blkW = W * r("support_block_width_ratio", 0.15);
+    const blkH = H * r("support_block_height_ratio", 0.50);
+    const botW = W * r("bottom_board_width_ratio", 0.14), botH = H * r("bottom_board_thickness_ratio", 0.16);
+    const add = (sx, sy, sz, x, y, z, mat) => {
+      const m = new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz), mat);
+      m.position.set(x, y, z);
+      m.castShadow = m.receiveShadow = true;
+      palletGroup.add(m);
+    };
+    centers(r("top_board_count", 5), W - topW).forEach(y => add(L, topW, topH, 0, y, -topH / 2, wood));
+    if (nStr > 0) {
+      centers(nStr, L - strW).forEach(x => add(strW, W, strH, x, 0, -topH - strH / 2, wood));
+    }
+    centers(r("support_block_count_x", 3), L - blkL).forEach(x => {
+      centers(r("support_block_count_y", 3), W - blkW).forEach(y =>
+        add(blkL, blkW, blkH, x, y, -topH - strH - blkH / 2, woodDark));
     });
-
-    [-0.39, 0, 0.39].forEach(xf => {
-      [-0.34, 0, 0.34].forEach(yf => {
-        const block = new THREE.Mesh(
-          new THREE.BoxGeometry(L * 0.14, W * 0.15, blockH), woodDark
-        );
-        block.position.set(
-          xf * L, yf * W, -topH - blockH / 2
-        );
-        block.castShadow = block.receiveShadow = true;
-        palletGroup.add(block);
-      });
-    });
-
-    [-0.34, 0, 0.34].forEach(yf => {
-      const board = new THREE.Mesh(
-        new THREE.BoxGeometry(L, W * 0.14, bottomH), wood
-      );
-      board.position.set(
-        0, yf * W, -topH - blockH - bottomH / 2
-      );
-      board.castShadow = board.receiveShadow = true;
-      palletGroup.add(board);
-    });
+    centers(r("bottom_board_count", 3), W - botW).forEach(y =>
+      add(L, botW, botH, 0, y, -topH - strH - blkH - botH / 2, wood));
 
     root.add(palletGroup);
 

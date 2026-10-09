@@ -68,7 +68,16 @@ class Camera:
 
 # Fixed pole CCTV (camera_1_cctv_base / cctv_camera_1 in the workcell SDF).
 FAR_CCTV = Camera(np.array([-0.6, 1.78, 2.4]), rot_rpy(0.0, 1.178996, -1.317721), 1.40, 1280, 720)
+if __import__("os").environ.get("PAC_LAYOUT") == "v46":
+    # V4.6 camera 2: same pole, 3.6 m high, wider view (PICK + pallet + buffer table)
+    FAR_CCTV = Camera(np.array([-0.6, 1.78, 3.6]), rot_rpy(0.0, 1.265364, -1.352630), 1.60, 1920, 1080)
 # Straight-down reference camera above PICK (synthetic tests only).
+# V4.6 camera 1: straight-down top view of the weighing section (scale moved by PAC_SCALE_SHIFT_M).
+SCALE_CX = -3.80 + float(__import__("os").environ.get("PAC_SCALE_SHIFT_M", "0"))
+SCALE_TOP = Camera(np.array([SCALE_CX, 1.20, 2.20]), rot_rpy(0.0, 1.5708, 0.0), 1.00, 1280, 960)
+SCALE_ROI = ((SCALE_CX - 0.60, SCALE_CX + 0.60), (0.80, 1.60))
+# No wrist camera (V4.6, PAC_NO_WRIST=1): the pole CCTV also re-checks boxes on the pallet.
+NO_WRIST = __import__("os").environ.get("PAC_NO_WRIST", "0") == "1"
 TOPVIEW_TEST = Camera(np.array([-1.06, 1.20, 2.60]), rot_rpy(0.0, 1.5708, 0.0), 1.0, 1280, 960)
 WRIST_HFOV, WRIST_W, WRIST_H = 1.30, 640, 480
 
@@ -150,16 +159,28 @@ def localize(rgb, cam: Camera, box_size=DEFAULT_BOX, roi=CONVEYOR_ROI, expect_xy
         return out
     if expect_yaw is not None:
         # Box on the pallet: known-size rectangle fit (neighbours of the same colour may touch it).
-        fit = fit_known_rect(xs, ys, box_size, expect_xy, expect_yaw)
+        fx_ = (cam.width / 2.0) / math.tan(cam.hfov / 2.0)
+
+        def visible(xw, yw, margin=4):
+            rel = np.stack([xw - cam.pos[0], yw - cam.pos[1], np.full_like(xw, z_top) - cam.pos[2]])
+            d = np.einsum("ij,j...->i...", cam.R.T, rel)
+            ok = d[0] > 0.05
+            den = np.where(ok, d[0], 1.0)
+            u_px = cam.width / 2.0 - fx_ * d[1] / den
+            v_px = cam.height / 2.0 - fx_ * d[2] / den
+            return ok & (u_px > margin) & (u_px < cam.width - margin) & (v_px > margin) & (v_px < cam.height - margin)
+
+        fit = fit_known_rect(xs, ys, box_size, expect_xy, expect_yaw, visible=visible)
         if fit is None:
             return out
         # Sub-grid refinement from the box edges (the 5 mm grid alone reported exactly 5.0 mm offsets).
         fit = refine_rect_edges(xs, ys, box_size, fit)
-        x, y, yaw, ins, rg = fit
-        ok = ins >= FIT_MIN_INSIDE and rg <= FIT_MAX_RING
+        x, y, yaw, ins, rg, vf = fit
+        ok = ins >= FIT_MIN_INSIDE and rg <= FIT_MAX_RING and vf >= 0.35
         out.update({"status": "OK" if ok else "FIT_POOR", "x": float(x), "y": float(y),
                     "z": z_top - box_size[2] / 2, "yaw": float(yaw), "length": float(box_size[0]),
-                    "width": float(box_size[1]), "fit_inside": round(ins, 3), "fit_ring": round(rg, 3)})
+                    "width": float(box_size[1]), "fit_inside": round(ins, 3), "fit_ring": round(rg, 3),
+                    "fit_visible": round(vf, 3)})
         return out
     pts = np.stack([xs, ys], axis=1)
     c = pts.mean(axis=0)
@@ -179,12 +200,13 @@ def localize(rgb, cam: Camera, box_size=DEFAULT_BOX, roi=CONVEYOR_ROI, expect_xy
 
 
 def fit_known_rect(xs, ys, box_size, expect_xy, yaw0, search=0.08, cell=0.005, band=0.025, yaw_step=1.0,
-                   yaw_span=4.0):
+                   yaw_span=4.0, visible=None):
     """Known-size footprint fit (box on the pallet): slide/turn an SKU-sized rectangle around
     `expect_xy` / `yaw0` and maximise (covered fraction inside) - (occupied fraction of a band just
     outside). A same-coloured neighbour touching the box in the image fills one side of the band
     wherever the rectangle is, the three free sides pin the position. Returns
-    (x, y, yaw, inside, band) or None."""
+    (x, y, yaw, inside, band, visible_fraction) or None. `visible(x, y)` (world, bool array): only
+    cells inside the camera image count (close views of large boxes, high stacks)."""
     L, W = box_size[0], box_size[1]
     ex, ey = expect_xy
     half = search + max(L, W) / 2 + band + 0.01
@@ -199,36 +221,50 @@ def fit_known_rect(xs, ys, box_size, expect_xy, yaw0, search=0.08, cell=0.005, b
         v = -(xs - ex) * s_ + (ys - ey) * c
         H, _, _ = np.histogram2d(u, v, bins=nb, range=[[-half, half], [-half, half]])
         occ = (H > 0).astype(np.int32)
+        if visible is not None:
+            centres = -half + (np.arange(nb) + 0.5) * (2 * half / nb)
+            UC, VC = np.meshgrid(centres, centres, indexing="ij")
+            vis = visible(ex + UC * c - VC * s_, ey + UC * s_ + VC * c).astype(np.int32)
+        else:
+            vis = np.ones_like(occ)
+        occ = occ * vis
         I = np.zeros((nb + 1, nb + 1), np.int64)
         I[1:, 1:] = occ.cumsum(0).cumsum(1)
+        IV = np.zeros((nb + 1, nb + 1), np.int64)
+        IV[1:, 1:] = vis.cumsum(0).cumsum(1)
         mid = nb // 2
         du, dv = np.meshgrid(np.arange(-k, k + 1), np.arange(-k, k + 1), indexing="ij")
 
-        def bsum(a0, a1, b0, b1):
+        def bsum(a0, a1, b0, b1, T=I):
             a0, a1 = np.clip(a0, 0, nb), np.clip(a1, 0, nb)
             b0, b1 = np.clip(b0, 0, nb), np.clip(b1, 0, nb)
-            return I[a1, b1] - I[a0, b1] - I[a1, b0] + I[a0, b0]
+            return T[a1, b1] - T[a0, b1] - T[a1, b0] + T[a0, b0]
 
         cu, cv = mid + du, mid + dv
-        inside = bsum(cu - hl, cu + hl, cv - hw, cv + hw) / float(4 * hl * hw)
+        rect_v = bsum(cu - hl, cu + hl, cv - hw, cv + hw, IV)
+        ring_v = bsum(cu - hl - bb, cu + hl + bb, cv - hw - bb, cv + hw + bb, IV) - rect_v
+        inside = bsum(cu - hl, cu + hl, cv - hw, cv + hw) / np.maximum(rect_v, 1)
         outer = bsum(cu - hl - bb, cu + hl + bb, cv - hw - bb, cv + hw + bb)
-        ring = (outer - bsum(cu - hl, cu + hl, cv - hw, cv + hw)) / float(4 * (hl + bb) * (hw + bb) - 4 * hl * hw)
+        ring = (outer - bsum(cu - hl, cu + hl, cv - hw, cv + hw)) / np.maximum(ring_v, 1)
+        vis_frac = rect_v / float(4 * hl * hw)
+        inside = np.where(vis_frac >= 0.35, inside, 0.0)
         score = inside - ring
         i = np.unravel_index(int(np.argmax(score)), score.shape)
         if best is None or score[i] > best[0]:
             ou, ov = du[i] * cell, dv[i] * cell
-            best = (score[i], ex + ou * c - ov * s_, ey + ou * s_ + ov * c, yaw, float(inside[i]), float(ring[i]))
+            best = (score[i], ex + ou * c - ov * s_, ey + ou * s_ + ov * c, yaw, float(inside[i]), float(ring[i]),
+                    float(vis_frac[i]))
     if best is None:
         return None
-    _, x, y, yaw, ins, rg = best
-    return x, y, (yaw + math.pi / 2) % math.pi - math.pi / 2, ins, rg
+    _, x, y, yaw, ins, rg, vf = best
+    return x, y, (yaw + math.pi / 2) % math.pi - math.pi / 2, ins, rg, vf
 
 
 def refine_rect_edges(xs, ys, box_size, fit, band=0.025):
     """Refine a known-size fit from its free edges: along each box axis, an edge whose outside band
     is empty is measured (1st / 99th percentile of the top-face points); a side touching a
     same-coloured neighbour is not used (centre = free edge -+ half size). Returns the fit tuple."""
-    x, y, yaw, ins, rg = fit
+    x, y, yaw = fit[:3]
     L, W = box_size[0], box_size[1]
     c, s_ = math.cos(yaw), math.sin(yaw)
     u = (xs - x) * c + (ys - y) * s_
@@ -260,7 +296,7 @@ def refine_rect_edges(xs, ys, box_size, fit, band=0.025):
             du = d
         else:
             dv = d
-    return x + du * c - dv * s_, y + du * s_ + dv * c, yaw, ins, rg
+    return (x + du * c - dv * s_, y + du * s_ + dv * c, yaw) + tuple(fit[3:])
 
 
 def draw(rgb, res, cam: Camera, box_size, label):
@@ -290,7 +326,8 @@ class BoxPerception(Node):
         self.box_name, self.box_size, self.base_z, self.expect_yaw = None, DEFAULT_BOX, None, None
         self.coarse = None
         self.pubs = {}
-        for cam in ("far", "wrist"):
+        self.scale_box, self.scale_size = None, DEFAULT_BOX
+        for cam in ("far", "wrist", "scale"):
             self.pubs[cam] = (self.create_publisher(String, f"/pac/perception/{cam}/box_info", 10),
                               self.create_publisher(PoseStamped, f"/pac/perception/{cam}/box_pose", 10),
                               self.create_publisher(Image, f"/pac/perception/{cam}/debug_image", 2))
@@ -299,7 +336,15 @@ class BoxPerception(Node):
                                  qos_profile_sensor_data)
         self.create_subscription(Image, "/pac/wrist_camera/image", lambda m: self.on_image(m, "wrist"),
                                  qos_profile_sensor_data)
+        # V4.6 scale camera: its own target (the box on the scale is not the box at PICK).
+        self.create_subscription(String, "/pac/perception/scale_target", self.on_scale_target, 10)
+        self.create_subscription(Image, "/pac/scale_camera/image", lambda m: self.on_image(m, "scale"),
+                                 qos_profile_sensor_data)
         self.last_status = {}
+
+    def on_scale_target(self, msg: String) -> None:
+        t = json.loads(msg.data)
+        self.scale_box, self.scale_size = t.get("box"), tuple(t.get("size", DEFAULT_BOX))
 
     def on_target(self, msg: String) -> None:
         t = json.loads(msg.data)
@@ -335,9 +380,23 @@ class BoxPerception(Node):
         if msg.encoding == "bgr8":
             rgb = rgb[..., ::-1]
         rgb = np.ascontiguousarray(rgb)
-        if cam_name == "far":
-            if self.base_z is not None:   # box on the pallet: gripper camera only
+        box_name, box_size = self.box_name, self.box_size
+        if cam_name == "scale":
+            if self.scale_box is None:
                 return
+            cam, roi, expect = SCALE_TOP, SCALE_ROI, (SCALE_CX, 1.20)
+            box_name, box_size = self.scale_box, self.scale_size
+            res = localize(rgb, cam, box_size, roi, expect, CONVEYOR_TOP_Z)
+        elif cam_name == "far" and self.base_z is not None:
+            if not NO_WRIST or self.coarse is None:   # box on the pallet: wrist camera (V4.4)
+                return
+            cam = FAR_CCTV
+            cx, cy = self.coarse
+            r = max(self.box_size[:2]) / 2 + 0.13
+            roi = ((cx - r, cx + r), (cy - r, cy + r))
+            res = localize(rgb, cam, self.box_size, roi, self.coarse, self.base_z, split_px=4,
+                           expect_yaw=self.expect_yaw or 0.0)
+        elif cam_name == "far":
             cam, roi = FAR_CCTV, CONVEYOR_ROI
         else:
             cam = self.wrist_camera(msg.header.stamp)
@@ -347,21 +406,22 @@ class BoxPerception(Node):
             # On the pallet the neighbours are close: look only around the expected footprint.
             r = 0.35 if self.base_z is None else max(self.box_size[:2]) / 2 + 0.13
             roi = ((cx - r, cx + r), (cy - r, cy + r))
-        expect = self.coarse if cam_name == "wrist" else (-0.845 - self.box_size[0] / 2, 1.20)
-        res = localize(rgb, cam, self.box_size, roi, expect,
-                       CONVEYOR_TOP_Z if self.base_z is None else self.base_z,
-                       split_px=0 if self.base_z is None else 4,
-                       expect_yaw=None if self.base_z is None else (self.expect_yaw or 0.0))
-        if cam_name == "far" and res["status"] == "OK":
-            self.coarse = (res["x"], res["y"])
-        res.update({"camera": cam_name, "box": self.box_name, "size_sku": list(self.box_size),
+        if cam_name == "wrist" or (cam_name == "far" and self.base_z is None):
+            expect = self.coarse if cam_name == "wrist" else (-0.845 - self.box_size[0] / 2, 1.20)
+            res = localize(rgb, cam, self.box_size, roi, expect,
+                           CONVEYOR_TOP_Z if self.base_z is None else self.base_z,
+                           split_px=0 if self.base_z is None else 4,
+                           expect_yaw=None if self.base_z is None else (self.expect_yaw or 0.0))
+            if cam_name == "far" and res["status"] == "OK":
+                self.coarse = (res["x"], res["y"])
+        res.update({"camera": cam_name, "box": box_name, "size_sku": list(box_size),
                     "stamp": msg.header.stamp.sec + msg.header.stamp.nanosec * 1e-9, "frame": "world"})
         info_pub, pose_pub, dbg_pub = self.pubs[cam_name]
         info_pub.publish(String(data=json.dumps(res)))
         if self.last_status.get(cam_name) != res["status"]:
             self.get_logger().info(f"{cam_name}: {res['status']} {json.dumps({k: round(v, 3) for k, v in res.items() if isinstance(v, float)})}")
             self.last_status[cam_name] = res["status"]
-        dbg = draw(rgb, res, cam, self.box_size, cam_name)
+        dbg = draw(rgb, res, cam, box_size, cam_name)
         dbg_pub.publish(Image(header=msg.header, height=dbg.shape[0], width=dbg.shape[1], encoding="bgr8",
                               is_bigendian=0, step=dbg.shape[1] * 3, data=dbg.tobytes()))
         if res["status"] == "OK":

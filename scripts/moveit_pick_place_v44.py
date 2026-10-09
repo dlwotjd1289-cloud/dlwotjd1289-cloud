@@ -76,9 +76,15 @@ BUFFER_TOP_Z = 0.9425            # buffer table shelf top
 # Gripper payload (rated, safety factor included): foam/area suction pad sized for 30 kg cartons.
 # Extension options for heavier boxes (illustrative ratings until the EOAT is selected):
 GRIPPERS = {"pad": 30.0, "pad_xl": 45.0, "pad_fork": 60.0}
+# V4.6: no wrist camera (two fixed cameras). The pick pose comes from the pole CCTV alone and the
+# placed box is checked by the pole CCTV after the arm is back at READY (out of its view).
+NO_WRIST = os.environ.get("PAC_NO_WRIST", "0") == "1"
+REACH_TCP_MAX_Z = 1.95           # IK grid 2026-10-09: TCP z reachable over the whole pallet
 PICK_ATTEMPTS = 3                 # pick tries (re-perceive + re-grip after a failed one)
 REPLACE_ATTEMPTS = 1              # re-grip on the pallet when the camera finds the box off target
 
+BUFFER_X = float(os.environ.get("PAC_BUFFER_X", "1.45"))     # buffer table centre (V4.6: -1.05, 0.40)
+BUFFER_Y = float(os.environ.get("PAC_BUFFER_Y", "-0.55"))
 # Workcell planning scene (world frame), from ahead_workcell_v4_2_physical_scale.sdf
 # collision geometry; boxes as (name, center xyz, size xyz).
 SCENE = [
@@ -87,12 +93,12 @@ SCENE = [
     ("conveyor", (-2.95, 1.20, 0.445), (4.18, 0.80, 0.89)),        # supports + rollers, top 0.89
     ("pick_stopper", (-0.82, 1.20, 0.96), (0.05, 0.66, 0.18)),
     ("pallet", (0.0, 1.20, 0.075), (1.10, 1.10, 0.15)),
-    # buffer table (V4.4: 2 bays on the 0.92 m shelf, posts 0.97 m)
-    *[(f"buffer_post_{i}", (1.45 + dx, -0.55 + dy, 0.485), (0.055, 0.055, 0.97))
+    # buffer table (V4.4: 2 bays on the 0.92 m shelf, posts 0.97 m; V4.6: next to PICK)
+    *[(f"buffer_post_{i}", (BUFFER_X + dx, BUFFER_Y + dy, 0.485), (0.055, 0.055, 0.97))
       for i, (dx, dy) in enumerate(((-0.43, -0.26), (0.43, -0.26), (-0.43, 0.26), (0.43, 0.26)))],
-    *[(f"buffer_divider_{i}", (1.45, -0.55 + dy, 0.485), (0.04, 0.04, 0.97)) for i, dy in enumerate((-0.26, 0.26))],
-    ("buffer_shelf_low", (1.45, -0.55, 0.34), (0.90, 0.58, 0.045)),
-    ("buffer_shelf", (1.45, -0.55, 0.92), (0.90, 0.58, 0.045)),
+    *[(f"buffer_divider_{i}", (BUFFER_X, BUFFER_Y + dy, 0.485), (0.04, 0.04, 0.97)) for i, dy in enumerate((-0.26, 0.26))],
+    ("buffer_shelf_low", (BUFFER_X, BUFFER_Y, 0.34), (0.90, 0.58, 0.045)),
+    ("buffer_shelf", (BUFFER_X, BUFFER_Y, 0.92), (0.90, 0.58, 0.045)),
     ("camera_pole", (-0.60, 1.95, 1.17), (0.24, 0.24, 2.34)),
 ]
 
@@ -503,11 +509,13 @@ class MoveItPickPlace(Node):
             # attaches every new box_NN on appearance (released right after), which must happen
             # while the arm stands still.
             print(">>> [MoveIt 4/7] 로봇 정지(압착) 중: 다음 박스를 컨베이어 입구에 생성 대기...", flush=True)
-            end = time.monotonic() + 30.0
+            # The runner always opens the gate (also when the spawn failed: the next box is then
+            # created after this cycle); a slow spawn under load took > 30 s once (box_11).
+            end = time.monotonic() + 120.0
             while time.monotonic() < end and not os.path.exists(gate):
                 self.spin_for(0.1)
             if not os.path.exists(gate):
-                raise Fatal("next box was not created at the inlet within 30 s (SPAWN_GATE)")
+                print("    ! next box not created within 120 s: continuing without it", flush=True)
         print(">>> [MoveIt 4/7] 진공 ON, 흡착 확인 후 박스를 로봇에 부착(attach) 중...", flush=True)
         self.set_vacuum(True)
         self.wait(lambda: self.suction == "GRIPPED", 5, "suction GRIPPED (vacuum switch)")
@@ -624,10 +632,16 @@ class MoveItPickPlace(Node):
                 truth_b, truth_q, _ = self.fresh_box()
                 b, q = truth_b.copy(), truth_q
                 if pick_from == "buffer":
-                    # Box parked on the buffer table: start from where it was put, refine with the
-                    # gripper camera (the pole CCTV does not see the buffer).
+                    # Box parked on the buffer table: start from where it was put; V4.6 measures it
+                    # with the pole CCTV (table next to PICK), V4.4 refines with the gripper camera.
                     b = np.array(pick_pose[:3], float)
                     q = (0.0, 0.0, math.sin(pick_pose[3] / 2), math.cos(pick_pose[3] / 2))
+                    if NO_WRIST and pose_source == "camera":
+                        bf, q = self.far_locate(box, size, b, pick_pose[3], BUFFER_TOP_Z, "box on the buffer table")
+                        b = np.array([bf[0], bf[1], b[2]])
+                        err = np.linalg.norm((b - truth_b)[:2])
+                        notes.append(f"CCTV (buffer) error {err * 1000:.1f} mm")
+                        print(f"    [camera] CCTV buffer pose error vs ground truth {err * 1000:.1f} mm", flush=True)
                 elif pose_source == "camera":
                     # Coarse pose from the fixed pole CCTV (robot at READY, view unobstructed);
                     # Gazebo ground truth is only used to report the errors.
@@ -652,7 +666,10 @@ class MoveItPickPlace(Node):
                           f"target ({place[0]:.3f}, {place[1]:.3f}, {place[2]:.3f}) m", flush=True)
                     print(">>> [MoveIt 3/7] 박스 위 접근 위치로 이동 중 (IK + Pilz PTP, 충돌 검사)...", flush=True)
                 self.apply_scene(objects=[box_object(BOX_ID, b, size, q)])
-                if pose_source == "camera":
+                if NO_WRIST:
+                    # pole CCTV pose (PICK) or the recorded buffer pose: go straight above the box
+                    self.plan_pose((b[0], b[1], top + APPROACH_M), yaw, "move above box")
+                elif pose_source == "camera":
                     b_w, q_w = self.wrist_look(box, size, b, yaw, top,
                                                base_z=BUFFER_TOP_Z if pick_from == "buffer" else None)
                     shift = np.linalg.norm((b_w - b)[:2])
@@ -764,14 +781,23 @@ class MoveItPickPlace(Node):
                 self.set_allowed_collision(BOX_ID, "suction_cup_link", False)
             if pose_source != "camera":
                 break
+            if NO_WRIST:
+                c_b, c_q = self.far_check(box, size, place, place_yaw)
             # Gripper camera check of the placed box (RGB: top face on the plane slot top; a tilted
             # or fallen box does not match the SKU footprint there and is not confirmed).
             print(">>> [MoveIt 6/7] 그리퍼 카메라로 놓인 박스 위치 확인 중...", flush=True)
+            # Look from INSPECT_M above the box top where the arm reaches (from 0.2 m only half of a
+            # 0.41 m box was in the image: box_09 on the buffer, 2026-10-09); the fit counts only
+            # the part of the footprint inside the image.
+            z_look = min(max(transfer_z, place_top + INSPECT_M), REACH_TCP_MAX_Z)
+            if not NO_WRIST and z_look > transfer_z + 0.01:
+                self.line((target[0], target[1], z_look), place_yaw, "rise for the gripper camera check")
             try:
                 # From the retreat pose straight above the slot (no extra move: a PTP down to the
                 # inspection height aborted twice on box_01, 2026-10-09).
-                c_b, c_q = self.wrist_look(box, size, place, place_yaw, place_top, base_z=place[2] - size[2] / 2,
-                                           timeout=10.0, move=False)
+                if not NO_WRIST:
+                    c_b, c_q = self.wrist_look(box, size, place, place_yaw, place_top, base_z=place[2] - size[2] / 2,
+                                               timeout=10.0, move=False)
             except Failure:
                 raise Fatal("placed box not confirmed by the gripper camera (tilted, fallen or moved): "
                             "cell stopped, operator check needed")
@@ -788,6 +814,8 @@ class MoveItPickPlace(Node):
             self.recoveries.append(f"re-place: camera {c_err * 1000:.0f} mm off")
             c_top = place_top
             try:
+                if NO_WRIST:   # from READY: above the measured box first
+                    self.plan_pose((c_b[0], c_b[1], c_top + APPROACH_M), yaw_of(c_q), "move above the placed box")
                 self.grip(np.array([c_b[0], c_b[1], place[2]]), yaw_of(c_q), c_top, size, c_q, at_pick=False)
             except Failure as exc:
                 raise Fatal(f"re-grip on the pallet failed: {exc}")
@@ -823,6 +851,33 @@ class MoveItPickPlace(Node):
         if worst > DISTURB_TOL_M:
             raise Fatal(f"an already placed box moved {worst * 1000:.1f} mm (> {DISTURB_TOL_M * 1000:.0f} mm): " + result)
         return result
+
+    def far_check(self, box, size, place, place_yaw):
+        """V4.6: back to READY (out of the pole CCTV's view of the pallet), then measure the placed
+        box with the pole CCTV (SKU-sized rectangle fit on the slot plane)."""
+        print(">>> [MoveIt 6/7] 대기 자세로 물러난 뒤 고정 카메라(CCTV)로 놓인 박스 위치 확인 중...", flush=True)
+        self.go_ready("back to ready pose for the CCTV check")
+        return self.far_locate(box, size, place, place_yaw, place[2] - size[2] / 2, "placed box")
+
+    def far_locate(self, box, size, xy, yaw, base_z, what):
+        """Pole CCTV measurement of a box resting on a known surface (pallet / buffer table), arm out
+        of the view. Fatal if not confirmed."""
+        msg = {"box": box, "size": list(size), "base_z": float(base_z),
+               "expect": [float(xy[0]), float(xy[1])], "expect_yaw": float(yaw)}
+        for _ in range(3):
+            self.percept_target_pub.publish(String(data=json.dumps(msg)))
+            self.spin_for(0.05)
+        self.spin_for(1.0)
+        t_req = time.monotonic()
+        self.percept.pop("far", None)
+        try:
+            self.wait(lambda: "far" in self.percept and self.percept["far"][2] > t_req + 0.3, 10.0,
+                      f"/pac/perception/far/box_pose ({what})")
+        except Failure:
+            raise Fatal(f"{what} not confirmed by the pole CCTV (tilted, fallen, moved or hidden): "
+                        "cell stopped, operator check needed")
+        b, q, _ = self.percept["far"]
+        return b, q
 
     def check_carried(self, size, phase):
         """Box still on the cup (simulation: pose stream as the vacuum sensor). A dropped box is

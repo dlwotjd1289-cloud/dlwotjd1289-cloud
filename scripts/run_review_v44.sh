@@ -4,6 +4,7 @@
 # cell repeats every Gazebo placement), then a generator scenario through the closed loop.
 #   bash scripts/run_review_v44.sh [SCENARIO] [COUNT]        default S0001 5
 #   NO_BROWSER=1  do not open the browser      DATASET=...  generator dataset dir
+#   LAYOUT=v46    V4.6 world (two fixed cameras, scale at the conveyor start, buffer next to PICK)
 #   GZ_GUI=0      no Gazebo window (server only; review in RViz + browser, saves ~2 CPU cores)
 # Everything stays up after the run for review; stop with: bash scripts/stop_review_v44.sh
 set -eo pipefail
@@ -15,6 +16,14 @@ mkdir -p "$LOG"
 source /opt/ros/humble/setup.bash
 source "$ROOT/ros2_ws/install/setup.bash"
 set -u
+# LAYOUT=v46: V4.6 world (scale at the conveyor start, +2.185 m conveyor, buffer table next to PICK,
+# two fixed cameras: scale top view + pole CCTV, no wrist camera). Default: V4.4.
+if [[ "${LAYOUT:-v44}" == v46 ]]; then
+  export PAC_LAYOUT=v46 PAC_SCALE_SHIFT_M=-2.185 PAC_NO_WRIST=1 PAC_BUFFER_X=-1.05 PAC_BUFFER_Y=0.40
+  WORKCELL_LAUNCH=hdr50_workcell_v4_6.launch.py
+else
+  WORKCELL_LAUNCH=hdr50_workcell_v4_4_pick.launch.py
+fi
 # gz-transport discovery on the loopback interface only: a Wi-Fi / hotspot address change broke
 # discovery for every new process (new boxes could not be created, 2026-10-09). IGN_IP= to override.
 export IGN_IP="${IGN_IP-127.0.0.1}"
@@ -30,8 +39,8 @@ fi
 echo ">>> [리뷰 1/5] 이전 시뮬레이션 정리 중..."
 bash "$ROOT/scripts/stop_review_v44.sh" >/dev/null 2>&1 || true
 
-echo ">>> [리뷰 2/5] Gazebo V4.4 작업셀 실행 중..."
-setsid nohup ros2 launch pac_bringup hdr50_workcell_v4_4_pick.launch.py > "$LOG/gazebo.log" 2>&1 < /dev/null &
+echo ">>> [리뷰 2/5] Gazebo 작업셀 실행 중 ($WORKCELL_LAUNCH)..."
+setsid nohup ros2 launch pac_bringup "$WORKCELL_LAUNCH" > "$LOG/gazebo.log" 2>&1 < /dev/null &
 for _ in $(seq 60); do ign topic -l 2>/dev/null | grep -qx /pac/gripper/state && break; sleep 1; done
 for _ in $(seq 40); do timeout 5 ros2 control list_controllers 2>/dev/null | grep -q 'trajectory.*active' && break; sleep 1; done
 timeout 5 ros2 control list_controllers 2>/dev/null | grep -q 'trajectory.*active' \

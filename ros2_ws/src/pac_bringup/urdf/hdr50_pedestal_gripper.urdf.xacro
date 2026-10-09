@@ -15,6 +15,9 @@
 
   <xacro:arg name="name" default="hdr_robot"/>
   <xacro:arg name="gripper_child_model" default="v43_scale_box_5kg"/>
+  <!-- V4.6: two fixed cameras only (scale top view + PICK/pallet CCTV); wrist_camera:=false removes
+       the gripper camera sensor and its visual (the frame stays for the SRDF collision pairs). -->
+  <xacro:arg name="wrist_camera" default="true"/>
 
   <xacro:include filename="$(find pac_bringup)/urdf/hdr50_pedestal.urdf.xacro"/>
 
@@ -69,10 +72,12 @@
       <mass value="0.1"/>
       <inertia ixx="1e-5" ixy="0" ixz="0" iyy="1e-5" iyz="0" izz="1e-5"/>
     </inertial>
+    <xacro:if value="$(arg wrist_camera)">
     <visual name="wrist_camera_visual">
       <geometry><box size="0.03 0.05 0.04"/></geometry>
       <material name="wrist_camera_black"><color rgba="0.08 0.08 0.1 1"/></material>
     </visual>
+    </xacro:if>
   </link>
   <joint name="wrist_camera_joint" type="fixed">
     <parent link="suction_cup_link"/>
@@ -82,6 +87,7 @@
   <gazebo reference="wrist_camera_joint">
     <preserveFixedJoint>true</preserveFixedJoint>
   </gazebo>
+  <xacro:if value="$(arg wrist_camera)">
   <gazebo reference="wrist_camera_link">
     <sensor name="wrist_camera" type="camera">
       <always_on>true</always_on>
@@ -94,6 +100,7 @@
       </camera>
     </sensor>
   </gazebo>
+  </xacro:if>
 
   <!-- Keep the cup as its own link (no fixed-joint lumping into flange_link)
        so the contact sensor and DetachableJoint can reference it. -->
