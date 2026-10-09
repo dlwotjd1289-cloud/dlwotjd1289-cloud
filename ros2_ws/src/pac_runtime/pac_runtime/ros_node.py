@@ -25,10 +25,14 @@ Run (after ``colcon build``)::
     ros2 run pac_runtime runtime_node --ros-args -p order_file:=/path/order.json
 
 One command is outstanding at a time; the next one is published after its
-result arrives (or after a new observation when the cell was idle).
+result arrives (or after a new observation when the cell was idle). While
+the robot executes a command, the next one is planned in a background
+thread on the expected outcome (``RuntimeCore.forecast``); when the result
+matches, it is published at once instead of planning while the robot waits.
 """
 
 import json
+import threading
 
 from pac_common import Pose3D
 
@@ -112,8 +116,10 @@ def make_runtime_ranker(name="layer", model_path="", seed=7, config_path=""):
 class CoreBridge:
     """ROS-free message handling (unit-tested); the node only moves strings."""
 
-    def __init__(self, core):
+    def __init__(self, core, plan_ahead=True):
         self.core = core
+        self.plan_ahead = plan_ahead
+        self._ahead = None      # (thread, [core copy, planned command]) for the outstanding command
         self.pending = None
         # Observations / idle reports that arrive while a command is being
         # executed (the next box reaches the pick point during a placement).
@@ -121,15 +127,43 @@ class CoreBridge:
         # command (STALE_RESULT); they are applied right after its result.
         self.deferred = []
 
+    def _start_ahead(self, cmd):
+        """Plan the command after ``cmd`` while the robot executes it."""
+        self._ahead = None
+        twin = self.core.forecast(cmd) if self.plan_ahead else None
+        if twin is None or not twin.has_work():
+            return
+        out = [twin, None]
+
+        def plan():
+            try:
+                out[1] = twin.next_command()
+            except Exception:  # the real core plans again; never break the cell over a forecast
+                out[1] = None
+
+        thread = threading.Thread(target=plan, name="pac_plan_ahead", daemon=True)
+        thread.start()
+        self._ahead = (thread, out)
+
+    def _take_ahead(self):
+        if self._ahead is None:
+            return None
+        thread, out = self._ahead
+        self._ahead = None
+        thread.join()  # still running: the remaining time is spent anyway
+        return out[0], out[1]
+
     def _next(self):
         if self.pending is None and self.core.has_work():
-            cmd = self.core.next_command()
+            cmd = self.core.next_command(forecast=self._take_ahead())
             while cmd.action == "WAIT" and cmd.reason == "REPACK_NOT_EXECUTABLE":
                 cmd = self.core.next_command()  # the repack counter rises: terminates
             if cmd.action != "WAIT":
                 self.pending = cmd
                 box = self.core.sm.tracked.get(cmd.box_id)
-                return command_to_dict(cmd, box)
+                out = command_to_dict(cmd, box)
+                self._start_ahead(cmd)
+                return out
         return None
 
     def on_observation(self, text):
@@ -187,6 +221,8 @@ class CoreBridge:
         out = {"state_version": sm.version, "pallet_id": sm.pallet_id, "placed": len(sm.placed),
                "buffer": sm.buffer_slots(), "mode": self.core.supervisor.mode.value,
                "inspection": len(self.core.inspection), "counts": dict(self.core.counts),
+               "planned_ahead": self.core.counts.get("ahead_used", 0),
+               "replanned": self.core.counts.get("ahead_replanned", 0),
                "policy": "lookahead", "visible_boxes": len(self.core.preview),
                "ranker": getattr(ranker, "name", "custom"),
                "deferred": len(self.deferred)}

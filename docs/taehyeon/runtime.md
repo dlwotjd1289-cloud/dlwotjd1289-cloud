@@ -71,6 +71,8 @@ level = core.on_result(cmd, ExecutionReport(measured_pose=top_view_pose))   # 7 
 core.on_conveyor_idle(idle_s)    # 3: MISSING 확정
 ```
 
+로봇이 명령을 실행하는 동안 `CoreBridge`가 다음 명령을 별도 스레드에서 미리 계산합니다(`RuntimeCore.forecast`: 계획한 위치에 놓였고 컨베이어에 보이던 다음 박스가 왔다고 가정). 결과가 오면 실제 상태가 예상과 같은지(놓인 위치 L0 범위, 무게 검증 범위, 보이는 박스) 보고, 같으면 고른 자리를 실제 상태로 Hard Mask·6단계 검사만 다시 해서 바로 보냅니다. 다르면 처음부터 다시 계산합니다. `status`의 `planned_ahead` / `replanned`가 사용 횟수입니다.
+
 주문 목록 형식은 `pac_runtime/order.py`, 예시는 `config/taehyeon/example_order.json`(생성기 시나리오 1개)입니다.
 
 ### ROS 2 노드

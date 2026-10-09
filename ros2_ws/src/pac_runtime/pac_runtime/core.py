@@ -10,9 +10,18 @@ or a ROS 2 node drives.
 
 All decisions read the State Manager snapshot; the state only changes in
 ``on_observation`` / ``on_result`` / ``on_conveyor_idle``.
+
+Planning during the robot motion: ``forecast(cmd)`` copies the core with
+the expected outcome of ``cmd`` applied (planned pose reached, the first
+visible conveyor box at the pick point); the next command can be planned
+on that copy while the robot moves. ``next_command(forecast=...)`` uses it
+only if the real state turned out the same (poses within the L0 band) and
+the chosen pose passes the hard mask and stage 6 again on the real state;
+otherwise it plans from scratch.
 """
 
 from collections import Counter
+import copy
 from dataclasses import dataclass, field, replace
 
 from pac_common import PalletState, PlacementCandidate, SystemState
@@ -75,6 +84,7 @@ class RuntimeCore:
         self.closed = []
         self.last_check = {}
         self.preview = ()       # look-ahead window: boxes seen on the conveyor after the current one
+        self._preview_obs = ()
 
     # ---------------------------------------------------------------- 1, 2
     def on_observation(self, obs, base_view=None):
@@ -104,8 +114,9 @@ class RuntimeCore:
         State Manager through ``on_observation`` when they reach the pick
         point). Unlabelled or unknown boxes cannot be planned and are left out."""
         catalog = self.cell.catalog
+        self._preview_obs = tuple(o for o in observations if o.label_sku in catalog)
         self.preview = tuple(to_box_state(o, catalog[o.label_sku], size=catalog[o.label_sku].size)
-                             for o in observations if o.label_sku in catalog)
+                             for o in self._preview_obs)
 
     # ---------------------------------------------------------------- 3
     def on_conveyor_idle(self, idle_s):
@@ -118,12 +129,85 @@ class RuntimeCore:
         return self.sm.current_id() is not None or bool(self.sm.buffer_slots())
 
     # ---------------------------------------------------------------- 4, 5, 6
-    def next_command(self):
+    def forecast(self, cmd):
+        """Copy of the core after ``cmd`` went as planned (``None``: nothing
+        worth planning ahead). Shares the robot model, policy and placer
+        (stateless apart from statistics); the real core is untouched."""
+        if cmd.action not in ("PLACE_CURRENT", "RETRIEVE_BUFFER", "BUFFER_CURRENT", "REJECT_NG"):
+            return None
+        twin = copy.deepcopy(self, {id(self.robot): self.robot, id(self.placer): self.placer,
+                                    id(self.decider.policy): self.decider.policy})
+        report = ExecutionReport(measured_pose=cmd.candidate.target_pose) if cmd.candidate is not None else None
+        twin.on_result(cmd, report)
+        if cmd.action != "RETRIEVE_BUFFER" and twin._preview_obs:  # the conveyor box left: the next one arrives
+            nxt, rest = twin._preview_obs[0], twin._preview_obs[1:]
+            twin.on_observation(nxt)
+            twin.on_preview(rest)
+        return twin
+
+    def _same_state(self, twin):
+        """The real state equals the forecast: placed poses within the L0 band,
+        weights within the validator band (the hard mask is re-run with the
+        real weights in ``_adopt``), and the forecast's conveyor window a
+        prefix of the real one (a box that came into view meanwhile only adds
+        information the plan did not use)."""
+        a, b, v = self.sm, twin.sm, self.cfg.verify
+        if (a.pallet_index, a.slots, a.remaining, a.uncertain, a.no_load) !=                 (b.pallet_index, b.slots, b.remaining, b.uncertain, b.no_load):
+            return False
+        if self.supervisor.mode != twin.supervisor.mode or self.repacks_for_current != twin.repacks_for_current:
+            return False
+        seen = [x.box_id for x in twin.preview]
+        if [k for k in a.tracked] != [k for k in b.tracked] or                 [x.box_id for x in self.preview][:len(seen)] != seen:
+            return False
+        wtol = self.cfg.validator.weight_tolerance_ratio
+        for k, x in a.tracked.items():
+            y = b.tracked[k]
+            if (x.sku_id, x.status, x.size) != (y.sku_id, y.status, y.size) or                     abs(x.weight_kg - y.weight_kg) > wtol * max(x.weight_kg, y.weight_kg):
+                return False
+        if [p.box_id for p in a.placed] != [p.box_id for p in b.placed]:
+            return False
+        for p, q in zip(a.placed, b.placed):
+            if abs(p.pose.x - q.pose.x) > v.l0_xy_m or abs(p.pose.y - q.pose.y) > v.l0_xy_m or                     abs(p.pose.z - q.pose.z) > v.l0_z_m or abs(p.pose.yaw - q.pose.yaw) > 1e-6:
+                return False
+        return True
+
+    def _adopt(self, planned, state):
+        """``planned`` (made on the forecast) for the real ``state``, or None."""
+        sm = self.sm
+        cmd = replace(planned, state_version=state.state_version, robot={}, repack=[],
+                      decided_by=planned.decided_by + "+ahead")
+        if planned.action in ("PLACE_CURRENT", "RETRIEVE_BUFFER"):
+            box = sm.tracked[planned.box_id]
+            cand = replace(planned.candidate, base_state_version=state.state_version)
+            world = self.decider.snapshot_world(state, current_box_id=sm.current_id(),
+                                                buffer_slots=sm.buffer_slots(), buffer_age=sm.buffer_age())
+            if not world.backend().validate_constraints(box, cand, state).success:
+                return None
+            v6 = self.robot.validate_robot_motion(box, cand, state)
+            if not v6.success:
+                return None
+            cmd = replace(cmd, candidate=cand, robot=dict(v6.details))
+        elif planned.action not in ("BUFFER_CURRENT", "PALLET_CLOSE", "REJECT_NG"):
+            return None  # repack / wait: plan again on the real state
+        return cmd
+
+    def next_command(self, forecast=None):
+        """``forecast``: (core copy from ``forecast``, the command planned on it)."""
         sm = self.sm
         if not self.supervisor.can_pick() or not self.has_work():
             return Command("WAIT", sm.version, reason=self.supervisor.mode.value if self.has_work() else "NO_BOX")
         self.decider.context = sm.context()
         state = sm.snapshot()
+        if forecast is not None:
+            twin, planned = forecast
+            cmd = None
+            if twin is not None and planned is not None and planned.action != "WAIT" and self._same_state(twin):
+                cmd = self._adopt(planned, state)
+            self.counts["ahead_used" if cmd is not None else "ahead_replanned"] += 1
+            if cmd is not None:
+                sm.decisions += 1
+                self.counts[cmd.action] += 1
+                return cmd
         d = self.decider.decide(state, current_box_id=sm.current_id(), buffer_slots=sm.buffer_slots(),
                                 buffer_age=sm.buffer_age(), repack_attempts=self.repacks_for_current,
                                 visible_boxes=self.preview)

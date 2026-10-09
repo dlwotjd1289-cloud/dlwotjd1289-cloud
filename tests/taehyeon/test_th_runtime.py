@@ -552,3 +552,68 @@ def json_ok(cmd):
     import json
 
     return json.dumps({"state_version": cmd["state_version"], "ok": True})
+
+
+def _gazebo_run(plan_ahead, noise=0.0):
+    import json
+
+    from pac_robot_check import load_robot_check_config
+    from pac_runtime import RuntimeCore
+    from pac_runtime.gazebo_driver import GazeboCell, GazeboDriverCore, boxes_from_order
+    from pac_runtime.order import cell_from_order
+    from pac_runtime.ros_node import CoreBridge
+
+    order = {"pallet": {"size_m": [1.2, 1.0, 1.35]},
+             "skus": {"K": {"size_m": [0.4, 0.3, 0.2], "weight_kg": [2.0, 6.0], "count": 6},
+                      "S": {"size_m": [0.25, 0.2, 0.15], "weight_kg": [2.0, 4.0], "count": 6}}}
+    hl = replace(HighLevelConfig(), buffer=replace(HighLevelConfig().buffer, slots=2))
+    robot = RobotFeasibility(load_robot_check_config(REPO / "config/taehyeon/robot_check_gazebo.yaml"))
+    bridge = CoreBridge(RuntimeCore(cell_from_order(order, CandidateConfig()), CandidateConfig(), hl,
+                                    RuntimeConfig(), robot, load_policy("lookahead", config=hl)),
+                        plan_ahead=plan_ahead)
+    driver = GazeboDriverCore(boxes_from_order(order, seed=2), robot, GazeboCell(), visible_boxes=3,
+                              place_noise_m=noise, seed=5)
+    queue = [("preview", driver.preview()), ("obs", driver.first_observation())]
+    commands = []
+    while queue:
+        kind, payload = queue.pop(0)
+        if kind == "preview":
+            bridge.on_preview(json.dumps(payload))
+            continue
+        call = {"obs": bridge.on_observation, "idle": bridge.on_idle, "res": bridge.on_result}[kind]
+        _, cmd = call(json.dumps(payload))
+        if cmd is None:
+            continue
+        commands.append((cmd["action"], cmd["box_id"], cmd.get("target_min_corner")))
+        acts = driver.on_command(cmd)
+        queue.append(("res", acts.result))
+        if acts.preview is not None:
+            queue.append(("preview", acts.preview))
+        if acts.observation is not None:
+            queue.append(("obs", acts.observation))
+        if acts.idle is not None:
+            queue.append(("idle", acts.idle))
+    return commands, bridge
+
+
+def test_planning_during_the_motion_gives_the_same_commands():
+    """The command planned on the forecast while the robot moves is the one
+    the cell would have planned after the result (exact execution)."""
+    plain, _ = _gazebo_run(plan_ahead=False)
+    ahead, bridge = _gazebo_run(plan_ahead=True)
+    assert ahead == plain
+    status = bridge.status()
+    assert status["planned_ahead"] > 0.5 * len(ahead)
+    placed = sum(1 for a, _, _ in ahead if a in ("PLACE_CURRENT", "RETRIEVE_BUFFER"))
+    assert placed + len(bridge.core.inspection) == 12
+
+
+def test_planning_ahead_falls_back_when_the_result_differs():
+    """Placement error beyond the L0 band: the forecast is dropped and the
+    next command is planned on the real (measured) state."""
+    ahead, bridge = _gazebo_run(plan_ahead=True, noise=0.02)
+    core = bridge.core
+    assert core.counts["ahead_replanned"] > 0
+    assert len(core.sm.placed) + sum(len(b) for _, b in core.closed) + len(core.inspection) == 12
+    for action, box_id, corner in ahead:
+        assert action != "WAIT"
