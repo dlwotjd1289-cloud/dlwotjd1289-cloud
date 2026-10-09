@@ -1,0 +1,4 @@
+TEST: team default(perbox) -> WAVE+LBCP0.06    n=27 better 27 worse 0 d_paleq -1.57 d_pallets -1.67 p=1.5e-08
+TEST: team LBCP0.06 -> WAVE+LBCP0.06           n=27 better 27 worse 0 d_paleq -1.54 d_pallets -1.59 p=1.5e-08
+HOLDOUT: team default -> WAVE+LBCP0.06         n=21 better 21 worse 0 d_paleq -1.58 d_pallets -1.71 p=9.5e-07
+HOLDOUT: team LBCP0.06 -> WAVE+LBCP0.06        n=21 better 21 worse 0 d_paleq -1.71 d_pallets -1.86 p=9.5e-07

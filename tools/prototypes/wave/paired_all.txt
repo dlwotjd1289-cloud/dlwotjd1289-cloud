@@ -1,0 +1,4 @@
+TEST: team DBLF+Rule -> WAVE placer+Rule         n=27 better 27 worse 0  d_paleq -1.23  d_pallets -1.30  d_time -83s  p=1.5e-08
+TEST: team DBLF+Rule -> WAVE placer+WAVE buffer  n=27 better 27 worse 0  d_paleq -1.75  d_pallets -1.85  d_time +231s  p=1.5e-08
+HOLDOUT777: team -> WAVE placer+Rule             n=21 better 21 worse 0  d_paleq -1.07  d_pallets -1.10  d_time -82s  p=9.5e-07
+HOLDOUT777: team -> WAVE placer+WAVE buffer      n=21 better 21 worse 0  d_paleq -1.53  d_pallets -1.57  d_time +297s  p=9.5e-07

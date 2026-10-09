@@ -127,4 +127,14 @@ python3 scripts/verify_stack_bullet_v45.py --scenario S0001 --skip-unplaceable
 | shared `feature/jaesung-physics-simulator` | 7f4ae37 | `pac_simulation/ahead_sim`, `viewer/` |
 | `pac2026-ahead` `fix/hyundai-submodule-init` + 미커밋 V3~V4.5 | 0c8fb80 | 작업셀·로봇·`docs/jaesung`·`tests/workcell` |
 
+**2026-10-09 갱신 (각자 최신본으로 교체)**
+
+| 원본 | 커밋 | 위치 / 비고 |
+|---|---|---|
+| `yang8988/pac-mission1-taehyeon` main (태현) | 74cbc38 | e75e274 이후 19커밋 이력째 병합: `pac_runtime`, `pac_robot_check`, `tools/{runtime,tuning}` |
+| `donghan7298-code/pac2026-ahead-donghan` main (동한 v3) | c0dd992 | 위와 같은 경로 규칙으로 병합: `pac_execution`, `pac_gazebo_grasp`, 학습·평가 파이프라인, 시연 설정. `archive/`(24 MB 기록)는 원본 저장소에만 있음 |
+| `pac2026_hdr50_proxy_scaffold` 미커밋 V4.4 (재성) | fa3115a + 작업본 | 카메라 인식, AHEAD 연결, 다중 박스·생성기 사이클, 팔레트 교체(시험 중). `*_v45`는 이미 통합된 최신본 유지 |
+| `ahead-dataset-generator` main (재성) | 401f097 | 생성기 v1.4.0 (중복 제거, 무게 분포) |
+| 감사·알고리즘 검토 (재성) | — | `docs/jaesung/audit_20261009`, `tools/prototypes` (실험용, 운영 경로 아님) |
+
 `git log --follow <파일>`로 원래 위치의 이력까지 볼 수 있습니다.
